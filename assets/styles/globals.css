@@ -119,3 +119,44 @@
   }
 }
 
+/* use instead of tailwind before version 4 utilities */
+.wrapper {
+  max-width: 80rem;
+  width: 100%;
+  padding: 1.25rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.flex-start {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.h1-bold {
+  font-weight: 700;
+  font-size: 1.875rem;
+}
+
+.h2-bold {
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.h3-bold {
+  font-weight: 700;
+  font-size: 1.25rem;
+}
