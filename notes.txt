@@ -1,0 +1,4 @@
+npx create-next-app@15.5.6 .
+
+npx shadcn@latest init
+npx shadcn@latest add button
