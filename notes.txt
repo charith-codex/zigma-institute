@@ -8,3 +8,19 @@ npm install next-themes
 npx shadcn@latest add dropdown-menu
 
 npx shadcn@latest add card
+
+npm i -D prisma @prisma/client
+npx prisma init
+
+npm i dotenv 
+## add to prisma.config.ts(import "dotenv/config)
+
+npx prisma generate
+## add -  "postinstall": "prisma generate" to package.json
+npx prisma migrate dev --name init
+
+# fix prisma 6+ error in prisma.schema
+provider = "prisma-client" <change to> provider = "prisma-client-js"
+
+# seed data to db
+npx tsx ./db/seed
