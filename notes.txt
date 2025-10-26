@@ -24,3 +24,5 @@ provider = "prisma-client" <change to> provider = "prisma-client-js"
 
 # seed data to db
 npx tsx ./db/seed
+
+npm i zod

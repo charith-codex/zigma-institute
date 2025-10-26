@@ -1,8 +1,9 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Course } from "@/types";
 import Image from "next/image";
 import Link from "next/link";
 
-const CourseCard = ({ course }: { course: any }) => {
+const CourseCard = ({ course }: { course: Course }) => {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="p-0 items-center">
@@ -18,7 +19,6 @@ const CourseCard = ({ course }: { course: any }) => {
         </Link>
       </CardHeader>
       <CardContent className="p-4 grid gap-4">
-        <div className="text-xs">{course.brand}</div>
         <Link href={`/course/${course.slug}`}>
           <h2 className="font-bold">{course.name}</h2>
         </Link>
