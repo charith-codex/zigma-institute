@@ -3,13 +3,12 @@ import Image from "next/image";
 import Link from "next/link";
 
 const CourseCard = ({ course }: { course: any }) => {
-  console.log(course);
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="p-0 items-center">
         <Link href={`/course/${course.slug}`}>
           <Image
-            src={course.cover_image}
+            src={course.coverImage}
             alt={course.name}
             height={300}
             width={300}
@@ -24,7 +23,7 @@ const CourseCard = ({ course }: { course: any }) => {
           <h2 className="font-bold">{course.name}</h2>
         </Link>
         <div className="flex-between gap-4">
-          <p className="text-sm font-medium">{course.teacher.name}</p>
+          <p className="text-sm font-medium">{course.teacherName}</p>
         </div>
       </CardContent>
     </Card>
