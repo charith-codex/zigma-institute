@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+// schema for inserting courses
 export const courseSchema = z.object({
   name: z
     .string()
@@ -22,4 +23,12 @@ export const courseSchema = z.object({
     .string()
     .min(3, "Teacher name must be at least 3 characters")
     .max(100, "Teacher name must be less than 100 characters"),
+});
+
+// Schema for signing in a user
+export const signInFormSchema = z.object({
+  email: z
+    .string()
+    .email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });

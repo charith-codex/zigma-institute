@@ -5,3 +5,8 @@ export const SERVER_URL =
   process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3000";
 export const LATEST_COURSES_LIMIT =
   Number(process.env.LATEST_COURSES_LIMIT) || 4;
+
+export const signInDefaultValues = {
+  email: "",
+  password: "",
+};

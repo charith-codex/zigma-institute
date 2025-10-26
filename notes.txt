@@ -31,3 +31,6 @@ npm i bcrypt-ts-edge
 
 npm i next-auth@beta
 npm i @auth/prisma-adapter
+openssl rand -hex 32
+
+npx shadcn@latest add label input
