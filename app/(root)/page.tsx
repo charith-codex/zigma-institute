@@ -10,7 +10,7 @@ export default function ShowcaseSite() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Link href="/classes">Classes</Link>
+        <Link href="/courses">Courses</Link>
         <Link href="/contact">Contact</Link>
         <Link href="/student-register">Student Register</Link>
       </div>

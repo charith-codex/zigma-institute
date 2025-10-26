@@ -1,6 +1,6 @@
-import ClassCard from "./class-card";
+import CourseCard from "./course-card";
 
-const ClassList = ({
+const CourseList = ({
   data,
   title,
   limit,
@@ -15,17 +15,17 @@ const ClassList = ({
       <h2 className="h2-bold mb-4">{title}</h2>
       {data.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {limitData.map((classItem: any) => (
-          <ClassCard key={classItem.slug} classItem={classItem}/>
+          {limitData.map((course: any) => (
+            <CourseCard key={course.slug} course={course} />
           ))}
         </div>
       ) : (
         <div>
-          <p>No Classes Available</p>
+          <p>No Courses Available</p>
         </div>
       )}
     </div>
   );
 };
 
-export default ClassList;
+export default CourseList;
