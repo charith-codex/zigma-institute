@@ -1,7 +1,6 @@
-import Footer from "@/components/footer";
 import Header from "@/components/shared/header";
 
-export default function ShowcaseSiteLayout({
+export default function AdminDashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -10,7 +9,6 @@ export default function ShowcaseSiteLayout({
     <div className="flex h-screen flex-col">
       <Header />
       <main className="flex-1 wrapper">{children}</main>
-      <Footer />
     </div>
   );
 }

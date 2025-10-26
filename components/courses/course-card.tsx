@@ -7,7 +7,7 @@ const CourseCard = ({ course }: { course: Course }) => {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader className="p-0 items-center">
-        <Link href={`/course/${course.slug}`}>
+        <Link href={`/lms/courses/${course.slug}`}>
           <Image
             src={course.coverImage}
             alt={course.name}
@@ -19,7 +19,7 @@ const CourseCard = ({ course }: { course: Course }) => {
         </Link>
       </CardHeader>
       <CardContent className="p-4 grid gap-4">
-        <Link href={`/course/${course.slug}`}>
+        <Link href={`/lms/courses/${course.slug}`}>
           <h2 className="font-bold">{course.name}</h2>
         </Link>
         <div className="flex-between gap-4">
