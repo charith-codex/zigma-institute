@@ -26,3 +26,8 @@ provider = "prisma-client" <change to> provider = "prisma-client-js"
 npx tsx ./db/seed
 
 npm i zod
+
+npm i bcrypt-ts-edge
+
+npm i next-auth@beta
+npm i @auth/prisma-adapter
