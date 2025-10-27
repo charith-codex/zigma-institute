@@ -28,22 +28,37 @@ export default async function SignInPage(props: {
   return (
     <div className="w-full max-w-md mx-auto">
       <Card>
-        <CardHeader className="space-y-2">
-          <Link href="/" className="flex-center">
-            <Image
-              priority={true}
-              src="/logo.png"
-              width={80}
-              height={80}
-              alt={`${APP_NAME} logo`}
-            />
-          </Link>
-          <CardTitle className="text-center">Sign In</CardTitle>
-          <CardDescription className="text-center">
-            Sign in to your account
-          </CardDescription>
+        <CardHeader className="space-y-6 pb-2 border-b">
+          <div className="flex justify-center">
+            <Link
+              href="/"
+              className="flex items-center gap-3 hover:scale-105 transition-transform"
+            >
+              <Image
+                priority
+                src="/logo.png"
+                width={42}
+                height={42}
+                alt={`${APP_NAME} logo`}
+                className="rounded-lg shadow-sm"
+              />
+              <span className="text-2xl font-bold tracking-tight">
+                {APP_NAME}
+              </span>
+            </Link>
+          </div>
+
+          <div className="space-y-1">
+            <CardTitle className="text-center text-2xl font-semibold">
+              Sign In
+            </CardTitle>
+            <CardDescription className="text-center text-base text-muted-foreground">
+              Access your account
+            </CardDescription>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+
+        <CardContent className="space-y-6 mt-2">
           <SignInForm />
         </CardContent>
       </Card>
