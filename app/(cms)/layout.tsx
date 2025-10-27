@@ -1,6 +1,6 @@
 import Header from "@/components/shared/header";
 
-export default function AdminDashboardLayout({
+export default function LmsCmsLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -8,7 +8,7 @@ export default function AdminDashboardLayout({
   return (
     <div className="flex h-screen flex-col">
       <Header />
-      <main className="flex-1 wrapper">{children}</main>
+      <div className="flex-1 wrapper">{children}</div>
     </div>
   );
 }
