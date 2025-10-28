@@ -27,8 +27,55 @@ export const courseSchema = z.object({
 
 // Schema for signing in a user
 export const signInFormSchema = z.object({
-  email: z
-    .string()
-    .email("Invalid email address"),
+  email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+const UserRoleEnum = z.enum([
+  "STUDENT",
+  "TEACHER",
+  "ADMIN",
+  "MANAGER",
+  "ATTENDANCE",
+]);
+
+// Schema for creating a user from the admin dashboard
+export const createUserSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(3, { message: "Name must be at least 3 characters" })
+    .max(100, { message: "Name must be less than 100 characters" }),
+
+  email: z.string().trim().email({ message: "Invalid email address" }),
+
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters" }),
+
+  role: UserRoleEnum,
+
+  address: z
+    .string()
+    .max(255, { message: "Address must be less than 255 characters" })
+    .optional(),
+
+  phone: z.string().regex(/^[0-9]{10,15}$/, {
+    message: "Phone number must contain only digits (10–15 digits)",
+  }),
+
+  dob: z
+    .string()
+    .refine(
+      (val) => !val || !isNaN(Date.parse(val)),
+      "Date of Birth must be a valid date"
+    ),
+
+  joinDate: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || !isNaN(Date.parse(val)),
+      "Join Date must be a valid date"
+    ),
 });

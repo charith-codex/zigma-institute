@@ -31,9 +31,9 @@ import Image from "next/image";
 // This is sample data.
 const data = {
   user: {
-    name: "charith",
+    name: "user",
     email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    avatar: "/logo.png",
   },
   navMain: [
     {

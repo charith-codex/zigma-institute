@@ -4,6 +4,16 @@ import { prisma } from "@/db/prisma";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compareSync } from "bcrypt-ts-edge";
 import type { NextAuthConfig } from "next-auth";
+import { DefaultSession } from "next-auth";
+
+declare module "next-auth" {
+  interface User {
+    role?: string; // widen role
+  }
+  interface Session {
+    user: DefaultSession["user"] & { role?: string };
+  }
+}
 
 export const config = {
   pages: {
