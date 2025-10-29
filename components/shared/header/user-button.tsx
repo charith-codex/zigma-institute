@@ -30,7 +30,7 @@ const UserButton = async () => {
           <div className="flex items-center">
             <Button
               variant="ghost"
-              className="relative w-8 h-8 rounded-full ml-2 flex items-center justify-center bg-violet-600"
+              className="relative w-8 h-8 rounded-full ml-2 flex items-center justify-center bg-primary"
             >
               <UserIcon className="w-5 h-5 text-white" />
             </Button>

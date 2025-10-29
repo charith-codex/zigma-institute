@@ -12,11 +12,11 @@ const Header = () => {
             <Image
               src="/logo.png"
               alt={`${APP_NAME} logo`}
-              height={34}
-              width={34}
+              height={30}
+              width={30}
               priority={true}
             />
-            <span className="hidden lg:block font-bold text-2xl ml-3">
+            <span className="hidden lg:block font-bold text-xl ml-3">
               {APP_NAME}
             </span>
           </Link>
