@@ -1,4 +1,5 @@
-import Header from "@/components/shared/header";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import LmsHeader from "@/components/lms/lms-header";
 
 export default function LmsCmsLayout({
   children,
@@ -7,8 +8,12 @@ export default function LmsCmsLayout({
 }>) {
   return (
     <div className="flex h-screen flex-col">
-      <Header />
-      <div className="flex-1 wrapper">{children}</div>
+      <SidebarProvider>
+        <main className="flex-1 wrapper">
+          <LmsHeader title="Content Management Platform" />
+          {children}
+        </main>
+      </SidebarProvider>
     </div>
   );
 }

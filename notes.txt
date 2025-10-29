@@ -39,3 +39,6 @@ npx shadcn@latest add sidebar-07
 
 npx shadcn@latest add select
 npx shadcn@latest add calendar
+npx shadcn@latest add badge progress popover dialog tabs sonner scroll-area textarea
+
+npx shadcn@latest add checkbox table

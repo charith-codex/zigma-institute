@@ -1,6 +1,5 @@
-// import Header from "@/components/shared/header";
-import { AppSidebar } from "@/components/sidebar/app-sidebar";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import LmsHeader from "@/components/lms/lms-header";
 
 export default function LmsLayout({
   children,
@@ -9,11 +8,9 @@ export default function LmsLayout({
 }>) {
   return (
     <div className="flex h-screen flex-col">
-      {/* <Header /> */}
       <SidebarProvider>
-        <AppSidebar />
         <main className="flex-1 wrapper">
-          <SidebarTrigger />
+          <LmsHeader title="Student Learning Platform" />
           {children}
         </main>
       </SidebarProvider>

@@ -115,8 +115,8 @@ export default function ShowcaseSite() {
             <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm uppercase tracking-[0.3em] text-primary">
               Future-Ready Institute
             </div>
-            <h1 className="text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">
-              The connected platform for ambitious schools and thriving learners
+            <h1 className="text-4xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
+              Next-era educational experience with modern comfort zone
             </h1>
             <p className="text-lg text-slate-200">
               {APP_NAME} unifies enrollment, academics, communication, and
