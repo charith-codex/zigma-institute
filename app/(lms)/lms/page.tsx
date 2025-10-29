@@ -4,42 +4,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { useEnrollments, useAssignments, usePayments } from "@/hooks/useData";
 import {
   BookOpen,
-  Calendar,
   Clock,
   User,
-  Bell,
   Star,
-  Play,
   CheckCircle,
-  AlertCircle,
   TrendingUp,
-  MessageSquare,
-  Download,
-  FileText,
   Video,
-  Headphones,
   Brain,
   Target,
   Award,
-  GraduationCap,
-  DollarSign,
-  LogOut,
-  BookMarked,
-  NotebookPen,
-  Menu,
-  Home,
-  CreditCard,
-  Settings,
   BarChart3,
 } from "lucide-react";
 import { StudentSidebar } from "@/components/lms/StudentSidebar";
 import TutorialManager from "@/components/lms/TutorialManager";
 import { ClassDetailView } from "@/components/lms/ClassDetailView";
-import { signOut } from "@/auth";
 import { DailyQuotes } from "@/components/lms/DailyQuotes";
 import { SchedulingCalendarView } from "@/components/lms/SchedulingCalendarView";
 import { PaymentSection } from "@/components/lms/PaymentSection";

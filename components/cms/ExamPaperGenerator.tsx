@@ -17,7 +17,6 @@ import {
   Brain,
   Clock,
   FileText,
-  Users,
   BookOpen,
   CheckCircle,
   AlertCircle,

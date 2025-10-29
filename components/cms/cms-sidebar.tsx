@@ -14,7 +14,6 @@ const TeacherSidebar = ({
   sidebarItems,
   activeModule,
   setActiveModule,
-  teacherInfo,
 }: any) => {
   const { state } = useSidebar();
 

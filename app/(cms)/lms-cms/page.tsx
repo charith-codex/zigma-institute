@@ -3,16 +3,8 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useClasses } from "@/hooks/useData";
 import {
-  User,
-  LogOut,
   Settings,
   Home,
   BookOpen,
@@ -22,11 +14,9 @@ import {
   Calendar,
   FileText,
 } from "lucide-react";
-import { NotificationDropdown } from "@/components/lms/NotificationDropdown";
 import { TeacherClassList } from "@/components/cms/TeacherClassList";
 import { ClassContentManager } from "@/components/cms/ClassContentManager";
 import { SchedulingCalendarView } from "@/components/lms/SchedulingCalendarView";
-import Link from "next/link";
 import { ScheduleLists } from "@/components/cms/ScheduleLists";
 import { ScheduleForm } from "@/components/cms/ScheduleForm";
 import { useParams, useRouter } from "next/navigation";

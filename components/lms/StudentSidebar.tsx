@@ -7,7 +7,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
@@ -17,9 +16,7 @@ import {
   Brain,
   TrendingUp,
   CreditCard,
-  LogOut,
 } from "lucide-react";
-import { DropdownMenuSeparator } from "../ui/dropdown-menu";
 
 interface StudentSidebarProps {
   activeModule: string;
