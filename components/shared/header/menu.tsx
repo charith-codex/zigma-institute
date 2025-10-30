@@ -34,6 +34,12 @@ const Menu = () => {
           ))}
         </div>
         <Button asChild size="sm" variant="outline">
+          <Link href="/lms">LMS</Link>
+        </Button>
+        <Button asChild size="sm" variant="outline">
+          <Link href="/lms-cms">LMS CMS</Link>
+        </Button>
+        <Button asChild size="sm" variant="outline">
           <Link href="/dashboard">Dashboard</Link>
         </Button>
 
@@ -65,6 +71,12 @@ const Menu = () => {
               <Link href="/student-registration">Student Registration</Link>
             </Button>
 
+            <Button asChild variant="outline">
+              <Link href="/lms">LMS</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/lms-cms">LMS CMS</Link>
+            </Button>
             <Button asChild variant="outline">
               <Link href="/dashboard">Dashboard</Link>
             </Button>
