@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import ClientComponent from "./client-comp";
+import { CourseCreateForm } from "@/components/cms/CourseCreateForm";
 
 export default async function Demo() {
   const session = await auth();
@@ -10,11 +11,8 @@ export default async function Demo() {
       <h1>test</h1>
       <ClientComponent />
       <p>{session?.user?.email}</p>
-      {session?.user?.role === "ADMIN" ? (
-        <p>Welcome, Admin!</p>
-      ) : (
-        <p>Welcome!</p>
-      )}
+
+      <CourseCreateForm />
     </div>
   );
 }

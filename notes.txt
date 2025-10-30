@@ -42,3 +42,7 @@ npx shadcn@latest add calendar
 npx shadcn@latest add badge progress popover dialog tabs sonner scroll-area textarea
 
 npx shadcn@latest add checkbox table
+
+npm install uploadthing @uploadthing/react
+
+npm i ai @ai-sdk/react @ai-sdk/google zod
