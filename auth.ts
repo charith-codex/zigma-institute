@@ -93,26 +93,6 @@ export const config = {
       }
       return token;
     },
-    authorized({ request, auth }: any) {
-      // Protected routes regex patterns
-      const protectedPaths = [
-        /\/dashboard/,
-        /\/lms/,
-        /\/lms-cms/,
-        /\/profile/,
-        /\/user\/(.*)/,
-      ];
-
-      const { pathname } = request.nextUrl;
-
-      // Require auth on protected paths
-      if (!auth && protectedPaths.some((p) => p.test(pathname))) {
-        return false;
-      }
-
-      // If authenticated or route not protected allow
-      return true;
-    },
   },
 } satisfies NextAuthConfig;
 
