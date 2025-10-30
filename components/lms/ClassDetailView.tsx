@@ -132,11 +132,11 @@ export const ClassDetailView = ({
 
   const currentWeek = weeklyData.find((week) => week.id === selectedWeek);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const MaterialCard = ({
     material,
     type,
   }: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     material: any;
     type: string;
   }) => {
