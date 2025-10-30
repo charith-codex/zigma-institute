@@ -29,7 +29,8 @@ export function UsersTable({ users }: UsersTableProps) {
               </td>
             </tr>
           ) : (
-            users.map((user) => (
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            users.map((user: any) => (
               <tr key={user.id} className="hover:bg-muted/40">
                 <TableCell className="font-medium">{user.name}</TableCell>
                 <TableCell className="text-muted-foreground">
