@@ -4,12 +4,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Search, Edit, Trash2, Users } from "lucide-react";
-// TODO: Replace with Neon PostgreSQL client
 import { toast } from "sonner";
 
 interface StudentManagementProps {
@@ -20,20 +38,23 @@ export function StudentManagement({ classId }: StudentManagementProps = {}) {
   const { profiles, loading } = useData();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [editingStudent, setEditingStudent] = useState<any>(null);
   const [newStudent, setNewStudent] = useState({
     email: "",
     full_name: "",
     phone: "",
     address: "",
-    role: "student" as const
+    role: "student" as const,
   });
 
-  const students = profiles?.filter(profile => profile.role === 'student') || [];
-  
-  const filteredStudents = students.filter(student =>
-    student.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const students =
+    profiles?.filter((profile) => profile.role === "student") || [];
+
+  const filteredStudents = students.filter(
+    (student) =>
+      student.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddStudent = async () => {
@@ -45,7 +66,13 @@ export function StudentManagement({ classId }: StudentManagementProps = {}) {
 
       toast.success("Student added successfully");
       setIsAddDialogOpen(false);
-      setNewStudent({ email: "", full_name: "", phone: "", address: "", role: "student" as const });
+      setNewStudent({
+        email: "",
+        full_name: "",
+        phone: "",
+        address: "",
+        role: "student" as const,
+      });
     } catch (error) {
       toast.error("Failed to add student");
       console.error(error);
@@ -110,7 +137,9 @@ export function StudentManagement({ classId }: StudentManagementProps = {}) {
                   id="email"
                   type="email"
                   value={newStudent.email}
-                  onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
+                  onChange={(e) =>
+                    setNewStudent({ ...newStudent, email: e.target.value })
+                  }
                 />
               </div>
               <div>
@@ -118,7 +147,9 @@ export function StudentManagement({ classId }: StudentManagementProps = {}) {
                 <Input
                   id="full_name"
                   value={newStudent.full_name}
-                  onChange={(e) => setNewStudent({ ...newStudent, full_name: e.target.value })}
+                  onChange={(e) =>
+                    setNewStudent({ ...newStudent, full_name: e.target.value })
+                  }
                 />
               </div>
               <div>
@@ -126,7 +157,9 @@ export function StudentManagement({ classId }: StudentManagementProps = {}) {
                 <Input
                   id="phone"
                   value={newStudent.phone}
-                  onChange={(e) => setNewStudent({ ...newStudent, phone: e.target.value })}
+                  onChange={(e) =>
+                    setNewStudent({ ...newStudent, phone: e.target.value })
+                  }
                 />
               </div>
               <div>
@@ -134,7 +167,9 @@ export function StudentManagement({ classId }: StudentManagementProps = {}) {
                 <Input
                   id="address"
                   value={newStudent.address}
-                  onChange={(e) => setNewStudent({ ...newStudent, address: e.target.value })}
+                  onChange={(e) =>
+                    setNewStudent({ ...newStudent, address: e.target.value })
+                  }
                 />
               </div>
               <Button onClick={handleAddStudent} className="w-full">
@@ -158,9 +193,7 @@ export function StudentManagement({ classId }: StudentManagementProps = {}) {
                 className="pl-10"
               />
             </div>
-            <Badge variant="outline">
-              Total: {filteredStudents.length}
-            </Badge>
+            <Badge variant="outline">Total: {filteredStudents.length}</Badge>
           </div>
         </CardHeader>
         <CardContent>
@@ -177,11 +210,15 @@ export function StudentManagement({ classId }: StudentManagementProps = {}) {
             <TableBody>
               {filteredStudents.map((student) => (
                 <TableRow key={student.id}>
-                  <TableCell className="font-medium">{student.full_name}</TableCell>
+                  <TableCell className="font-medium">
+                    {student.full_name}
+                  </TableCell>
                   <TableCell>{student.email}</TableCell>
                   <TableCell>{student.phone || "N/A"}</TableCell>
                   <TableCell>
-                    <Badge variant={student.is_active ? "default" : "secondary"}>
+                    <Badge
+                      variant={student.is_active ? "default" : "secondary"}
+                    >
                       {student.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
@@ -211,7 +248,10 @@ export function StudentManagement({ classId }: StudentManagementProps = {}) {
       </Card>
 
       {editingStudent && (
-        <Dialog open={!!editingStudent} onOpenChange={() => setEditingStudent(null)}>
+        <Dialog
+          open={!!editingStudent}
+          onOpenChange={() => setEditingStudent(null)}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit Student</DialogTitle>
@@ -222,7 +262,12 @@ export function StudentManagement({ classId }: StudentManagementProps = {}) {
                 <Input
                   id="edit_full_name"
                   value={editingStudent.full_name}
-                  onChange={(e) => setEditingStudent({ ...editingStudent, full_name: e.target.value })}
+                  onChange={(e) =>
+                    setEditingStudent({
+                      ...editingStudent,
+                      full_name: e.target.value,
+                    })
+                  }
                 />
               </div>
               <div>
@@ -230,7 +275,12 @@ export function StudentManagement({ classId }: StudentManagementProps = {}) {
                 <Input
                   id="edit_phone"
                   value={editingStudent.phone || ""}
-                  onChange={(e) => setEditingStudent({ ...editingStudent, phone: e.target.value })}
+                  onChange={(e) =>
+                    setEditingStudent({
+                      ...editingStudent,
+                      phone: e.target.value,
+                    })
+                  }
                 />
               </div>
               <div>
@@ -238,14 +288,24 @@ export function StudentManagement({ classId }: StudentManagementProps = {}) {
                 <Input
                   id="edit_address"
                   value={editingStudent.address || ""}
-                  onChange={(e) => setEditingStudent({ ...editingStudent, address: e.target.value })}
+                  onChange={(e) =>
+                    setEditingStudent({
+                      ...editingStudent,
+                      address: e.target.value,
+                    })
+                  }
                 />
               </div>
               <div>
                 <Label htmlFor="edit_status">Status</Label>
-                <Select 
+                <Select
                   value={editingStudent.is_active ? "active" : "inactive"}
-                  onValueChange={(value) => setEditingStudent({ ...editingStudent, is_active: value === "active" })}
+                  onValueChange={(value) =>
+                    setEditingStudent({
+                      ...editingStudent,
+                      is_active: value === "active",
+                    })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />

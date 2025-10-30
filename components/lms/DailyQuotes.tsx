@@ -94,7 +94,7 @@ export const DailyQuotes = () => {
 
         <div className="space-y-4">
           <blockquote className="text-lg font-medium text-foreground leading-relaxed italic">
-            "{currentQuote.text}"
+            {currentQuote.text}
           </blockquote>
           <div className="flex justify-end">
             <cite className="text-sm text-muted-foreground font-medium not-italic">

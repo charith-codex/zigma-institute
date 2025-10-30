@@ -22,12 +22,22 @@ import { StudentSidebar } from "@/components/lms/StudentSidebar";
 import TutorialManager from "@/components/lms/TutorialManager";
 import { ClassDetailView } from "@/components/lms/ClassDetailView";
 import { DailyQuotes } from "@/components/lms/DailyQuotes";
-import { SchedulingCalendarView } from "@/components/lms/SchedulingCalendarView";
 import { PaymentSection } from "@/components/lms/PaymentSection";
+
+type EnrolledClass = {
+  id: string;
+  code: string;
+  name: string;
+  instructor: string;
+  progress: number;
+  status: string;
+  weeks: number;
+  completedWeeks: number;
+};
 
 const LMS = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
-  const [selectedClass, setSelectedClass] = useState<any>(null);
+  const [selectedClass, setSelectedClass] = useState<EnrolledClass | null>(null);
   const { enrollments, loading: enrollmentsLoading } = useEnrollments();
   const { assignments, loading: assignmentsLoading } = useAssignments();
   const { payments, loading: paymentsLoading } = usePayments();
@@ -280,10 +290,7 @@ const LMS = () => {
                   </div>
                 </div>
 
-                <SchedulingCalendarView
-                  userType="student"
-                  title="Your Class Schedule"
-                />
+               
               </div>
             )}
 

@@ -4,7 +4,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { GraduationCap, LogOut, LogOutIcon, User } from "lucide-react";
+import { LogOutIcon, User } from "lucide-react";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { Button } from "../ui/button";
 import { signOutUser } from "@/lib/actions/user";

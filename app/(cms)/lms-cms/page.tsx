@@ -16,9 +16,6 @@ import {
 } from "lucide-react";
 import { TeacherClassList } from "@/components/cms/TeacherClassList";
 import { ClassContentManager } from "@/components/cms/ClassContentManager";
-import { SchedulingCalendarView } from "@/components/lms/SchedulingCalendarView";
-import { ScheduleLists } from "@/components/cms/ScheduleLists";
-import { ScheduleForm } from "@/components/cms/ScheduleForm";
 import { useParams, useRouter } from "next/navigation";
 import TeacherSidebar from "@/components/cms/cms-sidebar";
 
@@ -81,7 +78,6 @@ const LMSCMS = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
-
         {/* Main Content */}
         <main className="flex-1 p-6 overflow-auto">
           {loading ? (
@@ -333,7 +329,7 @@ const LMSCMS = () => {
                   <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-semibold mb-2">Select a Class</h3>
                   <p className="text-muted-foreground mb-4">
-                    Choose a class from "My Classes" to manage exams and
+                    Choose a class from My Classes to manage exams and
                     assessments.
                   </p>
                   <Button onClick={() => setActiveModule("my-classes")}>
@@ -598,28 +594,6 @@ const LMSCMS = () => {
                         Request new class sessions and manage your schedule
                       </p>
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                    <div className="space-y-6">
-                      <ScheduleForm
-                        userType="teacher"
-                        teacherId={user?.id || "teacher-default"}
-                        teacherName={teacherInfo.name}
-                        availableClasses={teacherClasses.map((cls) => ({
-                          id: cls.id,
-                          name: cls.name,
-                          code: cls.code,
-                        }))}
-                      />
-                      <ScheduleLists userType="teacher" teacherId={user?.id} />
-                    </div>
-
-                    <SchedulingCalendarView
-                      userType="teacher"
-                      teacherId={user?.id}
-                      title="My Teaching Schedule"
-                    />
                   </div>
                 </div>
               )}

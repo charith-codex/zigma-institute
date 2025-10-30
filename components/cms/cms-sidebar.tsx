@@ -14,7 +14,8 @@ const TeacherSidebar = ({
   sidebarItems,
   activeModule,
   setActiveModule,
-}: any) => {
+}: // eslint-disable-next-line @typescript-eslint/no-explicit-any
+any) => {
   const { state } = useSidebar();
 
   return (
@@ -27,6 +28,7 @@ const TeacherSidebar = ({
           )}
           <SidebarGroupContent>
             <SidebarMenu>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {sidebarItems.map((item: any) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton

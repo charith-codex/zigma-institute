@@ -177,7 +177,7 @@ export function NotificationDropdown() {
                   <Bell className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                   <h4 className="font-medium mb-2">No notifications</h4>
                   <p className="text-sm text-muted-foreground">
-                    You're all caught up! New notifications will appear here.
+                    You are all caught up! New notifications will appear here.
                   </p>
                 </div>
               ) : (

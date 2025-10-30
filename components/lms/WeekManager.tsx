@@ -21,14 +21,13 @@ export interface Week {
 }
 
 interface WeekManagerProps {
-  classId: string;
   weeks: Week[];
   onWeeksChange: (weeks: Week[]) => void;
   onSelectWeek: (weekId: string) => void;
   selectedWeek?: string;
 }
 
-export function WeekManager({ classId, weeks, onWeeksChange, onSelectWeek, selectedWeek }: WeekManagerProps) {
+export function WeekManager({ weeks, onWeeksChange, onSelectWeek, selectedWeek }: WeekManagerProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingWeek, setEditingWeek] = useState<Week | null>(null);
   const [formData, setFormData] = useState({
