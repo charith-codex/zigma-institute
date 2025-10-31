@@ -125,7 +125,7 @@ export default function ShowcaseSite() {
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/student-register"
+                href="/student-registration"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:scale-[1.02]"
               >
                 Start Student Registration

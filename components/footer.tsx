@@ -16,7 +16,7 @@ const footerLinks = [
   {
     title: "Get Started",
     links: [
-      { label: "Student Registration", href: "/student-register" },
+      { label: "Student Registration", href: "/student-registration" },
       { label: "Sign In", href: "/dashboard" },
       { label: "LMS", href: "/lms" },
       { label: "LMS-CMS", href: "/lms-cms" },

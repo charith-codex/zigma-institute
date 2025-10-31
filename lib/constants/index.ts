@@ -10,3 +10,5 @@ export const signInDefaultValues = {
   email: "",
   password: "",
 };
+
+export const SENDER_EMAIL = process.env.SENDER_EMAIL || "admin@zenora.tech";

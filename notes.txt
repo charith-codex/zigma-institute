@@ -46,3 +46,5 @@ npx shadcn@latest add checkbox table
 npm install uploadthing @uploadthing/react
 
 npm i ai @ai-sdk/react @ai-sdk/google zod
+
+npm i resend react-email @react-email/components @react-email/render
