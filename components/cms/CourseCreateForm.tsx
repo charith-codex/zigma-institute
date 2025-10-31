@@ -26,6 +26,7 @@ const INITIAL_VALUES = {
   teacherName: "",
   description: "",
   coverImage: "",
+  price: "",
 };
 
 type FormState = typeof INITIAL_VALUES;
@@ -38,12 +39,16 @@ export function CourseCreateForm({ className }: { className?: string }) {
   const [isUploading, setIsUploading] = useState(false);
 
   const isReadyToSubmit = useMemo(() => {
+    const priceValue = Number(formState.price);
+
     return (
       Boolean(formState.name.trim()) &&
       Boolean(formState.slug.trim()) &&
       Boolean(formState.teacherName.trim()) &&
       Boolean(formState.description.trim()) &&
-      Boolean(formState.coverImage)
+      Boolean(formState.coverImage) &&
+      Number.isFinite(priceValue) &&
+      priceValue > 0
     );
   }, [formState]);
 
@@ -60,12 +65,22 @@ export function CourseCreateForm({ className }: { className?: string }) {
       return;
     }
 
+    const numericPrice = Number(formState.price);
+
+    if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+      toast.error("Enter a valid price greater than zero.");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const response = await fetch("/api/courses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formState),
+        body: JSON.stringify({
+          ...formState,
+          price: numericPrice,
+        }),
       });
 
       if (!response.ok) {
@@ -167,6 +182,30 @@ export function CourseCreateForm({ className }: { className?: string }) {
                 required
               />
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="price">Price</Label>
+              <Input
+                id="price"
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.01"
+                placeholder="e.g. 99.99"
+                value={formState.price}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    price: event.target.value,
+                  }))
+                }
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Prices are charged in USD.
+              </p>
+            </div>
+
             <div className="space-y-2">
               <Label>Cover image</Label>
               <div className="flex flex-col gap-3">

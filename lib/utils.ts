@@ -19,3 +19,15 @@ export function generateSlug(value: string) {
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
 }
+
+export function formatCurrency(amountInCents: number, currency: string) {
+  const normalizedCurrency =
+    typeof currency === "string" && currency.length > 0
+      ? currency.toUpperCase()
+      : "USD";
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: normalizedCurrency,
+  }).format(amountInCents / 100);
+}

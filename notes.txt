@@ -48,3 +48,5 @@ npm install uploadthing @uploadthing/react
 npm i ai @ai-sdk/react @ai-sdk/google zod
 
 npm i resend react-email @react-email/components @react-email/render
+
+npm i stripe @stripe/stripe-js @stripe/react-stripe-js

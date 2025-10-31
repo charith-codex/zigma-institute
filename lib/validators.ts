@@ -23,6 +23,10 @@ export const courseSchema = z.object({
     .string()
     .min(3, "Teacher name must be at least 3 characters")
     .max(100, "Teacher name must be less than 100 characters"),
+  price: z.coerce
+    .number("Price is required")
+    .finite("Price must be a valid number")
+    .gt(0, "Price must be greater than 0"),
 });
 
 // Schema for signing in a user

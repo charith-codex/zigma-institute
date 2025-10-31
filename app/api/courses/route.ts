@@ -4,6 +4,8 @@ import { ZodError } from "zod";
 import { prisma } from "@/db/prisma";
 import { courseSchema } from "@/lib/validators";
 
+const DEFAULT_CURRENCY = "usd";
+
 export async function POST(request: Request) {
   try {
     const payload = await request.json();
@@ -20,8 +22,14 @@ export async function POST(request: Request) {
       );
     }
 
+    const { price, ...courseData } = data;
+
     const course = await prisma.course.create({
-      data,
+      data: {
+        ...courseData,
+        priceInCents: Math.round(price * 100),
+        currency: DEFAULT_CURRENCY,
+      },
     });
 
     return NextResponse.json(course, { status: 201 });

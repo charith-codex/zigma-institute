@@ -7,7 +7,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import CourseList from "@/components/courses/course-list";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,7 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getCourses } from "@/lib/actions/course";
-import { LATEST_COURSES_LIMIT } from "@/lib/constants";
+import AllCoursesCard from "./AllCoursesCard";
 
 const statHighlights = [
   {
@@ -206,11 +205,7 @@ export default async function CoursesPage() {
             digital materials and class schedules before orientation.
           </p>
         </div>
-        <CourseList
-          data={courses}
-          title="Explore current offerings"
-          limit={LATEST_COURSES_LIMIT}
-        />
+        <AllCoursesCard data={courses} />
       </section>
 
       <section className="space-y-8">
