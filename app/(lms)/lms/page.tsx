@@ -23,6 +23,7 @@ import TutorialManager from "@/components/lms/TutorialManager";
 import { ClassDetailView } from "@/components/lms/ClassDetailView";
 import { DailyQuotes } from "@/components/lms/DailyQuotes";
 import { PaymentSection } from "@/components/lms/PaymentSection";
+import StudyMaterialManager from "@/components/lms/StudyMaterialManager";
 
 type EnrolledClass = {
   id: string;
@@ -37,7 +38,9 @@ type EnrolledClass = {
 
 const LMS = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
-  const [selectedClass, setSelectedClass] = useState<EnrolledClass | null>(null);
+  const [selectedClass, setSelectedClass] = useState<EnrolledClass | null>(
+    null
+  );
   const { enrollments, loading: enrollmentsLoading } = useEnrollments();
   const { assignments, loading: assignmentsLoading } = useAssignments();
   const { payments, loading: paymentsLoading } = usePayments();
@@ -289,12 +292,15 @@ const LMS = () => {
                     </p>
                   </div>
                 </div>
-
-               
               </div>
             )}
 
-            {activeModule === "study-tools" && <TutorialManager />}
+            {activeModule === "study-tools" && (
+              <div className="space-y-6">
+                <StudyMaterialManager />
+                <TutorialManager />
+              </div>
+            )}
 
             {activeModule === "performance" && (
               <div className="space-y-8">
@@ -467,8 +473,8 @@ const LMS = () => {
                                   course.progress >= 80
                                     ? "bg-success"
                                     : course.progress >= 60
-                                    ? "bg-warning"
-                                    : "bg-destructive"
+                                      ? "bg-warning"
+                                      : "bg-destructive"
                                 }`}
                               ></div>
                             </div>
