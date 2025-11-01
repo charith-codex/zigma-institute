@@ -1,6 +1,6 @@
 import { SessionProvider } from "next-auth/react";
 
-export default function ShowcaseSiteLayout({
+export default function TestLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
