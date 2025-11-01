@@ -170,20 +170,7 @@ export default function ContactPage() {
                   placeholder="(+94) 77 555 8899"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="role">I am a</Label>
-                <select
-                  id="role"
-                  name="role"
-                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                  defaultValue="student"
-                >
-                  <option value="student">Prospective Student</option>
-                  <option value="parent">Parent / Guardian</option>
-                  <option value="teacher">Teacher</option>
-                  <option value="staff">Partner / Staff</option>
-                </select>
-              </div>
+
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="message">How can we help?</Label>
                 <textarea

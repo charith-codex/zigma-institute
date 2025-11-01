@@ -453,10 +453,10 @@ export function PhysicalMaterialDistribution() {
                           <Label>Type</Label>
                           <Select
                             value={newMaterial.type || "handout"}
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             onValueChange={(value) =>
                               setNewMaterial({
                                 ...newMaterial,
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 type: value as any,
                               })
                             }

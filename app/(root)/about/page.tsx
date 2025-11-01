@@ -1,231 +1,391 @@
-import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Globe,
+  Heart,
+  Target,
+  Zap,
+  Shield,
+  Brain,
+  CheckCircle,
+} from "lucide-react";
+import Image from "next/image";
 
-const coreModules = [
-  {
-    title: "EIMS Admin Dashboard",
-    description:
-      "Manage enrollments, staff, fees, attendance, schedules, and analytics from one command center tailored for management teams.",
-    highlights: [
-      "Role-based dashboards for management, IT, and attendance teams",
-      "Automated fee tracking with Stripe & manual payment capture",
-      "Attendance via QR cards with instant parent email alerts",
-    ],
-  },
-  {
-    title: "Learning Management System",
-    description:
-      "Deliver rich learning experiences with multimedia lessons, AI study aids, and continuous performance insights for every learner.",
-    highlights: [
-      "Upload videos, notes, tutes, and AI-generated study plans",
-      "Assign quizzes, past papers, and monitor mastery progression",
-      "Delight students with motivational quotes and Play Zone experiments",
-    ],
-  },
-  {
-    title: "Teacher LMS-CMS Portal",
-    description:
-      "Empower teachers to craft content, evaluate performance, and coordinate hybrid learning from a single workspace.",
-    highlights: [
-      "AI assistant for quiz and paper creation",
-      "Track quiz + physical exam marks to close the feedback loop",
-      "Collaborate with management on tute distribution and schedules",
-    ],
-  },
-];
+const About = () => {
+  const values = [
+    {
+      icon: Heart,
+      title: "Student-Centered",
+      description:
+        "Every decision we make prioritizes student success and learning outcomes.",
+    },
+    {
+      icon: Target,
+      title: "Excellence",
+      description:
+        "We strive for the highest standards in education and institutional management.",
+    },
+    {
+      icon: Globe,
+      title: "Innovation",
+      description:
+        "Embracing cutting-edge technology to enhance the educational experience.",
+    },
+    {
+      icon: Shield,
+      title: "Integrity",
+      description:
+        "Building trust through transparency, security, and ethical practices.",
+    },
+  ];
 
-const pillars = [
-  {
-    title: "Unified Authentication",
-    description:
-      "One secure NextAuth login directs every role to the correct workspace with instant, role-aware navigation.",
-  },
-  {
-    title: "Automation Built-In",
-    description:
-      "QR attendance, Google Calendar sync, payment reminders, and Resend-powered notifications keep operations humming.",
-  },
-  {
-    title: "AI-Augmented Learning",
-    description:
-      "Gemini-driven study helpers and analytics translate raw performance data into actionable coaching moments.",
-  },
-  {
-    title: "Parent Visibility",
-    description:
-      "Guardians receive timely updates on attendance, assessments, and outstanding fees so they stay engaged.",
-  },
-];
+  const achievements = [
+    { number: "50,000+", label: "Students Educated" },
+    { number: "1,200+", label: "Expert Faculty" },
+    { number: "98%", label: "Graduate Success Rate" },
+    { number: "25+", label: "Years of Excellence" },
+  ];
 
-const milestones = [
-  {
-    period: "Week 1",
-    title: "Institute Setup",
-    detail:
-      "Configure branding, import classes, seed staff accounts, and publish your showcase site within hours.",
-  },
-  {
-    period: "Week 2",
-    title: "Student Onboarding",
-    detail:
-      "Launch the online registration form, approve applicants, and generate digital ID cards plus LMS credentials.",
-  },
-  {
-    period: "Week 3",
-    title: "Operational Automations",
-    detail:
-      "Connect Stripe, sync Google Calendar, enable attendance QR flows, and roll out notifications to families.",
-  },
-  {
-    period: "Week 4",
-    title: "Insights & Growth",
-    detail:
-      "Unlock analytics dashboards highlighting class performance, finance trends, and leaderboard-ready achievements.",
-  },
-];
+  const team = [
+    {
+      name: "Dr. Sarah Wilson",
+      role: "Chief Technology Officer",
+      image: "👩‍💼",
+      description:
+        "Leading our AI integration and educational technology initiatives.",
+    },
+    {
+      name: "Prof. Michael Chen",
+      role: "Director of Academic Excellence",
+      image: "👨‍🏫",
+      description:
+        "Overseeing curriculum development and faculty training programs.",
+    },
+    {
+      name: "Dr. Emily Davis",
+      role: "Head of Student Success",
+      image: "👩‍🎓",
+      description:
+        "Ensuring comprehensive student support and career development.",
+    },
+    {
+      name: "Alex Johnson",
+      role: "Innovation Manager",
+      image: "👨‍💻",
+      description: "Driving digital transformation and platform development.",
+    },
+  ];
 
-export default function AboutPage() {
   return (
-    <div className="space-y-16 py-12">
-      <section className="grid gap-10 lg:grid-cols-[3fr_2fr] items-start">
-        <div className="space-y-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">
-            About Zigma Institute
-          </p>
-          <h1 className="text-4xl font-bold leading-tight md:text-5xl">
-            Building the smartest connected campus experience for ambitious
-            learners.
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Zigma Institute unifies admissions, classroom delivery, and parent
-            engagement into a single digital ecosystem. From the first
-            registration to every exam, we automate the busywork so your team
-            can focus on inspiring students.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Button asChild size="lg">
-              <Link href="/student-registration">Student Registration</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/sign-in">Staff & Student Sign In</Link>
-            </Button>
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <div className="bg-gradient-hero">
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-4xl mx-auto text-center">
+            <Badge className="mb-6">🏛️ About Modern EIMS</Badge>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              Transforming Education Through Innovation
+            </h1>
+            <p className="text-xl  leading-relaxed">
+              We are pioneering the future of education with our comprehensive
+              management system that seamlessly integrates traditional learning
+              with cutting-edge technology.
+            </p>
           </div>
         </div>
-        <Card className="bg-gradient-to-br from-primary/10 via-background to-secondary/10">
-          <CardHeader>
-            <CardTitle className="text-2xl">Why institutes choose us</CardTitle>
-            <CardDescription>
-              A single platform that brings together operations, academics, and
-              community stories.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5 text-sm leading-relaxed text-muted-foreground">
-            <p>
-              Our modular suite eliminates siloed tools and patchwork logins.
-              Each stakeholder—students, teachers, parents, and administrators—
-              receives a tailored experience fueled by shared data.
-            </p>
-            <p>
-              Password resets, onboarding checklists, and digital ID cards are
-              automated, while our management dashboards surface the metrics
-              that matter most to your leadership team.
-            </p>
-            <p className="font-semibold text-foreground">
-              Result: faster enrollments, consistent teaching quality, and
-              delighted families.
-            </p>
-          </CardContent>
-        </Card>
-      </section>
+      </div>
 
-      <section className="space-y-8">
-        <div className="space-y-3">
-          <h2 className="text-3xl font-semibold">Core experience pillars</h2>
-          <p className="text-muted-foreground">
-            The foundation behind every module across the LMS, CMS, and EIMS
-            environment.
-          </p>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {pillars.map((pillar) => (
-            <Card key={pillar.title}>
-              <CardHeader>
-                <CardTitle className="text-xl">{pillar.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {pillar.description}
+      {/* Mission Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <h2 className="text-3xl font-bold mb-6">Our Mission</h2>
+                <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+                  To revolutionize educational institutions by providing a
+                  comprehensive, AI-powered management system that enhances
+                  learning outcomes, streamlines administrative processes, and
+                  creates meaningful connections between students, educators,
+                  and administrators.
                 </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-8">
-        <div className="space-y-3">
-          <h2 className="text-3xl font-semibold">Everything your campus needs</h2>
-          <p className="text-muted-foreground">
-            A cohesive set of digital workspaces designed to scale from a single
-            branch to a multi-location institute.
-          </p>
-        </div>
-        <div className="grid gap-6 lg:grid-cols-3">
-          {coreModules.map((module) => (
-            <Card key={module.title} className="flex flex-col">
-              <CardHeader>
-                <CardTitle className="text-2xl font-semibold">
-                  {module.title}
-                </CardTitle>
-                <CardDescription>{module.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="mt-auto space-y-3">
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  {module.highlights.map((highlight) => (
-                    <li key={highlight} className="flex gap-2">
-                      <span className="mt-1 inline-block h-2 w-2 rounded-full bg-primary" />
-                      <span>{highlight}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-8">
-        <div className="space-y-3">
-          <h2 className="text-3xl font-semibold">Launch timeline</h2>
-          <p className="text-muted-foreground">
-            A pragmatic rollout for teams balancing academics and operations.
-          </p>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          {milestones.map((milestone) => (
-            <Card key={milestone.period}>
-              <CardHeader className="space-y-1">
-                <CardDescription className="uppercase tracking-[0.2em] text-xs">
-                  {milestone.period}
-                </CardDescription>
-                <CardTitle className="text-xl">{milestone.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {milestone.detail}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <span>Empowering educators with advanced tools</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <span>Enhancing student learning experiences</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <span>Streamlining institutional operations</span>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl p-8">
+                <div className="text-6xl mb-4 text-center">🎯</div>
+                <h3 className="text-xl font-semibold mb-4 text-center">
+                  Vision 2030
+                </h3>
+                <p className="text-muted-foreground text-center">
+                  To become the global standard for educational institution
+                  management, making quality education accessible and efficient
+                  for institutions worldwide.
                 </p>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Values Section */}
+      <section className="py-16 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">
+              Our Core Values
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {values.map((value, index) => (
+                <Card
+                  key={index}
+                  className="text-center hover:shadow-lg transition-shadow"
+                >
+                  <CardHeader>
+                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <value.icon className="w-8 h-8 text-primary" />
+                    </div>
+                    <CardTitle className="text-lg">{value.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground">{value.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Achievements Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">Our Impact</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {achievements.map((achievement, index) => (
+                <div key={index} className="text-center">
+                  <div className="text-4xl font-bold text-primary mb-2">
+                    {achievement.number}
+                  </div>
+                  <div className="text-muted-foreground">
+                    {achievement.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Team Section */}
+      <section className="py-16 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">
+              Meet Our Team
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {team.map((member, index) => (
+                <Card
+                  key={index}
+                  className="text-center hover:shadow-lg transition-shadow"
+                >
+                  <CardHeader>
+                    <div className="text-5xl mb-4">{member.image}</div>
+                    <CardTitle className="text-lg">{member.name}</CardTitle>
+                    <p className="text-primary font-medium">{member.role}</p>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      {member.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Classes in Action Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">
+              Our Classes in Action
+            </h2>
+            <p className="text-lg text-muted-foreground text-center mb-12 max-w-3xl mx-auto">
+              See how our students engage with cutting-edge learning
+              environments designed to foster creativity, collaboration, and
+              academic excellence.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="aspect-video relative overflow-hidden">
+                  <Image
+                    src="https://images.unsplash.com/photo-1577896851231-70ef18881754?fm=jpg&q=80&w=1600"
+                    alt="Modern classroom with students learning"
+                    width={1600}
+                    height={900}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    Interactive Learning
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Modern classrooms equipped with smart boards, collaborative
+                    workspaces, and technology that enhances the learning
+                    experience.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="aspect-video relative overflow-hidden">
+                  <Image
+                    src="https://images.unsplash.com/photo-1758685734470-a75109299497?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fA%3D%3D&auto=format&fit=crop&q=80&w=1600"
+                    alt="Students conducting science experiments"
+                    width={1600}
+                    height={900}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg">Hands-on Science</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    State-of-the-art laboratories where students conduct real
+                    experiments and explore scientific concepts through
+                    practical application.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="aspect-video relative overflow-hidden">
+                  <Image
+                    src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?fm=jpg&q=80&w=1600"
+                    alt="Programming class with students coding"
+                    width={1600}
+                    height={900}
+                    className="w-full h-full object-cover hover:scale-105transition-transform duration-300"
+                  />
+                </div>
+                <CardHeader>
+                  <CardTitle className="text-lg">Technology Focus</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Cutting-edge computer labs where students learn programming,
+                    web development, and emerging technologies for the digital
+                    future.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Technology Section */}
+      <section className="py-16 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">
+                Powered by Advanced Technology
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                Our platform leverages cutting-edge technologies to deliver a
+                seamless, secure, and intelligent educational management
+                experience.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Brain className="w-10 h-10" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">AI Integration</h3>
+                <p className="text-muted-foreground">
+                  Advanced AI algorithms for personalized learning, automated
+                  assessment, and intelligent analytics.
+                </p>
+              </div>
+
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Shield className="w-10 h-10" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">
+                  Enterprise Security
+                </h3>
+                <p className="text-muted-foreground">
+                  Bank-level security with end-to-end encryption, secure
+                  authentication, and comprehensive data protection.
+                </p>
+              </div>
+
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Zap className="w-10 h-10" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">
+                  Real-time Performance
+                </h3>
+                <p className="text-muted-foreground">
+                  Lightning-fast performance with real-time updates, instant
+                  notifications, and seamless synchronization.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 bg-gradient-hero">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl font-bold mb-6">
+              Ready to Transform Your Institution?
+            </h2>
+            <p className="text-xl mb-8">
+              Join thousands of educational institutions already benefiting from
+              our comprehensive management system.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg">Schedule a Demo</Button>
+              <Button size="lg" variant="outline">
+                Contact Sales
+              </Button>
+            </div>
+          </div>
         </div>
       </section>
     </div>
   );
-}
+};
+
+export default About;
