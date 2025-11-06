@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/db/prisma";
@@ -11,12 +11,14 @@ const updateSchema = z.object({
 });
 
 export async function GET(
-  _request: Request,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
+
     const exam = await prisma.examPaper.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         questions: {
           orderBy: { order: "asc" },
@@ -40,15 +42,17 @@ export async function GET(
 }
 
 export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const payload = await request.json();
     const data = updateSchema.parse(payload);
 
+    const { id } = await context.params;
+
     const exam = await prisma.examPaper.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!exam) {
@@ -60,7 +64,7 @@ export async function PATCH(
       : (data.status ?? exam.status);
 
     const updated = await prisma.examPaper.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         title: data.title ?? exam.title,
         description: data.description ?? exam.description,
