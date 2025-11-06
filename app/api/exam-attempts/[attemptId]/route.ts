@@ -30,6 +30,7 @@ export async function PATCH(
 
     // Resolve params whether it's a plain object or a promise (to align with Next.js 15 types expectation)
     const resolvedParams =
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       "params" in context && typeof (context as any).params?.then === "function"
         ? await (context as { params: Promise<{ attemptId: string }> }).params
         : (context as { params: { attemptId: string } }).params;
