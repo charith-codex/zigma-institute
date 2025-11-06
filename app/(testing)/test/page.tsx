@@ -2,10 +2,11 @@ import { auth } from "@/auth";
 import ClientComponent from "./client-comp";
 import { CourseCreateForm } from "@/components/cms/CourseCreateForm";
 import SendInvoiceButton from "@/email/SendInvoiceButton";
+import Link from "next/link";
 
 export default async function Demo() {
   const session = await auth();
-  // console.log(session?.user);
+  // console.log(session);
 
   return (
     <div>
@@ -14,7 +15,10 @@ export default async function Demo() {
       <p>{session?.user?.email}</p>
 
       {/* send email */}
-      <SendInvoiceButton email="pvmcw7@gmail.com" orderId="256" /> 
+      <SendInvoiceButton email="pvmcw7@gmail.com" orderId="256" />
+
+      {/* payment */}
+      <Link href="/lms/courses">Go to Course Payment</Link>
 
       <CourseCreateForm />
     </div>

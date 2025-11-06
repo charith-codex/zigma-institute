@@ -1,0 +1,125 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, ShieldCheck } from "lucide-react";
+
+type ExamSummary = {
+  id: string;
+  title: string;
+  lessonTitle: string;
+  description?: string | null;
+  status: "DRAFT" | "PUBLISHED" | "CLOSED";
+  questions: Array<{ id: string; marks: number }>;
+  createdAt: string;
+  publishedAt?: string | null;
+};
+
+export default function PublishedExamsPage() {
+  const [exams, setExams] = useState<ExamSummary[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchExams = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch("/api/exams?status=PUBLISHED");
+        if (!response.ok) {
+          throw new Error("Failed to load published exams");
+        }
+        const data = await response.json();
+        setExams(data.exams ?? []);
+      } catch (err) {
+        console.error(err);
+        setError(err instanceof Error ? err.message : "Unable to load exams");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExams();
+  }, []);
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl font-semibold">
+            Available exam papers
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {loading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading exams...
+            </div>
+          ) : error ? (
+            <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+              {error}
+            </div>
+          ) : exams.length === 0 ? (
+            <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+              No published exams yet. Check back later.
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {exams.map((exam) => (
+                <Card key={exam.id} className="border border-border/70">
+                  <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <CardTitle className="text-lg font-semibold">
+                        {exam.title}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Lesson: {exam.lessonTitle}
+                      </p>
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className="flex items-center gap-1"
+                    >
+                      <ShieldCheck className="h-4 w-4" /> Published
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {exam.description && (
+                      <p className="text-sm text-muted-foreground">
+                        {exam.description}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <Badge variant="outline">
+                        Questions: {exam.questions.length}
+                      </Badge>
+                      <Badge variant="outline">
+                        Total marks:{" "}
+                        {exam.questions.reduce(
+                          (sum, question) => sum + question.marks,
+                          0
+                        )}
+                      </Badge>
+                      {exam.publishedAt && (
+                        <span>
+                          Published:{" "}
+                          {new Date(exam.publishedAt).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                    <Button asChild className="mt-2 w-full md:w-auto">
+                      <Link href={`/lms/exams/${exam.id}`}>Start exam</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

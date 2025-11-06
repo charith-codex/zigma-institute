@@ -1,0 +1,597 @@
+"use client";
+
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { CalendarDays, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+
+const normalizeOptions = (value: unknown): string[] => {
+  if (!value || !Array.isArray(value)) return [];
+
+  return value.map((option) => {
+    if (typeof option === "string") return option;
+    if (option && typeof option === "object" && "text" in option) {
+      return String((option as { text?: string }).text ?? "");
+    }
+    return "";
+  });
+};
+
+type QuestionRecord = {
+  id: string;
+  lessonTitle: string;
+  type: "MCQ" | "ESSAY";
+  questionText: string;
+  options?: unknown;
+  correctAnswer?: string | null;
+  explanation?: string | null;
+  sampleAnswer?: string | null;
+  difficulty?: string | null;
+};
+
+type ExamQuestionRecord = {
+  id: string;
+  order: number;
+  marks: number;
+  questionId: string;
+  question: QuestionRecord;
+};
+
+type ExamRecord = {
+  id: string;
+  title: string;
+  lessonTitle: string;
+  description?: string | null;
+  status: "DRAFT" | "PUBLISHED" | "CLOSED";
+  createdAt: string;
+  publishedAt?: string | null;
+  questions: ExamQuestionRecord[];
+};
+
+type SelectedQuestion = {
+  question: QuestionRecord;
+  marks: number;
+};
+
+type ExamFormState = {
+  title: string;
+  lessonTitle: string;
+  description: string;
+  publish: boolean;
+};
+
+const DEFAULT_FORM: ExamFormState = {
+  title: "",
+  lessonTitle: "",
+  description: "",
+  publish: false,
+};
+
+export function ExamBuilder() {
+  const [questionBank, setQuestionBank] = useState<QuestionRecord[]>([]);
+  const [questionLessonFilter, setQuestionLessonFilter] = useState("all");
+  const [selectedQuestions, setSelectedQuestions] = useState<
+    Record<string, SelectedQuestion>
+  >({});
+  const [examForm, setExamForm] = useState<ExamFormState>(DEFAULT_FORM);
+  const [exams, setExams] = useState<ExamRecord[]>([]);
+  const [isLoading, setIsLoading] = useState({
+    questions: false,
+    exams: false,
+  });
+  const [isSavingExam, setIsSavingExam] = useState(false);
+
+  const fetchQuestions = async () => {
+    try {
+      setIsLoading((prev) => ({ ...prev, questions: true }));
+      const response = await fetch("/api/questions");
+      if (!response.ok) {
+        throw new Error("Failed to fetch question bank");
+      }
+      const data = await response.json();
+      setQuestionBank(data.questions ?? []);
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error instanceof Error ? error.message : "Unable to fetch questions"
+      );
+    } finally {
+      setIsLoading((prev) => ({ ...prev, questions: false }));
+    }
+  };
+
+  const fetchExams = async () => {
+    try {
+      setIsLoading((prev) => ({ ...prev, exams: true }));
+      const response = await fetch("/api/exams");
+      if (!response.ok) {
+        throw new Error("Failed to fetch exams");
+      }
+      const data = await response.json();
+      setExams(data.exams ?? []);
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error instanceof Error ? error.message : "Unable to fetch exams"
+      );
+    } finally {
+      setIsLoading((prev) => ({ ...prev, exams: false }));
+    }
+  };
+
+  useEffect(() => {
+    fetchQuestions();
+    fetchExams();
+  }, []);
+
+  const lessons = useMemo(() => {
+    const values = new Set(
+      questionBank.map((question) => question.lessonTitle)
+    );
+    return Array.from(values).sort((a, b) => a.localeCompare(b));
+  }, [questionBank]);
+
+  const filteredQuestions = useMemo(() => {
+    if (questionLessonFilter === "all" || !questionLessonFilter)
+      return questionBank;
+    return questionBank.filter(
+      (question) => question.lessonTitle === questionLessonFilter
+    );
+  }, [questionBank, questionLessonFilter]);
+
+  const totalMarks = useMemo(() => {
+    return Object.values(selectedQuestions).reduce(
+      (sum, entry) => sum + entry.marks,
+      0
+    );
+  }, [selectedQuestions]);
+
+  const toggleQuestionSelection = (question: QuestionRecord) => {
+    setSelectedQuestions((prev) => {
+      if (prev[question.id]) {
+        const { [question.id]: _removed, ...rest } = prev;
+        return rest;
+      }
+
+      return {
+        ...prev,
+        [question.id]: {
+          question,
+          marks: question.type === "MCQ" ? 1 : 5,
+        },
+      };
+    });
+  };
+
+  const updateMarks = (questionId: string, marks: number) => {
+    setSelectedQuestions((prev) => ({
+      ...prev,
+      [questionId]: {
+        ...prev[questionId],
+        marks,
+      },
+    }));
+  };
+
+  const handleCreateExam = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!examForm.title.trim()) {
+      toast.error("Exam title is required");
+      return;
+    }
+
+    if (!examForm.lessonTitle.trim()) {
+      toast.error("Lesson title is required");
+      return;
+    }
+
+    const questionEntries = Object.entries(selectedQuestions);
+    if (questionEntries.length === 0) {
+      toast.error("Select at least one question for the exam");
+      return;
+    }
+
+    setIsSavingExam(true);
+
+    try {
+      const payload = {
+        title: examForm.title.trim(),
+        lessonTitle: examForm.lessonTitle.trim(),
+        description: examForm.description.trim() || undefined,
+        publish: examForm.publish,
+        questions: questionEntries.map(([questionId, entry], index) => ({
+          questionId,
+          order: index,
+          marks: entry.marks,
+        })),
+      };
+
+      const response = await fetch("/api/exams", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error ?? "Failed to create exam");
+      }
+
+      toast.success(
+        examForm.publish ? "Exam published" : "Exam saved as draft"
+      );
+      setSelectedQuestions({});
+      setExamForm(DEFAULT_FORM);
+      fetchExams();
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error instanceof Error ? error.message : "Unable to create exam"
+      );
+    } finally {
+      setIsSavingExam(false);
+    }
+  };
+
+  const publishExam = async (examId: string) => {
+    try {
+      const response = await fetch(`/api/exams/${examId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ publish: true }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error ?? "Failed to publish exam");
+      }
+
+      toast.success("Exam published successfully");
+      fetchExams();
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error instanceof Error ? error.message : "Unable to publish exam"
+      );
+    }
+  };
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">
+              Select questions
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Label className="text-sm font-medium">Filter by lesson</Label>
+              <Select
+                value={questionLessonFilter}
+                onValueChange={setQuestionLessonFilter}
+              >
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue placeholder="All lessons" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All lessons</SelectItem>
+                  {lessons.map((lesson) => (
+                    <SelectItem key={lesson} value={lesson}>
+                      {lesson}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={fetchQuestions}
+                disabled={isLoading.questions}
+              >
+                {isLoading.questions ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Refresh"
+                )}
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {filteredQuestions.length === 0 ? (
+                <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                  No questions available. Create questions first.
+                </div>
+              ) : (
+                filteredQuestions.map((question) => {
+                  const options = normalizeOptions(question.options);
+                  const isSelected = Boolean(selectedQuestions[question.id]);
+                  return (
+                    <div
+                      key={question.id}
+                      className={`space-y-3 rounded-md border p-4 transition ${
+                        isSelected
+                          ? "border-primary bg-primary/5"
+                          : "border-border"
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline">
+                            {question.lessonTitle}
+                          </Badge>
+                          <Badge variant="secondary">{question.type}</Badge>
+                          {question.difficulty && (
+                            <Badge variant="outline">
+                              {question.difficulty}
+                            </Badge>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          variant={isSelected ? "secondary" : "outline"}
+                          size="sm"
+                          onClick={() => toggleQuestionSelection(question)}
+                        >
+                          {isSelected ? "Remove" : "Select"}
+                        </Button>
+                      </div>
+                      <p className="font-medium">{question.questionText}</p>
+                      {question.type === "MCQ" && options.length > 0 && (
+                        <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+                          {options.map((option, index) => (
+                            <li key={`${question.id}-option-${index}`}>
+                              {option}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {question.type === "ESSAY" && question.sampleAnswer && (
+                        <details className="text-sm text-muted-foreground">
+                          <summary>View sample answer</summary>
+                          <p className="mt-2 whitespace-pre-wrap">
+                            {question.sampleAnswer}
+                          </p>
+                        </details>
+                      )}
+                      {isSelected && (
+                        <div className="space-y-2">
+                          <Label
+                            htmlFor={`${question.id}-marks`}
+                            className="text-sm"
+                          >
+                            Marks awarded
+                          </Label>
+                          <Input
+                            id={`${question.id}-marks`}
+                            type="number"
+                            min={1}
+                            value={selectedQuestions[question.id]?.marks ?? 1}
+                            onChange={(event) =>
+                              updateMarks(
+                                question.id,
+                                Number.parseInt(event.target.value || "1", 10)
+                              )
+                            }
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="space-y-6">
+        <Card>
+          <form onSubmit={handleCreateExam}>
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">
+                Exam details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="exam-title">Exam title</Label>
+                <Input
+                  id="exam-title"
+                  value={examForm.title}
+                  onChange={(event) =>
+                    setExamForm((prev) => ({
+                      ...prev,
+                      title: event.target.value,
+                    }))
+                  }
+                  placeholder="e.g. Mid-term assessment"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="exam-lesson">Lesson title</Label>
+                <Input
+                  id="exam-lesson"
+                  value={examForm.lessonTitle}
+                  onChange={(event) =>
+                    setExamForm((prev) => ({
+                      ...prev,
+                      lessonTitle: event.target.value,
+                    }))
+                  }
+                  placeholder="e.g. JavaScript Fundamentals"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="exam-description">Instructions</Label>
+                <Textarea
+                  id="exam-description"
+                  value={examForm.description}
+                  onChange={(event) =>
+                    setExamForm((prev) => ({
+                      ...prev,
+                      description: event.target.value,
+                    }))
+                  }
+                  placeholder="Optional instructions for students"
+                  rows={4}
+                />
+              </div>
+              <div className="flex items-center justify-between rounded-md border p-3">
+                <div>
+                  <p className="font-medium">Publish immediately</p>
+                  <p className="text-xs text-muted-foreground">
+                    Publish now to make the exam visible to students.
+                  </p>
+                </div>
+                <Switch
+                  checked={examForm.publish}
+                  onCheckedChange={(checked) =>
+                    setExamForm((prev) => ({ ...prev, publish: checked }))
+                  }
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col items-start gap-4">
+              <div className="text-sm text-muted-foreground">
+                Selected questions: {Object.keys(selectedQuestions).length} |
+                Total marks: {totalMarks}
+              </div>
+              <Button
+                type="submit"
+                className="flex items-center gap-2"
+                disabled={isSavingExam}
+              >
+                {isSavingExam ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : examForm.publish ? (
+                  <ShieldCheck className="h-4 w-4" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4" />
+                )}
+                {examForm.publish ? "Create & publish exam" : "Save exam"}
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Exam papers</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isLoading.exams ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading exams...
+              </div>
+            ) : exams.length === 0 ? (
+              <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
+                No exam papers yet. Create one to get started.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {exams.map((exam) => (
+                  <div
+                    key={exam.id}
+                    className="space-y-3 rounded-md border p-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-lg font-semibold">{exam.title}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Lesson: {exam.lessonTitle}
+                        </p>
+                      </div>
+                      {exam.status !== "PUBLISHED" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => publishExam(exam.id)}
+                        >
+                          Publish
+                        </Button>
+                      )}
+                    </div>
+                    {exam.description && (
+                      <p className="text-sm text-muted-foreground">
+                        {exam.description}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <CalendarDays className="h-4 w-4" />
+                        {new Date(exam.createdAt).toLocaleDateString()}
+                      </span>
+                      <Badge
+                        variant={
+                          exam.status === "PUBLISHED" ? "default" : "outline"
+                        }
+                      >
+                        {exam.status}
+                      </Badge>
+                      <Badge variant="secondary">
+                        Questions: {exam.questions.length}
+                      </Badge>
+                      <Badge variant="outline">
+                        Total marks:{" "}
+                        {exam.questions.reduce(
+                          (sum, entry) => sum + entry.marks,
+                          0
+                        )}
+                      </Badge>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      {exam.questions.map((entry, index) => (
+                        <div
+                          key={entry.id}
+                          className="rounded-md bg-muted/40 p-3"
+                        >
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium">
+                              Q{index + 1}. {entry.question.questionText}
+                            </p>
+                            <Badge variant="outline">{entry.marks} marks</Badge>
+                          </div>
+                          {entry.question.type === "MCQ" && (
+                            <p className="text-xs text-muted-foreground">
+                              Correct answer: {entry.question.correctAnswer}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

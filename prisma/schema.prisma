@@ -28,7 +28,11 @@ model User {
   student       Student?
   teacher       Teacher?
   staff         Staff?
+  
   studyMaterials StudyMaterial[]
+  questions      Question[]   @relation("QuestionCreatedBy")
+  createdExams   ExamPaper[]  @relation("ExamCreatedBy")
+  gradedAttempts ExamAttempt[] @relation("AttemptGradedBy")
 }
 
 enum UserRole {
@@ -111,4 +115,113 @@ model StudyMaterial {
   uploadedBy    User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+model Question {
+  id            String        @id @default(uuid())
+  lessonTitle   String
+  type          QuestionType
+  questionText  String
+  options       Json?
+  correctAnswer String?
+  explanation   String?
+  sampleAnswer  String?
+  difficulty    QuestionDifficulty?
+  sourceFileUrl String?
+  createdById   String?
+  createdBy     User?         @relation("QuestionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  exams         ExamQuestion[]
+  answers       ExamAnswer[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+enum QuestionType {
+  MCQ
+  ESSAY
+}
+
+enum QuestionDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model ExamPaper {
+  id           String        @id @default(uuid())
+  title        String
+  lessonTitle  String
+  description  String?
+  status       ExamStatus    @default(DRAFT)
+  publishedAt  DateTime?
+  createdById  String?
+  createdBy    User?         @relation("ExamCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  questions    ExamQuestion[]
+  attempts     ExamAttempt[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+enum ExamStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+model ExamQuestion {
+  id          String     @id @default(uuid())
+  order       Int
+  marks       Int        @default(1)
+  examId      String
+  questionId  String
+  exam        ExamPaper  @relation(fields: [examId], references: [id], onDelete: Cascade)
+  question    Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([examId, questionId])
+}
+
+model ExamAttempt {
+  id           String             @id @default(uuid())
+  examId       String
+  studentId    String
+  studentName  String?
+  status       ExamAttemptStatus  @default(IN_PROGRESS)
+  startedAt    DateTime           @default(now())
+  submittedAt  DateTime?
+  gradedAt     DateTime?
+  score        Int?
+  gradedById   String?
+
+  exam         ExamPaper          @relation(fields: [examId], references: [id], onDelete: Cascade)
+  gradedBy     User?              @relation("AttemptGradedBy", fields: [gradedById], references: [id], onDelete: SetNull)
+  answers      ExamAnswer[]
+}
+
+enum ExamAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+}
+
+model ExamAnswer {
+  id           String    @id @default(uuid())
+  attemptId    String
+  questionId   String
+  answerText   String?
+  selectedOption String?
+  isCorrect    Boolean?
+  marksAwarded Int?
+  feedback     String?
+  attempt      ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question     Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([attemptId, questionId])
 }

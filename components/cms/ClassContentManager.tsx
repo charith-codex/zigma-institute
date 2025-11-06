@@ -22,8 +22,8 @@ import { WeekNavigation } from "../lms/WeekNavigation";
 import { Material, WeekContentView } from "../lms/WeekContentView";
 import { Week, WeekManager } from "../lms/WeekManager";
 import { StudentManagement } from "./StudentManagement";
-import { QuizManagement } from "./QuizManagement";
-import { ExamPaperGenerator } from "./ExamPaperGenerator";
+import { QuestionAuthoring } from "./QuestionAuthoring";
+import { ExamBuilder } from "./ExamBuilder";
 import { ExamScheduler } from "./ExamScheduler";
 import { ExamResults } from "./ExamResults";
 import { useRouter } from "next/navigation";
@@ -38,7 +38,7 @@ const navigationItems = [
   { id: "weeks", label: "Weekly Content", icon: BookOpen },
   { id: "recordings", label: "Class Recordings", icon: Video },
   { id: "students", label: "Students", icon: Users },
-  { id: "quizzes", label: "Quizzes", icon: ClipboardList },
+  { id: "quizzes", label: "Question Bank", icon: ClipboardList },
   { id: "exams", label: "Exam Papers", icon: FileText },
   { id: "exam-sessions", label: "Exam Sessions", icon: Target },
   { id: "exam-results", label: "Exam Results", icon: BarChart3 },
@@ -264,10 +264,10 @@ export function ClassContentManager({
         return <StudentManagement classId={classId} />;
 
       case "quizzes":
-        return <QuizManagement classId={classId} />;
+        return <QuestionAuthoring />;
 
       case "exams":
-        return <ExamPaperGenerator classId={classId} />;
+        return <ExamBuilder />;
 
       case "exam-sessions":
         return <ExamScheduler classId={classId} />;
