@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/db/prisma";
@@ -16,16 +16,26 @@ const gradeSchema = z.object({
     .optional(),
 });
 
+type AttemptRouteContext =
+  | { params: { attemptId: string } }
+  | { params: Promise<{ attemptId: string }> };
+
 export async function PATCH(
-  request: Request,
-  { params }: { params: { attemptId: string } }
+  request: NextRequest,
+  context: AttemptRouteContext
 ) {
   try {
     const payload = await request.json();
     const data = gradeSchema.parse(payload);
 
+    // Resolve params whether it's a plain object or a promise (to align with Next.js 15 types expectation)
+    const resolvedParams =
+      "params" in context && typeof (context as any).params?.then === "function"
+        ? await (context as { params: Promise<{ attemptId: string }> }).params
+        : (context as { params: { attemptId: string } }).params;
+
     const attempt = await prisma.examAttempt.findUnique({
-      where: { id: params.attemptId },
+      where: { id: resolvedParams.attemptId },
       include: {
         answers: true,
       },
