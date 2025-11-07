@@ -22,7 +22,7 @@ import { WeekNavigation } from "../lms/WeekNavigation";
 import { Material, WeekContentView } from "../lms/WeekContentView";
 import { Week, WeekManager } from "../lms/WeekManager";
 import { StudentManagement } from "./StudentManagement";
-import { QuestionAuthoring } from "./QuestionAuthoring";
+import { QuestionCreation } from "./QuestionCreation";
 import { ExamBuilder } from "./ExamBuilder";
 import { ExamScheduler } from "./ExamScheduler";
 import { ExamResults } from "./ExamResults";
@@ -264,7 +264,7 @@ export function ClassContentManager({
         return <StudentManagement classId={classId} />;
 
       case "quizzes":
-        return <QuestionAuthoring />;
+        return <QuestionCreation />;
 
       case "exams":
         return <ExamBuilder />;

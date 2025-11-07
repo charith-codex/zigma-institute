@@ -99,7 +99,7 @@ const normalizeOptions = (value: StoredQuestion["options"]): string[] => {
   return [];
 };
 
-export function QuestionAuthoring() {
+export function QuestionCreation() {
   const [manualForm, setManualForm] = useState<ManualFormState>(() => ({
     lessonTitle: "",
     question: createEmptyQuestion("MCQ"),
@@ -469,7 +469,7 @@ export function QuestionAuthoring() {
       <Card>
         <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <CardTitle className="text-2xl font-bold">
-            Question Authoring
+            Question Creation
           </CardTitle>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Badge variant="outline">Manual &amp; AI Creation</Badge>
@@ -479,7 +479,7 @@ export function QuestionAuthoring() {
         <CardContent>
           <Tabs defaultValue="manual">
             <TabsList className="grid w-full grid-cols-2 md:w-1/2">
-              <TabsTrigger value="manual">Manual Authoring</TabsTrigger>
+              <TabsTrigger value="manual">Manual Creation</TabsTrigger>
               <TabsTrigger value="ai">AI Assisted</TabsTrigger>
             </TabsList>
 

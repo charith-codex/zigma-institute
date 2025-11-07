@@ -72,6 +72,7 @@ model Student {
   parentEmail     String?
 
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments     Enrollment[]
 }
 
 model Teacher {
@@ -80,6 +81,7 @@ model Teacher {
   nic           String? @unique
 
   user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courses       Course[]
 }
 
 model Staff {
@@ -99,6 +101,14 @@ model Course {
   priceInCents Int      @default(0)
   currency     String   @default("usd")
 
+  teacherId     String?
+  teacher       Teacher?      @relation(fields: [teacherId], references: [userId], onDelete: SetNull)
+
+  enrollments   Enrollment[]
+  studyMaterials StudyMaterial[]
+  exams         ExamPaper[]
+  lessons       Lesson[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -112,7 +122,13 @@ model StudyMaterial {
   fileName      String
   fileSize      Int?
   uploadedById  String?
+  courseId      String?
+  lessonId      String?
+
   uploadedBy    User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  course        Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson        Lesson?  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -129,13 +145,18 @@ model Question {
   difficulty    QuestionDifficulty?
   sourceFileUrl String?
   createdById   String?
+  courseId      String?
+  lessonId      String?    
+
   createdBy     User?         @relation("QuestionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  lesson        Lesson?       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   exams         ExamQuestion[]
   answers       ExamAnswer[]
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
+
 
 enum QuestionType {
   MCQ
@@ -151,18 +172,22 @@ enum QuestionDifficulty {
 model ExamPaper {
   id           String        @id @default(uuid())
   title        String
-  lessonTitle  String
   description  String?
+  courseId     String?
+  lessonId     String?
   status       ExamStatus    @default(DRAFT)
   publishedAt  DateTime?
   createdById  String?
   createdBy    User?         @relation("ExamCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  course       Course?       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson       Lesson?       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   questions    ExamQuestion[]
   attempts     ExamAttempt[]
 
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
+
 
 enum ExamStatus {
   DRAFT
@@ -224,4 +249,31 @@ model ExamAnswer {
   updatedAt    DateTime   @updatedAt
 
   @@unique([attemptId, questionId])
+}
+
+model Enrollment {
+  id          String   @id @default(uuid())
+  studentId   String
+  courseId    String
+  enrolledAt  DateTime @default(now())
+
+  student     Student  @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId])
+}
+
+model Lesson {
+  id            String        @id @default(uuid())
+  title         String
+  description   String?
+  courseId      String
+  course        Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  studyMaterials StudyMaterial[]
+  questions      Question[]
+  exams          ExamPaper[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }

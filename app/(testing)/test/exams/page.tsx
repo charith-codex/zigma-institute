@@ -1,7 +1,7 @@
 // import { ClassContentManager } from "@/components/cms/ClassContentManager";
 import { ExamBuilder } from "@/components/cms/ExamBuilder";
 // import { ExamResults } from "@/components/cms/ExamResults";
-import { QuestionAuthoring } from "@/components/cms/QuestionAuthoring";
+import { QuestionCreation } from "@/components/cms/QuestionCreation";
 import React from "react";
 
 export default function page() {
@@ -10,7 +10,7 @@ export default function page() {
       <ExamBuilder />
       {/* <ClassContentManager/> */}
       {/* <ExamResults classId="13" /> */}
-      <QuestionAuthoring />
+      <QuestionCreation />
     </div>
   );
 }

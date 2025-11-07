@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import ClientComponent from "./client-comp";
-import { CourseCreateForm } from "@/components/cms/CourseCreateForm";
+import { CourseCreateForm } from "@/components/eims/CourseCreateForm";
 import SendInvoiceButton from "@/email/SendInvoiceButton";
 import Link from "next/link";
 
