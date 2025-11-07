@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ZodError } from "zod";
 
 import { prisma } from "@/db/prisma";
@@ -84,10 +84,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
+    if (error instanceof PrismaClientKnownRequestError && error.code === "P2025") {
       return NextResponse.json(
         { error: "Course not found." },
         { status: 404 }
@@ -122,10 +119,7 @@ export async function DELETE(
 
     return NextResponse.json(convertToPlainObject(deletedCourse));
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2025"
-    ) {
+    if (error instanceof PrismaClientKnownRequestError && error.code === "P2025") {
       return NextResponse.json(
         { error: "Course not found." },
         { status: 404 }
