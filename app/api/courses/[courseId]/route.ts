@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 
@@ -6,14 +6,12 @@ import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "@/lib/utils";
 import { courseSchema } from "@/lib/validators";
 
-interface RouteParams {
-  params: {
-    courseId: string;
-  };
+interface RouteContext {
+  params: Promise<{ courseId: string }>;
 }
 
-export async function PATCH(request: Request, { params }: RouteParams) {
-  const courseId = params.courseId;
+export async function PATCH(request: NextRequest, { params }: RouteContext) {
+  const { courseId } = await params;
 
   if (!courseId) {
     return NextResponse.json(
@@ -104,8 +102,11 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: Request, { params }: RouteParams) {
-  const courseId = params.courseId;
+export async function DELETE(
+  request: NextRequest,
+  { params }: RouteContext
+) {
+  const { courseId } = await params;
 
   if (!courseId) {
     return NextResponse.json(
