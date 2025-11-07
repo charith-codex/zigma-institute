@@ -14,8 +14,8 @@ import {
   Calendar,
   FileText,
 } from "lucide-react";
-import { TeacherClassList } from "@/components/cms/TeacherClassList";
-import { ClassContentManager } from "@/components/cms/ClassContentManager";
+import { TeacherCourseList } from "@/components/cms/TeacherCourseList";
+import { CourseContentManager } from "@/components/cms/CourseContentManager";
 import { useParams, useRouter } from "next/navigation";
 import TeacherSidebar from "@/components/cms/cms-sidebar";
 
@@ -52,7 +52,7 @@ const LMSCMS = () => {
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
-    { id: "my-classes", label: "My Classes", icon: BookOpen },
+    { id: "my-classes", label: "My Courses", icon: BookOpen },
     { id: "notifications", label: "Notifications", icon: FileText },
     { id: "exams", label: "Exams", icon: Settings },
     { id: "student-analytics", label: "Student Analytics", icon: BarChart3 },
@@ -60,7 +60,7 @@ const LMSCMS = () => {
     { id: "schedule", label: "Schedule", icon: Calendar },
   ];
 
-  // Handle class selection from TeacherClassList
+  // Handle class selection from TeacherCourseList
   const handleSelectClass = (selectedClassId: string) => {
     setActiveModule("class-content");
     router.push(`/lms-cms/${selectedClassId}`);
@@ -105,7 +105,7 @@ const LMSCMS = () => {
                                 </div>
                                 <div>
                                   <p className="text-sm text-muted-foreground">
-                                    Active Classes
+                                    Active Courses
                                   </p>
                                   <p className="text-xl font-bold">
                                     {teacherInfo.activeClasses}
@@ -185,7 +185,7 @@ const LMSCMS = () => {
                     )}
 
                     {activeModule === "my-classes" && (
-                      <TeacherClassList onSelectClass={handleSelectClass} />
+                      <TeacherCourseList onSelectClass={handleSelectClass} />
                     )}
 
                     {activeModule === "notifications" && (
@@ -199,7 +199,7 @@ const LMSCMS = () => {
                               <div className="w-2 h-2 bg-primary rounded-full"></div>
                               <div>
                                 <p className="font-medium">
-                                  Class Schedule Update
+                                  Course Schedule Update
                                 </p>
                                 <p className="text-sm text-muted-foreground">
                                   Mathematics class moved to 10:00 AM tomorrow
@@ -223,7 +223,7 @@ const LMSCMS = () => {
                     )}
 
                     {activeModule === "class-content" && classId && (
-                      <ClassContentManager
+                      <CourseContentManager
                         classId={classId}
                         classes={classes}
                         loading={loading}
@@ -338,14 +338,14 @@ const LMSCMS = () => {
                       <div className="text-center py-12">
                         <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
                         <h3 className="text-lg font-semibold mb-2">
-                          Select a Class
+                          Select a Course
                         </h3>
                         <p className="text-muted-foreground mb-4">
-                          Choose a class from My Classes to manage exams and
+                          Choose a class from My Courses to manage exams and
                           assessments.
                         </p>
                         <Button onClick={() => setActiveModule("my-classes")}>
-                          Go to My Classes
+                          Go to My Courses
                         </Button>
                       </div>
                     )}
@@ -439,7 +439,7 @@ const LMSCMS = () => {
 
                           <Card>
                             <CardHeader>
-                              <CardTitle>Class Engagement</CardTitle>
+                              <CardTitle>Course Engagement</CardTitle>
                             </CardHeader>
                             <CardContent>
                               <div className="h-64 flex items-center justify-center border border-border rounded-lg bg-muted/20">
@@ -474,7 +474,7 @@ const LMSCMS = () => {
                                         Sarah Johnson
                                       </p>
                                       <p className="text-xs text-muted-foreground">
-                                        Class 12A
+                                        Course 12A
                                       </p>
                                     </div>
                                   </div>
@@ -495,7 +495,7 @@ const LMSCMS = () => {
                                         Michael Chen
                                       </p>
                                       <p className="text-xs text-muted-foreground">
-                                        Class 12B
+                                        Course 12B
                                       </p>
                                     </div>
                                   </div>
@@ -514,7 +514,7 @@ const LMSCMS = () => {
                                     <div>
                                       <p className="font-medium">Emma Wilson</p>
                                       <p className="text-xs text-muted-foreground">
-                                        Class 12A
+                                        Course 12A
                                       </p>
                                     </div>
                                   </div>
@@ -554,7 +554,7 @@ const LMSCMS = () => {
                                       Quiz Completed
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                      Physics Quiz 3 by Class 12A
+                                      Physics Quiz 3 by Course 12A
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                       4 hours ago
@@ -608,7 +608,7 @@ const LMSCMS = () => {
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <div>
                             <h1 className="text-2xl font-bold">
-                              Class Scheduling
+                              Course Scheduling
                             </h1>
                             <p className="text-muted-foreground">
                               Request new class sessions and manage your

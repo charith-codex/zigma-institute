@@ -28,7 +28,7 @@ import { ExamScheduler } from "./ExamScheduler";
 import { ExamResults } from "./ExamResults";
 import { useRouter } from "next/navigation";
 
-interface ClassContentManagerProps {
+interface CourseContentManagerProps {
   classId: string;
   loading?: boolean;
   classes?: { id: string; name: string; code: string }[];
@@ -36,7 +36,7 @@ interface ClassContentManagerProps {
 
 const navigationItems = [
   { id: "weeks", label: "Weekly Content", icon: BookOpen },
-  { id: "recordings", label: "Class Recordings", icon: Video },
+  { id: "recordings", label: "Course Recordings", icon: Video },
   { id: "students", label: "Students", icon: Users },
   { id: "quizzes", label: "Question Bank", icon: ClipboardList },
   { id: "exams", label: "Exam Papers", icon: FileText },
@@ -46,11 +46,11 @@ const navigationItems = [
   { id: "ai-tools", label: "AI Tools", icon: Brain },
 ];
 
-export function ClassContentManager({
+export function CourseContentManager({
   classId,
   loading = false,
   classes = [],
-}: ClassContentManagerProps) {
+}: CourseContentManagerProps) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState("weeks");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -147,11 +147,11 @@ export function ClassContentManager({
     setWeeks(updatedWeeks);
   };
 
-  console.log("ClassContentManager - classId:", classId);
-  console.log("ClassContentManager - classes:", classes);
+  console.log("CourseContentManager - classId:", classId);
+  console.log("CourseContentManager - classes:", classes);
 
   const classItem = classes.find((cls) => cls.id === classId);
-  console.log("ClassContentManager - classItem:", classItem);
+  console.log("CourseContentManager - classItem:", classItem);
 
   const handleFileUpload = () => {
     toast.success("File uploaded successfully!");
@@ -209,7 +209,7 @@ export function ClassContentManager({
         return (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Class Recordings</h3>
+              <h3 className="text-lg font-semibold">Course Recordings</h3>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
                 Upload Recording
@@ -283,7 +283,7 @@ export function ClassContentManager({
             </div>
             <div className="text-center py-12">
               <BarChart3 className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h4 className="text-lg font-semibold mb-2">Class Analytics</h4>
+              <h4 className="text-lg font-semibold mb-2">Course Analytics</h4>
               <p className="text-muted-foreground">
                 View detailed analytics and insights about your class
                 performance.
@@ -334,7 +334,7 @@ export function ClassContentManager({
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <h3 className="text-lg font-semibold">Loading Class...</h3>
+          <h3 className="text-lg font-semibold">Loading Course...</h3>
           <p className="text-muted-foreground">
             Please wait while we load the class content
           </p>
@@ -349,7 +349,7 @@ export function ClassContentManager({
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <div className="text-center">
           <h3 className="text-lg font-semibold text-destructive">
-            Class Not Found
+            Course Not Found
           </h3>
           <p className="text-muted-foreground">
             Looking for class ID: {classId}
@@ -358,7 +358,7 @@ export function ClassContentManager({
             Available classes: {classes.map((c) => c.id).join(", ")}
           </p>
         </div>
-        <Button onClick={() => router.push("/lms-cms")}>Back to Classes</Button>
+        <Button onClick={() => router.push("/lms-cms")}>Back to Courses</Button>
       </div>
     );
   }
@@ -376,7 +376,7 @@ export function ClassContentManager({
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Classes
+            Back to Courses
           </Button>
           <div>
             <h2 className="text-lg font-bold">{classItem.name}</h2>

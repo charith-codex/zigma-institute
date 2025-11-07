@@ -34,7 +34,7 @@ const menuItems = [
   { id: "overview", label: "Dashboard", icon: BarChart3 },
   { id: "students", label: "Students", icon: Users },
   { id: "teachers", label: "Teachers", icon: GraduationCap },
-  { id: "classes", label: "Classes", icon: BookOpen },
+  { id: "classes", label: "Courses", icon: BookOpen },
   { id: "scheduling", label: "Scheduling", icon: Calendar },
   {
     id: "material-distribution",

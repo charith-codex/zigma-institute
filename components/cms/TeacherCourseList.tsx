@@ -15,11 +15,11 @@ const user = {
   name: "Teacher 02",
 };
 
-interface TeacherClassListProps {
+interface TeacherCourseListProps {
   onSelectClass: (classId: string) => void;
 }
 
-export function TeacherClassList({ onSelectClass }: TeacherClassListProps) {
+export function TeacherCourseList({ onSelectClass }: TeacherCourseListProps) {
   const { classes, loading } = useClasses();
 
   if (loading) {
@@ -66,7 +66,7 @@ export function TeacherClassList({ onSelectClass }: TeacherClassListProps) {
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between lg:items-center">
         <div className="space-y-2">
           <h2 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            My Classes
+            My Courses
           </h2>
           <p className="text-lg text-muted-foreground">
             Manage your teaching classes and inspire student success
@@ -74,7 +74,7 @@ export function TeacherClassList({ onSelectClass }: TeacherClassListProps) {
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-primary" />
-              <span>{teacherClasses.length} Active Classes</span>
+              <span>{teacherClasses.length} Active Courses</span>
             </div>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-secondary" />
@@ -90,7 +90,7 @@ export function TeacherClassList({ onSelectClass }: TeacherClassListProps) {
         </div>
         <Button className="h-12 w-full rounded-xl bg-gradient-primary px-6 transition-all duration-300 hover:scale-105 hover:shadow-medium sm:w-auto">
           <Plus className="w-5 h-5 mr-2" />
-          Create New Class
+          Create New Course
         </Button>
       </div>
 
@@ -117,9 +117,9 @@ export function TeacherClassList({ onSelectClass }: TeacherClassListProps) {
             </CardHeader>
 
             <CardContent className="flex flex-1 flex-col gap-4">
-              {/* Class Details */}
+              {/* Course Details */}
               <div className="space-y-3">
-               <div className="flex flex-wrap items-center gap-2 text-sm">
+                <div className="flex flex-wrap items-center gap-2 text-sm">
                   <Users className="w-4 h-4 text-primary" />
                   <span className="text-foreground font-medium">
                     {classItem.enrolled_students}/{classItem.max_students}{" "}
@@ -127,12 +127,12 @@ export function TeacherClassList({ onSelectClass }: TeacherClassListProps) {
                   </span>
                 </div>
 
-                 <div className="flex flex-wrap items-center gap-2 text-sm">
+                <div className="flex flex-wrap items-center gap-2 text-sm">
                   <Calendar className="w-4 h-4 text-primary" />
                   <span className="text-foreground">{classItem.schedule}</span>
                 </div>
 
-               <div className="flex flex-wrap items-center gap-2 text-sm">
+                <div className="flex flex-wrap items-center gap-2 text-sm">
                   <MapPin className="w-4 h-4 text-primary" />
                   <span className="text-foreground">{classItem.room}</span>
                 </div>
@@ -156,7 +156,7 @@ export function TeacherClassList({ onSelectClass }: TeacherClassListProps) {
             <BookOpen className="w-16 h-16 text-primary" />
           </div>
           <h3 className="text-2xl font-bold mb-4 bg-gradient-primary bg-clip-text text-transparent">
-            No Classes Yet
+            No Courses Yet
           </h3>
           <p className="text-muted-foreground mb-8 text-lg max-w-md mx-auto">
             Ready to start your teaching journey? Request your first class
@@ -164,7 +164,7 @@ export function TeacherClassList({ onSelectClass }: TeacherClassListProps) {
           </p>
           <Button className="bg-gradient-primary hover:shadow-medium transition-all duration-300 hover:scale-105 h-12 px-8 rounded-xl">
             <Plus className="w-5 h-5 mr-2" />
-            Request Class Assignment
+            Request Course Assignment
           </Button>
         </div>
       )}

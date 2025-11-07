@@ -17,16 +17,16 @@ import {
 import { VideoPlayer } from "./VideoPlayer";
 import { WeekNavigation } from "./WeekNavigation";
 
-interface ClassDetailViewProps {
+interface CourseDetailViewProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   classData: any;
   onBack: () => void;
 }
 
-export const ClassDetailView = ({
+export const CourseDetailView = ({
   classData,
   onBack,
-}: ClassDetailViewProps) => {
+}: CourseDetailViewProps) => {
   const [selectedWeek, setSelectedWeek] = useState<string>("");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedVideo, setSelectedVideo] = useState<any>(null);
@@ -236,7 +236,7 @@ export const ClassDetailView = ({
         <div className="p-4 border-b border-border">
           <Button variant="ghost" onClick={onBack} className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Classes
+            Back to Courses
           </Button>
 
           <div className="space-y-2">

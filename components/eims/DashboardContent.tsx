@@ -27,7 +27,7 @@ import { StaffManagement } from "./StaffManagement";
 import { InquiryManagement } from "./InquiryManagement";
 import { StudentManagement } from "../cms/StudentManagement";
 import { TeacherManagement } from "./TeacherManagement";
-import { ClassManagement } from "./ClassManagement";
+import { CourseManagement } from "./CourseManagement";
 import { StudentRegistrationManagement } from "./StudentRegistrationManagement";
 import { ShowcaseManagement } from "./ShowcaseManagement";
 
@@ -129,7 +129,7 @@ export function DashboardContent({
   const quickActions = [
     { title: "Add Student", icon: Users, action: "add-student" },
     { title: "Create Course", icon: BookOpen, action: "create-course" },
-    { title: "Schedule Class", icon: Calendar, action: "schedule-class" },
+    { title: "Schedule Course", icon: Calendar, action: "schedule-course" },
     { title: "Generate Report", icon: BarChart3, action: "generate-report" },
   ];
 
@@ -243,13 +243,13 @@ export function DashboardContent({
       case "teachers":
         return <TeacherManagement />;
       case "classes":
-        return <ClassManagement />;
+        return <CourseManagement />;
       case "scheduling":
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold">Class Scheduling</h1>
+                <h1 className="text-2xl font-bold">Course Scheduling</h1>
                 <p className="text-muted-foreground">
                   Manage class schedules and approve teacher requests
                 </p>

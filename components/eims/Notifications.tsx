@@ -97,7 +97,7 @@ const mockNotifications: Notification[] = [
   {
     id: "5",
     type: "class",
-    title: "Class Cancelled",
+    title: "Course Cancelled",
     message:
       "Advanced Physics class on December 8, 2024 has been cancelled due to teacher illness.",
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8), // 8 hours ago
@@ -327,7 +327,7 @@ export function Notifications() {
                       <SelectItem value="exam">Exam</SelectItem>
                       <SelectItem value="payment">Payment</SelectItem>
                       <SelectItem value="system">System</SelectItem>
-                      <SelectItem value="class">Class</SelectItem>
+                      <SelectItem value="class">Course</SelectItem>
                       <SelectItem value="teacher">Teacher</SelectItem>
                     </SelectContent>
                   </Select>
@@ -468,7 +468,7 @@ export function Notifications() {
                       All Administrators
                     </SelectItem>
                     <SelectItem value="specific-class">
-                      Specific Class
+                      Specific Course
                     </SelectItem>
                     <SelectItem value="custom">Custom Recipients</SelectItem>
                   </SelectContent>
@@ -556,10 +556,10 @@ export function Notifications() {
                     },
                   },
                   {
-                    title: "Class Cancellation",
+                    title: "Course Cancellation",
                     description: "Notify about cancelled classes",
                     template: {
-                      title: "Class Cancelled",
+                      title: "Course Cancelled",
                       message:
                         "The [Subject] class scheduled for [Date] at [Time] has been cancelled due to [Reason]. We apologize for any inconvenience.",
                       priority: "high" as const,
@@ -695,7 +695,7 @@ export function Notifications() {
                   {[
                     {
                       type: "Student Activities",
-                      recipients: "All Students, Class Teachers",
+                      recipients: "All Students, Course Teachers",
                     },
                     {
                       type: "Exam Updates",

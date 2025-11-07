@@ -117,7 +117,7 @@ export function ShowcaseManagement() {
     {
       id: "3",
       title: "Flexible Timing",
-      description: "Classes that fit your schedule",
+      description: "Courses that fit your schedule",
       icon: "Calendar",
       color: "accent",
     },

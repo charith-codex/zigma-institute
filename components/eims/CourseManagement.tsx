@@ -31,7 +31,7 @@ import { Plus, Search, Edit, Trash2, Calendar, Users } from "lucide-react";
 // TODO: Replace with Neon PostgreSQL client
 import { toast } from "sonner";
 
-export function ClassManagement() {
+export function CourseManagement() {
   const { classes, profiles, loading } = useData();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -73,7 +73,7 @@ export function ClassManagement() {
 
       if (error) throw error;
 
-      toast.success("Class added successfully");
+      toast.success("Course added successfully");
       setIsAddDialogOpen(false);
       setNewClass({
         name: "",
@@ -100,7 +100,7 @@ export function ClassManagement() {
 
       if (error) throw error;
 
-      toast.success("Class updated successfully");
+      toast.success("Course updated successfully");
       setEditingClass(null);
     } catch (error) {
       toast.error("Failed to update class");
@@ -115,7 +115,7 @@ export function ClassManagement() {
 
       if (error) throw error;
 
-      toast.success("Class deactivated successfully");
+      toast.success("Course deactivated successfully");
     } catch (error) {
       toast.error("Failed to deactivate class");
       console.error(error);
@@ -147,22 +147,22 @@ export function ClassManagement() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Calendar className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-bold">Class Management</h1>
+          <h1 className="text-2xl font-bold">Course Management</h1>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Add Class
+              Add Course
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Add New Class</DialogTitle>
+              <DialogTitle>Add New Course</DialogTitle>
             </DialogHeader>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="name">Class Name</Label>
+                <Label htmlFor="name">Course Name</Label>
                 <Input
                   id="name"
                   value={newClass.name}
@@ -275,7 +275,7 @@ export function ClassManagement() {
               </div>
               <div className="col-span-2">
                 <Button onClick={handleAddClass} className="w-full">
-                  Add Class
+                  Add Course
                 </Button>
               </div>
             </div>
@@ -307,7 +307,7 @@ export function ClassManagement() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Classes Overview</CardTitle>
+          <CardTitle>Courses Overview</CardTitle>
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -325,7 +325,7 @@ export function ClassManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Class Name</TableHead>
+                <TableHead>Course Name</TableHead>
                 <TableHead>Subject</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Teacher</TableHead>
@@ -387,11 +387,11 @@ export function ClassManagement() {
         >
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Edit Class</DialogTitle>
+              <DialogTitle>Edit Course</DialogTitle>
             </DialogHeader>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="edit_name">Class Name</Label>
+                <Label htmlFor="edit_name">Course Name</Label>
                 <Input
                   id="edit_name"
                   value={editingClass.name}
@@ -475,7 +475,7 @@ export function ClassManagement() {
               </div>
               <div className="col-span-2">
                 <Button onClick={handleUpdateClass} className="w-full">
-                  Update Class
+                  Update Course
                 </Button>
               </div>
             </div>

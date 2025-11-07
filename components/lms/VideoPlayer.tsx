@@ -25,13 +25,13 @@ interface VideoPlayerProps {
   classDate?: string;
 }
 
-export const VideoPlayer = ({ 
-  src, 
-  title, 
-  description, 
-  duration, 
-  instructor, 
-  classDate 
+export const VideoPlayer = ({
+  src,
+  title,
+  description,
+  duration,
+  instructor,
+  classDate,
 }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -73,7 +73,7 @@ export const VideoPlayer = ({
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -96,25 +96,23 @@ export const VideoPlayer = ({
           <div>
             <CardTitle className="text-lg">{title}</CardTitle>
             {instructor && (
-              <p className="text-sm text-muted-foreground">Instructor: {instructor}</p>
+              <p className="text-sm text-muted-foreground">
+                Instructor: {instructor}
+              </p>
             )}
           </div>
           <div className="flex items-center gap-2">
-            {classDate && (
-              <Badge variant="outline">{classDate}</Badge>
-            )}
-            {duration && (
-              <Badge variant="secondary">{duration}</Badge>
-            )}
+            {classDate && <Badge variant="outline">{classDate}</Badge>}
+            {duration && <Badge variant="secondary">{duration}</Badge>}
           </div>
         </div>
         {description && (
           <p className="text-sm text-muted-foreground">{description}</p>
         )}
       </CardHeader>
-      
+
       <CardContent className="p-0">
-        <div 
+        <div
           className="relative bg-black group"
           onMouseEnter={() => setShowControls(true)}
           onMouseLeave={() => setShowControls(false)}
@@ -131,9 +129,9 @@ export const VideoPlayer = ({
             <source src={src} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
-          
+
           {/* Play/Pause Overlay */}
-          <div 
+          <div
             className="absolute inset-0 flex items-center justify-center cursor-pointer"
             onClick={togglePlay}
           >
@@ -143,24 +141,24 @@ export const VideoPlayer = ({
               </div>
             )}
           </div>
-          
+
           {/* Controls */}
-          <div 
+          <div
             className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 transition-opacity duration-300 ${
-              showControls ? 'opacity-100' : 'opacity-0'
+              showControls ? "opacity-100" : "opacity-0"
             }`}
           >
             {/* Progress Bar */}
-            <div 
+            <div
               className="w-full h-1 bg-white/30 rounded-full cursor-pointer mb-3"
               onClick={handleSeek}
             >
-              <div 
+              <div
                 className="h-full bg-primary rounded-full transition-all duration-150"
                 style={{ width: `${progress}%` }}
               />
             </div>
-            
+
             {/* Control Buttons */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -176,33 +174,39 @@ export const VideoPlayer = ({
                     <Play className="w-4 h-4" />
                   )}
                 </Button>
-                
+
                 <Button
                   size="sm"
                   variant="ghost"
                   className="text-white hover:bg-white/20"
                   onClick={() => {
                     if (videoRef.current) {
-                      videoRef.current.currentTime = Math.max(0, currentTime - 10);
+                      videoRef.current.currentTime = Math.max(
+                        0,
+                        currentTime - 10
+                      );
                     }
                   }}
                 >
                   <SkipBack className="w-4 h-4" />
                 </Button>
-                
+
                 <Button
                   size="sm"
                   variant="ghost"
                   className="text-white hover:bg-white/20"
                   onClick={() => {
                     if (videoRef.current) {
-                      videoRef.current.currentTime = Math.min(totalDuration, currentTime + 10);
+                      videoRef.current.currentTime = Math.min(
+                        totalDuration,
+                        currentTime + 10
+                      );
                     }
                   }}
                 >
                   <SkipForward className="w-4 h-4" />
                 </Button>
-                
+
                 <Button
                   size="sm"
                   variant="ghost"
@@ -215,12 +219,12 @@ export const VideoPlayer = ({
                     <Volume2 className="w-4 h-4" />
                   )}
                 </Button>
-                
+
                 <span className="text-white text-sm">
                   {formatTime(currentTime)} / {formatTime(totalDuration)}
                 </span>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
@@ -229,7 +233,7 @@ export const VideoPlayer = ({
                 >
                   <Bookmark className="w-4 h-4" />
                 </Button>
-                
+
                 <Button
                   size="sm"
                   variant="ghost"
@@ -237,7 +241,7 @@ export const VideoPlayer = ({
                 >
                   <Download className="w-4 h-4" />
                 </Button>
-                
+
                 <Button
                   size="sm"
                   variant="ghost"
@@ -245,7 +249,7 @@ export const VideoPlayer = ({
                 >
                   <Settings className="w-4 h-4" />
                 </Button>
-                
+
                 <Button
                   size="sm"
                   variant="ghost"
@@ -266,21 +270,25 @@ export const VideoPlayer = ({
             </div>
           </div>
         </div>
-        
+
         {/* Video Notes/Comments Section */}
         <div className="p-4 border-t border-border">
           <div className="flex items-center gap-2 mb-3">
             <MessageCircle className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Class Notes & Comments</span>
-            <Badge variant="outline" className="text-xs">3 notes</Badge>
+            <span className="text-sm font-medium">Course Notes & Comments</span>
+            <Badge variant="outline" className="text-xs">
+              3 notes
+            </Badge>
           </div>
-          
+
           <div className="space-y-2 text-sm text-muted-foreground">
             <div className="p-2 bg-muted/50 rounded">
-              <span className="font-medium">05:23</span> - Important concept: Binary search complexity
+              <span className="font-medium">05:23</span> - Important concept:
+              Binary search complexity
             </div>
             <div className="p-2 bg-muted/50 rounded">
-              <span className="font-medium">12:45</span> - Practice problem starts here
+              <span className="font-medium">12:45</span> - Practice problem
+              starts here
             </div>
             <div className="p-2 bg-muted/50 rounded">
               <span className="font-medium">18:30</span> - Summary of key points

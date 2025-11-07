@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { StudentSidebar } from "@/components/lms/StudentSidebar";
 import TutorialManager from "@/components/lms/TutorialManager";
-import { ClassDetailView } from "@/components/lms/ClassDetailView";
+import { CourseDetailView } from "@/components/lms/CourseDetailView";
 import { DailyQuotes } from "@/components/lms/DailyQuotes";
 import { PaymentSection } from "@/components/lms/PaymentSection";
 import StudyMaterialManager from "@/components/lms/StudyMaterialManager";
@@ -116,7 +116,7 @@ const LMS = () => {
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground">
-                            Enrolled Classes
+                            Enrolled Courses
                           </p>
                           {/* <p className="text-xl font-bold">
                               {studentInfo.totalCourses}
@@ -196,7 +196,7 @@ const LMS = () => {
 
             {activeModule === "classes" &&
               (selectedClass ? (
-                <ClassDetailView
+                <CourseDetailView
                   classData={selectedClass}
                   onBack={() => setSelectedClass(null)}
                 />
@@ -204,7 +204,7 @@ const LMS = () => {
                 <div className="space-y-6">
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                      <h1 className="text-2xl font-bold">My Classes</h1>
+                      <h1 className="text-2xl font-bold">My Courses</h1>
                       <p className="text-muted-foreground">
                         Track your progress across all enrolled courses
                       </p>
@@ -262,7 +262,7 @@ const LMS = () => {
                             onClick={() => setSelectedClass(classItem)}
                           >
                             <BookOpen className="w-4 h-4 mr-2" />
-                            View Class Content
+                            View Course Content
                           </Button>
                         </CardContent>
                       </Card>
@@ -275,7 +275,7 @@ const LMS = () => {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h1 className="text-2xl font-bold">My Class Schedule</h1>
+                    <h1 className="text-2xl font-bold">My Course Schedule</h1>
                     <p className="text-muted-foreground">
                       View your upcoming classes and sessions
                     </p>

@@ -1,4 +1,4 @@
-// import { ClassContentManager } from "@/components/cms/ClassContentManager";
+// import { CourseContentManager } from "@/components/cms/CourseContentManager";
 import { ExamBuilder } from "@/components/cms/ExamBuilder";
 // import { ExamResults } from "@/components/cms/ExamResults";
 import { QuestionCreation } from "@/components/cms/QuestionCreation";
@@ -8,7 +8,7 @@ export default function page() {
   return (
     <div>
       <ExamBuilder />
-      {/* <ClassContentManager/> */}
+      {/* <CourseContentManager/> */}
       {/* <ExamResults classId="13" /> */}
       <QuestionCreation />
     </div>

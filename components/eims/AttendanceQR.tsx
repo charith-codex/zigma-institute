@@ -271,7 +271,7 @@ const AttendanceQR = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Class</TableHead>
+                <TableHead>Course</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>QR Code</TableHead>
                 <TableHead>Status</TableHead>

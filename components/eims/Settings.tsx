@@ -474,9 +474,9 @@ export function Settings() {
                   enabled: true,
                 },
                 {
-                  title: "Class Management",
+                  title: "Course Management",
                   description:
-                    "Class schedule changes, attendance alerts, and teacher updates",
+                    "Course schedule changes, attendance alerts, and teacher updates",
                   enabled: true,
                 },
               ].map((item, index) => (
@@ -726,12 +726,12 @@ export function Settings() {
                 </div>
 
                 <div className="p-4 border border-border rounded-lg space-y-3">
-                  <h4 className="font-medium">Export Class Records</h4>
+                  <h4 className="font-medium">Export Course Records</h4>
                   <p className="text-sm text-muted-foreground">
                     Download class schedules, attendance, and grades
                   </p>
                   <Button variant="outline" size="sm" className="w-full">
-                    Export Classes
+                    Export Courses
                   </Button>
                 </div>
 

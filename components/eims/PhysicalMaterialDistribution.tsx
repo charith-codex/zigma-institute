@@ -363,7 +363,7 @@ export function PhysicalMaterialDistribution() {
                   <TableRow>
                     <TableHead>Student</TableHead>
                     <TableHead>Material</TableHead>
-                    <TableHead>Class</TableHead>
+                    <TableHead>Course</TableHead>
                     <TableHead>Distributed Date</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Actions</TableHead>
@@ -584,7 +584,7 @@ export function PhysicalMaterialDistribution() {
         <TabsContent value="distribute" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Distribute Materials to Class</CardTitle>
+              <CardTitle>Distribute Materials to Course</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -610,7 +610,7 @@ export function PhysicalMaterialDistribution() {
                   </Select>
                 </div>
                 <div>
-                  <Label>Select Class</Label>
+                  <Label>Select Course</Label>
                   <Select
                     value={selectedClass}
                     onValueChange={setSelectedClass}
@@ -637,7 +637,7 @@ export function PhysicalMaterialDistribution() {
                 disabled={!selectedMaterial || !selectedClass}
                 className="w-full"
               >
-                Distribute to All Students in Class
+                Distribute to All Students in Course
               </Button>
             </CardContent>
           </Card>

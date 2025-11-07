@@ -98,9 +98,9 @@ const mockInquiries: Inquiry[] = [
     name: "Sarah Wilson",
     email: "sarah.wilson@email.com",
     phone: "+1-555-0304",
-    subject: "Complaint about Class Schedule",
+    subject: "Complaint about Course Schedule",
     message:
-      "The recent changes to the class schedule are causing conflicts with my work schedule. This is affecting my ability to attend classes regularly.",
+      "The recent changes to the course schedule are causing conflicts with my work schedule. This is affecting my ability to attend classes regularly.",
     inquiryType: "complaint",
     priority: "urgent",
     status: "new",

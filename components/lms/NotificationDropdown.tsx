@@ -1,9 +1,13 @@
-'use client'
-import { useState } from 'react';
+"use client";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -22,12 +26,18 @@ import { formatDistanceToNow } from "date-fns";
 
 interface Notification {
   id: string;
-  type: 'assignment' | 'exam' | 'announcement' | 'student' | 'system' | 'message';
+  type:
+    | "assignment"
+    | "exam"
+    | "announcement"
+    | "student"
+    | "system"
+    | "message";
   title: string;
   message: string;
   timestamp: Date;
   read: boolean;
-  priority: 'low' | 'medium' | 'high';
+  priority: "low" | "medium" | "high";
   actionUrl?: string;
 }
 
@@ -35,105 +45,122 @@ export function NotificationDropdown() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([
     {
-      id: 'notif-001',
-      type: 'student',
-      title: 'New Student Enrollment',
-      message: 'Sarah Johnson enrolled in React Fundamentals (CLS00001)',
+      id: "notif-001",
+      type: "student",
+      title: "New Student Enrollment",
+      message: "Sarah Johnson enrolled in React Fundamentals (CLS00001)",
       timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
       read: false,
-      priority: 'medium',
+      priority: "medium",
     },
     {
-      id: 'notif-002',
-      type: 'exam',
-      title: 'Exam Submission Alert',
-      message: 'Final exam for Full Stack Development has 3 pending submissions',
+      id: "notif-002",
+      type: "exam",
+      title: "Exam Submission Alert",
+      message:
+        "Final exam for Full Stack Development has 3 pending submissions",
       timestamp: new Date(Date.now() - 1000 * 60 * 45), // 45 minutes ago
       read: false,
-      priority: 'high',
+      priority: "high",
     },
     {
-      id: 'notif-003',
-      type: 'assignment',
-      title: 'Assignment Due Soon',
-      message: 'React Components assignment due in 2 hours (5 students pending)',
+      id: "notif-003",
+      type: "assignment",
+      title: "Assignment Due Soon",
+      message:
+        "React Components assignment due in 2 hours (5 students pending)",
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
       read: false,
-      priority: 'high',
+      priority: "high",
     },
     {
-      id: 'notif-004',
-      type: 'announcement',
-      title: 'Class Schedule Update',
-      message: 'Monday lecture moved to 2 PM due to technical maintenance',
+      id: "notif-004",
+      type: "announcement",
+      title: "Course Schedule Update",
+      message: "Monday lecture moved to 2 PM due to technical maintenance",
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4), // 4 hours ago
       read: true,
-      priority: 'medium',
+      priority: "medium",
     },
     {
-      id: 'notif-005',
-      type: 'message',
-      title: 'Student Query',
-      message: 'John Smith asked a question about useState hooks in Week 2',
+      id: "notif-005",
+      type: "message",
+      title: "Student Query",
+      message: "John Smith asked a question about useState hooks in Week 2",
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6), // 6 hours ago
       read: true,
-      priority: 'low',
+      priority: "low",
     },
     {
-      id: 'notif-006',
-      type: 'system',
-      title: 'System Maintenance',
-      message: 'Scheduled maintenance completed successfully. All systems operational.',
+      id: "notif-006",
+      type: "system",
+      title: "System Maintenance",
+      message:
+        "Scheduled maintenance completed successfully. All systems operational.",
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12), // 12 hours ago
       read: true,
-      priority: 'low',
+      priority: "low",
     },
   ]);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const getNotificationIcon = (type: Notification['type']) => {
+  const getNotificationIcon = (type: Notification["type"]) => {
     switch (type) {
-      case 'student': return <User className="w-4 h-4 text-primary" />;
-      case 'exam': return <FileText className="w-4 h-4 text-warning" />;
-      case 'assignment': return <BookOpen className="w-4 h-4 text-accent" />;
-      case 'announcement': return <AlertCircle className="w-4 h-4 text-secondary" />;
-      case 'message': return <MessageSquare className="w-4 h-4 text-primary" />;
-      case 'system': return <CheckCircle className="w-4 h-4 text-success" />;
-      default: return <Bell className="w-4 h-4 text-muted-foreground" />;
+      case "student":
+        return <User className="w-4 h-4 text-primary" />;
+      case "exam":
+        return <FileText className="w-4 h-4 text-warning" />;
+      case "assignment":
+        return <BookOpen className="w-4 h-4 text-accent" />;
+      case "announcement":
+        return <AlertCircle className="w-4 h-4 text-secondary" />;
+      case "message":
+        return <MessageSquare className="w-4 h-4 text-primary" />;
+      case "system":
+        return <CheckCircle className="w-4 h-4 text-success" />;
+      default:
+        return <Bell className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
-  const getPriorityColor = (priority: Notification['priority'], read: boolean) => {
-    if (read) return 'text-muted-foreground';
+  const getPriorityColor = (
+    priority: Notification["priority"],
+    read: boolean
+  ) => {
+    if (read) return "text-muted-foreground";
     switch (priority) {
-      case 'high': return 'text-destructive';
-      case 'medium': return 'text-warning';
-      case 'low': return 'text-foreground';
-      default: return 'text-muted-foreground';
+      case "high":
+        return "text-destructive";
+      case "medium":
+        return "text-warning";
+      case "low":
+        return "text-foreground";
+      default:
+        return "text-muted-foreground";
     }
   };
 
   const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
   const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button 
-          size="sm" 
-          variant="outline" 
+        <Button
+          size="sm"
+          variant="outline"
           className="relative h-10 w-10 rounded-xl border-warning/20 hover:bg-warning/5 hover:border-warning/40 transition-all duration-300"
         >
           <Bell className="w-4 h-4 text-warning" />
@@ -158,9 +185,9 @@ export function NotificationDropdown() {
                 )}
               </CardTitle>
               {unreadCount > 0 && (
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
+                <Button
+                  size="sm"
+                  variant="ghost"
                   onClick={markAllAsRead}
                   className="text-xs h-7 px-3"
                 >
@@ -183,10 +210,10 @@ export function NotificationDropdown() {
               ) : (
                 <div className="divide-y divide-border/50">
                   {notifications.map((notification) => (
-                    <div 
+                    <div
                       key={notification.id}
                       className={`p-4 hover:bg-muted/30 transition-colors cursor-pointer ${
-                        !notification.read ? 'bg-primary/5' : ''
+                        !notification.read ? "bg-primary/5" : ""
                       }`}
                       onClick={() => markAsRead(notification.id)}
                     >
@@ -196,9 +223,13 @@ export function NotificationDropdown() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between mb-1">
-                            <h4 className={`font-medium text-sm ${
-                              !notification.read ? 'text-foreground' : 'text-muted-foreground'
-                            }`}>
+                            <h4
+                              className={`font-medium text-sm ${
+                                !notification.read
+                                  ? "text-foreground"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
                               {notification.title}
                             </h4>
                             <div className="flex items-center gap-1 ml-2">
@@ -218,24 +249,36 @@ export function NotificationDropdown() {
                               </Button>
                             </div>
                           </div>
-                          <p className={`text-xs mb-2 ${getPriorityColor(notification.priority, notification.read)}`}>
+                          <p
+                            className={`text-xs mb-2 ${getPriorityColor(notification.priority, notification.read)}`}
+                          >
                             {notification.message}
                           </p>
                           <div className="flex items-center gap-2">
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                               <Clock className="w-3 h-3" />
-                              {formatDistanceToNow(notification.timestamp, { addSuffix: true })}
+                              {formatDistanceToNow(notification.timestamp, {
+                                addSuffix: true,
+                              })}
                             </div>
-                            {notification.priority === 'high' && !notification.read && (
-                              <Badge variant="destructive" className="text-xs px-1 py-0">
-                                High
-                              </Badge>
-                            )}
-                            {notification.priority === 'medium' && !notification.read && (
-                              <Badge variant="outline" className="text-xs px-1 py-0 border-warning text-warning">
-                                Medium
-                              </Badge>
-                            )}
+                            {notification.priority === "high" &&
+                              !notification.read && (
+                                <Badge
+                                  variant="destructive"
+                                  className="text-xs px-1 py-0"
+                                >
+                                  High
+                                </Badge>
+                              )}
+                            {notification.priority === "medium" &&
+                              !notification.read && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs px-1 py-0 border-warning text-warning"
+                                >
+                                  Medium
+                                </Badge>
+                              )}
                           </div>
                         </div>
                       </div>
