@@ -12,6 +12,7 @@ import Image from "next/image";
 import { APP_NAME } from "@/lib/constants";
 import { NotificationDropdown } from "../lms/NotificationDropdown";
 import { auth } from "@/auth";
+import ModeToggle from "../shared/header/mode-toggle";
 
 const DashboardHeader = async ({ title }: { title: string }) => {
   const session = await auth();
@@ -41,6 +42,8 @@ const DashboardHeader = async ({ title }: { title: string }) => {
 
       {/* Right side - Notifications and Profile */}
       <div className="flex items-center gap-4">
+        <ModeToggle />
+
         <NotificationDropdown />
         <Popover>
           <PopoverTrigger asChild>

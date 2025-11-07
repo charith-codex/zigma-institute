@@ -9,6 +9,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 const TeacherSidebar = ({
   sidebarItems,
@@ -16,11 +17,20 @@ const TeacherSidebar = ({
   setActiveModule,
 }: // eslint-disable-next-line @typescript-eslint/no-explicit-any
 any) => {
-  const { state } = useSidebar();
+  const { state, isMobile } = useSidebar();
 
   return (
-    <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarContent className="pt-15">
+    <Sidebar
+      variant="sidebar"
+      collapsible="icon"
+      className="border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/90"
+    >
+      <SidebarContent
+        className={cn(
+          "flex flex-col gap-2 pb-6",
+          isMobile ? "pt-6" : "pt-6 mt-14"
+        )}
+      >
         {/* Navigation */}
         <SidebarGroup>
           {state === "expanded" && (
@@ -33,13 +43,15 @@ any) => {
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
                     onClick={() => setActiveModule(item.id)}
-                    className={
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                       activeModule === item.id
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "hover:bg-muted/50"
-                    }
+                        ? "bg-primary/10 text-primary shadow-sm"
+                        : "hover:bg-muted"
+                    )}
+                    aria-current={activeModule === item.id ? "page" : undefined}
                   >
-                    <item.icon className="w-4 h-4" />
+                    <item.icon className="h-4 w-4" />
                     {state === "expanded" && <span>{item.label}</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>

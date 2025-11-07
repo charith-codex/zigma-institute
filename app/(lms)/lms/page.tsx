@@ -45,17 +45,6 @@ const LMS = () => {
   const { assignments, loading: assignmentsLoading } = useAssignments();
   const { payments, loading: paymentsLoading } = usePayments();
 
-  // const studentInfo = {
-  //   name: userProfile?.full_name || "Student",
-  //   id: User.
-  //   program: "Computer Science",
-  //   semester: "Current Semester",
-  //   gpa: "N/A",
-  //   completedCourses: enrollments.filter((e) => e.status === "completed")
-  //     .length,
-  //   totalCourses: enrollments.length,
-  // };
-
   // Hardcoded enrolled classes for the student
   const enrolledClasses = [
     {
@@ -101,7 +90,7 @@ const LMS = () => {
   ];
 
   return (
-    <div className="min-h-screen flex w-full">
+    <div className="flex w-full min-h-[calc(100vh-3.5rem)]">
       {/* Sidebar */}
       <StudentSidebar
         activeModule={activeModule}
@@ -109,16 +98,16 @@ const LMS = () => {
       />
 
       {/* Main Content */}
-      <main className="flex-1 pt-14 p-6 bg-muted/20">
-        <div className="h-full bg-background rounded-lg shadow-sm border border-border overflow-auto">
-          <div className="p-6">
+      <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-full w-full max-w-7xl flex-col rounded-2xl border border-border bg-background shadow-sm">
+          <div className="flex-1 space-y-8 p-4 sm:p-6 lg:p-8">
             {activeModule === "dashboard" && (
               <div className="space-y-8">
                 {/* Daily Motivation */}
                 <DailyQuotes />
 
                 {/* Quick Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   <Card>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
@@ -213,7 +202,7 @@ const LMS = () => {
                 />
               ) : (
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
                       <h1 className="text-2xl font-bold">My Classes</h1>
                       <p className="text-muted-foreground">
@@ -222,14 +211,14 @@ const LMS = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     {enrolledClasses.map((classItem) => (
                       <Card
                         key={classItem.id}
                         className="hover:shadow-lg transition-shadow cursor-pointer"
                       >
                         <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                             <div>
                               <CardTitle className="text-lg">
                                 {classItem.name}
@@ -305,7 +294,7 @@ const LMS = () => {
             {activeModule === "performance" && (
               <div className="space-y-8">
                 {/* Performance Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
                     <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                       Academic Performance
@@ -314,17 +303,17 @@ const LMS = () => {
                       Track your progress, achievements, and learning milestones
                     </p>
                   </div>
-                  <div className="flex items-center gap-3 px-4 py-2 bg-gradient-primary rounded-xl text-white shadow-soft">
+                  <div className="flex flex-col items-start gap-2 rounded-xl bg-gradient-primary px-4 py-2 text-white shadow-soft sm:flex-row sm:items-center sm:gap-3">
                     <Award className="w-5 h-5" />
                     <span className="font-medium">Honor Student</span>
                   </div>
                 </div>
 
                 {/* Key Metrics */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                   <Card className="edu-card-hover border-primary/20">
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                         <div className="w-12 h-12 rounded-xl bg-gradient-primary flex items-center justify-center">
                           <Star className="w-6 h-6 text-white" />
                         </div>
@@ -378,7 +367,7 @@ const LMS = () => {
 
                   <Card className="edu-card-hover border-accent/20">
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                         <div className="w-12 h-12 rounded-xl bg-gradient-accent flex items-center justify-center">
                           <Brain className="w-6 h-6 text-white" />
                         </div>
@@ -403,7 +392,7 @@ const LMS = () => {
 
                   <Card className="edu-card-hover border-success/20">
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-success to-success-light flex items-center justify-center">
                           <Award className="w-6 h-6 text-white" />
                         </div>
@@ -427,7 +416,7 @@ const LMS = () => {
                 </div>
 
                 {/* Course Performance Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
                   {/* Course Progress */}
                   <Card className="edu-card">
                     <CardHeader>
@@ -440,7 +429,7 @@ const LMS = () => {
                       {enrolledClasses.map((course) => (
                         <div
                           key={course.id}
-                          className="flex items-center justify-between p-4 rounded-xl bg-gradient-card border border-border hover-lift"
+                          className="flex flex-col gap-4 rounded-xl border border-border bg-gradient-card p-4 transition-all hover-lift sm:flex-row sm:items-center sm:justify-between"
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg bg-primary-light flex items-center justify-center">
@@ -493,8 +482,8 @@ const LMS = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-primary-light to-transparent border border-primary/20 animate-scale-in">
-                        <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center">
+                      <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-gradient-to-r from-primary-light to-transparent p-4 animate-scale-in sm:flex-row sm:items-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-primary">
                           <Star className="w-6 h-6 text-white" />
                         </div>
                         <div>
@@ -510,8 +499,8 @@ const LMS = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-success-light to-transparent border border-success/20">
-                        <div className="w-12 h-12 rounded-full bg-success flex items-center justify-center">
+                      <div className="flex flex-col gap-4 rounded-xl border border-success/20 bg-gradient-to-r from-success-light to-transparent p-4 sm:flex-row sm:items-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success">
                           <TrendingUp className="w-6 h-6 text-white" />
                         </div>
                         <div>
@@ -527,8 +516,8 @@ const LMS = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-accent-light to-transparent border border-accent/20">
-                        <div className="w-12 h-12 rounded-full bg-gradient-accent flex items-center justify-center">
+                      <div className="flex flex-col gap-4 rounded-xl border border-accent/20 bg-gradient-to-r from-accent-light to-transparent p-4 sm:flex-row sm:items-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-accent">
                           <Brain className="w-6 h-6 text-white" />
                         </div>
                         <div>
@@ -548,7 +537,7 @@ const LMS = () => {
                 </div>
 
                 {/* Study Analytics */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
                   <Card className="lg:col-span-2 edu-card">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -566,7 +555,7 @@ const LMS = () => {
                             return (
                               <div
                                 key={day}
-                                className="flex items-center gap-4"
+                                className="flex flex-wrap items-center gap-3 sm:gap-4"
                               >
                                 <span className="w-8 text-sm font-medium text-muted-foreground">
                                   {day}
@@ -585,8 +574,8 @@ const LMS = () => {
                           }
                         )}
                       </div>
-                      <div className="mt-6 p-4 bg-gradient-card rounded-xl border border-border">
-                        <div className="flex items-center justify-between">
+                      <div className="mt-6 rounded-xl border border-border bg-gradient-card p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
                           <div>
                             <p className="text-sm text-muted-foreground">
                               This Week Total
@@ -617,8 +606,8 @@ const LMS = () => {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-3">
-                        <div className="p-3 rounded-lg bg-success-light border border-success/20">
-                          <div className="flex items-center justify-between mb-2">
+                        <div className="rounded-lg border border-success/20 bg-success-light p-3">
+                          <div className="mb-2 flex items-center justify-between gap-3">
                             <span className="text-sm font-medium text-success">
                               Complete CS101
                             </span>
@@ -627,8 +616,8 @@ const LMS = () => {
                           <Progress value={90} className="h-2" />
                         </div>
 
-                        <div className="p-3 rounded-lg bg-warning-light border border-warning/20">
-                          <div className="flex items-center justify-between mb-2">
+                        <div className="rounded-lg border border-warning/20 bg-warning-light p-3">
+                          <div className="mb-2 flex items-center justify-between gap-3">
                             <span className="text-sm font-medium text-warning">
                               Improve Math Grade
                             </span>
@@ -637,8 +626,8 @@ const LMS = () => {
                           <Progress value={65} className="h-2" />
                         </div>
 
-                        <div className="p-3 rounded-lg bg-primary-light border border-primary/20">
-                          <div className="flex items-center justify-between mb-2">
+                        <div className="rounded-lg border border-primary/20 bg-primary-light p-3">
+                          <div className="mb-2 flex items-center justify-between gap-3">
                             <span className="text-sm font-medium text-primary">
                               Physics Mastery
                             </span>

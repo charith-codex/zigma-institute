@@ -11,6 +11,7 @@ import { signOutUser } from "@/lib/actions/user";
 import Link from "next/link";
 import Image from "next/image";
 import { APP_NAME } from "@/lib/constants";
+import ModeToggle from "../shared/header/mode-toggle";
 
 const LmsHeader = ({ title }: { title: string }) => {
   return (
@@ -39,6 +40,8 @@ const LmsHeader = ({ title }: { title: string }) => {
 
       {/* Right side - Notifications and Profile */}
       <div className="flex items-center gap-4">
+        <ModeToggle />
+
         <NotificationDropdown />
         <Popover>
           <PopoverTrigger asChild>

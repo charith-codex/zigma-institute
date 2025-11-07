@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useDashboardStats, useCourses, useClasses } from "@/hooks/useData";
+import { useDashboardStats, useCourses } from "@/hooks/useData";
+import { cn } from "@/lib/utils";
 
 import {
   Users,
@@ -47,7 +48,13 @@ export function DashboardContent({
 }: DashboardContentProps) {
   const { stats, loading: statsLoading } = useDashboardStats();
   const { courses } = useCourses();
-  const { classes } = useClasses();
+
+  const statStyles = {
+    primary: "bg-primary/10 text-primary",
+    secondary: "bg-secondary/10 text-secondary-foreground",
+    accent: "bg-accent/10 text-accent",
+    success: "bg-success/10 text-success",
+  } as const;
 
   const dashboardStats = [
     {
@@ -80,7 +87,13 @@ export function DashboardContent({
       icon: BookOpen,
       color: "success",
     },
-  ];
+  ] satisfies Array<{
+    title: string;
+    value: string;
+    change: string;
+    icon: typeof Users;
+    color: keyof typeof statStyles;
+  }>;
 
   const recentActivities = [
     {
@@ -121,18 +134,25 @@ export function DashboardContent({
   ];
 
   const renderOverview = () => (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         {dashboardStats.map((stat, index) => (
-          <Card key={index} className="edu-card-hover">
+          <Card key={index} className="edu-card-hover h-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.title}
               </CardTitle>
-              <stat.icon className="w-4 h-4 text-primary" />
+              <div
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg",
+                  statStyles[stat.color]
+                )}
+              >
+                <stat.icon className="h-4 w-4" />
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
               <div className="text-2xl font-bold text-foreground">
                 {stat.value}
               </div>
@@ -146,23 +166,23 @@ export function DashboardContent({
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
         {/* Quick Actions */}
-        <Card className="lg:col-span-1">
+        <Card className="md:col-span-1 lg:col-span-1">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Plus className="w-5 h-5" />
               Quick Actions
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {quickActions.map((action, index) => (
               <Button
                 key={index}
                 variant="outline"
-                className="w-full justify-start gap-3 h-12"
+                className="h-12 w-full justify-start gap-3 rounded-xl border-border/70 text-left text-sm font-medium"
               >
-                <action.icon className="w-4 h-4" />
+                <action.icon className="h-4 w-4" />
                 {action.title}
               </Button>
             ))}
@@ -170,7 +190,7 @@ export function DashboardContent({
         </Card>
 
         {/* Recent Activities */}
-        <Card className="lg:col-span-2">
+        <Card className="md:col-span-1 lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="w-5 h-5" />
@@ -182,12 +202,12 @@ export function DashboardContent({
               {recentActivities.map((activity) => (
                 <div
                   key={activity.id}
-                  className="flex items-center gap-4 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+                  className="flex flex-col gap-3 rounded-xl border border-border p-4 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <activity.icon className="w-5 h-5 text-primary" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <activity.icon className="h-5 w-5 text-primary" />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 text-left">
                     <p className="text-sm font-medium text-foreground">
                       {activity.message}
                     </p>
@@ -289,5 +309,7 @@ export function DashboardContent({
     }
   };
 
-  return <div className="p-6">{renderContent()}</div>;
+  return (
+    <div className="px-4 pb-10 pt-6 sm:px-6 lg:px-8">{renderContent()}</div>
+  );
 }

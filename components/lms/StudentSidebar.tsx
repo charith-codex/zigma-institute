@@ -42,8 +42,11 @@ export function StudentSidebar({
   const isActive = (moduleId: string) => activeModule === moduleId;
 
   return (
-    <Sidebar className={collapsed ? "w-14" : "w-60"} collapsible="icon">
-      <SidebarContent className="pt-15">
+    <Sidebar
+      className={`${collapsed ? "w-14" : "w-60"} border-r border-border bg-background`}
+      collapsible="icon"
+    >
+      <SidebarContent className="pt-6 pb-6 lg:pt-16">
         <SidebarGroup>
           <SidebarGroupLabel>Student Portal Menu</SidebarGroupLabel>
           <SidebarGroupContent>

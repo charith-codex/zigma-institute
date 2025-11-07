@@ -63,7 +63,7 @@ export function TeacherClassList({ onSelectClass }: TeacherClassListProps) {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between lg:items-center">
         <div className="space-y-2">
           <h2 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
             My Classes
@@ -71,7 +71,7 @@ export function TeacherClassList({ onSelectClass }: TeacherClassListProps) {
           <p className="text-lg text-muted-foreground">
             Manage your teaching classes and inspire student success
           </p>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-primary" />
               <span>{teacherClasses.length} Active Classes</span>
@@ -88,17 +88,17 @@ export function TeacherClassList({ onSelectClass }: TeacherClassListProps) {
             </div>
           </div>
         </div>
-        <Button className="bg-gradient-primary hover:shadow-medium transition-all duration-300 hover:scale-105 h-12 px-6 rounded-xl">
+        <Button className="h-12 w-full rounded-xl bg-gradient-primary px-6 transition-all duration-300 hover:scale-105 hover:shadow-medium sm:w-auto">
           <Plus className="w-5 h-5 mr-2" />
           Create New Class
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {teacherClasses.map((classItem, index) => (
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        {teacherClasses.map((classItem) => (
           <Card
             key={classItem.id}
-            className="group bg-card border-border hover:border-primary/30 transition-all duration-300 hover:shadow-md rounded-xl"
+            className="group flex h-full flex-col rounded-xl border-border bg-card transition-all duration-300 hover:border-primary/30 hover:shadow-md"
           >
             <CardHeader className="pb-4">
               <div className="flex items-start gap-3">
@@ -116,10 +116,10 @@ export function TeacherClassList({ onSelectClass }: TeacherClassListProps) {
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            <CardContent className="flex flex-1 flex-col gap-4">
               {/* Class Details */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm">
+               <div className="flex flex-wrap items-center gap-2 text-sm">
                   <Users className="w-4 h-4 text-primary" />
                   <span className="text-foreground font-medium">
                     {classItem.enrolled_students}/{classItem.max_students}{" "}
@@ -127,19 +127,19 @@ export function TeacherClassList({ onSelectClass }: TeacherClassListProps) {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 text-sm">
+                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <Calendar className="w-4 h-4 text-primary" />
                   <span className="text-foreground">{classItem.schedule}</span>
                 </div>
 
-                <div className="flex items-center gap-2 text-sm">
+               <div className="flex flex-wrap items-center gap-2 text-sm">
                   <MapPin className="w-4 h-4 text-primary" />
                   <span className="text-foreground">{classItem.room}</span>
                 </div>
               </div>
 
               <Button
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg h-10"
+                className="h-10 w-full rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={() => onSelectClass(classItem.id)}
               >
                 <Settings className="w-4 h-4 mr-2" />

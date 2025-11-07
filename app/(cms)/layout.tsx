@@ -7,12 +7,10 @@ export default function LmsCmsLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-muted/20">
       <SidebarProvider>
-        <main className="flex-1 wrapper">
-          <LmsHeader title="Content Management Platform" />
-          {children}
-        </main>
+        <LmsHeader title="Content Management Platform" />
+        <main className="flex-1 pt-14">{children}</main>
       </SidebarProvider>
     </div>
   );

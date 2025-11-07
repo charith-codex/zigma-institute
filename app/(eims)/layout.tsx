@@ -8,13 +8,11 @@ export default function AdminDashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-muted/30">
       <SessionProvider>
         <SidebarProvider>
-          <main className="flex-1 wrapper">
-            <DashboardHeader title="EIMS Dashboard" />
-            {children}
-          </main>
+          <DashboardHeader title="EIMS Dashboard" />
+          <main className="flex-1 pt-18">{children}</main>
         </SidebarProvider>
       </SessionProvider>
     </div>

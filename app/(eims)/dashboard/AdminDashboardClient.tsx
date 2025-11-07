@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Users, PieChart, UserCheck } from "lucide-react";
 import { AdminSidebar } from "@/components/eims/AdminSidebar";
 import { DashboardContent } from "@/components/eims/DashboardContent";
+import { cn } from "@/lib/utils";
 
 type SessionLike = {
   user?: {
@@ -14,6 +15,29 @@ type SessionLike = {
     role?: string | null;
   } | null;
 } | null;
+
+const portalColorStyles = {
+  primary: {
+    iconWrapper: "bg-primary/10 text-primary",
+    button:
+      "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary",
+  },
+  secondary: {
+    iconWrapper: "bg-secondary/10 text-secondary-foreground",
+    button:
+      "bg-secondary text-secondary-foreground hover:bg-secondary/90 focus-visible:ring-secondary",
+  },
+  accent: {
+    iconWrapper: "bg-accent/10 text-accent",
+    button:
+      "bg-accent text-accent-foreground hover:bg-accent/90 focus-visible:ring-accent",
+  },
+  success: {
+    iconWrapper: "bg-success/10 text-success",
+    button:
+      "bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-success",
+  },
+} as const;
 
 export function AdminDashboardClient({ session }: { session: SessionLike }) {
   const [activeModule, setActiveModule] = useState("overview");
@@ -131,17 +155,17 @@ export function AdminDashboardClient({ session }: { session: SessionLike }) {
     : undefined;
 
   return (
-    <div className="min-h-screen flex w-full">
+    <div className="flex w-full pr-4 pb-4 flex-col min-h-[calc(100vh-3.5rem)] lg:flex-row">
       <AdminSidebar
         activeModule={activeModule}
         onModuleChange={setActiveModule}
       />
 
-      <main className="flex-1 pt-12 bg-background">
+      <main className="mx-auto flex h-full w-full max-w-7xl flex-col rounded-2xl border border-border bg-background shadow-sm">
         {activeModule === "overview" ? (
-          <div className="p-6">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-foreground mb-2">
+          <div className="px-4 pt-6 sm:px-6 lg:px-8">
+            <div className="mb-8 flex flex-col gap-2">
+              <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
                 Welcome, {session?.user?.name}!
               </h1>
               <p className="text-muted-foreground">
@@ -151,39 +175,50 @@ export function AdminDashboardClient({ session }: { session: SessionLike }) {
 
             {portalButtons.length > 0 && (
               <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4">Portal Access</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {portalButtons.map((portal, index) => (
-                    <Card
-                      key={index}
-                      className="edu-card-hover cursor-pointer"
-                      onClick={() => router.push(portal.path)}
-                    >
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-3">
-                          <div
-                            className={`w-10 h-10 rounded-lg bg-${portal.color}/10 flex items-center justify-center`}
+                <h2 className="mb-4 text-xl font-semibold">Portal Access</h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {portalButtons.map((portal, index) => {
+                    const colorStyles = portalColorStyles[portal.color];
+
+                    return (
+                      <Card
+                        key={index}
+                        className="edu-card-hover flex h-full cursor-pointer flex-col transition-all duration-300 hover:-translate-y-1"
+                        onClick={() => router.push(portal.path)}
+                      >
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-3 text-base sm:text-lg">
+                            <div
+                              className={cn(
+                                "flex h-10 w-10 items-center justify-center rounded-lg",
+                                colorStyles.iconWrapper
+                              )}
+                            >
+                              <portal.icon className="h-5 w-5" />
+                            </div>
+                            <span className="text-left font-semibold">
+                              {portal.title}
+                            </span>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-1 flex-col justify-between gap-4">
+                          <p className="text-sm text-muted-foreground">
+                            {portal.description}
+                          </p>
+                          <Button
+                            type="button"
+                            className={cn("mt-auto w-full", colorStyles.button)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              router.push(portal.path);
+                            }}
                           >
-                            <portal.icon
-                              className={`w-5 h-5 text-${portal.color}`}
-                            />
-                          </div>
-                          {portal.title}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-muted-foreground text-sm">
-                          {portal.description}
-                        </p>
-                        <Button
-                          className="w-full mt-4"
-                          onClick={() => router.push(portal.path)}
-                        >
-                          Access Portal
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
+                            Access Portal
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               </div>
             )}
