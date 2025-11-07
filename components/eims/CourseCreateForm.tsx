@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Loader2, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,13 +16,23 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { UploadButton } from "@/lib/uploadthing";
 import { cn, generateSlug } from "@/lib/utils";
+import { Course } from "@/types";
+import { useTeachers } from "@/hooks/useData";
 
 const INITIAL_VALUES = {
   name: "",
   slug: "",
+  teacherId: "",
   teacherName: "",
   description: "",
   coverImage: "",
@@ -31,12 +41,97 @@ const INITIAL_VALUES = {
 
 type FormState = typeof INITIAL_VALUES;
 
-export function CourseCreateForm({ className }: { className?: string }) {
+interface CourseCreateFormProps {
+  className?: string;
+  onSuccess?: () => void;
+  course?: Course | null;
+}
+
+export function CourseCreateForm({
+  className,
+  onSuccess,
+  course,
+}: CourseCreateFormProps) {
   const router = useRouter();
-  const [formState, setFormState] = useState<FormState>(INITIAL_VALUES);
-  const [isAutoSlug, setIsAutoSlug] = useState(true);
+  const isEditMode = Boolean(course);
+  const { teachers, loading: teachersLoading, error: teachersError } = useTeachers();
+
+  const deriveInitialState = useMemo<FormState>(() => {
+    if (!course) {
+      return INITIAL_VALUES;
+    }
+
+    return {
+      name: course.name,
+      slug: course.slug,
+      teacherId: course.teacherId ?? "",
+      teacherName: course.teacherName,
+      description: course.description,
+      coverImage: course.coverImage,
+      price: (course.priceInCents / 100).toString(),
+    };
+  }, [course]);
+
+  const [formState, setFormState] = useState<FormState>(deriveInitialState);
+  const [isAutoSlug, setIsAutoSlug] = useState(!isEditMode);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  const teacherOptions = useMemo(() => {
+    if (
+      course &&
+      course.teacherId &&
+      !teachers.some((teacher) => teacher.id === course.teacherId)
+    ) {
+      return [
+        ...teachers,
+        {
+          id: course.teacherId,
+          name: course.teacherName,
+          email: null,
+        },
+      ];
+    }
+
+    return teachers;
+  }, [course, teachers]);
+
+  useEffect(() => {
+    setFormState(deriveInitialState);
+    setIsAutoSlug(!isEditMode);
+  }, [deriveInitialState, isEditMode]);
+
+  useEffect(() => {
+    if (!formState.teacherId) {
+      if (course && teacherOptions.length > 0) {
+        const normalizedCourseTeacher = course.teacherName.trim().toLowerCase();
+        const matchingTeacher = teacherOptions.find(
+          (teacher) => teacher.name.trim().toLowerCase() === normalizedCourseTeacher
+        );
+
+        if (matchingTeacher) {
+          setFormState((prev) => ({
+            ...prev,
+            teacherId: matchingTeacher.id,
+            teacherName: matchingTeacher.name,
+          }));
+        }
+      }
+
+      return;
+    }
+
+    const selectedTeacher = teacherOptions.find(
+      (teacher) => teacher.id === formState.teacherId
+    );
+
+    if (selectedTeacher && selectedTeacher.name !== formState.teacherName) {
+      setFormState((prev) => ({
+        ...prev,
+        teacherName: selectedTeacher.name,
+      }));
+    }
+  }, [course, formState.teacherId, formState.teacherName, teacherOptions]);
 
   const isReadyToSubmit = useMemo(() => {
     const priceValue = Number(formState.price);
@@ -44,6 +139,7 @@ export function CourseCreateForm({ className }: { className?: string }) {
     return (
       Boolean(formState.name.trim()) &&
       Boolean(formState.slug.trim()) &&
+      Boolean(formState.teacherId.trim()) &&
       Boolean(formState.teacherName.trim()) &&
       Boolean(formState.description.trim()) &&
       Boolean(formState.coverImage) &&
@@ -53,8 +149,8 @@ export function CourseCreateForm({ className }: { className?: string }) {
   }, [formState]);
 
   const resetForm = () => {
-    setFormState(INITIAL_VALUES);
-    setIsAutoSlug(true);
+    setFormState(deriveInitialState);
+    setIsAutoSlug(!isEditMode);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -72,10 +168,27 @@ export function CourseCreateForm({ className }: { className?: string }) {
       return;
     }
 
+    if (!formState.teacherId) {
+      toast.error("Select an instructor before saving the course.");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      const response = await fetch("/api/courses", {
-        method: "POST",
+      let requestEndpoint = "/api/courses";
+      let requestMethod: "POST" | "PATCH" = "POST";
+
+      if (isEditMode) {
+        if (!course) {
+          throw new Error("A course is required to update details.");
+        }
+
+        requestEndpoint = `/api/courses/${course.id}`;
+        requestMethod = "PATCH";
+      }
+
+      const response = await fetch(requestEndpoint, {
+        method: requestMethod,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formState,
@@ -87,16 +200,32 @@ export function CourseCreateForm({ className }: { className?: string }) {
         const error = await response
           .json()
           .catch(() => ({ error: "Unknown error" }));
-        throw new Error(error.error || "Failed to create course");
+        throw new Error(
+          error.error ||
+            (isEditMode
+              ? "Failed to update course"
+              : "Failed to create course")
+        );
       }
 
-      toast.success("Course created successfully.");
-      resetForm();
+      toast.success(
+        isEditMode
+          ? "Course updated successfully."
+          : "Course created successfully."
+      );
+      if (!isEditMode) {
+        resetForm();
+      }
       router.refresh();
+      onSuccess?.();
     } catch (error) {
       console.error(error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to create course"
+        error instanceof Error
+          ? error.message
+          : isEditMode
+            ? "Failed to update course"
+            : "Failed to create course"
       );
     } finally {
       setIsSubmitting(false);
@@ -107,7 +236,7 @@ export function CourseCreateForm({ className }: { className?: string }) {
     <Card className={cn("max-w-3xl", className)}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <CardHeader>
-          <CardTitle>Create a new course</CardTitle>
+          <CardTitle>{isEditMode ? "Edit course" : "Create a new course"}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
@@ -168,19 +297,62 @@ export function CourseCreateForm({ className }: { className?: string }) {
 
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="teacherName">Instructor</Label>
-              <Input
-                id="teacherName"
-                placeholder="e.g. Dr. Jane Doe"
-                value={formState.teacherName}
-                onChange={(event) =>
+              <Label htmlFor="teacherId">Instructor</Label>
+              <Select
+                value={formState.teacherId}
+                onValueChange={(value) => {
+                  const selectedTeacher = teacherOptions.find(
+                    (teacher) => teacher.id === value
+                  );
                   setFormState((prev) => ({
                     ...prev,
-                    teacherName: event.target.value,
-                  }))
+                    teacherId: value,
+                    teacherName: selectedTeacher?.name ?? prev.teacherName,
+                  }));
+                }}
+                disabled={
+                  teachersLoading ||
+                  isSubmitting ||
+                  isUploading ||
+                  teacherOptions.length === 0
                 }
-                required
-              />
+              >
+                <SelectTrigger id="teacherId">
+                  <SelectValue
+                    placeholder={
+                      teachersLoading
+                        ? "Loading instructors..."
+                        : teacherOptions.length === 0
+                          ? "No instructors available"
+                          : "Select instructor"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {teacherOptions.map((teacher) => (
+                    <SelectItem key={teacher.id} value={teacher.id}>
+                      {teacher.email
+                        ? `${teacher.name} (${teacher.email})`
+                        : teacher.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {teachersError ? (
+                <p className="text-xs text-destructive">
+                  Unable to load instructors. {teacherOptions.length > 0
+                    ? "The current assignment is still selected."
+                    : "Please try again."}
+                </p>
+              ) : teacherOptions.length === 0 && !teachersLoading ? (
+                <p className="text-xs text-destructive">
+                  Add teachers in the management module before assigning a course.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Select the teacher who will build lessons for this course in the CMS.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -307,18 +479,24 @@ export function CourseCreateForm({ className }: { className?: string }) {
             onClick={resetForm}
             disabled={isSubmitting || isUploading}
           >
-            Reset
+            {isEditMode ? "Revert" : "Reset"}
           </Button>
           <Button
             type="submit"
-            disabled={!isReadyToSubmit || isSubmitting || isUploading}
+            disabled={
+              !isReadyToSubmit ||
+              isSubmitting ||
+              isUploading ||
+              teachersLoading
+            }
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {isEditMode ? "Saving changes..." : "Saving..."}
               </>
             ) : (
-              "Save course"
+              isEditMode ? "Update course" : "Save course"
             )}
           </Button>
         </CardFooter>
