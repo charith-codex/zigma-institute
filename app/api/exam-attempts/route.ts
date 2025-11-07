@@ -37,7 +37,12 @@ export async function GET(request: Request) {
       },
       include: {
         exam: {
-          select: { id: true, title: true, lessonTitle: true, status: true },
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            lesson: { select: { title: true } },
+          },
         },
         answers: {
           orderBy: { createdAt: "asc" },
@@ -47,8 +52,20 @@ export async function GET(request: Request) {
       orderBy: { submittedAt: "desc" },
     });
 
+    const sanitizedAttempts = attempts.map((attempt) => ({
+      ...attempt,
+      exam: attempt.exam
+        ? {
+            id: attempt.exam.id,
+            title: attempt.exam.title,
+            status: attempt.exam.status,
+            lessonTitle: attempt.exam.lesson?.title ?? null,
+          }
+        : null,
+    }));
+
     return NextResponse.json({
-      attempts: JSON.parse(JSON.stringify(attempts)),
+      attempts: JSON.parse(JSON.stringify(sanitizedAttempts)),
     });
   } catch (error) {
     console.error("Failed to fetch exam attempts", error);
@@ -160,7 +177,12 @@ export async function POST(request: Request) {
       },
       include: {
         exam: {
-          select: { id: true, title: true, lessonTitle: true, status: true },
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            lesson: { select: { title: true } },
+          },
         },
         answers: {
           orderBy: { createdAt: "asc" },
@@ -168,6 +190,18 @@ export async function POST(request: Request) {
         },
       },
     });
+
+    const sanitizedAttempt = {
+      ...attempt,
+      exam: attempt.exam
+        ? {
+            id: attempt.exam.id,
+            title: attempt.exam.title,
+            status: attempt.exam.status,
+            lessonTitle: attempt.exam.lesson?.title ?? null,
+          }
+        : null,
+    };
 
     const evaluation = attempt.answers.map((answer) => ({
       answerId: answer.id,
@@ -182,7 +216,7 @@ export async function POST(request: Request) {
     }));
 
     return NextResponse.json({
-      attempt: JSON.parse(JSON.stringify(attempt)),
+      attempt: JSON.parse(JSON.stringify(sanitizedAttempt)),
       evaluation: JSON.parse(JSON.stringify(evaluation)),
     });
   } catch (error) {

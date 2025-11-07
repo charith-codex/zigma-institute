@@ -26,15 +26,25 @@ export async function GET(request: Request) {
 
     const exams = await prisma.examPaper.findMany({
       where: {
-        status: status === "DRAFT" || status === "PUBLISHED" || status === "CLOSED" ? status : undefined,
-        lessonTitle: lessonTitle
+        status:
+          status === "DRAFT" || status === "PUBLISHED" || status === "CLOSED"
+            ? status
+            : undefined,
+        questions: lessonTitle
           ? {
-              contains: lessonTitle,
-              mode: "insensitive",
+              some: {
+                question: {
+                  lessonTitle: {
+                    contains: lessonTitle,
+                    mode: "insensitive",
+                  },
+                },
+              },
             }
           : undefined,
       },
       include: {
+        lesson: { select: { title: true } },
         questions: {
           orderBy: { order: "asc" },
           include: {
@@ -45,12 +55,27 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ exams: JSON.parse(JSON.stringify(exams)) });
+    const sanitizedExams = exams.map((exam) => {
+      const lessonTitleFromLesson = exam.lesson?.title ?? null;
+      const lessonTitleFromQuestion =
+        exam.questions[0]?.question.lessonTitle ?? null;
+
+      const { lesson, ...rest } = exam;
+
+      return {
+        ...rest,
+        lessonTitle: lessonTitleFromLesson ?? lessonTitleFromQuestion,
+      };
+    });
+
+    return NextResponse.json({
+      exams: JSON.parse(JSON.stringify(sanitizedExams)),
+    });
   } catch (error) {
     console.error("Failed to fetch exams", error);
     return NextResponse.json(
       { error: "Unable to fetch exams. Please try again later." },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -63,7 +88,6 @@ export async function POST(request: Request) {
     const exam = await prisma.examPaper.create({
       data: {
         title: data.title,
-        lessonTitle: data.lessonTitle,
         description: data.description ?? null,
         status: data.publish ? "PUBLISHED" : "DRAFT",
         publishedAt: data.publish ? new Date() : null,
@@ -77,6 +101,7 @@ export async function POST(request: Request) {
         },
       },
       include: {
+        lesson: { select: { title: true } },
         questions: {
           orderBy: { order: "asc" },
           include: {
@@ -86,19 +111,34 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ exam: JSON.parse(JSON.stringify(exam)) }, { status: 201 });
+    const lessonTitleFromLesson = exam.lesson?.title ?? null;
+    const lessonTitleFromQuestion =
+      exam.questions[0]?.question.lessonTitle ?? null;
+
+    const { lesson, ...rest } = exam;
+
+    const sanitizedExam = {
+      ...rest,
+      lessonTitle:
+        lessonTitleFromLesson ?? data.lessonTitle ?? lessonTitleFromQuestion,
+    };
+
+    return NextResponse.json(
+      { exam: JSON.parse(JSON.stringify(sanitizedExam)) },
+      { status: 201 }
+    );
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: error.issues.map((issue) => issue.message).join("\n") },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     console.error("Failed to create exam", error);
     return NextResponse.json(
       { error: "Unable to create exam. Please try again later." },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

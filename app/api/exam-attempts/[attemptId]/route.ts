@@ -70,7 +70,12 @@ export async function PATCH(
       },
       include: {
         exam: {
-          select: { id: true, title: true, lessonTitle: true, status: true },
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            lesson: { select: { title: true } },
+          },
         },
         answers: {
           orderBy: { createdAt: "asc" },
@@ -79,8 +84,20 @@ export async function PATCH(
       },
     });
 
+    const sanitizedAttempt = {
+      ...updatedAttempt,
+      exam: updatedAttempt.exam
+        ? {
+            id: updatedAttempt.exam.id,
+            title: updatedAttempt.exam.title,
+            status: updatedAttempt.exam.status,
+            lessonTitle: updatedAttempt.exam.lesson?.title ?? null,
+          }
+        : null,
+    };
+
     return NextResponse.json({
-      attempt: JSON.parse(JSON.stringify(updatedAttempt)),
+      attempt: JSON.parse(JSON.stringify(sanitizedAttempt)),
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
