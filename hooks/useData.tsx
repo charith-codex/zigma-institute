@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { Course, TeacherSummary } from '@/types';
 
 // Mock data hooks for demonstration - replace with your Neon PostgreSQL implementation
 export function useProfiles() {
@@ -24,24 +25,101 @@ export function useProfiles() {
 }
 
 export function useCourses() {
-  const [courses, setCourses] = useState<any[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refetch = async () => {
-    // TODO: Implement with Neon PostgreSQL
-    setLoading(true);
-    setTimeout(() => {
-      setCourses([]);
-      setLoading(false);
-    }, 1000);
-  };
+  const refetch = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/courses');
 
-  useEffect(() => {
-    refetch();
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error ?? 'Failed to load courses');
+      }
+
+      const payload = await response.json();
+      const normalizedCourses: Course[] = Array.isArray(payload)
+        ? payload.map((course) => ({
+            ...course,
+            teacherId: course.teacherId ?? null,
+            createdAt: new Date(course.createdAt),
+            updatedAt: new Date(course.updatedAt),
+          }))
+        : [];
+
+      setCourses(normalizedCourses);
+      setError(null);
+    } catch (fetchError) {
+      console.error('Failed to fetch courses', fetchError);
+      setCourses([]);
+      setError(
+        fetchError instanceof Error
+          ? fetchError.message
+          : 'Failed to load courses'
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
+
   return { courses, loading, error, refetch };
+}
+
+export function useTeachers() {
+  const [teachers, setTeachers] = useState<TeacherSummary[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refetch = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/teachers');
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error ?? 'Failed to load teachers');
+      }
+
+      const payload = await response.json();
+      const normalizedTeachers: TeacherSummary[] = Array.isArray(payload)
+        ? payload
+            .filter(
+              (teacher): teacher is TeacherSummary =>
+                Boolean(teacher) && typeof teacher.id === 'string' && typeof teacher.name === 'string'
+            )
+            .map((teacher) => ({
+              id: teacher.id,
+              name: teacher.name,
+              email: typeof teacher.email === 'string' ? teacher.email : null,
+            }))
+        : [];
+
+      setTeachers(normalizedTeachers);
+      setError(null);
+    } catch (fetchError) {
+      console.error('Failed to fetch teachers', fetchError);
+      setTeachers([]);
+      setError(
+        fetchError instanceof Error
+          ? fetchError.message
+          : 'Failed to load teachers'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
+
+  return { teachers, loading, error, refetch };
 }
 
 export function useClasses() {

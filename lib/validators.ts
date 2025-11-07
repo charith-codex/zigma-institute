@@ -19,6 +19,7 @@ export const courseSchema = z.object({
     .string()
     .min(10, "Description must be at least 10 characters")
     .max(1000, "Description is too long"),
+  teacherId: z.string().min(1, "Teacher is required"),
   teacherName: z
     .string()
     .min(3, "Teacher name must be at least 3 characters")
