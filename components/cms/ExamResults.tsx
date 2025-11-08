@@ -76,7 +76,7 @@ type GradeFormState = Record<
 >;
 
 interface ExamResultsProps {
-  classId: string;
+  courseId: string;
 }
 
 const STATUS_OPTIONS = [
@@ -85,7 +85,7 @@ const STATUS_OPTIONS = [
   { value: "GRADED", label: "Graded" },
 ] as const;
 
-export function ExamResults({ classId }: ExamResultsProps) {
+export function ExamResults({ courseId }: ExamResultsProps) {
   const [attempts, setAttempts] = useState<ExamAttemptRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] =
@@ -113,7 +113,7 @@ export function ExamResults({ classId }: ExamResultsProps) {
 
   useEffect(() => {
     fetchAttempts();
-  }, [classId]);
+  }, [courseId]);
 
   const filteredAttempts = useMemo(() => {
     if (statusFilter === "ALL") return attempts;

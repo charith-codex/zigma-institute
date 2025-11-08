@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 interface TeacherCourseListProps {
-  onSelectClass: (classId: string) => void;
+  onSelectClass: (courseId: string) => void;
   classes: ClassSummary[];
   loading: boolean;
 }
@@ -36,33 +36,11 @@ export function TeacherCourseList({
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between lg:items-center">
         <div className="space-y-2">
-          <h2 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            My Courses
-          </h2>
-          <p className="text-lg text-muted-foreground">
-            Manage your teaching classes and inspire student success
+          <h2 className="text-2xl font-bold">My Courses</h2>
+          <p className="text-muted-foreground">
+            Manage your teaching courses and inspire student success
           </p>
-          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-primary" />
-              <span>{teacherClasses.length} Active Courses</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-secondary" />
-              <span>
-                {teacherClasses.reduce(
-                  (sum, cls) => sum + (cls.enrolled_students ?? 0),
-                  0
-                )}{" "}
-                Total Students
-              </span>
-            </div>
-          </div>
         </div>
-        <Button className="h-12 w-full rounded-xl bg-gradient-primary px-6 transition-all duration-300 hover:scale-105 hover:shadow-medium sm:w-auto">
-          <Plus className="w-5 h-5 mr-2" />
-          Create New Course
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">

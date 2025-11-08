@@ -58,7 +58,7 @@ interface MaterialDistribution {
   materialName: string;
   studentId: string;
   studentName: string;
-  classId: string;
+  courseId: string;
   className: string;
   distributedDate: string;
   distributedBy: string;
@@ -102,7 +102,7 @@ const mockDistributions: MaterialDistribution[] = [
     materialName: "Chemistry Lab Manual",
     studentId: "STU001",
     studentName: "John Smith",
-    classId: "CLS001",
+    courseId: "CLS001",
     className: "Grade 12-A",
     distributedDate: "2024-01-22",
     distributedBy: "Admin",
@@ -115,7 +115,7 @@ const mockDistributions: MaterialDistribution[] = [
     materialName: "Chemistry Lab Manual",
     studentId: "STU002",
     studentName: "Jane Doe",
-    classId: "CLS001",
+    courseId: "CLS001",
     className: "Grade 12-A",
     distributedDate: "2024-01-22",
     distributedBy: "Admin",
@@ -175,7 +175,7 @@ export function PhysicalMaterialDistribution() {
     toast.success("Material added successfully");
   };
 
-  const handleDistributeMaterial = (materialId: string, classId: string) => {
+  const handleDistributeMaterial = (materialId: string, courseId: string) => {
     // Mock student data for the selected class
     const mockStudents = [
       { id: "STU003", name: "Alice Johnson" },
@@ -184,7 +184,7 @@ export function PhysicalMaterialDistribution() {
     ];
 
     const material = materials.find((m) => m.id === materialId);
-    const selectedClassData = classes.find((c) => c.id === classId);
+    const selectedClassData = classes.find((c) => c.id === courseId);
 
     if (!material || !selectedClassData) {
       toast.error("Invalid material or class selection");
@@ -197,7 +197,7 @@ export function PhysicalMaterialDistribution() {
       materialName: material.name,
       studentId: student.id,
       studentName: student.name,
-      classId,
+      courseId,
       className: selectedClassData.name,
       distributedDate: new Date().toISOString().split("T")[0],
       distributedBy: "Admin",

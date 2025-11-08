@@ -3,7 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export interface ScheduleEvent {
   id: string;
-  classId: string;
+  courseId: string;
   className: string;
   date: string;
   startTime: string;
@@ -33,7 +33,7 @@ const STORAGE_KEY = "zigma_schedules";
 const MOCK_SCHEDULES: ScheduleEvent[] = [
   {
     id: "sched-1",
-    classId: "cs101",
+    courseId: "cs101",
     className: "Computer Science Fundamentals",
     date: "2024-12-09",
     startTime: "09:00",
@@ -48,7 +48,7 @@ const MOCK_SCHEDULES: ScheduleEvent[] = [
   },
   {
     id: "sched-2",
-    classId: "math201",
+    courseId: "math201",
     className: "Advanced Mathematics",
     date: "2024-12-10",
     startTime: "11:00",
@@ -63,7 +63,7 @@ const MOCK_SCHEDULES: ScheduleEvent[] = [
   },
   {
     id: "sched-3",
-    classId: "phys301",
+    courseId: "phys301",
     className: "Physics for Engineers",
     date: "2024-12-11",
     startTime: "14:00",

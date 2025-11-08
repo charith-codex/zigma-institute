@@ -31,10 +31,10 @@ import { Plus, Search, Edit, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 
 interface StudentManagementProps {
-  classId?: string;
+  courseId?: string;
 }
 
-export function StudentManagement({ classId }: StudentManagementProps = {}) {
+export function StudentManagement({ courseId }: StudentManagementProps = {}) {
   const { profiles, loading } = useData();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);

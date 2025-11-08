@@ -16,6 +16,7 @@ import {
   Brain,
   TrendingUp,
   CreditCard,
+  Paperclip,
 } from "lucide-react";
 
 interface StudentSidebarProps {
@@ -26,6 +27,7 @@ interface StudentSidebarProps {
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: Home },
   { id: "classes", label: "My Courses", icon: BookOpen },
+  { id: "exams", label: "Exams", icon: Paperclip },
   { id: "schedule", label: "Schedule", icon: Calendar },
   { id: "study-tools", label: "AI Study Tools", icon: Brain },
   { id: "performance", label: "Student Performance", icon: TrendingUp },

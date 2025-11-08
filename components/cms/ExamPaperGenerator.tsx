@@ -4,8 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
@@ -26,7 +38,7 @@ import {
 interface ExamQuestion {
   id: string;
   question: string;
-  type: 'multiple-choice' | 'short-answer' | 'essay' | 'true-false';
+  type: "multiple-choice" | "short-answer" | "essay" | "true-false";
   marks: number;
   options?: string[];
   correctAnswer?: string;
@@ -47,10 +59,12 @@ interface ExamPaper {
 }
 
 interface ExamPaperGeneratorProps {
-  classId?: string;
+  courseId?: string;
 }
 
-export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) => {
+export const ExamPaperGenerator = ({
+  courseId,
+}: ExamPaperGeneratorProps = {}) => {
   const [examPapers, setExamPapers] = useState<ExamPaper[]>([
     {
       id: "1",
@@ -62,10 +76,11 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
       questions: [
         {
           id: "q1",
-          question: "Explain the concept of Object-Oriented Programming with examples.",
+          question:
+            "Explain the concept of Object-Oriented Programming with examples.",
           type: "essay",
           marks: 20,
-          instructions: "Minimum 500 words required"
+          instructions: "Minimum 500 words required",
         },
         {
           id: "q2",
@@ -73,13 +88,13 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
           type: "multiple-choice",
           marks: 5,
           options: ["O(n)", "O(log n)", "O(n²)", "O(1)"],
-          correctAnswer: "O(log n)"
-        }
+          correctAnswer: "O(log n)",
+        },
       ],
       isPublished: true,
       createdAt: "2024-01-15",
-      examDate: "2024-02-15"
-    }
+      examDate: "2024-02-15",
+    },
   ]);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -90,12 +105,17 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
     duration: 180,
     totalMarks: 100,
     instructions: "",
-    examDate: ""
+    examDate: "",
   });
 
-  const generateAIExam = async (subject: string, level: string, duration: number, marks: number) => {
+  const generateAIExam = async (
+    subject: string,
+    level: string,
+    duration: number,
+    marks: number
+  ) => {
     toast.info("Generating AI exam paper...");
-    
+
     // Simulate AI exam generation
     setTimeout(() => {
       const aiPaper: ExamPaper = {
@@ -104,21 +124,23 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
         subject: subject,
         duration: duration,
         totalMarks: marks,
-        instructions: "Read all questions carefully before answering. Time management is crucial.",
+        instructions:
+          "Read all questions carefully before answering. Time management is crucial.",
         questions: [
           {
             id: "ai-q1",
             question: `Explain the fundamental concepts of ${subject} with practical examples.`,
             type: "essay",
             marks: Math.floor(marks * 0.3),
-            instructions: "Minimum 800 words required. Include diagrams where necessary."
+            instructions:
+              "Minimum 800 words required. Include diagrams where necessary.",
           },
           {
             id: "ai-q2",
             question: `What are the key principles in ${subject}?`,
             type: "short-answer",
             marks: Math.floor(marks * 0.2),
-            instructions: "Answer in 200-300 words"
+            instructions: "Answer in 200-300 words",
           },
           {
             id: "ai-q3",
@@ -126,15 +148,15 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
             type: "multiple-choice",
             marks: Math.floor(marks * 0.1),
             options: ["Option A", "Option B", "Option C", "Option D"],
-            correctAnswer: "Option A"
-          }
+            correctAnswer: "Option A",
+          },
         ],
         isPublished: false,
-        createdAt: new Date().toISOString().split('T')[0],
-        examDate: ""
+        createdAt: new Date().toISOString().split("T")[0],
+        examDate: "",
       };
-      
-      setExamPapers(prev => [...prev, aiPaper]);
+
+      setExamPapers((prev) => [...prev, aiPaper]);
       toast.success("AI exam paper generated successfully!");
     }, 3000);
   };
@@ -150,24 +172,31 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
       ...newPaper,
       questions: [],
       isPublished: false,
-      createdAt: new Date().toISOString().split('T')[0]
+      createdAt: new Date().toISOString().split("T")[0],
     };
 
-    setExamPapers(prev => [...prev, paper]);
-    setNewPaper({ title: "", subject: "", duration: 180, totalMarks: 100, instructions: "", examDate: "" });
+    setExamPapers((prev) => [...prev, paper]);
+    setNewPaper({
+      title: "",
+      subject: "",
+      duration: 180,
+      totalMarks: 100,
+      instructions: "",
+      examDate: "",
+    });
     setShowCreateDialog(false);
     toast.success("Exam paper created successfully!");
   };
 
   const deleteExamPaper = (id: string) => {
-    setExamPapers(prev => prev.filter(p => p.id !== id));
+    setExamPapers((prev) => prev.filter((p) => p.id !== id));
     toast.success("Exam paper deleted successfully!");
   };
 
   const togglePublish = (id: string) => {
-    setExamPapers(prev => prev.map(p => 
-      p.id === id ? { ...p, isPublished: !p.isPublished } : p
-    ));
+    setExamPapers((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, isPublished: !p.isPublished } : p))
+    );
     toast.success("Exam paper status updated!");
   };
 
@@ -181,8 +210,12 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Exam Paper Generator</h2>
-          <p className="text-muted-foreground">Create and manage examination papers</p>
+          <h2 className="text-2xl font-bold text-foreground">
+            Exam Paper Generator
+          </h2>
+          <p className="text-muted-foreground">
+            Create and manage examination papers
+          </p>
         </div>
         <div className="flex gap-2">
           <Dialog>
@@ -224,8 +257,10 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
                     <Input id="marks" type="number" defaultValue="100" />
                   </div>
                 </div>
-                <Button 
-                  onClick={() => generateAIExam("Computer Science", "advanced", 180, 100)}
+                <Button
+                  onClick={() =>
+                    generateAIExam("Computer Science", "advanced", 180, 100)
+                  }
                   className="w-full"
                 >
                   Generate Exam Paper
@@ -233,7 +268,7 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
               </div>
             </DialogContent>
           </Dialog>
-          
+
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
               <Button variant="outline" className="gap-2">
@@ -251,7 +286,12 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
                   <Input
                     id="title"
                     value={newPaper.title}
-                    onChange={(e) => setNewPaper(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={(e) =>
+                      setNewPaper((prev) => ({
+                        ...prev,
+                        title: e.target.value,
+                      }))
+                    }
                     placeholder="e.g., Mid-term Examination"
                   />
                 </div>
@@ -260,7 +300,12 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
                   <Input
                     id="subject"
                     value={newPaper.subject}
-                    onChange={(e) => setNewPaper(prev => ({ ...prev, subject: e.target.value }))}
+                    onChange={(e) =>
+                      setNewPaper((prev) => ({
+                        ...prev,
+                        subject: e.target.value,
+                      }))
+                    }
                     placeholder="e.g., Computer Science"
                   />
                 </div>
@@ -271,7 +316,12 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
                       id="duration"
                       type="number"
                       value={newPaper.duration}
-                      onChange={(e) => setNewPaper(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
+                      onChange={(e) =>
+                        setNewPaper((prev) => ({
+                          ...prev,
+                          duration: parseInt(e.target.value),
+                        }))
+                      }
                     />
                   </div>
                   <div>
@@ -280,7 +330,12 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
                       id="totalMarks"
                       type="number"
                       value={newPaper.totalMarks}
-                      onChange={(e) => setNewPaper(prev => ({ ...prev, totalMarks: parseInt(e.target.value) }))}
+                      onChange={(e) =>
+                        setNewPaper((prev) => ({
+                          ...prev,
+                          totalMarks: parseInt(e.target.value),
+                        }))
+                      }
                     />
                   </div>
                 </div>
@@ -290,7 +345,12 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
                     id="examDate"
                     type="date"
                     value={newPaper.examDate}
-                    onChange={(e) => setNewPaper(prev => ({ ...prev, examDate: e.target.value }))}
+                    onChange={(e) =>
+                      setNewPaper((prev) => ({
+                        ...prev,
+                        examDate: e.target.value,
+                      }))
+                    }
                   />
                 </div>
                 <div>
@@ -298,7 +358,12 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
                   <Textarea
                     id="instructions"
                     value={newPaper.instructions}
-                    onChange={(e) => setNewPaper(prev => ({ ...prev, instructions: e.target.value }))}
+                    onChange={(e) =>
+                      setNewPaper((prev) => ({
+                        ...prev,
+                        instructions: e.target.value,
+                      }))
+                    }
                     placeholder="Enter exam instructions"
                   />
                 </div>
@@ -319,7 +384,9 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
               <div className="flex items-start justify-between">
                 <div>
                   <CardTitle className="text-lg">{paper.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground">{paper.subject}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {paper.subject}
+                  </p>
                   {paper.examDate && (
                     <p className="text-xs text-muted-foreground mt-1">
                       Exam Date: {new Date(paper.examDate).toLocaleDateString()}
@@ -366,8 +433,8 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
                   <Edit className="w-3 h-3 mr-2" />
                   Edit
                 </Button>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="outline"
                   onClick={() => downloadPaper(paper)}
                   className="flex-1"
@@ -378,8 +445,8 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
               </div>
 
               <div className="flex gap-2">
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant={paper.isPublished ? "secondary" : "default"}
                   onClick={() => togglePublish(paper.id)}
                   className="flex-1"
@@ -396,8 +463,8 @@ export const ExamPaperGenerator = ({ classId }: ExamPaperGeneratorProps = {}) =>
                     </>
                   )}
                 </Button>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="destructive"
                   onClick={() => deleteExamPaper(paper.id)}
                 >

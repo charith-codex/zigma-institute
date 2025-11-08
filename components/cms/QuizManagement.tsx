@@ -4,8 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import {
@@ -24,7 +36,7 @@ import {
 interface Question {
   id: string;
   question: string;
-  type: 'multiple-choice' | 'true-false' | 'short-answer';
+  type: "multiple-choice" | "true-false" | "short-answer";
   options?: string[];
   correctAnswer: string;
   points: number;
@@ -43,10 +55,10 @@ interface Quiz {
 }
 
 interface QuizManagementProps {
-  classId?: string;
+  courseId?: string;
 }
 
-export const QuizManagement = ({ classId }: QuizManagementProps = {}) => {
+export const QuizManagement = ({ courseId }: QuizManagementProps = {}) => {
   const [quizzes, setQuizzes] = useState<Quiz[]>([
     {
       id: "1",
@@ -55,19 +67,25 @@ export const QuizManagement = ({ classId }: QuizManagementProps = {}) => {
       questions: [
         {
           id: "q1",
-          question: "What is the correct way to declare a variable in JavaScript?",
+          question:
+            "What is the correct way to declare a variable in JavaScript?",
           type: "multiple-choice",
-          options: ["var x = 5;", "variable x = 5;", "v x = 5;", "declare x = 5;"],
+          options: [
+            "var x = 5;",
+            "variable x = 5;",
+            "v x = 5;",
+            "declare x = 5;",
+          ],
           correctAnswer: "var x = 5;",
-          points: 5
-        }
+          points: 5,
+        },
       ],
       timeLimit: 30,
       attempts: 3,
       isPublished: true,
       createdAt: "2024-01-15",
-      responses: 24
-    }
+      responses: 24,
+    },
   ]);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -76,12 +94,16 @@ export const QuizManagement = ({ classId }: QuizManagementProps = {}) => {
     title: "",
     description: "",
     timeLimit: 30,
-    attempts: 3
+    attempts: 3,
   });
 
-  const generateAIQuiz = async (topic: string, difficulty: string, questionCount: number) => {
+  const generateAIQuiz = async (
+    topic: string,
+    difficulty: string,
+    questionCount: number
+  ) => {
     toast.info("Generating AI quiz...");
-    
+
     // Simulate AI quiz generation
     setTimeout(() => {
       const aiQuiz: Quiz = {
@@ -94,16 +116,16 @@ export const QuizManagement = ({ classId }: QuizManagementProps = {}) => {
           type: "multiple-choice" as const,
           options: ["Option A", "Option B", "Option C", "Option D"],
           correctAnswer: "Option A",
-          points: 5
+          points: 5,
         })),
         timeLimit: questionCount * 2,
         attempts: 3,
         isPublished: false,
-        createdAt: new Date().toISOString().split('T')[0],
-        responses: 0
+        createdAt: new Date().toISOString().split("T")[0],
+        responses: 0,
       };
-      
-      setQuizzes(prev => [...prev, aiQuiz]);
+
+      setQuizzes((prev) => [...prev, aiQuiz]);
       toast.success("AI quiz generated successfully!");
     }, 2000);
   };
@@ -119,25 +141,25 @@ export const QuizManagement = ({ classId }: QuizManagementProps = {}) => {
       ...newQuiz,
       questions: [],
       isPublished: false,
-      createdAt: new Date().toISOString().split('T')[0],
-      responses: 0
+      createdAt: new Date().toISOString().split("T")[0],
+      responses: 0,
     };
 
-    setQuizzes(prev => [...prev, quiz]);
+    setQuizzes((prev) => [...prev, quiz]);
     setNewQuiz({ title: "", description: "", timeLimit: 30, attempts: 3 });
     setShowCreateDialog(false);
     toast.success("Quiz created successfully!");
   };
 
   const deleteQuiz = (id: string) => {
-    setQuizzes(prev => prev.filter(q => q.id !== id));
+    setQuizzes((prev) => prev.filter((q) => q.id !== id));
     toast.success("Quiz deleted successfully!");
   };
 
   const togglePublish = (id: string) => {
-    setQuizzes(prev => prev.map(q => 
-      q.id === id ? { ...q, isPublished: !q.isPublished } : q
-    ));
+    setQuizzes((prev) =>
+      prev.map((q) => (q.id === id ? { ...q, isPublished: !q.isPublished } : q))
+    );
     toast.success("Quiz status updated!");
   };
 
@@ -146,8 +168,12 @@ export const QuizManagement = ({ classId }: QuizManagementProps = {}) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Quiz Management</h2>
-          <p className="text-muted-foreground">Create, manage, and analyze quizzes</p>
+          <h2 className="text-2xl font-bold text-foreground">
+            Quiz Management
+          </h2>
+          <p className="text-muted-foreground">
+            Create, manage, and analyze quizzes
+          </p>
         </div>
         <div className="flex gap-2">
           <Dialog>
@@ -193,8 +219,10 @@ export const QuizManagement = ({ classId }: QuizManagementProps = {}) => {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button 
-                  onClick={() => generateAIQuiz("React Hooks", "intermediate", 10)}
+                <Button
+                  onClick={() =>
+                    generateAIQuiz("React Hooks", "intermediate", 10)
+                  }
                   className="w-full"
                 >
                   Generate Quiz
@@ -202,7 +230,7 @@ export const QuizManagement = ({ classId }: QuizManagementProps = {}) => {
               </div>
             </DialogContent>
           </Dialog>
-          
+
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
               <Button variant="outline" className="gap-2">
@@ -220,7 +248,9 @@ export const QuizManagement = ({ classId }: QuizManagementProps = {}) => {
                   <Input
                     id="title"
                     value={newQuiz.title}
-                    onChange={(e) => setNewQuiz(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={(e) =>
+                      setNewQuiz((prev) => ({ ...prev, title: e.target.value }))
+                    }
                     placeholder="Enter quiz title"
                   />
                 </div>
@@ -229,7 +259,12 @@ export const QuizManagement = ({ classId }: QuizManagementProps = {}) => {
                   <Textarea
                     id="description"
                     value={newQuiz.description}
-                    onChange={(e) => setNewQuiz(prev => ({ ...prev, description: e.target.value }))}
+                    onChange={(e) =>
+                      setNewQuiz((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
                     placeholder="Enter quiz description"
                   />
                 </div>
@@ -240,7 +275,12 @@ export const QuizManagement = ({ classId }: QuizManagementProps = {}) => {
                       id="timeLimit"
                       type="number"
                       value={newQuiz.timeLimit}
-                      onChange={(e) => setNewQuiz(prev => ({ ...prev, timeLimit: parseInt(e.target.value) }))}
+                      onChange={(e) =>
+                        setNewQuiz((prev) => ({
+                          ...prev,
+                          timeLimit: parseInt(e.target.value),
+                        }))
+                      }
                     />
                   </div>
                   <div>
@@ -249,7 +289,12 @@ export const QuizManagement = ({ classId }: QuizManagementProps = {}) => {
                       id="attempts"
                       type="number"
                       value={newQuiz.attempts}
-                      onChange={(e) => setNewQuiz(prev => ({ ...prev, attempts: parseInt(e.target.value) }))}
+                      onChange={(e) =>
+                        setNewQuiz((prev) => ({
+                          ...prev,
+                          attempts: parseInt(e.target.value),
+                        }))
+                      }
                     />
                   </div>
                 </div>
@@ -298,14 +343,14 @@ export const QuizManagement = ({ classId }: QuizManagementProps = {}) => {
                   <span>{quiz.attempts} attempts</span>
                 </div>
               </div>
-              
+
               <div className="flex gap-2">
                 <Button size="sm" variant="outline" className="flex-1">
                   <Edit className="w-3 h-3 mr-2" />
                   Edit
                 </Button>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant={quiz.isPublished ? "secondary" : "default"}
                   onClick={() => togglePublish(quiz.id)}
                   className="flex-1"
@@ -322,8 +367,8 @@ export const QuizManagement = ({ classId }: QuizManagementProps = {}) => {
                     </>
                   )}
                 </Button>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="destructive"
                   onClick={() => deleteQuiz(quiz.id)}
                 >

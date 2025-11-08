@@ -43,7 +43,7 @@ import type { ClassSummary } from "@/hooks/useData";
 import { useLessons } from "@/hooks/useData";
 
 interface CourseContentManagerProps {
-  classId: string;
+  courseId: string;
   loading?: boolean;
   classes?: ClassSummary[];
 }
@@ -62,7 +62,7 @@ const navigationItems = [
 ];
 
 export function CourseContentManager({
-  classId,
+  courseId,
   loading = false,
   classes = [],
 }: CourseContentManagerProps) {
@@ -167,12 +167,12 @@ export function CourseContentManager({
     setWeeks(updatedWeeks);
   };
 
-  console.log("CourseContentManager - classId:", classId);
+  console.log("CourseContentManager - courseId:", courseId);
   console.log("CourseContentManager - classes:", classes);
 
   const classItem = useMemo(
-    () => classes.find((cls) => cls.id === classId),
-    [classes, classId]
+    () => classes.find((cls) => cls.id === courseId),
+    [classes, courseId]
   );
   console.log("CourseContentManager - classItem:", classItem);
 
@@ -242,7 +242,10 @@ export function CourseContentManager({
                   activities for this course.
                 </p>
               </div>
-              <Dialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen}>
+              <Dialog
+                open={lessonDialogOpen}
+                onOpenChange={setLessonDialogOpen}
+              >
                 <DialogTrigger asChild>
                   <Button className="bg-gradient-primary hover:shadow-medium">
                     <Plus className="w-4 h-4 mr-2" />
@@ -253,8 +256,8 @@ export function CourseContentManager({
                   <DialogHeader>
                     <DialogTitle>Create a new lesson</DialogTitle>
                     <DialogDescription>
-                      Provide a title and optional description to add a lesson to
-                      this course.
+                      Provide a title and optional description to add a lesson
+                      to this course.
                     </DialogDescription>
                   </DialogHeader>
                   <form onSubmit={handleCreateLesson} className="space-y-4">
@@ -375,7 +378,9 @@ export function CourseContentManager({
                         )}
                         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                           <span>Course ID: {lesson.courseId}</span>
-                          <span>Lesson ID: {lesson.id.slice(0, 8).toUpperCase()}</span>
+                          <span>
+                            Lesson ID: {lesson.id.slice(0, 8).toUpperCase()}
+                          </span>
                         </div>
                       </CardContent>
                     </Card>
@@ -476,7 +481,7 @@ export function CourseContentManager({
         );
 
       case "students":
-        return <StudentManagement classId={classId} />;
+        return <StudentManagement courseId={courseId} />;
 
       case "quizzes":
         return <QuestionCreation />;
@@ -485,10 +490,10 @@ export function CourseContentManager({
         return <ExamBuilder />;
 
       case "exam-sessions":
-        return <ExamScheduler classId={classId} />;
+        return <ExamScheduler courseId={courseId} />;
 
       case "exam-results":
-        return <ExamResults classId={classId} />;
+        return <ExamResults courseId={courseId} />;
 
       case "analytics":
         return (
@@ -567,10 +572,10 @@ export function CourseContentManager({
             Course Not Found
           </h3>
           <p className="text-muted-foreground">
-            Looking for class ID: {classId}
+            Looking for course ID: {courseId}
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            Available classes: {classes.map((c) => c.id).join(", ")}
+            Available courses: {classes.map((c) => c.id).join(", ")}
           </p>
         </div>
         <Button onClick={() => router.push("/lms-cms")}>Back to Courses</Button>
