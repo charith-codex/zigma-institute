@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useClasses } from "@/hooks/useData";
+import type { ClassSummary } from "@/hooks/useData";
 import {
   BookOpen,
   Users,
@@ -10,18 +10,17 @@ import {
   Plus,
 } from "lucide-react";
 
-const user = {
-  id: "teacher-1234",
-  name: "Teacher 02",
-};
-
 interface TeacherCourseListProps {
   onSelectClass: (classId: string) => void;
+  classes: ClassSummary[];
+  loading: boolean;
 }
 
-export function TeacherCourseList({ onSelectClass }: TeacherCourseListProps) {
-  const { classes, loading } = useClasses();
-
+export function TeacherCourseList({
+  onSelectClass,
+  classes,
+  loading,
+}: TeacherCourseListProps) {
   if (loading) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -31,35 +30,7 @@ export function TeacherCourseList({ onSelectClass }: TeacherCourseListProps) {
   }
 
   // Filter classes for the current teacher
-  const teacherClasses = classes.filter((cls) => cls.teacher_id === user?.id);
-
-  // Mock content data for each class (in a real app, this would come from an API)
-  const getClassContent = (classId: string) => ({
-    weeks: [
-      { id: "week-1", title: "Week 1: Introduction", materialsCount: 5 },
-      { id: "week-2", title: "Week 2: Fundamentals", materialsCount: 3 },
-      { id: "week-3", title: "Week 3: Advanced Topics", materialsCount: 4 },
-    ],
-    materials: {
-      videos: Math.floor(Math.random() * 15) + 5,
-      documents: Math.floor(Math.random() * 20) + 10,
-      quizzes: Math.floor(Math.random() * 8) + 2,
-      assignments: Math.floor(Math.random() * 6) + 3,
-    },
-    recentActivity: [
-      {
-        type: "video",
-        title: "Lecture Recording - Advanced Concepts",
-        date: "2 hours ago",
-      },
-      {
-        type: "document",
-        title: "Assignment Guidelines.pdf",
-        date: "1 day ago",
-      },
-      { type: "quiz", title: "Mid-term Quiz Created", date: "3 days ago" },
-    ],
-  });
+  const teacherClasses = classes;
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -80,7 +51,7 @@ export function TeacherCourseList({ onSelectClass }: TeacherCourseListProps) {
               <Users className="w-4 h-4 text-secondary" />
               <span>
                 {teacherClasses.reduce(
-                  (sum, cls) => sum + cls.enrolled_students,
+                  (sum, cls) => sum + (cls.enrolled_students ?? 0),
                   0
                 )}{" "}
                 Total Students
@@ -112,6 +83,11 @@ export function TeacherCourseList({ onSelectClass }: TeacherCourseListProps) {
                   <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
                     {classItem.description}
                   </p>
+                  {classItem.teacher_name && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Instructor: {classItem.teacher_name}
+                    </p>
+                  )}
                 </div>
               </div>
             </CardHeader>
@@ -122,8 +98,9 @@ export function TeacherCourseList({ onSelectClass }: TeacherCourseListProps) {
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <Users className="w-4 h-4 text-primary" />
                   <span className="text-foreground font-medium">
-                    {classItem.enrolled_students}/{classItem.max_students}{" "}
-                    students
+                    {classItem.max_students > 0
+                      ? `${classItem.enrolled_students}/${classItem.max_students} students`
+                      : `${classItem.enrolled_students} students`}
                   </span>
                 </div>
 

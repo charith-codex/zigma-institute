@@ -30,6 +30,23 @@ export const courseSchema = z.object({
     .gt(0, "Price must be greater than 0"),
 });
 
+export const lessonSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(3, "Lesson title must be at least 3 characters long"),
+  description: z
+    .string()
+    .trim()
+    .max(1000, "Description must be less than 1000 characters")
+    .optional()
+    .nullable(),
+  courseId: z
+    .string()
+    .trim()
+    .min(1, "A course must be selected for the lesson"),
+});
+
 // Schema for signing in a user
 export const signInFormSchema = z.object({
   email: z.string().email("Invalid email address"),

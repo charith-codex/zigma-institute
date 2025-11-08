@@ -3,8 +3,9 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/db/prisma";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compareSync } from "bcrypt-ts-edge";
-import type { NextAuthConfig } from "next-auth";
+import type { NextAuthConfig, Session, User } from "next-auth";
 import { DefaultSession } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 
 declare module "next-auth" {
   interface User {
@@ -62,20 +63,40 @@ export const config = {
     }),
   ],
   callbacks: {
-    async session({ session, user, trigger, token }: any) {
-      // set the user ID from the session
-      session.user.id = token.sub;
-      session.user.role = token.role;
-      session.user.name = token.name;
+    async session({
+      session,
+      user,
+      trigger,
+      token,
+    }: {
+      session: Session;
+      user?: User | null;
+      trigger?: "update" | "signIn" | "signUp" | undefined;
+      token: JWT & { role?: string; name?: string };
+    }) {
+      if (session.user) {
+        session.user.id = token.sub ?? session.user.id;
+        session.user.role = token.role;
+        session.user.name = token.name ?? session.user.name;
+      }
 
       // if there is an update, set the user name
-      if (trigger === "update") {
+      if (trigger === "update" && user?.name && session.user) {
         session.user.name = user.name;
       }
 
       return session;
     },
-    async jwt({ token, user, trigger, session }: any) {
+    async jwt({
+      token,
+      user,
+      trigger,
+    }: {
+      token: JWT & { role?: string; name?: string };
+      user?: (User & { role?: string | null }) | null;
+      trigger?: "update" | "signIn" | "signUp" | undefined;
+      session?: Session;
+    }) {
       // assign user fields to token
       if (user) {
         token.role = user.role;
