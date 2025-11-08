@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,15 +28,29 @@ import { ExamBuilder } from "./ExamBuilder";
 import { ExamScheduler } from "./ExamScheduler";
 import { ExamResults } from "./ExamResults";
 import { useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
+import type { ClassSummary } from "@/hooks/useData";
+import { useLessons } from "@/hooks/useData";
 
 interface CourseContentManagerProps {
   classId: string;
   loading?: boolean;
-  classes?: { id: string; name: string; code: string }[];
+  classes?: ClassSummary[];
 }
 
 const navigationItems = [
-  { id: "weeks", label: "Weekly Content", icon: BookOpen },
+  { id: "lessons", label: "Lessons", icon: BookOpen },
+  { id: "weeks", label: "Weekly Content", icon: ClipboardList },
   { id: "recordings", label: "Course Recordings", icon: Video },
   { id: "students", label: "Students", icon: Users },
   { id: "quizzes", label: "Question Bank", icon: ClipboardList },
@@ -52,9 +67,14 @@ export function CourseContentManager({
   classes = [],
 }: CourseContentManagerProps) {
   const router = useRouter();
-  const [activeSection, setActiveSection] = useState("weeks");
-  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("lessons");
   const [selectedWeek, setSelectedWeek] = useState<string>("");
+  const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
+  const [lessonForm, setLessonForm] = useState({
+    title: "",
+    description: "",
+  });
+  const [creatingLesson, setCreatingLesson] = useState(false);
 
   // Week-wise data management
   const [weeks, setWeeks] = useState<Week[]>([
@@ -150,12 +170,52 @@ export function CourseContentManager({
   console.log("CourseContentManager - classId:", classId);
   console.log("CourseContentManager - classes:", classes);
 
-  const classItem = classes.find((cls) => cls.id === classId);
+  const classItem = useMemo(
+    () => classes.find((cls) => cls.id === classId),
+    [classes, classId]
+  );
   console.log("CourseContentManager - classItem:", classItem);
+
+  const {
+    lessons,
+    loading: lessonsLoading,
+    error: lessonsError,
+    createLesson,
+  } = useLessons(classItem?.id);
+
+  const resetLessonForm = () => {
+    setLessonForm({ title: "", description: "" });
+  };
+
+  const handleCreateLesson = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!lessonForm.title.trim()) {
+      toast.error("Lesson title is required");
+      return;
+    }
+
+    try {
+      setCreatingLesson(true);
+      await createLesson({
+        title: lessonForm.title,
+        description: lessonForm.description.trim() || null,
+      });
+      toast.success("Lesson created successfully!");
+      resetLessonForm();
+      setLessonDialogOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create lesson"
+      );
+    } finally {
+      setCreatingLesson(false);
+    }
+  };
 
   const handleFileUpload = () => {
     toast.success("File uploaded successfully!");
-    setUploadDialogOpen(false);
   };
 
   const getFileIcon = (type: string) => {
@@ -171,6 +231,161 @@ export function CourseContentManager({
 
   const renderContent = () => {
     switch (activeSection) {
+      case "lessons":
+        return (
+          <div className="space-y-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <h3 className="text-2xl font-semibold">Course Lessons</h3>
+                <p className="text-sm text-muted-foreground">
+                  Create lessons to organize materials, exams, and student
+                  activities for this course.
+                </p>
+              </div>
+              <Dialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-gradient-primary hover:shadow-medium">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create lesson
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create a new lesson</DialogTitle>
+                    <DialogDescription>
+                      Provide a title and optional description to add a lesson to
+                      this course.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handleCreateLesson} className="space-y-4">
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="lesson-title"
+                        className="text-sm font-medium text-foreground"
+                      >
+                        Lesson title
+                      </label>
+                      <Input
+                        id="lesson-title"
+                        placeholder="e.g. Introduction to React Hooks"
+                        value={lessonForm.title}
+                        onChange={(event) =>
+                          setLessonForm((previous) => ({
+                            ...previous,
+                            title: event.target.value,
+                          }))
+                        }
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label
+                        htmlFor="lesson-description"
+                        className="text-sm font-medium text-foreground"
+                      >
+                        Description
+                      </label>
+                      <Textarea
+                        id="lesson-description"
+                        placeholder="Describe the goals, activities, or resources for this lesson"
+                        value={lessonForm.description}
+                        onChange={(event) =>
+                          setLessonForm((previous) => ({
+                            ...previous,
+                            description: event.target.value,
+                          }))
+                        }
+                        rows={4}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setLessonDialogOpen(false);
+                          resetLessonForm();
+                        }}
+                        disabled={creatingLesson}
+                      >
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={creatingLesson}>
+                        {creatingLesson && (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        )}
+                        Save lesson
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {lessonsError && (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+                {lessonsError}
+              </div>
+            )}
+
+            {lessonsLoading ? (
+              <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-border">
+                <div className="flex items-center gap-3 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Loading lessons...</span>
+                </div>
+              </div>
+            ) : lessons.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border/70 bg-card/50 p-12 text-center">
+                <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                <h4 className="text-lg font-semibold">No lessons yet</h4>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Start building your course by creating the first lesson.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {lessons.map((lesson) => {
+                  const createdDate = new Date(lesson.createdAt);
+                  const formattedDate = isNaN(createdDate.getTime())
+                    ? "Recently created"
+                    : createdDate.toLocaleString();
+
+                  return (
+                    <Card
+                      key={lesson.id}
+                      className="flex h-full flex-col justify-between border-border/60 bg-card"
+                    >
+                      <CardContent className="space-y-4 p-5">
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-lg font-semibold line-clamp-2">
+                              {lesson.title}
+                            </h4>
+                            <Badge variant="outline">Lesson</Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Created {formattedDate}
+                          </p>
+                        </div>
+                        {lesson.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-3">
+                            {lesson.description}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                          <span>Course ID: {lesson.courseId}</span>
+                          <span>Lesson ID: {lesson.id.slice(0, 8).toUpperCase()}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+
       case "weeks":
         return (
           <div className="flex h-full">
@@ -380,7 +595,9 @@ export function CourseContentManager({
           </Button>
           <div>
             <h2 className="text-lg font-bold">{classItem.name}</h2>
-            <p className="text-sm text-muted-foreground">{classItem.code}</p>
+            <p className="text-sm text-muted-foreground">
+              {classItem.code || classItem.slug || classItem.id}
+            </p>
           </div>
         </div>
 

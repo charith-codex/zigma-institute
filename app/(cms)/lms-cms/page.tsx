@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,31 +18,62 @@ import { TeacherCourseList } from "@/components/cms/TeacherCourseList";
 import { CourseContentManager } from "@/components/cms/CourseContentManager";
 import { useParams, useRouter } from "next/navigation";
 import TeacherSidebar from "@/components/cms/cms-sidebar";
-
-const user = {
-  id: "teacher-1234",
-  name: "Teacher 02",
-};
+import { useSession } from "next-auth/react";
 
 const LMSCMS = () => {
   const { classId } = useParams<{ classId: string }>();
   const router = useRouter();
   const { classes, loading } = useClasses();
+  const { data: session, status } = useSession();
+  const sessionLoading = status === "loading";
+  const userId = session?.user?.id ?? null;
+  const role = session?.user?.role ?? null;
+  const isAdmin = role === "ADMIN";
+  const isTeacher = role === "TEACHER";
+
+  const accessibleClasses = useMemo(() => {
+    if (isAdmin) {
+      return classes;
+    }
+
+    if (isTeacher && userId) {
+      return classes.filter((cls) => cls.teacher_id === userId);
+    }
+
+    return [];
+  }, [classes, isAdmin, isTeacher, userId]);
+
+  const classIsAccessible = useMemo(() => {
+    if (!classId) {
+      return true;
+    }
+
+    return accessibleClasses.some((cls) => cls.id === classId);
+  }, [accessibleClasses, classId]);
+
   const [activeModule, setActiveModule] = useState(
-    classId ? "exams" : "my-classes"
+    classId && classIsAccessible ? "class-content" : "my-classes"
   );
+
+  useEffect(() => {
+    if (classId && classIsAccessible) {
+      setActiveModule("class-content");
+    } else if (classId && !classIsAccessible) {
+      setActiveModule("my-classes");
+    }
+  }, [classId, classIsAccessible]);
 
   console.log("LMSCMS - classId from URL:", classId);
   console.log("LMSCMS - classes loading:", loading);
   console.log("LMSCMS - classes data:", classes);
 
   // Filter classes for the current teacher
-  const teacherClasses = classes.filter((cls) => cls.teacher_id === user?.id);
+  const teacherClasses = accessibleClasses;
 
   const teacherInfo = {
-    name: user.name || "Teacher",
-    id: user?.id?.slice(0, 8).toUpperCase() || "TEA000000",
-    department: "Computer Science",
+    name: session?.user?.name || "Teacher",
+    id: userId ? userId.slice(0, 8).toUpperCase() : "TEA000000",
+    department: isAdmin ? "Administration" : "Computer Science",
     totalStudents: teacherClasses.reduce(
       (sum, cls) => sum + (cls.enrolled_students || 0),
       0
@@ -66,6 +97,9 @@ const LMSCMS = () => {
     router.push(`/lms-cms/${selectedClassId}`);
   };
 
+  const isAuthenticated = Boolean(session?.user);
+  const combinedLoading = loading || sessionLoading;
+
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] w-full flex-col bg-muted/20 lg:flex-row">
       {/* Sidebar */}
@@ -82,12 +116,23 @@ const LMSCMS = () => {
           <div className="flex-1 overflow-hidden rounded-2xl border border-border/60 bg-background shadow-sm">
             <main className="flex h-full flex-col">
               <div className="flex-1 overflow-y-auto">
-                {loading ? (
+                {combinedLoading ? (
                   <div className="flex h-full items-center justify-center p-8">
                     <div className="text-center">
                       <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
                       <p className="mt-2 text-sm text-muted-foreground">
                         Loading...
+                      </p>
+                    </div>
+                  </div>
+                ) : !isAuthenticated ? (
+                  <div className="flex h-full items-center justify-center p-8">
+                    <div className="text-center space-y-3">
+                      <h2 className="text-xl font-semibold">
+                        Please sign in to manage your courses
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        Access to the LMS CMS is restricted to authorized users.
                       </p>
                     </div>
                   </div>
@@ -185,7 +230,11 @@ const LMSCMS = () => {
                     )}
 
                     {activeModule === "my-classes" && (
-                      <TeacherCourseList onSelectClass={handleSelectClass} />
+                      <TeacherCourseList
+                        onSelectClass={handleSelectClass}
+                        classes={teacherClasses}
+                        loading={combinedLoading}
+                      />
                     )}
 
                     {activeModule === "notifications" && (
@@ -222,12 +271,33 @@ const LMSCMS = () => {
                       </Card>
                     )}
 
-                    {activeModule === "class-content" && classId && (
+                    {activeModule === "class-content" && classId && classIsAccessible && (
                       <CourseContentManager
                         classId={classId}
-                        classes={classes}
-                        loading={loading}
+                        classes={teacherClasses}
+                        loading={combinedLoading}
                       />
+                    )}
+
+                    {activeModule === "class-content" && classId && !classIsAccessible && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Course access required</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-muted-foreground">
+                            You do not have permission to manage this course. Please
+                            select a course assigned to you from the list.
+                          </p>
+                          <Button
+                            className="mt-4"
+                            variant="outline"
+                            onClick={() => router.push("/lms-cms")}
+                          >
+                            Back to my courses
+                          </Button>
+                        </CardContent>
+                      </Card>
                     )}
 
                     {activeModule === "exams" && classId && (

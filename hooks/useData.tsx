@@ -1,6 +1,35 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Course, TeacherSummary } from '@/types';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+export interface ClassSummary {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  teacher_id: string | null;
+  teacher_name: string | null;
+  enrolled_students: number;
+  max_students: number;
+  schedule: string;
+  room: string;
+  semester: string;
+  status: string;
+  department: string;
+  coverImage: string | null;
+  slug: string | null;
+}
+
+export interface LessonSummary {
+  id: string;
+  title: string;
+  description: string | null;
+  courseId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Mock data hooks for demonstration - replace with your Neon PostgreSQL implementation
 export function useProfiles() {
   const [profiles, setProfiles] = useState<any[]>([]);
@@ -122,69 +151,256 @@ export function useTeachers() {
   return { teachers, loading, error, refetch };
 }
 
+const normalizeCourseToClassSummary = (
+  course: unknown
+): ClassSummary | null => {
+  if (!course || typeof course !== 'object') {
+    return null;
+  }
+
+  const data = course as Record<string, unknown>;
+  const id = typeof data.id === 'string' ? data.id : null;
+
+  if (!id) {
+    return null;
+  }
+
+  const slug = typeof data.slug === 'string' ? data.slug : null;
+  const name =
+    typeof data.name === 'string' && data.name.trim().length > 0
+      ? data.name
+      : 'Untitled Course';
+  const description =
+    typeof data.description === 'string' ? data.description : 'Description unavailable.';
+  const teacherId = typeof data.teacherId === 'string' ? data.teacherId : null;
+  const teacherName = typeof data.teacherName === 'string' ? data.teacherName : null;
+  const coverImage = typeof data.coverImage === 'string' ? data.coverImage : null;
+  const enrolledFromCount =
+    typeof (data as { _count?: { enrollments?: number } })._count?.enrollments === 'number'
+      ? (data as { _count?: { enrollments?: number } })._count!.enrollments!
+      : null;
+  const enrolledStudents =
+    typeof (data as { enrolled_students?: number }).enrolled_students === 'number'
+      ? (data as { enrolled_students: number }).enrolled_students
+      : enrolledFromCount ?? 0;
+  const maxStudents =
+    typeof (data as { max_students?: number }).max_students === 'number'
+      ? (data as { max_students: number }).max_students
+      : Math.max(enrolledStudents, 0);
+  const schedule =
+    typeof (data as { schedule?: string }).schedule === 'string'
+      ? (data as { schedule?: string }).schedule!
+      : 'Schedule to be announced';
+  const room =
+    typeof (data as { room?: string }).room === 'string'
+      ? (data as { room?: string }).room!
+      : 'Room assignment pending';
+  const semester =
+    typeof (data as { semester?: string }).semester === 'string'
+      ? (data as { semester?: string }).semester!
+      : 'Upcoming semester';
+  const status =
+    typeof (data as { status?: string }).status === 'string'
+      ? (data as { status?: string }).status!
+      : 'active';
+  const department =
+    typeof (data as { department?: string }).department === 'string'
+      ? (data as { department?: string }).department!
+      : 'General Studies';
+
+  const code = slug && slug.trim().length > 0 ? slug.toUpperCase() : id.slice(0, 8).toUpperCase();
+
+  return {
+    id,
+    name,
+    code,
+    description,
+    teacher_id: teacherId,
+    teacher_name: teacherName,
+    enrolled_students: enrolledStudents,
+    max_students: maxStudents,
+    schedule,
+    room,
+    semester,
+    status,
+    department,
+    coverImage,
+    slug,
+  };
+};
+
 export function useClasses() {
-  const [classes, setClasses] = useState<any[]>([]);
+  const [classes, setClasses] = useState<ClassSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refetch = async () => {
-    // TODO: Implement with Neon PostgreSQL
-    setLoading(true);
-    setTimeout(() => {
-      // Mock teacher classes data
-      setClasses([
-        {
-          id: 'CLS00001',
-          name: 'Advanced React Development',
-          code: 'CS401',
-          description: 'Learn advanced React concepts including hooks, context, and performance optimization',
-          max_students: 30,
-          enrolled_students: 25,
-          schedule: 'Mon, Wed, Fri 10:00 AM',
-          room: 'Lab 101',
-          semester: 'Fall 2024',
-          status: 'active',
-          department: 'Computer Science',
-          teacher_id: 'teacher-001'
-        },
-        {
-          id: 'CLS00002', 
-          name: 'Database Design Principles',
-          code: 'CS301',
-          description: 'Comprehensive study of database design, normalization, and SQL optimization',
-          max_students: 25,
-          enrolled_students: 22,
-          schedule: 'Tue, Thu 2:00 PM',
-          room: 'Room 205',
-          semester: 'Fall 2024',
-          status: 'active',
-          department: 'Computer Science',
-          teacher_id: 'teacher-001'
-        },
-        {
-          id: 'CLS00003',
-          name: 'Web Development Fundamentals',
-          code: 'CS201',
-          description: 'Introduction to HTML, CSS, JavaScript and modern web development practices',
-          max_students: 35,
-          enrolled_students: 32,
-          schedule: 'Mon, Wed 2:00 PM',
-          room: 'Lab 102',
-          semester: 'Fall 2024',
-          status: 'active',
-          department: 'Computer Science',
-          teacher_id: 'teacher-001'
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
-  };
+  const refetch = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/courses');
 
-  useEffect(() => {
-    refetch();
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error ?? 'Failed to load courses');
+      }
+
+      const payload = await response.json();
+      const normalizedClasses: ClassSummary[] = Array.isArray(payload)
+        ? payload
+            .map((course) => normalizeCourseToClassSummary(course))
+            .filter((course): course is ClassSummary => course !== null)
+        : [];
+
+      setClasses(normalizedClasses);
+      setError(null);
+    } catch (fetchError) {
+      console.error('Failed to fetch classes', fetchError);
+      setClasses([]);
+      setError(
+        fetchError instanceof Error ? fetchError.message : 'Failed to load courses'
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
+
   return { classes, loading, error, refetch };
+}
+
+const normalizeLesson = (lesson: unknown): LessonSummary | null => {
+  if (!lesson || typeof lesson !== 'object') {
+    return null;
+  }
+
+  const data = lesson as Record<string, unknown>;
+  const id = typeof data.id === 'string' ? data.id : null;
+  const courseId = typeof data.courseId === 'string' ? data.courseId : null;
+  const title = typeof data.title === 'string' ? data.title : null;
+
+  if (!id || !courseId || !title) {
+    return null;
+  }
+
+  const description =
+    typeof data.description === 'string' && data.description.length > 0
+      ? data.description
+      : null;
+  const createdAt =
+    typeof data.createdAt === 'string'
+      ? data.createdAt
+      : new Date().toISOString();
+  const updatedAt =
+    typeof data.updatedAt === 'string'
+      ? data.updatedAt
+      : new Date().toISOString();
+
+  return {
+    id,
+    title,
+    description,
+    courseId,
+    createdAt,
+    updatedAt,
+  };
+};
+
+export function useLessons(courseId?: string) {
+  const [lessons, setLessons] = useState<LessonSummary[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refetch = useCallback(async () => {
+    if (!courseId) {
+      setLessons([]);
+      setError(null);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/lessons?courseId=${encodeURIComponent(courseId)}`);
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error ?? 'Failed to load lessons');
+      }
+
+      const payload = await response.json();
+      const normalizedLessons: LessonSummary[] = Array.isArray(payload)
+        ? payload
+            .map((lesson) => normalizeLesson(lesson))
+            .filter((lesson): lesson is LessonSummary => lesson !== null)
+            .sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            )
+        : [];
+
+      setLessons(normalizedLessons);
+      setError(null);
+    } catch (fetchError) {
+      console.error('Failed to fetch lessons', fetchError);
+      setLessons([]);
+      setError(
+        fetchError instanceof Error ? fetchError.message : 'Failed to load lessons'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [courseId]);
+
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
+
+  const createLesson = useCallback(
+    async (input: { title: string; description?: string | null }) => {
+      if (!courseId) {
+        throw new Error('A course must be selected before creating lessons.');
+      }
+
+      const response = await fetch('/api/lessons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: input.title,
+          description: input.description ?? null,
+          courseId,
+        }),
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          (payload && typeof payload.error === 'string'
+            ? payload.error
+            : null) ?? 'Failed to create lesson'
+        );
+      }
+
+      const normalized = normalizeLesson(payload);
+
+      if (!normalized) {
+        throw new Error('Unexpected response received when creating lesson.');
+      }
+
+      setLessons((previous) =>
+        [...previous, normalized].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      );
+
+      return normalized;
+    },
+    [courseId]
+  );
+
+  return { lessons, loading, error, refetch, createLesson };
 }
 
 export function useEnrollments() {
