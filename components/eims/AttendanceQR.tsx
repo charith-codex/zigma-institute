@@ -170,7 +170,8 @@ const AttendanceQR = () => {
                     <SelectContent>
                       {classes.map((cls) => (
                         <SelectItem key={cls.id} value={cls.id}>
-                          {cls.name} - {cls.courses?.name}
+                          {cls.name}
+                          {cls.code ? ` (${cls.code})` : ""}
                         </SelectItem>
                       ))}
                     </SelectContent>
