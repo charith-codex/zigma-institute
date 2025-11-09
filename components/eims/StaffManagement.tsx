@@ -1,8 +1,28 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+"use client";
+
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { Users, Plus, Search, Edit, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -11,555 +31,574 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Search,
-  Plus,
-  Edit,
-  Trash2,
-  UserCheck,
-  UserX,
-  Mail,
-  Phone,
-} from "lucide-react";
-import { toast } from "sonner";
 
-interface StaffMember {
-  id: string;
-  fullName: string;
+import {
+  createStaff,
+  deleteStaff,
+  listStaff,
+  updateStaff,
+  type StaffRecord,
+} from "@/lib/actions/eims-user-management";
+
+const statusOptions = [
+  { label: "Active", value: "ACTIVE" as const },
+  { label: "Inactive", value: "INACTIVE" as const },
+];
+
+const roleOptions = [
+  { label: "Administrator", value: "ADMIN" as const },
+  { label: "Management", value: "MANAGER" as const },
+  { label: "Attendance", value: "ATTENDANCE" as const },
+];
+
+type StaffDraft = {
+  name: string;
   email: string;
   phone: string;
-  role: "management_staff" | "attendance_staff" | "it_admin" | "teacher";
-  department: string;
-  status: "active" | "inactive";
-  joinDate: string;
-  address?: string;
-  notes?: string;
-}
-
-const mockStaff: StaffMember[] = [
-  {
-    id: "STAFF-001",
-    fullName: "John Administrator",
-    email: "john.admin@zigma.edu",
-    phone: "+1-555-0201",
-    role: "it_admin",
-    department: "Information Technology",
-    status: "active",
-    joinDate: "2023-01-15",
-    address: "123 Admin St, Springfield, IL",
-    notes: "Senior IT Administrator with full system access",
-  },
-  {
-    id: "STAFF-002",
-    fullName: "Sarah Manager",
-    email: "sarah.manager@zigma.edu",
-    phone: "+1-555-0202",
-    role: "management_staff",
-    department: "Academic Affairs",
-    status: "active",
-    joinDate: "2023-03-20",
-    address: "456 Manager Ave, Springfield, IL",
-    notes: "Handles student affairs and administrative tasks",
-  },
-  {
-    id: "STAFF-003",
-    fullName: "Mike Attendance",
-    email: "mike.attendance@zigma.edu",
-    phone: "+1-555-0203",
-    role: "attendance_staff",
-    department: "Student Services",
-    status: "active",
-    joinDate: "2023-06-10",
-    address: "789 Service Rd, Springfield, IL",
-    notes: "Responsible for attendance tracking and student monitoring",
-  },
-  {
-    id: "STAFF-004",
-    fullName: "Lisa Teacher",
-    email: "lisa.teacher@zigma.edu",
-    phone: "+1-555-0204",
-    role: "teacher",
-    department: "Mathematics",
-    status: "inactive",
-    joinDate: "2022-09-05",
-    address: "321 Teacher Ln, Springfield, IL",
-    notes: "On temporary leave",
-  },
-];
-
-const roleLabels = {
-  management_staff: "Management Staff",
-  attendance_staff: "Attendance Staff",
-  it_admin: "IT Administrator",
-  teacher: "Teacher",
+  address: string;
+  nic: string;
+  role: "ADMIN" | "MANAGER" | "ATTENDANCE";
+  status: "ACTIVE" | "INACTIVE";
 };
 
-const departments = [
-  "Information Technology",
-  "Academic Affairs",
-  "Student Services",
-  "Mathematics",
-  "Computer Science",
-  "Physics",
-  "Chemistry",
-  "Biology",
-  "English",
-  "History",
-  "Administration",
-];
+const createEmptyStaff = (): StaffDraft => ({
+  name: "",
+  email: "",
+  phone: "",
+  address: "",
+  nic: "",
+  role: "MANAGER",
+  status: "ACTIVE",
+});
 
 export function StaffManagement() {
-  const [staff, setStaff] = useState<StaffMember[]>(mockStaff);
+  const [staffMembers, setStaffMembers] = useState<StaffRecord[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isLoading, setIsLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
-  const [formData, setFormData] = useState<Partial<StaffMember>>({});
+  const [editingStaff, setEditingStaff] = useState<StaffRecord | null>(null);
+  const [newStaff, setNewStaff] = useState<StaffDraft>(createEmptyStaff);
+  const [isPending, startTransition] = useTransition();
 
-  const filteredStaff = staff.filter((member) => {
-    const matchesSearch =
-      member.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.department.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === "all" || member.role === roleFilter;
-    const matchesStatus =
-      statusFilter === "all" || member.status === statusFilter;
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+  useEffect(() => {
+    let isMounted = true;
 
-  const handleAddStaff = () => {
-    const newStaff: StaffMember = {
-      id: `STAFF-${(staff.length + 1).toString().padStart(3, "0")}`,
-      fullName: formData.fullName || "",
-      email: formData.email || "",
-      phone: formData.phone || "",
-      role: (formData.role as StaffMember["role"]) || "teacher",
-      department: formData.department || "",
-      status: "active",
-      joinDate: new Date().toISOString().split("T")[0],
-      address: formData.address,
-      notes: formData.notes,
+    const fetchStaff = async () => {
+      setIsLoading(true);
+      const result = await listStaff();
+
+      if (!isMounted) return;
+
+      if (result.success) {
+        setStaffMembers(result.data);
+        setListError(null);
+      } else {
+        setStaffMembers([]);
+        setListError(result.error);
+        toast.error(result.error);
+      }
+
+      setIsLoading(false);
     };
 
-    setStaff((prev) => [...prev, newStaff]);
-    setFormData({});
-    setIsAddDialogOpen(false);
-    toast.success("Staff member added successfully");
+    void fetchStaff();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const filteredStaff = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return staffMembers;
+
+    return staffMembers.filter((member) =>
+      [member.name, member.email, member.nic ?? ""]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(term))
+    );
+  }, [staffMembers, searchTerm]);
+
+  const handleCreateStaff = () => {
+    startTransition(async () => {
+      const result = await createStaff({
+        name: newStaff.name,
+        email: newStaff.email,
+        phone: newStaff.phone,
+        address: newStaff.address,
+        nic: newStaff.nic,
+        role: newStaff.role,
+        status: newStaff.status,
+      });
+
+      if (result.success) {
+        setStaffMembers((prev) => [result.data, ...prev]);
+        setIsAddDialogOpen(false);
+        setNewStaff(createEmptyStaff());
+        toast.success("Staff member added successfully");
+      } else {
+        toast.error(result.error);
+      }
+    });
   };
 
-  const handleEditStaff = () => {
+  const handleUpdateStaff = () => {
     if (!editingStaff) return;
 
-    setStaff((prev) =>
-      prev.map((member) =>
-        member.id === editingStaff.id ? { ...member, ...formData } : member
-      )
-    );
+    startTransition(async () => {
+      const result = await updateStaff({
+        id: editingStaff.id,
+        name: editingStaff.name,
+        email: editingStaff.email,
+        phone: editingStaff.phone ?? "",
+        address: editingStaff.address ?? "",
+        nic: editingStaff.nic ?? "",
+        role: editingStaff.role,
+        status: editingStaff.status,
+        dob: editingStaff.dob ?? undefined,
+        joinDate: editingStaff.joinDate ?? undefined,
+      });
 
-    setEditingStaff(null);
-    setFormData({});
-    toast.success("Staff member updated successfully");
+      if (result.success) {
+        setStaffMembers((prev) =>
+          prev.map((member) =>
+            member.id === result.data.id ? result.data : member
+          )
+        );
+        toast.success("Staff member updated successfully");
+        setEditingStaff(null);
+      } else {
+        toast.error(result.error);
+      }
+    });
   };
 
-  const handleStatusChange = (id: string, newStatus: "active" | "inactive") => {
-    setStaff((prev) =>
-      prev.map((member) =>
-        member.id === id ? { ...member, status: newStatus } : member
-      )
-    );
-    toast.success(
-      `Staff member ${newStatus === "active" ? "activated" : "deactivated"} successfully`
-    );
+  const handleDeleteStaff = (staffId: string) => {
+    startTransition(async () => {
+      const result = await deleteStaff(staffId);
+
+      if (result.success) {
+        setStaffMembers((prev) => prev.filter((member) => member.id !== staffId));
+        toast.success("Staff member removed successfully");
+      } else {
+        toast.error(result.error);
+      }
+    });
   };
 
-  const handleDeleteStaff = (id: string) => {
-    setStaff((prev) => prev.filter((member) => member.id !== id));
-    toast.success("Staff member deleted successfully");
-  };
-
-  const getStatusBadge = (status: string) => {
-    return status === "active" ? (
-      <Badge className="bg-success/10 text-success border-success/20">
-        Active
-      </Badge>
-    ) : (
-      <Badge variant="secondary">Inactive</Badge>
-    );
-  };
-
-  const getRoleBadge = (role: string) => {
-    const colors = {
-      it_admin: "bg-destructive/10 text-destructive border-destructive/20",
-      management_staff: "bg-primary/10 text-primary border-primary/20",
-      attendance_staff: "bg-warning/10 text-warning border-warning/20",
-      teacher: "bg-secondary/10 text-secondary border-secondary/20",
-    };
-
+  if (isLoading) {
     return (
-      <Badge
-        className={
-          colors[role as keyof typeof colors] ||
-          "bg-muted/10 text-muted-foreground border-muted/20"
-        }
-      >
-        {roleLabels[role as keyof typeof roleLabels] || role}
-      </Badge>
+      <div className="flex justify-center p-8 text-sm text-muted-foreground">
+        Loading staff...
+      </div>
     );
-  };
+  }
 
-  const openEditDialog = (member: StaffMember) => {
-    setEditingStaff(member);
-    setFormData(member);
-  };
-
-  const StaffFormDialog = ({ isEdit }: { isEdit: boolean }) => (
-    <Dialog
-      open={isEdit ? !!editingStaff : isAddDialogOpen}
-      onOpenChange={isEdit ? () => setEditingStaff(null) : setIsAddDialogOpen}
-    >
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>
-            {isEdit ? "Edit Staff Member" : "Add New Staff Member"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEdit
-              ? "Update staff member information"
-              : "Enter details for the new staff member"}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid grid-cols-2 gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
-            <Input
-              id="fullName"
-              value={formData.fullName || ""}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, fullName: e.target.value }))
+  if (listError) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 p-8 text-center">
+        <p className="text-sm text-muted-foreground">{listError}</p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setListError(null);
+            setIsLoading(true);
+            void listStaff().then((result) => {
+              if (result.success) {
+                setStaffMembers(result.data);
+              } else {
+                toast.error(result.error);
+                setListError(result.error);
               }
-              placeholder="Enter full name"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email || ""}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, email: e.target.value }))
-              }
-              placeholder="Enter email address"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              value={formData.phone || ""}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, phone: e.target.value }))
-              }
-              placeholder="Enter phone number"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
-            <Select
-              value={formData.role || ""}
-              onValueChange={(value) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  role: value as StaffMember["role"],
-                }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select role" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(roleLabels).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="department">Department</Label>
-            <Select
-              value={formData.department || ""}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, department: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select department" />
-              </SelectTrigger>
-              <SelectContent>
-                {departments.map((dept) => (
-                  <SelectItem key={dept} value={dept}>
-                    {dept}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="col-span-2 space-y-2">
-            <Label htmlFor="address">Address</Label>
-            <Input
-              id="address"
-              value={formData.address || ""}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, address: e.target.value }))
-              }
-              placeholder="Enter address"
-            />
-          </div>
-
-          <div className="col-span-2 space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes || ""}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, notes: e.target.value }))
-              }
-              placeholder="Additional notes or comments"
-              rows={3}
-            />
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setFormData({});
-              isEdit ? setEditingStaff(null) : setIsAddDialogOpen(false);
-            }}
-          >
-            Cancel
-          </Button>
-          <Button onClick={isEdit ? handleEditStaff : handleAddStaff}>
-            {isEdit ? "Update" : "Add"} Staff Member
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+              setIsLoading(false);
+            });
+          }}
+        >
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex items-center gap-3">
+          <Users className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold">Staff Management</h1>
-          <p className="text-muted-foreground">
-            Manage staff members and their roles
-          </p>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Staff Member
-        </Button>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Staff
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Add New Staff Member</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="staff-name">Full name</Label>
+                <Input
+                  id="staff-name"
+                  value={newStaff.name}
+                  onChange={(event) =>
+                    setNewStaff((prev) => ({
+                      ...prev,
+                      name: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="staff-email">Email</Label>
+                <Input
+                  id="staff-email"
+                  type="email"
+                  value={newStaff.email}
+                  onChange={(event) =>
+                    setNewStaff((prev) => ({
+                      ...prev,
+                      email: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="staff-phone">Phone</Label>
+                  <Input
+                    id="staff-phone"
+                    value={newStaff.phone}
+                    onChange={(event) =>
+                      setNewStaff((prev) => ({
+                        ...prev,
+                        phone: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="staff-status">Status</Label>
+                  <Select
+                    value={newStaff.status}
+                    onValueChange={(value) =>
+                      setNewStaff((prev) => ({
+                        ...prev,
+                        status: value as StaffDraft["status"],
+                      }))
+                    }
+                  >
+                    <SelectTrigger id="staff-status">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="staff-role">Role</Label>
+                  <Select
+                    value={newStaff.role}
+                    onValueChange={(value) =>
+                      setNewStaff((prev) => ({
+                        ...prev,
+                        role: value as StaffDraft["role"],
+                      }))
+                    }
+                  >
+                    <SelectTrigger id="staff-role">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roleOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="staff-nic">NIC</Label>
+                  <Input
+                    id="staff-nic"
+                    value={newStaff.nic}
+                    onChange={(event) =>
+                      setNewStaff((prev) => ({
+                        ...prev,
+                        nic: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="staff-address">Address</Label>
+                <Input
+                  id="staff-address"
+                  value={newStaff.address}
+                  onChange={(event) =>
+                    setNewStaff((prev) => ({
+                      ...prev,
+                      address: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <Button onClick={handleCreateStaff} disabled={isPending}>
+                {isPending ? "Adding..." : "Add staff member"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Staff
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{staff.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">
-              {staff.filter((s) => s.status === "active").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Inactive
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-muted-foreground">
-              {staff.filter((s) => s.status === "inactive").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Departments
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {new Set(staff.map((s) => s.department)).size}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Staff List */}
       <Card>
         <CardHeader>
-          <CardTitle>Staff Directory</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, email, or department..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle>Staff overview</CardTitle>
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+              <div className="relative flex-1 sm:w-64">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  className="pl-9"
+                  placeholder="Search by name, email, or NIC"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                />
+              </div>
+              <Badge variant="outline">Total: {filteredStaff.length}</Badge>
             </div>
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                {Object.entries(roleLabels).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
-
+        </CardHeader>
+        <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Staff ID</TableHead>
-                <TableHead>Name & Contact</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Department</TableHead>
+                <TableHead>NIC</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Join Date</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredStaff.map((member) => (
                 <TableRow key={member.id}>
-                  <TableCell className="font-medium">{member.id}</TableCell>
+                  <TableCell className="font-medium">{member.name}</TableCell>
+                  <TableCell>{member.email}</TableCell>
+                  <TableCell>{roleOptions.find((option) => option.value === member.role)?.label ?? member.role}</TableCell>
+                  <TableCell>{member.nic ?? "—"}</TableCell>
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{member.fullName}</div>
-                      <div className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Mail className="w-3 h-3" />
-                        {member.email}
-                      </div>
-                      <div className="text-sm text-muted-foreground flex items-center gap-2">
-                        <Phone className="w-3 h-3" />
-                        {member.phone}
-                      </div>
-                    </div>
+                    <Badge variant={member.status === "ACTIVE" ? "default" : "secondary"}>
+                      {member.status === "ACTIVE" ? "Active" : "Inactive"}
+                    </Badge>
                   </TableCell>
-                  <TableCell>{getRoleBadge(member.role)}</TableCell>
-                  <TableCell>{member.department}</TableCell>
-                  <TableCell>{getStatusBadge(member.status)}</TableCell>
-                  <TableCell>
-                    {new Date(member.joinDate).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEditDialog(member)}
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingStaff(member)}
+                        aria-label={`Edit ${member.name}`}
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="h-4 w-4" />
                       </Button>
-
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          handleStatusChange(
-                            member.id,
-                            member.status === "active" ? "inactive" : "active"
-                          )
-                        }
-                      >
-                        {member.status === "active" ? (
-                          <UserX className="w-4 h-4" />
-                        ) : (
-                          <UserCheck className="w-4 h-4" />
-                        )}
-                      </Button>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
+                        variant="ghost"
+                        size="icon"
                         onClick={() => handleDeleteStaff(member.id)}
+                        aria-label={`Delete ${member.name}`}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
+              {filteredStaff.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
+                    No staff members found.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      <StaffFormDialog isEdit={false} />
-      <StaffFormDialog isEdit={true} />
+      {editingStaff && (
+        <Dialog open onOpenChange={() => setEditingStaff(null)}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Edit staff member</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-staff-name">Full name</Label>
+                <Input
+                  id="edit-staff-name"
+                  value={editingStaff.name}
+                  onChange={(event) =>
+                    setEditingStaff((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            name: event.target.value,
+                          }
+                        : prev
+                    )
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-staff-email">Email</Label>
+                <Input
+                  id="edit-staff-email"
+                  type="email"
+                  value={editingStaff.email}
+                  onChange={(event) =>
+                    setEditingStaff((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            email: event.target.value,
+                          }
+                        : prev
+                    )
+                  }
+                />
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-staff-phone">Phone</Label>
+                  <Input
+                    id="edit-staff-phone"
+                    value={editingStaff.phone ?? ""}
+                    onChange={(event) =>
+                      setEditingStaff((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              phone: event.target.value,
+                            }
+                          : prev
+                      )
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-staff-status">Status</Label>
+                  <Select
+                    value={editingStaff.status}
+                    onValueChange={(value) =>
+                      setEditingStaff((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              status: value as StaffRecord["status"],
+                            }
+                          : prev
+                      )
+                    }
+                  >
+                    <SelectTrigger id="edit-staff-status">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-staff-role">Role</Label>
+                  <Select
+                    value={editingStaff.role}
+                    onValueChange={(value) =>
+                      setEditingStaff((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              role: value as StaffRecord["role"],
+                            }
+                          : prev
+                      )
+                    }
+                  >
+                    <SelectTrigger id="edit-staff-role">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roleOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-staff-nic">NIC</Label>
+                  <Input
+                    id="edit-staff-nic"
+                    value={editingStaff.nic ?? ""}
+                    onChange={(event) =>
+                      setEditingStaff((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              nic: event.target.value,
+                            }
+                          : prev
+                      )
+                    }
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-staff-address">Address</Label>
+                <Input
+                  id="edit-staff-address"
+                  value={editingStaff.address ?? ""}
+                  onChange={(event) =>
+                    setEditingStaff((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            address: event.target.value,
+                          }
+                        : prev
+                    )
+                  }
+                />
+              </div>
+              <Button onClick={handleUpdateStaff} disabled={isPending}>
+                {isPending ? "Saving..." : "Save changes"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

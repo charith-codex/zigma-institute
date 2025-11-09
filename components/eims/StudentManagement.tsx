@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { GraduationCap, Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Users, Plus, Search, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -33,11 +33,11 @@ import {
 } from "@/components/ui/table";
 
 import {
-  createTeacher,
-  deleteTeacher,
-  listTeachers,
-  updateTeacher,
-  type TeacherRecord,
+  createStudent,
+  deleteStudent,
+  listStudents,
+  updateStudent,
+  type StudentRecord,
 } from "@/lib/actions/eims-user-management";
 
 const statusOptions = [
@@ -45,136 +45,146 @@ const statusOptions = [
   { label: "Inactive", value: "INACTIVE" as const },
 ];
 
-type TeacherDraft = {
+type StudentDraft = {
   name: string;
   email: string;
   phone: string;
   address: string;
-  qualification: string;
-  nic: string;
+  parentEmail: string;
+  studentPublicId: string;
   status: "ACTIVE" | "INACTIVE";
 };
 
-const createEmptyTeacher = (): TeacherDraft => ({
+const createEmptyStudent = (): StudentDraft => ({
   name: "",
   email: "",
   phone: "",
   address: "",
-  qualification: "",
-  nic: "",
+  parentEmail: "",
+  studentPublicId: "",
   status: "ACTIVE",
 });
 
-export function TeacherManagement() {
-  const [teachers, setTeachers] = useState<TeacherRecord[]>([]);
+export function StudentManagement() {
+  const [students, setStudents] = useState<StudentRecord[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [listError, setListError] = useState<string | null>(null);
+  const [isListError, setIsListError] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingTeacher, setEditingTeacher] = useState<TeacherRecord | null>(null);
-  const [newTeacher, setNewTeacher] = useState<TeacherDraft>(createEmptyTeacher);
+  const [editingStudent, setEditingStudent] = useState<StudentRecord | null>(null);
+  const [newStudent, setNewStudent] = useState<StudentDraft>(createEmptyStudent);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     let isMounted = true;
 
-    const fetchTeachers = async () => {
+    const fetchStudents = async () => {
       setIsLoading(true);
-      const result = await listTeachers();
+      const result = await listStudents();
 
       if (!isMounted) return;
 
       if (result.success) {
-        setTeachers(result.data);
-        setListError(null);
+        setStudents(result.data);
+        setIsListError(null);
       } else {
-        setTeachers([]);
-        setListError(result.error);
+        setStudents([]);
+        setIsListError(result.error);
         toast.error(result.error);
       }
 
       setIsLoading(false);
     };
 
-    void fetchTeachers();
+    void fetchStudents();
 
     return () => {
       isMounted = false;
     };
   }, []);
 
-  const filteredTeachers = useMemo(() => {
+  const filteredStudents = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    if (!term) return teachers;
 
-    return teachers.filter((teacher) =>
-      [teacher.name, teacher.email, teacher.nic ?? ""]
+    if (!term) {
+      return students;
+    }
+
+    return students.filter((student) => {
+      const haystacks = [
+        student.name,
+        student.email,
+        student.parentEmail ?? "",
+        student.studentPublicId ?? "",
+      ]
         .filter(Boolean)
-        .some((value) => value.toLowerCase().includes(term))
-    );
-  }, [teachers, searchTerm]);
+        .map((value) => value.toLowerCase());
 
-  const handleCreateTeacher = () => {
+      return haystacks.some((value) => value.includes(term));
+    });
+  }, [students, searchTerm]);
+
+  const handleCreateStudent = () => {
     startTransition(async () => {
-      const result = await createTeacher({
-        name: newTeacher.name,
-        email: newTeacher.email,
-        phone: newTeacher.phone,
-        address: newTeacher.address,
-        qualification: newTeacher.qualification,
-        nic: newTeacher.nic,
-        status: newTeacher.status,
+      const result = await createStudent({
+        name: newStudent.name,
+        email: newStudent.email,
+        phone: newStudent.phone,
+        address: newStudent.address,
+        parentEmail: newStudent.parentEmail,
+        studentPublicId: newStudent.studentPublicId,
+        status: newStudent.status,
       });
 
       if (result.success) {
-        setTeachers((prev) => [result.data, ...prev]);
+        setStudents((prev) => [result.data, ...prev]);
         setIsAddDialogOpen(false);
-        setNewTeacher(createEmptyTeacher());
-        toast.success("Teacher added successfully");
+        setNewStudent(createEmptyStudent());
+        toast.success("Student added successfully");
       } else {
         toast.error(result.error);
       }
     });
   };
 
-  const handleUpdateTeacher = () => {
-    if (!editingTeacher) return;
+  const handleUpdateStudent = () => {
+    if (!editingStudent) return;
 
     startTransition(async () => {
-      const result = await updateTeacher({
-        id: editingTeacher.id,
-        name: editingTeacher.name,
-        email: editingTeacher.email,
-        phone: editingTeacher.phone ?? "",
-        address: editingTeacher.address ?? "",
-        qualification: editingTeacher.qualification ?? "",
-        nic: editingTeacher.nic ?? "",
-        status: editingTeacher.status,
-        dob: editingTeacher.dob ?? undefined,
-        joinDate: editingTeacher.joinDate ?? undefined,
+      const result = await updateStudent({
+        id: editingStudent.id,
+        name: editingStudent.name,
+        email: editingStudent.email,
+        phone: editingStudent.phone ?? "",
+        address: editingStudent.address ?? "",
+        parentEmail: editingStudent.parentEmail ?? "",
+        studentPublicId: editingStudent.studentPublicId ?? "",
+        status: editingStudent.status,
+        dob: editingStudent.dob ?? undefined,
+        joinDate: editingStudent.joinDate ?? undefined,
       });
 
       if (result.success) {
-        setTeachers((prev) =>
-          prev.map((teacher) =>
-            teacher.id === result.data.id ? result.data : teacher
+        setStudents((prev) =>
+          prev.map((student) =>
+            student.id === result.data.id ? result.data : student
           )
         );
-        toast.success("Teacher updated successfully");
-        setEditingTeacher(null);
+        toast.success("Student updated successfully");
+        setEditingStudent(null);
       } else {
         toast.error(result.error);
       }
     });
   };
 
-  const handleDeleteTeacher = (teacherId: string) => {
+  const handleDeleteStudent = (studentId: string) => {
     startTransition(async () => {
-      const result = await deleteTeacher(teacherId);
+      const result = await deleteStudent(studentId);
 
       if (result.success) {
-        setTeachers((prev) => prev.filter((teacher) => teacher.id !== teacherId));
-        toast.success("Teacher removed successfully");
+        setStudents((prev) => prev.filter((student) => student.id !== studentId));
+        toast.success("Student removed successfully");
       } else {
         toast.error(result.error);
       }
@@ -184,27 +194,27 @@ export function TeacherManagement() {
   if (isLoading) {
     return (
       <div className="flex justify-center p-8 text-sm text-muted-foreground">
-        Loading teachers...
+        Loading students...
       </div>
     );
   }
 
-  if (listError) {
+  if (isListError) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 p-8 text-center">
-        <p className="text-sm text-muted-foreground">{listError}</p>
+        <p className="text-sm text-muted-foreground">{isListError}</p>
         <Button
           variant="outline"
           size="sm"
           onClick={() => {
-            setListError(null);
+            setIsListError(null);
             setIsLoading(true);
-            void listTeachers().then((result) => {
+            void listStudents().then((result) => {
               if (result.success) {
-                setTeachers(result.data);
+                setStudents(result.data);
               } else {
                 toast.error(result.error);
-                setListError(result.error);
+                setIsListError(result.error);
               }
               setIsLoading(false);
             });
@@ -220,28 +230,28 @@ export function TeacherManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <GraduationCap className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">Teacher Management</h1>
+          <Users className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold">Student Management</h1>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Add Teacher
+              Add Student
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>Add New Teacher</DialogTitle>
+              <DialogTitle>Add New Student</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid gap-2">
-                <Label htmlFor="teacher-name">Full name</Label>
+                <Label htmlFor="student-name">Full name</Label>
                 <Input
-                  id="teacher-name"
-                  value={newTeacher.name}
+                  id="student-name"
+                  value={newStudent.name}
                   onChange={(event) =>
-                    setNewTeacher((prev) => ({
+                    setNewStudent((prev) => ({
                       ...prev,
                       name: event.target.value,
                     }))
@@ -249,13 +259,13 @@ export function TeacherManagement() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="teacher-email">Email</Label>
+                <Label htmlFor="student-email">Email</Label>
                 <Input
-                  id="teacher-email"
+                  id="student-email"
                   type="email"
-                  value={newTeacher.email}
+                  value={newStudent.email}
                   onChange={(event) =>
-                    setNewTeacher((prev) => ({
+                    setNewStudent((prev) => ({
                       ...prev,
                       email: event.target.value,
                     }))
@@ -264,12 +274,12 @@ export function TeacherManagement() {
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="teacher-phone">Phone</Label>
+                  <Label htmlFor="student-phone">Phone</Label>
                   <Input
-                    id="teacher-phone"
-                    value={newTeacher.phone}
+                    id="student-phone"
+                    value={newStudent.phone}
                     onChange={(event) =>
-                      setNewTeacher((prev) => ({
+                      setNewStudent((prev) => ({
                         ...prev,
                         phone: event.target.value,
                       }))
@@ -277,17 +287,17 @@ export function TeacherManagement() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="teacher-status">Status</Label>
+                  <Label htmlFor="student-status">Status</Label>
                   <Select
-                    value={newTeacher.status}
+                    value={newStudent.status}
                     onValueChange={(value) =>
-                      setNewTeacher((prev) => ({
+                      setNewStudent((prev) => ({
                         ...prev,
-                        status: value as TeacherDraft["status"],
+                        status: value as StudentDraft["status"],
                       }))
                     }
                   >
-                    <SelectTrigger id="teacher-status">
+                    <SelectTrigger id="student-status">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -301,46 +311,47 @@ export function TeacherManagement() {
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="teacher-qualification">Qualification</Label>
+                <Label htmlFor="student-parent-email">Parent email</Label>
                 <Input
-                  id="teacher-qualification"
-                  value={newTeacher.qualification}
+                  id="student-parent-email"
+                  type="email"
+                  value={newStudent.parentEmail}
                   onChange={(event) =>
-                    setNewTeacher((prev) => ({
+                    setNewStudent((prev) => ({
                       ...prev,
-                      qualification: event.target.value,
+                      parentEmail: event.target.value,
                     }))
                   }
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="teacher-nic">NIC</Label>
+                <Label htmlFor="student-public-id">Student ID</Label>
                 <Input
-                  id="teacher-nic"
-                  value={newTeacher.nic}
+                  id="student-public-id"
+                  value={newStudent.studentPublicId}
                   onChange={(event) =>
-                    setNewTeacher((prev) => ({
+                    setNewStudent((prev) => ({
                       ...prev,
-                      nic: event.target.value,
+                      studentPublicId: event.target.value,
                     }))
                   }
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="teacher-address">Address</Label>
+                <Label htmlFor="student-address">Address</Label>
                 <Input
-                  id="teacher-address"
-                  value={newTeacher.address}
+                  id="student-address"
+                  value={newStudent.address}
                   onChange={(event) =>
-                    setNewTeacher((prev) => ({
+                    setNewStudent((prev) => ({
                       ...prev,
                       address: event.target.value,
                     }))
                   }
                 />
               </div>
-              <Button onClick={handleCreateTeacher} disabled={isPending}>
-                {isPending ? "Adding..." : "Add teacher"}
+              <Button onClick={handleCreateStudent} disabled={isPending}>
+                {isPending ? "Adding..." : "Add student"}
               </Button>
             </div>
           </DialogContent>
@@ -350,18 +361,18 @@ export function TeacherManagement() {
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle>Teachers overview</CardTitle>
+            <CardTitle>Students overview</CardTitle>
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
               <div className="relative flex-1 sm:w-64">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   className="pl-9"
-                  placeholder="Search by name, email, or NIC"
+                  placeholder="Search by name, email, or ID"
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
                 />
               </div>
-              <Badge variant="outline">Total: {filteredTeachers.length}</Badge>
+              <Badge variant="outline">Total: {filteredStudents.length}</Badge>
             </div>
           </div>
         </CardHeader>
@@ -371,22 +382,22 @@ export function TeacherManagement() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Qualification</TableHead>
-                <TableHead>NIC</TableHead>
+                <TableHead>Student ID</TableHead>
+                <TableHead>Parent Email</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTeachers.map((teacher) => (
-                <TableRow key={teacher.id}>
-                  <TableCell className="font-medium">{teacher.name}</TableCell>
-                  <TableCell>{teacher.email}</TableCell>
-                  <TableCell>{teacher.qualification ?? "—"}</TableCell>
-                  <TableCell>{teacher.nic ?? "—"}</TableCell>
+              {filteredStudents.map((student) => (
+                <TableRow key={student.id}>
+                  <TableCell className="font-medium">{student.name}</TableCell>
+                  <TableCell>{student.email}</TableCell>
+                  <TableCell>{student.studentPublicId ?? "—"}</TableCell>
+                  <TableCell>{student.parentEmail ?? "—"}</TableCell>
                   <TableCell>
-                    <Badge variant={teacher.status === "ACTIVE" ? "default" : "secondary"}>
-                      {teacher.status === "ACTIVE" ? "Active" : "Inactive"}
+                    <Badge variant={student.status === "ACTIVE" ? "default" : "secondary"}>
+                      {student.status === "ACTIVE" ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -394,16 +405,16 @@ export function TeacherManagement() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setEditingTeacher(teacher)}
-                        aria-label={`Edit ${teacher.name}`}
+                        onClick={() => setEditingStudent(student)}
+                        aria-label={`Edit ${student.name}`}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDeleteTeacher(teacher.id)}
-                        aria-label={`Delete ${teacher.name}`}
+                        onClick={() => handleDeleteStudent(student.id)}
+                        aria-label={`Delete ${student.name}`}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -411,10 +422,10 @@ export function TeacherManagement() {
                   </TableCell>
                 </TableRow>
               ))}
-              {filteredTeachers.length === 0 && (
+              {filteredStudents.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
-                    No teachers found.
+                    No students found.
                   </TableCell>
                 </TableRow>
               )}
@@ -423,20 +434,20 @@ export function TeacherManagement() {
         </CardContent>
       </Card>
 
-      {editingTeacher && (
-        <Dialog open onOpenChange={() => setEditingTeacher(null)}>
+      {editingStudent && (
+        <Dialog open onOpenChange={() => setEditingStudent(null)}>
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
-              <DialogTitle>Edit teacher</DialogTitle>
+              <DialogTitle>Edit student</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="grid gap-2">
-                <Label htmlFor="edit-teacher-name">Full name</Label>
+                <Label htmlFor="edit-student-name">Full name</Label>
                 <Input
-                  id="edit-teacher-name"
-                  value={editingTeacher.name}
+                  id="edit-student-name"
+                  value={editingStudent.name}
                   onChange={(event) =>
-                    setEditingTeacher((prev) =>
+                    setEditingStudent((prev) =>
                       prev
                         ? {
                             ...prev,
@@ -448,13 +459,13 @@ export function TeacherManagement() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-teacher-email">Email</Label>
+                <Label htmlFor="edit-student-email">Email</Label>
                 <Input
-                  id="edit-teacher-email"
+                  id="edit-student-email"
                   type="email"
-                  value={editingTeacher.email}
+                  value={editingStudent.email}
                   onChange={(event) =>
-                    setEditingTeacher((prev) =>
+                    setEditingStudent((prev) =>
                       prev
                         ? {
                             ...prev,
@@ -467,12 +478,12 @@ export function TeacherManagement() {
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-teacher-phone">Phone</Label>
+                  <Label htmlFor="edit-student-phone">Phone</Label>
                   <Input
-                    id="edit-teacher-phone"
-                    value={editingTeacher.phone ?? ""}
+                    id="edit-student-phone"
+                    value={editingStudent.phone ?? ""}
                     onChange={(event) =>
-                      setEditingTeacher((prev) =>
+                      setEditingStudent((prev) =>
                         prev
                           ? {
                               ...prev,
@@ -484,21 +495,21 @@ export function TeacherManagement() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit-teacher-status">Status</Label>
+                  <Label htmlFor="edit-student-status">Status</Label>
                   <Select
-                    value={editingTeacher.status}
+                    value={editingStudent.status}
                     onValueChange={(value) =>
-                      setEditingTeacher((prev) =>
+                      setEditingStudent((prev) =>
                         prev
                           ? {
                               ...prev,
-                              status: value as TeacherRecord["status"],
+                              status: value as StudentRecord["status"],
                             }
                           : prev
                       )
                     }
                   >
-                    <SelectTrigger id="edit-teacher-status">
+                    <SelectTrigger id="edit-student-status">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -512,16 +523,17 @@ export function TeacherManagement() {
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-teacher-qualification">Qualification</Label>
+                <Label htmlFor="edit-student-parent-email">Parent email</Label>
                 <Input
-                  id="edit-teacher-qualification"
-                  value={editingTeacher.qualification ?? ""}
+                  id="edit-student-parent-email"
+                  type="email"
+                  value={editingStudent.parentEmail ?? ""}
                   onChange={(event) =>
-                    setEditingTeacher((prev) =>
+                    setEditingStudent((prev) =>
                       prev
                         ? {
                             ...prev,
-                            qualification: event.target.value,
+                            parentEmail: event.target.value,
                           }
                         : prev
                     )
@@ -529,16 +541,16 @@ export function TeacherManagement() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-teacher-nic">NIC</Label>
+                <Label htmlFor="edit-student-id">Student ID</Label>
                 <Input
-                  id="edit-teacher-nic"
-                  value={editingTeacher.nic ?? ""}
+                  id="edit-student-id"
+                  value={editingStudent.studentPublicId ?? ""}
                   onChange={(event) =>
-                    setEditingTeacher((prev) =>
+                    setEditingStudent((prev) =>
                       prev
                         ? {
                             ...prev,
-                            nic: event.target.value,
+                            studentPublicId: event.target.value,
                           }
                         : prev
                     )
@@ -546,12 +558,12 @@ export function TeacherManagement() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="edit-teacher-address">Address</Label>
+                <Label htmlFor="edit-student-address">Address</Label>
                 <Input
-                  id="edit-teacher-address"
-                  value={editingTeacher.address ?? ""}
+                  id="edit-student-address"
+                  value={editingStudent.address ?? ""}
                   onChange={(event) =>
-                    setEditingTeacher((prev) =>
+                    setEditingStudent((prev) =>
                       prev
                         ? {
                             ...prev,
@@ -562,7 +574,7 @@ export function TeacherManagement() {
                   }
                 />
               </div>
-              <Button onClick={handleUpdateTeacher} disabled={isPending}>
+              <Button onClick={handleUpdateStudent} disabled={isPending}>
                 {isPending ? "Saving..." : "Save changes"}
               </Button>
             </div>

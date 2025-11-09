@@ -25,7 +25,7 @@ import FeeManagement from "./FeeManagement";
 import AttendanceQR from "./AttendanceQR";
 import { StaffManagement } from "./StaffManagement";
 import { InquiryManagement } from "./InquiryManagement";
-import { StudentManagement } from "../cms/StudentManagement";
+import { StudentManagement } from "./StudentManagement";
 import { TeacherManagement } from "./TeacherManagement";
 import { CourseManagement } from "./CourseManagement";
 import { StudentRegistrationManagement } from "./StudentRegistrationManagement";
