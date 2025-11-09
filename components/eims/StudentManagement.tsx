@@ -65,7 +65,11 @@ const createEmptyStudent = (): StudentDraft => ({
   status: "ACTIVE",
 });
 
-export function StudentManagement() {
+type StudentManagementProps = {
+  courseId?: string;
+};
+
+export function StudentManagement(_: StudentManagementProps = {}) {
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
