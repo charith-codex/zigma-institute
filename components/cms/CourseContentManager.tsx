@@ -22,7 +22,6 @@ import { toast } from "sonner";
 import { WeekNavigation } from "../lms/WeekNavigation";
 import { Material, WeekContentView } from "../lms/WeekContentView";
 import { Week, WeekManager } from "../lms/WeekManager";
-import { StudentManagement } from "./StudentManagement";
 import { QuestionCreation } from "./QuestionCreation";
 import { ExamBuilder } from "./ExamBuilder";
 import { ExamScheduler } from "./ExamScheduler";
@@ -480,8 +479,7 @@ export function CourseContentManager({
           </div>
         );
 
-      case "students":
-        return <StudentManagement courseId={courseId} />;
+    
 
       case "quizzes":
         return <QuestionCreation />;
