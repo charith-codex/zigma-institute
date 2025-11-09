@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/db/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import type { UserRole } from "@prisma/client";
 
 const permittedRoles = ["ADMIN", "MANAGER"] as const;
 
@@ -187,7 +188,7 @@ const serializeStaff = (user: {
   phone: string | null;
   address: string | null;
   status: "ACTIVE" | "INACTIVE";
-  role: "ADMIN" | "MANAGER" | "ATTENDANCE";
+  role: UserRole;
   dob: Date | null;
   joinDate: Date | null;
   createdAt: Date;
@@ -202,7 +203,7 @@ const serializeStaff = (user: {
   phone: user.phone,
   address: user.address,
   status: user.status,
-  role: user.role,
+  role: user.role as StaffRecord["role"],
   nic: user.staff?.nic ?? null,
   dob: serializeDate(user.dob),
   joinDate: serializeDate(user.joinDate),
