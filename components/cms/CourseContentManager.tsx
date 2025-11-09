@@ -479,8 +479,6 @@ export function CourseContentManager({
           </div>
         );
 
-    
-
       case "quizzes":
         return <QuestionCreation />;
 
@@ -582,7 +580,7 @@ export function CourseContentManager({
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="flex min-h-screen bg-linear-to-br from-background via-background to-muted/20">
       {/* Left Sidebar */}
       <div className="w-64 bg-card/50 backdrop-blur-sm border-r border-border/50 p-4">
         {/* Header */}

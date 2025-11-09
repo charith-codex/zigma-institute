@@ -29,6 +29,7 @@ import { TeacherManagement } from "./TeacherManagement";
 import { CourseManagement } from "./CourseManagement";
 import { StudentRegistrationManagement } from "./StudentRegistrationManagement";
 import { ShowcaseManagement } from "./ShowcaseManagement";
+import { StudentManagement } from "./StudentManagement";
 
 interface DashboardContentProps {
   activeModule: string;
@@ -237,8 +238,8 @@ export function DashboardContent({
         return <StaffManagement />;
       case "inquiry-management":
         return <InquiryManagement />;
-      // case "students":
-      //   return <StudentManagement />;
+      case "students":
+        return <StudentManagement />;
       case "teachers":
         return <TeacherManagement />;
       case "classes":
