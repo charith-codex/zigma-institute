@@ -209,6 +209,14 @@ const serializeStaff = (user: {
   updatedAt: serializeDate(user.updatedAt)!,
 });
 
+const coerceStaffRole = (role: string): StaffRecord["role"] => {
+  if (role === "ADMIN" || role === "MANAGER" || role === "ATTENDANCE") {
+    return role;
+  }
+
+  throw new Error(`Unexpected staff role received: ${role}`);
+};
+
 export async function listStudents(): Promise<BaseActionResult<StudentRecord[]>> {
   const authorization = await ensureAuthorized();
   if (!authorization.success) {
@@ -518,7 +526,22 @@ export async function listStaff(): Promise<BaseActionResult<StaffRecord[]>> {
 
     return {
       success: true,
-      data: staffMembers.map(serializeStaff),
+      data: staffMembers.map((member) =>
+        serializeStaff({
+          id: member.id,
+          name: member.name,
+          email: member.email,
+          phone: member.phone,
+          address: member.address,
+          status: member.status,
+          role: coerceStaffRole(member.role),
+          dob: member.dob,
+          joinDate: member.joinDate,
+          createdAt: member.createdAt,
+          updatedAt: member.updatedAt,
+          staff: member.staff,
+        })
+      ),
     };
   } catch (error) {
     console.error("Failed to list staff", error);
@@ -563,7 +586,20 @@ export async function createStaff(
 
     return {
       success: true,
-      data: serializeStaff(created),
+      data: serializeStaff({
+        id: created.id,
+        name: created.name,
+        email: created.email,
+        phone: created.phone,
+        address: created.address,
+        status: created.status,
+        role: coerceStaffRole(created.role),
+        dob: created.dob,
+        joinDate: created.joinDate,
+        createdAt: created.createdAt,
+        updatedAt: created.updatedAt,
+        staff: created.staff,
+      }),
     };
   } catch (error) {
     console.error("Failed to create staff", error);
@@ -610,7 +646,20 @@ export async function updateStaff(
 
     return {
       success: true,
-      data: serializeStaff(updated),
+      data: serializeStaff({
+        id: updated.id,
+        name: updated.name,
+        email: updated.email,
+        phone: updated.phone,
+        address: updated.address,
+        status: updated.status,
+        role: coerceStaffRole(updated.role),
+        dob: updated.dob,
+        joinDate: updated.joinDate,
+        createdAt: updated.createdAt,
+        updatedAt: updated.updatedAt,
+        staff: updated.staff,
+      }),
     };
   } catch (error) {
     console.error("Failed to update staff", error);
