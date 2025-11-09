@@ -25,7 +25,6 @@ import FeeManagement from "./FeeManagement";
 import AttendanceQR from "./AttendanceQR";
 import { StaffManagement } from "./StaffManagement";
 import { InquiryManagement } from "./InquiryManagement";
-import { StudentManagement } from "../cms/StudentManagement";
 import { TeacherManagement } from "./TeacherManagement";
 import { CourseManagement } from "./CourseManagement";
 import { StudentRegistrationManagement } from "./StudentRegistrationManagement";
@@ -238,8 +237,8 @@ export function DashboardContent({
         return <StaffManagement />;
       case "inquiry-management":
         return <InquiryManagement />;
-      case "students":
-        return <StudentManagement />;
+      // case "students":
+      //   return <StudentManagement />;
       case "teachers":
         return <TeacherManagement />;
       case "classes":
