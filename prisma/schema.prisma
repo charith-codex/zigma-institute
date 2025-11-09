@@ -19,6 +19,7 @@ model User {
   dob           DateTime?
   joinDate      DateTime?
   profileImage  String?
+  gender        Gender? 
   status        UserStatus  @default(ACTIVE)
   role          UserRole
 
@@ -33,6 +34,11 @@ model User {
   questions      Question[]   @relation("QuestionCreatedBy")
   createdExams   ExamPaper[]  @relation("ExamCreatedBy")
   gradedAttempts ExamAttempt[] @relation("AttemptGradedBy")
+}
+
+enum Gender {
+  MALE
+  FEMALE
 }
 
 enum UserRole {
