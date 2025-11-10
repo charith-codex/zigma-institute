@@ -7,8 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { RegistrationForm } from "@/components/student-registration/registration-form";
 
 const enrollmentSteps = [
   {
@@ -35,24 +34,15 @@ const enrollmentSteps = [
 
 const documentChecklist = [
   "Latest school report or exam results (PDF)",
-  "Copy of national ID / birth certificate",
-  "Proof of payment (online receipt or bank slip)",
+  "Copy of national ID or birth certificate",
   "Parent or guardian contact information",
-];
-
-const classStreams = [
-  "Ordinary Level Revision",
-  "Advanced Level Science",
-  "Advanced Level Commerce",
-  "Advanced Level Technology",
-  "English & Communication Skills",
-  "AI & Emerging Tech Bootcamp",
+  "Preferred class stream or programme",
 ];
 
 export default function StudentRegisterPage() {
   return (
     <div className="space-y-16 py-12">
-      <section className="grid gap-10 lg:grid-cols-[3fr_2fr] items-start">
+      <section className="grid items-start gap-10 lg:grid-cols-[3fr_2fr]">
         <div className="space-y-6">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">
             Student Registration
@@ -93,7 +83,10 @@ export default function StudentRegisterPage() {
         </Card>
       </section>
 
-      <section className="grid gap-8 lg:grid-cols-[2fr_1fr]" id="registration-form">
+      <section
+        className="grid gap-8 lg:grid-cols-[2fr_1fr]"
+        id="registration-form"
+      >
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">Student details</CardTitle>
@@ -103,199 +96,42 @@ export default function StudentRegisterPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
-            <form className="space-y-8">
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">Student first name *</Label>
-                  <Input id="firstName" name="firstName" placeholder="Amaya" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Student last name *</Label>
-                  <Input id="lastName" name="lastName" placeholder="Perera" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dob">Date of birth *</Label>
-                  <Input id="dob" name="dob" type="date" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="school">Current school</Label>
-                  <Input
-                    id="school"
-                    name="school"
-                    placeholder="Royal College"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="studentEmail">Student email *</Label>
-                  <Input
-                    id="studentEmail"
-                    name="studentEmail"
-                    type="email"
-                    placeholder="student@example.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Mobile number *</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    placeholder="(+94) 77 123 4567"
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="guardianName">Parent / guardian name *</Label>
-                  <Input
-                    id="guardianName"
-                    name="guardianName"
-                    placeholder="Sunethra Perera"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="guardianEmail">Parent / guardian email *</Label>
-                  <Input
-                    id="guardianEmail"
-                    name="guardianEmail"
-                    type="email"
-                    placeholder="guardian@example.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="guardianPhone">Parent / guardian phone *</Label>
-                  <Input
-                    id="guardianPhone"
-                    name="guardianPhone"
-                    placeholder="(+94) 71 987 6543"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="contactPreference">Preferred contact method</Label>
-                  <select
-                    id="contactPreference"
-                    name="contactPreference"
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                    defaultValue="email"
-                  >
-                    <option value="email">Email</option>
-                    <option value="phone">Phone</option>
-                    <option value="whatsapp">WhatsApp</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="stream">Preferred class stream *</Label>
-                  <select
-                    id="stream"
-                    name="stream"
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                  >
-                    <option value="">Select a stream</option>
-                    {classStreams.map((stream) => (
-                      <option key={stream} value={stream}>
-                        {stream}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="goals">Learning goals</Label>
-                  <textarea
-                    id="goals"
-                    name="goals"
-                    rows={4}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                    placeholder="Tell us about your target exams, subjects that need support, or clubs you want to join."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="paymentRef">Payment reference *</Label>
-                  <Input
-                    id="paymentRef"
-                    name="paymentRef"
-                    placeholder="Stripe receipt ID or bank slip number"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="documents">Upload supporting documents *</Label>
-                  <Input id="documents" name="documents" type="file" multiple />
-                  <p className="text-xs text-muted-foreground">
-                    Accepted formats: PDF, JPG, or PNG (max 10MB each)
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <p className="text-sm text-muted-foreground">
-                  By submitting, you agree to our privacy policy and confirm that
-                  details are accurate to the best of your knowledge.
-                </p>
-                <Button type="submit" size="lg">
-                  Submit registration
-                </Button>
-              </div>
-            </form>
+            <RegistrationForm />
           </CardContent>
         </Card>
-        <div className="space-y-8">
-          <Card className="bg-muted/40">
-            <CardHeader>
-              <CardTitle className="text-xl">Documents checklist</CardTitle>
-              <CardDescription>
-                Upload clear scans to help our staff verify your enrollment quickly.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <ul className="space-y-2">
+        <Card className="h-full border-dashed border-muted-foreground/40">
+          <CardHeader>
+            <CardTitle className="text-xl">Before you begin</CardTitle>
+            <CardDescription>
+              Preparing these details in advance speeds up verification and ID
+              card generation.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6 text-sm text-muted-foreground">
+            <div>
+              <p className="font-medium text-foreground">Document checklist</p>
+              <ul className="mt-2 space-y-1 list-disc pl-4">
                 {documentChecklist.map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <span className="mt-1 inline-block h-2 w-2 rounded-full bg-primary" />
-                    <span>{item}</span>
-                  </li>
+                  <li key={item}>{item}</li>
                 ))}
               </ul>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl">Need help?</CardTitle>
-              <CardDescription>
-                Our admissions mentors can walk you through each step and arrange campus visits.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-muted-foreground">
-              <div>
-                <p className="font-medium text-foreground">Admissions hotline</p>
-                <Link
-                  href="tel:+94112223344"
-                  className="text-primary hover:underline"
-                >
-                  +94 11 222 3344
-                </Link>
-              </div>
-              <div>
-                <p className="font-medium text-foreground">Email</p>
+            </div>
+            <div>
+              <p className="font-medium text-foreground">Need assistance?</p>
+              <p>
+                Our support team can help with payment plans or document
+                questions. Email {" "}
                 <Link
                   href="mailto:admissions@zigmainstitute.lk"
-                  className="text-primary hover:underline"
+                  className="text-primary underline"
                 >
                   admissions@zigmainstitute.lk
-                </Link>
-              </div>
-              <div>
-                <p className="font-medium text-foreground">Visit us</p>
-                <p>Colombo Innovation Hub, 512 Galle Road, Colombo 03</p>
-              </div>
-              <Button asChild variant="outline">
-                <Link href="/contact">Book a consultation</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+                </Link>{" "}
+                or call +94 11 234 5678.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </section>
     </div>
   );

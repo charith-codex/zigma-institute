@@ -76,9 +76,54 @@ model Student {
   userId          String   @id
   studentPublicId String?   @unique
   parentEmail     String?
+  idCardUrl       String?
+  idCardFileKey   String?
+  idCardGeneratedAt DateTime?
+  profileImageFileKey String?
 
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   enrollments     Enrollment[]
+}
+
+model PendingStudentRegistration {
+  id                   String   @id @default(uuid())
+  firstName            String
+  lastName             String
+  email                String
+  phone                String
+  dob                  DateTime?
+  address              String?
+  parentEmail          String?
+  profileImageData     String?
+  profileImageUrl      String?
+  profileImageMimeType String?
+  profileImageFileKey  String?
+  status               PendingRegistrationStatus @default(PENDING_PAYMENT)
+  source               RegistrationSource        @default(ONLINE)
+  stripeSessionId      String?  @unique
+  stripeCustomerId     String?
+  studentId            String?
+  notes                String?
+  failureReason        String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  completedAt          DateTime?
+
+  student Student? @relation(fields: [studentId], references: [userId], onDelete: SetNull)
+}
+
+enum PendingRegistrationStatus {
+  PENDING_PAYMENT
+  AWAITING_APPROVAL
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum RegistrationSource {
+  ONLINE
+  OFFLINE
 }
 
 model Teacher {

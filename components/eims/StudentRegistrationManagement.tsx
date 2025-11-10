@@ -1,16 +1,22 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
+import { toast } from "sonner";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -20,165 +26,407 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { UploadButton } from "@/lib/uploadthing";
 import {
-  Search,
-  Eye,
-  Check,
-  X,
+  Loader2,
+  PlusCircle,
+  Printer,
+  ShieldCheck,
   UserPlus,
-  Filter,
-  Download,
 } from "lucide-react";
-import { toast } from "sonner";
 
-interface StudentRegistration {
+interface OfflineRegistration {
   id: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
-  dateOfBirth: string;
-  address: string;
-  course: string;
-  feeAmount: number;
-  status: "pending" | "approved" | "rejected";
-  submittedAt: string;
-  guardianName?: string;
-  guardianPhone?: string;
+  parentEmail?: string | null;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  profileImageUrl?: string | null;
+  notes?: string | null;
+  studentPublicId?: string | null;
+  idCardUrl?: string | null;
 }
 
-const mockRegistrations: StudentRegistration[] = [
-  {
-    id: "REG-001",
-    fullName: "Alice Johnson",
-    email: "alice.johnson@email.com",
-    phone: "+1-555-0101",
-    dateOfBirth: "2005-03-15",
-    address: "123 Main St, Springfield, IL",
-    course: "Computer Science",
-    feeAmount: 5000,
-    status: "pending",
-    submittedAt: "2024-01-15T10:30:00",
-    guardianName: "Robert Johnson",
-    guardianPhone: "+1-555-0102",
-  },
-  {
-    id: "REG-002",
-    fullName: "Bob Smith",
-    email: "bob.smith@email.com",
-    phone: "+1-555-0103",
-    dateOfBirth: "2004-07-22",
-    address: "456 Oak Ave, Springfield, IL",
-    course: "Mathematics",
-    feeAmount: 4500,
-    status: "approved",
-    submittedAt: "2024-01-14T14:20:00",
-  },
-  {
-    id: "REG-003",
-    fullName: "Carol Davis",
-    email: "carol.davis@email.com",
-    phone: "+1-555-0104",
-    dateOfBirth: "2005-11-08",
-    address: "789 Pine Rd, Springfield, IL",
-    course: "Physics",
-    feeAmount: 4800,
-    status: "rejected",
-    submittedAt: "2024-01-13T09:45:00",
-  },
-];
+interface RegistrationStats {
+  total: number;
+  awaitingApproval: number;
+  completed: number;
+  failed: number;
+}
+
+const INITIAL_FORM = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  parentEmail: "",
+  dob: "",
+  address: "",
+  notes: "",
+};
 
 export function StudentRegistrationManagement() {
-  const [registrations, setRegistrations] =
-    useState<StudentRegistration[]>(mockRegistrations);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedRegistration, setSelectedRegistration] =
-    useState<StudentRegistration | null>(null);
-
-  const filteredRegistrations = registrations.filter((reg) => {
-    const matchesSearch =
-      reg.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.course.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || reg.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  const [registrations, setRegistrations] = useState<OfflineRegistration[]>([]);
+  const [stats, setStats] = useState<RegistrationStats>({
+    total: 0,
+    awaitingApproval: 0,
+    completed: 0,
+    failed: 0,
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [formState, setFormState] = useState(INITIAL_FORM);
+  const [photo, setPhoto] = useState<{ url: string; fileKey: string } | null>(
+    null
+  );
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleStatusChange = (
-    id: string,
-    newStatus: "approved" | "rejected"
-  ) => {
-    setRegistrations((prev) =>
-      prev.map((reg) => (reg.id === id ? { ...reg, status: newStatus } : reg))
-    );
-    toast.success(`Registration ${newStatus} successfully`);
+  const fetchRegistrations = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/student-registration/offline");
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error ?? "Failed to load registrations");
+      }
+
+      const payload = await response.json();
+      setRegistrations(payload.registrations ?? []);
+      setStats(payload.stats ?? stats);
+      setError(null);
+    } catch (requestError) {
+      console.error(requestError);
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Failed to load registrations"
+      );
+      setRegistrations([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "pending":
-        return <Badge variant="secondary">Pending</Badge>;
-      case "approved":
-        return (
-          <Badge className="bg-success/10 text-success border-success/20">
-            Approved
-          </Badge>
-        );
-      case "rejected":
-        return <Badge variant="destructive">Rejected</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
+  useEffect(() => {
+    void fetchRegistrations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const awaitingApproval = useMemo(
+    () => registrations.filter((registration) => registration.status === "AWAITING_APPROVAL"),
+    [registrations]
+  );
+
+  const handleApprove = async (id: string) => {
+    try {
+      const response = await fetch(
+        `/api/student-registration/offline/${id}/approve`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error ?? "Failed to approve registration");
+      }
+
+      toast.success("Registration approved and student notified");
+      await fetchRegistrations();
+    } catch (approveError) {
+      console.error(approveError);
+      toast.error(
+        approveError instanceof Error
+          ? approveError.message
+          : "Unable to approve registration"
+      );
+    }
+  };
+
+  const handlePrintAll = async () => {
+    try {
+      const response = await fetch("/api/student-registration/print-all");
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error ?? "No ID cards available to print");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "student-id-cards.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (printError) {
+      console.error(printError);
+      toast.error(
+        printError instanceof Error
+          ? printError.message
+          : "Unable to generate ID card bundle"
+      );
+    }
+  };
+
+  const handleInputChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = event.target;
+    setFormState((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const resetForm = () => {
+    setFormState(INITIAL_FORM);
+    setPhoto(null);
+  };
+
+  const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!photo) {
+      toast.error("Please upload a JPEG photo for the ID card.");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const response = await fetch("/api/student-registration/offline", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formState,
+          parentEmail: formState.parentEmail || null,
+          notes: formState.notes || null,
+          profileImage: {
+            url: photo.url,
+            fileKey: photo.fileKey,
+            mimeType: "image/jpeg",
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error ?? "Failed to create registration");
+      }
+
+      toast.success("Offline registration recorded");
+      setDialogOpen(false);
+      resetForm();
+      await fetchRegistrations();
+    } catch (createError) {
+      console.error(createError);
+      toast.error(
+        createError instanceof Error
+          ? createError.message
+          : "Unable to create offline registration"
+      );
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">
-            Student Registration Management
-          </h1>
+          <h1 className="text-2xl font-bold">Student Registration Management</h1>
           <p className="text-muted-foreground">
-            Review and approve student registration requests
+            Review and approve student registration requests, and generate ID
+            cards on demand.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Export
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void fetchRegistrations()}
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Refreshing
+              </span>
+            ) : (
+              "Refresh"
+            )}
           </Button>
+          <Button variant="outline" size="sm" onClick={handlePrintAll}>
+            <Printer className="mr-2 h-4 w-4" /> Print All Cards
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm">
+                <PlusCircle className="mr-2 h-4 w-4" /> Add offline student
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Record offline registration</DialogTitle>
+                <DialogDescription>
+                  Create a student profile for offline payments. The ID card and
+                  credentials will be generated after approval.
+                </DialogDescription>
+              </DialogHeader>
+              <form className="space-y-4" onSubmit={handleCreate}>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Input
+                    name="firstName"
+                    placeholder="First name"
+                    value={formState.firstName}
+                    onChange={handleInputChange}
+                    required
+                  />
+                  <Input
+                    name="lastName"
+                    placeholder="Last name"
+                    value={formState.lastName}
+                    onChange={handleInputChange}
+                    required
+                  />
+                  <Input
+                    type="email"
+                    name="email"
+                    placeholder="Student email"
+                    value={formState.email}
+                    onChange={handleInputChange}
+                    required
+                  />
+                  <Input
+                    name="phone"
+                    placeholder="Contact number"
+                    value={formState.phone}
+                    onChange={handleInputChange}
+                    required
+                  />
+                  <Input
+                    type="email"
+                    name="parentEmail"
+                    placeholder="Parent or guardian email"
+                    value={formState.parentEmail}
+                    onChange={handleInputChange}
+                  />
+                  <Input
+                    type="date"
+                    name="dob"
+                    placeholder="Date of birth"
+                    value={formState.dob}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <Textarea
+                  name="address"
+                  placeholder="Home address"
+                  value={formState.address}
+                  onChange={handleInputChange}
+                  rows={3}
+                  required
+                />
+                <Textarea
+                  name="notes"
+                  placeholder="Learning goals or internal notes"
+                  value={formState.notes}
+                  onChange={handleInputChange}
+                  rows={3}
+                />
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Student photo *</p>
+                  <UploadButton
+                    endpoint="imageUploader"
+                    onClientUploadComplete={(res) => {
+                      if (!res || res.length === 0) {
+                        toast.error("Upload failed. Please try again.");
+                        return;
+                      }
+                      setPhoto({
+                        url: res[0]?.url ?? "",
+                        fileKey: res[0]?.key ?? "",
+                      });
+                      toast.success("Photo uploaded successfully");
+                    }}
+                    onUploadError={(uploadError) => {
+                      console.error(uploadError);
+                      toast.error("Unable to upload photo");
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Use a recent passport-style JPEG. This image will appear on
+                    the student ID card.
+                  </p>
+                </div>
+                <DialogFooter className="flex items-center justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      resetForm();
+                      setDialogOpen(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={submitting}>
+                    {submitting ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Saving…
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <UserPlus className="h-4 w-4" /> Save registration
+                      </span>
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Registrations
+              Total registrations
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{registrations.length}</div>
+            <p className="text-2xl font-bold">{stats.total}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pending
+              Awaiting approval
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-warning">
-              {registrations.filter((r) => r.status === "pending").length}
-            </div>
+            <p className="text-2xl font-bold text-yellow-600">
+              {stats.awaitingApproval}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -188,290 +436,105 @@ export function StudentRegistrationManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-success">
-              {registrations.filter((r) => r.status === "approved").length}
-            </div>
+            <p className="text-2xl font-bold text-green-600">
+              {stats.completed}
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Rejected
+              Failed
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              {registrations.filter((r) => r.status === "rejected").length}
-            </div>
+            <p className="text-2xl font-bold text-destructive">
+              {stats.failed}
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters and Search */}
       <Card>
-        <CardHeader>
-          <CardTitle>Registration Requests</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, email, or course..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
+        <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <CardTitle>Offline registrations</CardTitle>
+            <CardDescription>
+              Approve registrations to trigger student ID creation and welcome
+              email.
+            </CardDescription>
           </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Registration ID</TableHead>
-                <TableHead>Student Name</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Fee Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Submitted</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredRegistrations.map((registration) => (
-                <TableRow key={registration.id}>
-                  <TableCell className="font-medium">
-                    {registration.id}
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{registration.fullName}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {registration.email}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{registration.course}</TableCell>
-                  <TableCell>
-                    ${registration.feeAmount.toLocaleString()}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(registration.status)}</TableCell>
-                  <TableCell>
-                    {new Date(registration.submittedAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              setSelectedRegistration(registration)
-                            }
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>
-                              Registration Details - {registration.id}
-                            </DialogTitle>
-                            <DialogDescription>
-                              Complete registration information for{" "}
-                              {registration.fullName}
-                            </DialogDescription>
-                          </DialogHeader>
-
-                          {selectedRegistration && (
-                            <div className="grid grid-cols-2 gap-4 py-4">
-                              <div className="space-y-3">
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Full Name
-                                  </label>
-                                  <p className="text-sm">
-                                    {selectedRegistration.fullName}
-                                  </p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Email
-                                  </label>
-                                  <p className="text-sm">
-                                    {selectedRegistration.email}
-                                  </p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Phone
-                                  </label>
-                                  <p className="text-sm">
-                                    {selectedRegistration.phone}
-                                  </p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Date of Birth
-                                  </label>
-                                  <p className="text-sm">
-                                    {selectedRegistration.dateOfBirth}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="space-y-3">
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Course
-                                  </label>
-                                  <p className="text-sm">
-                                    {selectedRegistration.course}
-                                  </p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Fee Amount
-                                  </label>
-                                  <p className="text-sm">
-                                    $
-                                    {selectedRegistration.feeAmount.toLocaleString()}
-                                  </p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Status
-                                  </label>
-                                  <div className="mt-1">
-                                    {getStatusBadge(
-                                      selectedRegistration.status
-                                    )}
-                                  </div>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Submitted At
-                                  </label>
-                                  <p className="text-sm">
-                                    {new Date(
-                                      selectedRegistration.submittedAt
-                                    ).toLocaleString()}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="col-span-2">
-                                <label className="text-sm font-medium text-muted-foreground">
-                                  Address
-                                </label>
-                                <p className="text-sm">
-                                  {selectedRegistration.address}
-                                </p>
-                              </div>
-
-                              {selectedRegistration.guardianName && (
-                                <div className="col-span-2 border-t pt-3">
-                                  <h4 className="font-medium mb-2">
-                                    Guardian Information
-                                  </h4>
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <label className="text-sm font-medium text-muted-foreground">
-                                        Guardian Name
-                                      </label>
-                                      <p className="text-sm">
-                                        {selectedRegistration.guardianName}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <label className="text-sm font-medium text-muted-foreground">
-                                        Guardian Phone
-                                      </label>
-                                      <p className="text-sm">
-                                        {selectedRegistration.guardianPhone}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {selectedRegistration?.status === "pending" && (
-                            <DialogFooter>
-                              <Button
-                                variant="outline"
-                                onClick={() => {
-                                  handleStatusChange(
-                                    selectedRegistration.id,
-                                    "rejected"
-                                  );
-                                  setSelectedRegistration(null);
-                                }}
-                              >
-                                <X className="w-4 h-4 mr-2" />
-                                Reject
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  handleStatusChange(
-                                    selectedRegistration.id,
-                                    "approved"
-                                  );
-                                  setSelectedRegistration(null);
-                                }}
-                              >
-                                <Check className="w-4 h-4 mr-2" />
-                                Approve
-                              </Button>
-                            </DialogFooter>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-
-                      {registration.status === "pending" && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleStatusChange(registration.id, "approved")
-                            }
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleStatusChange(registration.id, "rejected")
-                            }
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
+          <div className="text-sm text-muted-foreground">
+            {awaitingApproval.length} awaiting approval
+          </div>
+        </CardHeader>
+        <CardContent>
+          {error ? (
+            <p className="text-sm text-destructive">{error}</p>
+          ) : loading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Loading registrations…
+            </div>
+          ) : registrations.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No offline registrations recorded yet.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {registrations.map((registration) => (
+                  <TableRow key={registration.id}>
+                    <TableCell className="font-medium">
+                      {registration.firstName} {registration.lastName}
+                    </TableCell>
+                    <TableCell>{registration.email}</TableCell>
+                    <TableCell>{registration.phone}</TableCell>
+                    <TableCell>
+                      <StatusBadge status={registration.status} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {registration.status === "AWAITING_APPROVAL" ? (
+                        <Button
+                          size="sm"
+                          onClick={() => void handleApprove(registration.id)}
+                        >
+                          <ShieldCheck className="mr-2 h-4 w-4" /> Approve
+                        </Button>
+                      ) : registration.studentPublicId ? (
+                        <div className="text-sm text-muted-foreground">
+                          ID {registration.studentPublicId}
+                        </div>
+                      ) : null}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
   );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  switch (status) {
+    case "AWAITING_APPROVAL":
+      return <Badge variant="secondary">Pending approval</Badge>;
+    case "COMPLETED":
+      return <Badge className="bg-green-100 text-green-700">Approved</Badge>;
+    case "FAILED":
+      return <Badge variant="destructive">Failed</Badge>;
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
 }
