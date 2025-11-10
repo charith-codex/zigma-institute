@@ -109,7 +109,7 @@ export default function ShowcaseSite() {
           sizes="100vw"
           className="object-cover opacity-30"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/95 to-primary/20" />
+        <div className="absolute inset-0 bg-linear-to-r from-slate-900 via-slate-900/95 to-primary/20" />
         <div className="relative z-10 wrapper flex flex-col gap-10 py-20 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm uppercase tracking-[0.3em] text-primary">
@@ -348,7 +348,7 @@ export default function ShowcaseSite() {
         </div>
       </section>
 
-      <section className="wrapper overflow-hidden rounded-3xl border bg-gradient-to-r from-primary/15 via-primary/5 to-primary/20 p-10">
+      <section className="wrapper overflow-hidden rounded-3xl border bg-linear-to-r from-primary/15 via-primary/5 to-primary/20 p-10">
         <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center px-10">
           <div className="space-y-5">
             <p className="text-sm uppercase tracking-[0.3em] text-primary">

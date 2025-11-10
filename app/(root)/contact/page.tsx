@@ -78,7 +78,7 @@ export default function ContactPage() {
             </Button>
           </div>
         </div>
-        <Card className="bg-gradient-to-br from-secondary/20 via-background to-primary/10">
+        <Card className="bg-linear-to-br from-secondary/20 via-background to-primary/10">
           <CardHeader>
             <CardTitle className="text-2xl">Visit our institute</CardTitle>
             <CardDescription>

@@ -125,7 +125,7 @@ const About = () => {
                   </div>
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl p-8">
+              <div className="bg-linear-to-br from-primary/10 to-accent/10 rounded-2xl p-8">
                 <div className="text-6xl mb-4 text-center">🎯</div>
                 <h3 className="text-xl font-semibold mb-4 text-center">
                   Vision 2030
@@ -324,7 +324,7 @@ const About = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-20 h-20 bg-linear-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Brain className="w-10 h-10" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">AI Integration</h3>
@@ -335,7 +335,7 @@ const About = () => {
               </div>
 
               <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-20 h-20 bg-linear-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Shield className="w-10 h-10" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">
@@ -348,7 +348,7 @@ const About = () => {
               </div>
 
               <div className="text-center">
-                <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-20 h-20 bg-linear-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Zap className="w-10 h-10" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">

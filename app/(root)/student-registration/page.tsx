@@ -74,7 +74,7 @@ export default function StudentRegisterPage() {
             </Button>
           </div>
         </div>
-        <Card className="bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+        <Card className="bg-linear-to-br from-primary/10 via-background to-secondary/10">
           <CardHeader>
             <CardTitle className="text-2xl">What happens next</CardTitle>
             <CardDescription>
@@ -93,7 +93,10 @@ export default function StudentRegisterPage() {
         </Card>
       </section>
 
-      <section className="grid gap-8 lg:grid-cols-[2fr_1fr]" id="registration-form">
+      <section
+        className="grid gap-8 lg:grid-cols-[2fr_1fr]"
+        id="registration-form"
+      >
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">Student details</CardTitle>
@@ -154,7 +157,9 @@ export default function StudentRegisterPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="guardianEmail">Parent / guardian email *</Label>
+                  <Label htmlFor="guardianEmail">
+                    Parent / guardian email *
+                  </Label>
                   <Input
                     id="guardianEmail"
                     name="guardianEmail"
@@ -163,7 +168,9 @@ export default function StudentRegisterPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="guardianPhone">Parent / guardian phone *</Label>
+                  <Label htmlFor="guardianPhone">
+                    Parent / guardian phone *
+                  </Label>
                   <Input
                     id="guardianPhone"
                     name="guardianPhone"
@@ -171,7 +178,9 @@ export default function StudentRegisterPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="contactPreference">Preferred contact method</Label>
+                  <Label htmlFor="contactPreference">
+                    Preferred contact method
+                  </Label>
                   <select
                     id="contactPreference"
                     name="contactPreference"
@@ -220,7 +229,9 @@ export default function StudentRegisterPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="documents">Upload supporting documents *</Label>
+                  <Label htmlFor="documents">
+                    Upload supporting documents *
+                  </Label>
                   <Input id="documents" name="documents" type="file" multiple />
                   <p className="text-xs text-muted-foreground">
                     Accepted formats: PDF, JPG, or PNG (max 10MB each)
@@ -230,8 +241,8 @@ export default function StudentRegisterPage() {
 
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <p className="text-sm text-muted-foreground">
-                  By submitting, you agree to our privacy policy and confirm that
-                  details are accurate to the best of your knowledge.
+                  By submitting, you agree to our privacy policy and confirm
+                  that details are accurate to the best of your knowledge.
                 </p>
                 <Button type="submit" size="lg">
                   Submit registration
@@ -245,7 +256,8 @@ export default function StudentRegisterPage() {
             <CardHeader>
               <CardTitle className="text-xl">Documents checklist</CardTitle>
               <CardDescription>
-                Upload clear scans to help our staff verify your enrollment quickly.
+                Upload clear scans to help our staff verify your enrollment
+                quickly.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
@@ -264,12 +276,15 @@ export default function StudentRegisterPage() {
             <CardHeader>
               <CardTitle className="text-xl">Need help?</CardTitle>
               <CardDescription>
-                Our admissions mentors can walk you through each step and arrange campus visits.
+                Our admissions mentors can walk you through each step and
+                arrange campus visits.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <div>
-                <p className="font-medium text-foreground">Admissions hotline</p>
+                <p className="font-medium text-foreground">
+                  Admissions hotline
+                </p>
                 <Link
                   href="tel:+94112223344"
                   className="text-primary hover:underline"

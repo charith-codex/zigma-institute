@@ -393,7 +393,7 @@ const LMS = () => {
                   <Card className="edu-card-hover border-success/20">
                     <CardContent className="p-6">
                       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-success to-success-light flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-xl bg-linear-to-br from-success to-success-light flex items-center justify-center">
                           <Award className="w-6 h-6 text-white" />
                         </div>
                         <Badge className="bg-accent-light text-accent border-accent/20">
@@ -482,7 +482,7 @@ const LMS = () => {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-gradient-to-r from-primary-light to-transparent p-4 animate-scale-in sm:flex-row sm:items-center">
+                      <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-linear-to-r from-primary-light to-transparent p-4 animate-scale-in sm:flex-row sm:items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-primary">
                           <Star className="w-6 h-6 text-white" />
                         </div>
@@ -499,7 +499,7 @@ const LMS = () => {
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-4 rounded-xl border border-success/20 bg-gradient-to-r from-success-light to-transparent p-4 sm:flex-row sm:items-center">
+                      <div className="flex flex-col gap-4 rounded-xl border border-success/20 bg-linear-to-r from-success-light to-transparent p-4 sm:flex-row sm:items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-success">
                           <TrendingUp className="w-6 h-6 text-white" />
                         </div>
@@ -516,7 +516,7 @@ const LMS = () => {
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-4 rounded-xl border border-accent/20 bg-gradient-to-r from-accent-light to-transparent p-4 sm:flex-row sm:items-center">
+                      <div className="flex flex-col gap-4 rounded-xl border border-accent/20 bg-linear-to-r from-accent-light to-transparent p-4 sm:flex-row sm:items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-accent">
                           <Brain className="w-6 h-6 text-white" />
                         </div>

@@ -66,8 +66,8 @@ const menuEntries: MenuEntry[] = [
     ],
   },
   {
-    id: "academic",
-    label: "Academic Operations",
+    id: "course-operations",
+    label: "Course Operations",
     icon: BookOpen,
     items: [
       { id: "classes", label: "Courses", icon: BookOpen },

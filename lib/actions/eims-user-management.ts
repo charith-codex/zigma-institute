@@ -1,9 +1,24 @@
 "use server";
 
+import { hashSync } from "bcrypt-ts-edge";
 import { auth } from "@/auth";
 import { prisma } from "@/db/prisma";
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
+import { ZodError } from "zod";
+import {
+  staffCreateSchema,
+  staffUpsertSchema,
+  studentCreateSchema,
+  studentUpsertSchema,
+  teacherCreateSchema,
+  teacherUpsertSchema,
+  type StaffCreateValues,
+  type StaffUpsertValues,
+  type StudentCreateValues,
+  type StudentUpsertValues,
+  type TeacherCreateValues,
+  type TeacherUpsertValues,
+} from "@/lib/validators/eims-user-management";
 
 const permittedRoles = ["ADMIN", "MANAGER"] as const;
 
@@ -12,49 +27,6 @@ type PermittedRole = (typeof permittedRoles)[number];
 type BaseActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: string };
-
-const studentUpsertSchema = z.object({
-  id: z.string().uuid().optional(),
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().trim().min(1).optional().or(z.literal("")),
-  address: z.string().trim().min(1).optional().or(z.literal("")),
-  status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
-  parentEmail: z.string().email().optional().or(z.literal("")),
-  studentPublicId: z.string().trim().min(1).optional().or(z.literal("")),
-  dob: z.string().optional().or(z.literal("")),
-  joinDate: z.string().optional().or(z.literal("")),
-});
-
-const teacherUpsertSchema = z.object({
-  id: z.string().uuid().optional(),
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().trim().min(1).optional().or(z.literal("")),
-  address: z.string().trim().min(1).optional().or(z.literal("")),
-  qualification: z.string().trim().optional().or(z.literal("")),
-  nic: z.string().trim().optional().or(z.literal("")),
-  status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
-  dob: z.string().optional().or(z.literal("")),
-  joinDate: z.string().optional().or(z.literal("")),
-});
-
-const staffUpsertSchema = z.object({
-  id: z.string().uuid().optional(),
-  name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().trim().min(1).optional().or(z.literal("")),
-  address: z.string().trim().min(1).optional().or(z.literal("")),
-  nic: z.string().trim().optional().or(z.literal("")),
-  role: z.enum(["ADMIN", "MANAGER", "ATTENDANCE"] as const),
-  status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
-  dob: z.string().optional().or(z.literal("")),
-  joinDate: z.string().optional().or(z.literal("")),
-});
-
-type StudentPayload = z.infer<typeof studentUpsertSchema>;
-type TeacherPayload = z.infer<typeof teacherUpsertSchema>;
-type StaffPayload = z.infer<typeof staffUpsertSchema>;
 
 const ensureAuthorized = async (): Promise<BaseActionResult<PermittedRole>> => {
   const session = await auth();
@@ -78,6 +50,19 @@ const serializeDate = (value: Date | null | undefined) =>
 const normalizeOptionalString = (value?: string | null) =>
   value && value.length > 0 ? value : null;
 
+const normalizeOptionalPassword = (value?: string | null) =>
+  value && value.trim().length > 0 ? value.trim() : null;
+
+const normalizeOptionalGender = (
+  value?: string | null
+): "MALE" | "FEMALE" | null => {
+  if (!value || value.length === 0) {
+    return null;
+  }
+
+  return value === "MALE" || value === "FEMALE" ? value : null;
+};
+
 export type StudentRecord = {
   id: string;
   name: string;
@@ -89,6 +74,8 @@ export type StudentRecord = {
   studentPublicId: string | null;
   dob: string | null;
   joinDate: string | null;
+  gender: "MALE" | "FEMALE" | null;
+  profileImage: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -104,6 +91,8 @@ export type TeacherRecord = {
   nic: string | null;
   dob: string | null;
   joinDate: string | null;
+  gender: "MALE" | "FEMALE" | null;
+  profileImage: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -119,6 +108,8 @@ export type StaffRecord = {
   nic: string | null;
   dob: string | null;
   joinDate: string | null;
+  gender: "MALE" | "FEMALE" | null;
+  profileImage: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -134,6 +125,8 @@ const serializeStudent = (user: {
   joinDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  gender?: "MALE" | "FEMALE" | null;
+  profileImage?: string | null;
   student: {
     parentEmail: string | null;
     studentPublicId: string | null;
@@ -149,6 +142,8 @@ const serializeStudent = (user: {
   studentPublicId: user.student?.studentPublicId ?? null,
   dob: serializeDate(user.dob),
   joinDate: serializeDate(user.joinDate),
+  gender: user.gender ?? null,
+  profileImage: user.profileImage ?? null,
   createdAt: serializeDate(user.createdAt)!,
   updatedAt: serializeDate(user.updatedAt)!,
 });
@@ -164,6 +159,8 @@ const serializeTeacher = (user: {
   joinDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  gender?: "MALE" | "FEMALE" | null;
+  profileImage?: string | null;
   teacher: {
     qualification: string | null;
     nic: string | null;
@@ -179,6 +176,8 @@ const serializeTeacher = (user: {
   nic: user.teacher?.nic ?? null,
   dob: serializeDate(user.dob),
   joinDate: serializeDate(user.joinDate),
+  gender: user.gender ?? null,
+  profileImage: user.profileImage ?? null,
   createdAt: serializeDate(user.createdAt)!,
   updatedAt: serializeDate(user.updatedAt)!,
 });
@@ -196,6 +195,8 @@ const serializeStaff = (user: {
   joinDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  gender?: "MALE" | "FEMALE" | null;
+  profileImage?: string | null;
   staff: {
     nic: string | null;
   } | null;
@@ -210,6 +211,8 @@ const serializeStaff = (user: {
   nic: user.staff?.nic ?? null,
   dob: serializeDate(user.dob),
   joinDate: serializeDate(user.joinDate),
+  gender: user.gender ?? null,
+  profileImage: user.profileImage ?? null,
   createdAt: serializeDate(user.createdAt)!,
   updatedAt: serializeDate(user.updatedAt)!,
 });
@@ -243,7 +246,7 @@ export async function listStudents(): Promise<
 }
 
 export async function createStudent(
-  input: Omit<StudentPayload, "id">
+  input: StudentCreateValues
 ): Promise<BaseActionResult<StudentRecord>> {
   const authorization = await ensureAuthorized();
   if (!authorization.success) {
@@ -251,7 +254,8 @@ export async function createStudent(
   }
 
   try {
-    const payload = studentUpsertSchema.omit({ id: true }).parse(input);
+    const payload = studentCreateSchema.parse(input);
+    const password = normalizeOptionalPassword(payload.password);
 
     const created = await prisma.user.create({
       data: {
@@ -263,6 +267,9 @@ export async function createStudent(
         role: "STUDENT",
         dob: payload.dob ? new Date(payload.dob) : null,
         joinDate: payload.joinDate ? new Date(payload.joinDate) : null,
+        profileImage: normalizeOptionalString(payload.profileImage),
+        gender: normalizeOptionalGender(payload.gender),
+        password: password ? hashSync(password, 10) : undefined,
         student: {
           create: {
             parentEmail: normalizeOptionalString(payload.parentEmail),
@@ -284,7 +291,7 @@ export async function createStudent(
     return {
       success: false,
       error:
-        error instanceof z.ZodError
+        error instanceof ZodError
           ? (error.issues[0]?.message ?? "Invalid input.")
           : "Failed to create student.",
     };
@@ -292,7 +299,7 @@ export async function createStudent(
 }
 
 export async function updateStudent(
-  input: StudentPayload
+  input: StudentUpsertValues
 ): Promise<BaseActionResult<StudentRecord>> {
   const authorization = await ensureAuthorized();
   if (!authorization.success) {
@@ -301,6 +308,7 @@ export async function updateStudent(
 
   try {
     const payload = studentUpsertSchema.parse(input);
+    const password = normalizeOptionalPassword(payload.password);
 
     const updated = await prisma.user.update({
       where: { id: payload.id },
@@ -310,8 +318,15 @@ export async function updateStudent(
         phone: normalizeOptionalString(payload.phone),
         address: normalizeOptionalString(payload.address),
         status: payload.status,
+        profileImage: normalizeOptionalString(payload.profileImage),
+        gender: normalizeOptionalGender(payload.gender),
         dob: payload.dob ? new Date(payload.dob) : null,
         joinDate: payload.joinDate ? new Date(payload.joinDate) : null,
+        ...(password
+          ? {
+              password: hashSync(password, 10),
+            }
+          : {}),
         student: {
           upsert: {
             create: {
@@ -339,7 +354,7 @@ export async function updateStudent(
     return {
       success: false,
       error:
-        error instanceof z.ZodError
+        error instanceof ZodError
           ? (error.issues[0]?.message ?? "Invalid input.")
           : "Failed to update student.",
     };
@@ -400,7 +415,7 @@ export async function listTeachers(): Promise<
 }
 
 export async function createTeacher(
-  input: Omit<TeacherPayload, "id">
+  input: TeacherCreateValues
 ): Promise<BaseActionResult<TeacherRecord>> {
   const authorization = await ensureAuthorized();
   if (!authorization.success) {
@@ -408,7 +423,8 @@ export async function createTeacher(
   }
 
   try {
-    const payload = teacherUpsertSchema.omit({ id: true }).parse(input);
+    const payload = teacherCreateSchema.parse(input);
+    const password = normalizeOptionalPassword(payload.password);
 
     const created = await prisma.user.create({
       data: {
@@ -420,6 +436,9 @@ export async function createTeacher(
         role: "TEACHER",
         dob: payload.dob ? new Date(payload.dob) : null,
         joinDate: payload.joinDate ? new Date(payload.joinDate) : null,
+        profileImage: normalizeOptionalString(payload.profileImage),
+        gender: normalizeOptionalGender(payload.gender),
+        password: password ? hashSync(password, 10) : undefined,
         teacher: {
           create: {
             qualification: normalizeOptionalString(payload.qualification),
@@ -441,7 +460,7 @@ export async function createTeacher(
     return {
       success: false,
       error:
-        error instanceof z.ZodError
+        error instanceof ZodError
           ? (error.issues[0]?.message ?? "Invalid input.")
           : "Failed to create teacher.",
     };
@@ -449,7 +468,7 @@ export async function createTeacher(
 }
 
 export async function updateTeacher(
-  input: TeacherPayload
+  input: TeacherUpsertValues
 ): Promise<BaseActionResult<TeacherRecord>> {
   const authorization = await ensureAuthorized();
   if (!authorization.success) {
@@ -458,6 +477,7 @@ export async function updateTeacher(
 
   try {
     const payload = teacherUpsertSchema.parse(input);
+    const password = normalizeOptionalPassword(payload.password);
 
     const updated = await prisma.user.update({
       where: { id: payload.id },
@@ -467,8 +487,15 @@ export async function updateTeacher(
         phone: normalizeOptionalString(payload.phone),
         address: normalizeOptionalString(payload.address),
         status: payload.status,
+        profileImage: normalizeOptionalString(payload.profileImage),
+        gender: normalizeOptionalGender(payload.gender),
         dob: payload.dob ? new Date(payload.dob) : null,
         joinDate: payload.joinDate ? new Date(payload.joinDate) : null,
+        ...(password
+          ? {
+              password: hashSync(password, 10),
+            }
+          : {}),
         teacher: {
           upsert: {
             create: {
@@ -496,7 +523,7 @@ export async function updateTeacher(
     return {
       success: false,
       error:
-        error instanceof z.ZodError
+        error instanceof ZodError
           ? (error.issues[0]?.message ?? "Invalid input.")
           : "Failed to update teacher.",
     };
@@ -555,7 +582,7 @@ export async function listStaff(): Promise<BaseActionResult<StaffRecord[]>> {
 }
 
 export async function createStaff(
-  input: Omit<StaffPayload, "id">
+  input: StaffCreateValues
 ): Promise<BaseActionResult<StaffRecord>> {
   const authorization = await ensureAuthorized();
   if (!authorization.success) {
@@ -563,7 +590,8 @@ export async function createStaff(
   }
 
   try {
-    const payload = staffUpsertSchema.omit({ id: true }).parse(input);
+    const payload = staffCreateSchema.parse(input);
+    const password = normalizeOptionalPassword(payload.password);
 
     const created = await prisma.user.create({
       data: {
@@ -575,6 +603,9 @@ export async function createStaff(
         role: payload.role,
         dob: payload.dob ? new Date(payload.dob) : null,
         joinDate: payload.joinDate ? new Date(payload.joinDate) : null,
+        profileImage: normalizeOptionalString(payload.profileImage),
+        gender: normalizeOptionalGender(payload.gender),
+        password: password ? hashSync(password, 10) : undefined,
         staff: {
           create: {
             nic: normalizeOptionalString(payload.nic),
@@ -595,7 +626,7 @@ export async function createStaff(
     return {
       success: false,
       error:
-        error instanceof z.ZodError
+        error instanceof ZodError
           ? (error.issues[0]?.message ?? "Invalid input.")
           : "Failed to create staff member.",
     };
@@ -603,7 +634,7 @@ export async function createStaff(
 }
 
 export async function updateStaff(
-  input: StaffPayload
+  input: StaffUpsertValues
 ): Promise<BaseActionResult<StaffRecord>> {
   const authorization = await ensureAuthorized();
   if (!authorization.success) {
@@ -612,6 +643,7 @@ export async function updateStaff(
 
   try {
     const payload = staffUpsertSchema.parse(input);
+    const password = normalizeOptionalPassword(payload.password);
 
     const updated = await prisma.user.update({
       where: { id: payload.id },
@@ -622,8 +654,15 @@ export async function updateStaff(
         address: normalizeOptionalString(payload.address),
         status: payload.status,
         role: payload.role,
+        profileImage: normalizeOptionalString(payload.profileImage),
+        gender: normalizeOptionalGender(payload.gender),
         dob: payload.dob ? new Date(payload.dob) : null,
         joinDate: payload.joinDate ? new Date(payload.joinDate) : null,
+        ...(password
+          ? {
+              password: hashSync(password, 10),
+            }
+          : {}),
         staff: {
           upsert: {
             create: { nic: normalizeOptionalString(payload.nic) },
@@ -645,7 +684,7 @@ export async function updateStaff(
     return {
       success: false,
       error:
-        error instanceof z.ZodError
+        error instanceof ZodError
           ? (error.issues[0]?.message ?? "Invalid input.")
           : "Failed to update staff member.",
     };
