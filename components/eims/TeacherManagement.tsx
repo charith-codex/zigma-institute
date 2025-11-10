@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { z } from "zod";
 import { GraduationCap, Plus, Search, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -39,23 +40,29 @@ import {
   updateTeacher,
   type TeacherRecord,
 } from "@/lib/actions/eims-user-management";
+import {
+  teacherCreateSchema,
+  teacherUpsertSchema,
+  type TeacherCreateValues,
+  type TeacherUpsertValues,
+} from "@/lib/validators/eims-user-management";
 
 const statusOptions = [
   { label: "Active", value: "ACTIVE" as const },
   { label: "Inactive", value: "INACTIVE" as const },
 ];
 
-type TeacherDraft = {
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  qualification: string;
-  nic: string;
-  status: "ACTIVE" | "INACTIVE";
-};
+const genderOptions = [
+  { label: "Male", value: "MALE" as const },
+  { label: "Female", value: "FEMALE" as const },
+];
 
-const createEmptyTeacher = (): TeacherDraft => ({
+type TeacherCreateErrorState = Partial<
+  Record<keyof TeacherCreateValues, string>
+>;
+type TeacherEditErrorState = Partial<Record<keyof TeacherUpsertValues, string>>;
+
+const createEmptyTeacher = (): TeacherCreateValues => ({
   name: "",
   email: "",
   phone: "",
@@ -63,6 +70,11 @@ const createEmptyTeacher = (): TeacherDraft => ({
   qualification: "",
   nic: "",
   status: "ACTIVE",
+  password: "",
+  dob: "",
+  joinDate: "",
+  gender: undefined,
+  profileImage: "",
 });
 
 export function TeacherManagement() {
@@ -75,8 +87,45 @@ export function TeacherManagement() {
     null
   );
   const [newTeacher, setNewTeacher] =
-    useState<TeacherDraft>(createEmptyTeacher);
+    useState<TeacherCreateValues>(createEmptyTeacher);
   const [isPending, startTransition] = useTransition();
+  const [editTeacherPassword, setEditTeacherPassword] = useState("");
+  const [newTeacherErrors, setNewTeacherErrors] =
+    useState<TeacherCreateErrorState>({});
+  const [editTeacherErrors, setEditTeacherErrors] =
+    useState<TeacherEditErrorState>({});
+
+  const formatDateForInput = (value?: string | null) =>
+    value ? value.slice(0, 10) : "";
+
+  const collectFieldErrors = (issues: z.ZodIssue[]) => {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of issues) {
+      const key = issue.path[0];
+      if (typeof key === "string" && !fieldErrors[key]) {
+        fieldErrors[key] = issue.message;
+      }
+    }
+    return fieldErrors;
+  };
+
+  const clearNewTeacherError = (field: keyof TeacherCreateValues) => {
+    setNewTeacherErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const clearEditTeacherError = (field: keyof TeacherUpsertValues) => {
+    setEditTeacherErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -106,6 +155,11 @@ export function TeacherManagement() {
     };
   }, []);
 
+  useEffect(() => {
+    setEditTeacherPassword("");
+    setEditTeacherErrors({});
+  }, [editingTeacher]);
+
   const filteredTeachers = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) return teachers;
@@ -118,16 +172,22 @@ export function TeacherManagement() {
   }, [teachers, searchTerm]);
 
   const handleCreateTeacher = () => {
+    const validation = teacherCreateSchema.safeParse(newTeacher);
+
+    if (!validation.success) {
+      const fieldErrors = collectFieldErrors(validation.error.issues);
+      setNewTeacherErrors(fieldErrors as TeacherCreateErrorState);
+      toast.error(
+        validation.error.issues[0]?.message ??
+          "Please correct the highlighted fields."
+      );
+      return;
+    }
+
+    setNewTeacherErrors({});
+
     startTransition(async () => {
-      const result = await createTeacher({
-        name: newTeacher.name,
-        email: newTeacher.email,
-        phone: newTeacher.phone,
-        address: newTeacher.address,
-        qualification: newTeacher.qualification,
-        nic: newTeacher.nic,
-        status: newTeacher.status,
-      });
+      const result = await createTeacher(validation.data);
 
       if (result.success) {
         setTeachers((prev) => [result.data, ...prev]);
@@ -143,19 +203,38 @@ export function TeacherManagement() {
   const handleUpdateTeacher = () => {
     if (!editingTeacher) return;
 
+    const payload: TeacherUpsertValues = {
+      id: editingTeacher.id,
+      name: editingTeacher.name,
+      email: editingTeacher.email,
+      phone: editingTeacher.phone ?? "",
+      address: editingTeacher.address ?? "",
+      qualification: editingTeacher.qualification ?? "",
+      nic: editingTeacher.nic ?? "",
+      status: editingTeacher.status,
+      dob: editingTeacher.dob ?? "",
+      joinDate: editingTeacher.joinDate ?? "",
+      password: editTeacherPassword,
+      gender: editingTeacher.gender ?? undefined,
+      profileImage: editingTeacher.profileImage ?? "",
+    };
+
+    const validation = teacherUpsertSchema.safeParse(payload);
+
+    if (!validation.success) {
+      const fieldErrors = collectFieldErrors(validation.error.issues);
+      setEditTeacherErrors(fieldErrors as TeacherEditErrorState);
+      toast.error(
+        validation.error.issues[0]?.message ??
+          "Please correct the highlighted fields."
+      );
+      return;
+    }
+
+    setEditTeacherErrors({});
+
     startTransition(async () => {
-      const result = await updateTeacher({
-        id: editingTeacher.id,
-        name: editingTeacher.name,
-        email: editingTeacher.email,
-        phone: editingTeacher.phone ?? "",
-        address: editingTeacher.address ?? "",
-        qualification: editingTeacher.qualification ?? "",
-        nic: editingTeacher.nic ?? "",
-        status: editingTeacher.status,
-        dob: editingTeacher.dob ?? undefined,
-        joinDate: editingTeacher.joinDate ?? undefined,
-      });
+      const result = await updateTeacher(validation.data);
 
       if (result.success) {
         setTeachers((prev) =>
@@ -228,7 +307,16 @@ export function TeacherManagement() {
           <GraduationCap className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold">Teacher Management</h1>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <Dialog
+          open={isAddDialogOpen}
+          onOpenChange={(open) => {
+            setIsAddDialogOpen(open);
+            if (!open) {
+              setNewTeacher(createEmptyTeacher());
+              setNewTeacherErrors({});
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -245,10 +333,17 @@ export function TeacherManagement() {
                 <Input
                   id="teacher-name"
                   value={newTeacher.name}
-                  onChange={(e) =>
-                    setNewTeacher((prev) => ({ ...prev, name: e.target.value }))
-                  }
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setNewTeacher((prev) => ({ ...prev, name: value }));
+                    clearNewTeacherError("name");
+                  }}
                 />
+                {newTeacherErrors.name && (
+                  <p className="text-xs text-destructive">
+                    {newTeacherErrors.name}
+                  </p>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="teacher-email">Email</Label>
@@ -256,13 +351,41 @@ export function TeacherManagement() {
                   id="teacher-email"
                   type="email"
                   value={newTeacher.email}
-                  onChange={(e) =>
+                  onChange={(event) => {
+                    const value = event.target.value;
                     setNewTeacher((prev) => ({
                       ...prev,
-                      email: e.target.value,
-                    }))
-                  }
+                      email: value,
+                    }));
+                    clearNewTeacherError("email");
+                  }}
                 />
+                {newTeacherErrors.email && (
+                  <p className="text-xs text-destructive">
+                    {newTeacherErrors.email}
+                  </p>
+                )}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="teacher-password">Password</Label>
+                <Input
+                  id="teacher-password"
+                  type="password"
+                  value={newTeacher.password}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setNewTeacher((prev) => ({
+                      ...prev,
+                      password: value,
+                    }));
+                    clearNewTeacherError("password");
+                  }}
+                />
+                {newTeacherErrors.password && (
+                  <p className="text-xs text-destructive">
+                    {newTeacherErrors.password}
+                  </p>
+                )}
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <div className="grid gap-2">
@@ -270,24 +393,32 @@ export function TeacherManagement() {
                   <Input
                     id="teacher-phone"
                     value={newTeacher.phone}
-                    onChange={(e) =>
+                    onChange={(event) => {
+                      const value = event.target.value;
                       setNewTeacher((prev) => ({
                         ...prev,
-                        phone: e.target.value,
-                      }))
-                    }
+                        phone: value,
+                      }));
+                      clearNewTeacherError("phone");
+                    }}
                   />
+                  {newTeacherErrors.phone && (
+                    <p className="text-xs text-destructive">
+                      {newTeacherErrors.phone}
+                    </p>
+                  )}
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="teacher-status">Status</Label>
                   <Select
                     value={newTeacher.status}
-                    onValueChange={(value) =>
+                    onValueChange={(value) => {
                       setNewTeacher((prev) => ({
                         ...prev,
-                        status: value as TeacherDraft["status"],
-                      }))
-                    }
+                        status: value as TeacherCreateValues["status"],
+                      }));
+                      clearNewTeacherError("status");
+                    }}
                   >
                     <SelectTrigger id="teacher-status">
                       <SelectValue placeholder="Select status" />
@@ -300,6 +431,107 @@ export function TeacherManagement() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {newTeacherErrors.status && (
+                    <p className="text-xs text-destructive">
+                      {newTeacherErrors.status}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="teacher-dob">Date of birth</Label>
+                  <Input
+                    id="teacher-dob"
+                    type="date"
+                    value={newTeacher.dob}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setNewTeacher((prev) => ({
+                        ...prev,
+                        dob: value,
+                      }));
+                      clearNewTeacherError("dob");
+                    }}
+                  />
+                  {newTeacherErrors.dob && (
+                    <p className="text-xs text-destructive">
+                      {newTeacherErrors.dob}
+                    </p>
+                  )}
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="teacher-join-date">Join date</Label>
+                  <Input
+                    id="teacher-join-date"
+                    type="date"
+                    value={newTeacher.joinDate}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setNewTeacher((prev) => ({
+                        ...prev,
+                        joinDate: value,
+                      }));
+                      clearNewTeacherError("joinDate");
+                    }}
+                  />
+                  {newTeacherErrors.joinDate && (
+                    <p className="text-xs text-destructive">
+                      {newTeacherErrors.joinDate}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="teacher-gender">Gender</Label>
+                  <Select
+                    value={newTeacher.gender}
+                    onValueChange={(value) => {
+                      setNewTeacher((prev) => ({
+                        ...prev,
+                        gender: value as TeacherCreateValues["gender"],
+                      }));
+                      clearNewTeacherError("gender");
+                    }}
+                  >
+                    <SelectTrigger id="teacher-gender">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {genderOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {newTeacherErrors.gender && (
+                    <p className="text-xs text-destructive">
+                      {newTeacherErrors.gender}
+                    </p>
+                  )}
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="teacher-profile-image">Profile image URL</Label>
+                  <Input
+                    id="teacher-profile-image"
+                    type="url"
+                    value={newTeacher.profileImage}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setNewTeacher((prev) => ({
+                        ...prev,
+                        profileImage: value,
+                      }));
+                      clearNewTeacherError("profileImage");
+                    }}
+                  />
+                  {newTeacherErrors.profileImage && (
+                    <p className="text-xs text-destructive">
+                      {newTeacherErrors.profileImage}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="grid gap-2">
@@ -307,36 +539,57 @@ export function TeacherManagement() {
                 <Input
                   id="teacher-qualification"
                   value={newTeacher.qualification}
-                  onChange={(e) =>
+                  onChange={(event) => {
+                    const value = event.target.value;
                     setNewTeacher((prev) => ({
                       ...prev,
-                      qualification: e.target.value,
-                    }))
-                  }
+                      qualification: value,
+                    }));
+                    clearNewTeacherError("qualification");
+                  }}
                 />
+                {newTeacherErrors.qualification && (
+                  <p className="text-xs text-destructive">
+                    {newTeacherErrors.qualification}
+                  </p>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="teacher-nic">NIC</Label>
                 <Input
                   id="teacher-nic"
                   value={newTeacher.nic}
-                  onChange={(e) =>
-                    setNewTeacher((prev) => ({ ...prev, nic: e.target.value }))
-                  }
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setNewTeacher((prev) => ({ ...prev, nic: value }));
+                    clearNewTeacherError("nic");
+                  }}
                 />
+                {newTeacherErrors.nic && (
+                  <p className="text-xs text-destructive">
+                    {newTeacherErrors.nic}
+                  </p>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="teacher-address">Address</Label>
                 <Input
                   id="teacher-address"
                   value={newTeacher.address}
-                  onChange={(e) =>
+                  onChange={(event) => {
+                    const value = event.target.value;
                     setNewTeacher((prev) => ({
                       ...prev,
-                      address: e.target.value,
-                    }))
-                  }
+                      address: value,
+                    }));
+                    clearNewTeacherError("address");
+                  }}
                 />
+                {newTeacherErrors.address && (
+                  <p className="text-xs text-destructive">
+                    {newTeacherErrors.address}
+                  </p>
+                )}
               </div>
               <Button onClick={handleCreateTeacher} disabled={isPending}>
                 {isPending ? "Adding..." : "Add teacher"}
@@ -430,7 +683,16 @@ export function TeacherManagement() {
       </Card>
 
       {editingTeacher && (
-        <Dialog open onOpenChange={() => setEditingTeacher(null)}>
+        <Dialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditingTeacher(null);
+              setEditTeacherErrors({});
+              setEditTeacherPassword("");
+            }
+          }}
+        >
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Edit teacher</DialogTitle>
@@ -441,12 +703,19 @@ export function TeacherManagement() {
                 <Input
                   id="edit-teacher-name"
                   value={editingTeacher.name}
-                  onChange={(e) =>
+                  onChange={(event) => {
+                    const value = event.target.value;
                     setEditingTeacher((prev) =>
-                      prev ? { ...prev, name: e.target.value } : prev
-                    )
-                  }
+                      prev ? { ...prev, name: value } : prev
+                    );
+                    clearEditTeacherError("name");
+                  }}
                 />
+                {editTeacherErrors.name && (
+                  <p className="text-xs text-destructive">
+                    {editTeacherErrors.name}
+                  </p>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit-teacher-email">Email</Label>
@@ -454,12 +723,37 @@ export function TeacherManagement() {
                   id="edit-teacher-email"
                   type="email"
                   value={editingTeacher.email}
-                  onChange={(e) =>
+                  onChange={(event) => {
+                    const value = event.target.value;
                     setEditingTeacher((prev) =>
-                      prev ? { ...prev, email: e.target.value } : prev
-                    )
-                  }
+                      prev ? { ...prev, email: value } : prev
+                    );
+                    clearEditTeacherError("email");
+                  }}
                 />
+                {editTeacherErrors.email && (
+                  <p className="text-xs text-destructive">
+                    {editTeacherErrors.email}
+                  </p>
+                )}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit-teacher-password">Password</Label>
+                <Input
+                  id="edit-teacher-password"
+                  type="password"
+                  value={editTeacherPassword}
+                  placeholder="Leave blank to keep current password"
+                  onChange={(event) => {
+                    setEditTeacherPassword(event.target.value);
+                    clearEditTeacherError("password");
+                  }}
+                />
+                {editTeacherErrors.password && (
+                  <p className="text-xs text-destructive">
+                    {editTeacherErrors.password}
+                  </p>
+                )}
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <div className="grid gap-2">
@@ -467,18 +761,25 @@ export function TeacherManagement() {
                   <Input
                     id="edit-teacher-phone"
                     value={editingTeacher.phone ?? ""}
-                    onChange={(e) =>
+                    onChange={(event) => {
+                      const value = event.target.value;
                       setEditingTeacher((prev) =>
-                        prev ? { ...prev, phone: e.target.value } : prev
-                      )
-                    }
+                        prev ? { ...prev, phone: value } : prev
+                      );
+                      clearEditTeacherError("phone");
+                    }}
                   />
+                  {editTeacherErrors.phone && (
+                    <p className="text-xs text-destructive">
+                      {editTeacherErrors.phone}
+                    </p>
+                  )}
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="edit-teacher-status">Status</Label>
                   <Select
                     value={editingTeacher.status}
-                    onValueChange={(value) =>
+                    onValueChange={(value) => {
                       setEditingTeacher((prev) =>
                         prev
                           ? {
@@ -486,8 +787,9 @@ export function TeacherManagement() {
                               status: value as TeacherRecord["status"],
                             }
                           : prev
-                      )
-                    }
+                      );
+                      clearEditTeacherError("status");
+                    }}
                   >
                     <SelectTrigger id="edit-teacher-status">
                       <SelectValue />
@@ -500,6 +802,122 @@ export function TeacherManagement() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {editTeacherErrors.status && (
+                    <p className="text-xs text-destructive">
+                      {editTeacherErrors.status}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-teacher-dob">Date of birth</Label>
+                  <Input
+                    id="edit-teacher-dob"
+                    type="date"
+                    value={formatDateForInput(editingTeacher.dob)}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setEditingTeacher((prev) =>
+                        prev
+                          ? { ...prev, dob: value ? value : null }
+                          : prev
+                      );
+                      clearEditTeacherError("dob");
+                    }}
+                  />
+                  {editTeacherErrors.dob && (
+                    <p className="text-xs text-destructive">
+                      {editTeacherErrors.dob}
+                    </p>
+                  )}
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-teacher-join-date">Join date</Label>
+                  <Input
+                    id="edit-teacher-join-date"
+                    type="date"
+                    value={formatDateForInput(editingTeacher.joinDate)}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setEditingTeacher((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              joinDate: value ? value : null,
+                            }
+                          : prev
+                      );
+                      clearEditTeacherError("joinDate");
+                    }}
+                  />
+                  {editTeacherErrors.joinDate && (
+                    <p className="text-xs text-destructive">
+                      {editTeacherErrors.joinDate}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-teacher-gender">Gender</Label>
+                  <Select
+                    value={editingTeacher.gender ?? undefined}
+                    onValueChange={(value) => {
+                      setEditingTeacher((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              gender: value as TeacherRecord["gender"],
+                            }
+                          : prev
+                      );
+                      clearEditTeacherError("gender");
+                    }}
+                  >
+                    <SelectTrigger id="edit-teacher-gender">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {genderOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {editTeacherErrors.gender && (
+                    <p className="text-xs text-destructive">
+                      {editTeacherErrors.gender}
+                    </p>
+                  )}
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-teacher-profile-image">
+                    Profile image URL
+                  </Label>
+                  <Input
+                    id="edit-teacher-profile-image"
+                    type="url"
+                    value={editingTeacher.profileImage ?? ""}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setEditingTeacher((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              profileImage: value,
+                            }
+                          : prev
+                      );
+                      clearEditTeacherError("profileImage");
+                    }}
+                  />
+                  {editTeacherErrors.profileImage && (
+                    <p className="text-xs text-destructive">
+                      {editTeacherErrors.profileImage}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="grid gap-2">
@@ -509,41 +927,62 @@ export function TeacherManagement() {
                 <Input
                   id="edit-teacher-qualification"
                   value={editingTeacher.qualification ?? ""}
-                  onChange={(e) =>
+                  onChange={(event) => {
+                    const value = event.target.value;
                     setEditingTeacher((prev) =>
                       prev
                         ? {
                             ...prev,
-                            qualification: e.target.value,
+                            qualification: value,
                           }
                         : prev
-                    )
-                  }
+                    );
+                    clearEditTeacherError("qualification");
+                  }}
                 />
+                {editTeacherErrors.qualification && (
+                  <p className="text-xs text-destructive">
+                    {editTeacherErrors.qualification}
+                  </p>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit-teacher-nic">NIC</Label>
                 <Input
                   id="edit-teacher-nic"
                   value={editingTeacher.nic ?? ""}
-                  onChange={(e) =>
+                  onChange={(event) => {
+                    const value = event.target.value;
                     setEditingTeacher((prev) =>
-                      prev ? { ...prev, nic: e.target.value } : prev
-                    )
-                  }
+                      prev ? { ...prev, nic: value } : prev
+                    );
+                    clearEditTeacherError("nic");
+                  }}
                 />
+                {editTeacherErrors.nic && (
+                  <p className="text-xs text-destructive">
+                    {editTeacherErrors.nic}
+                  </p>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit-teacher-address">Address</Label>
                 <Input
                   id="edit-teacher-address"
                   value={editingTeacher.address ?? ""}
-                  onChange={(e) =>
+                  onChange={(event) => {
+                    const value = event.target.value;
                     setEditingTeacher((prev) =>
-                      prev ? { ...prev, address: e.target.value } : prev
-                    )
-                  }
+                      prev ? { ...prev, address: value } : prev
+                    );
+                    clearEditTeacherError("address");
+                  }}
                 />
+                {editTeacherErrors.address && (
+                  <p className="text-xs text-destructive">
+                    {editTeacherErrors.address}
+                  </p>
+                )}
               </div>
               <Button onClick={handleUpdateTeacher} disabled={isPending}>
                 {isPending ? "Saving..." : "Save changes"}

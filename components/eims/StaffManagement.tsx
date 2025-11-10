@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { z } from "zod";
 import { Users, Plus, Search, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -17,8 +18,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -31,7 +30,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 
 import {
   createStaff,
@@ -40,6 +38,12 @@ import {
   updateStaff,
   type StaffRecord,
 } from "@/lib/actions/eims-user-management";
+import {
+  staffCreateSchema,
+  staffUpsertSchema,
+  type StaffCreateValues,
+  type StaffUpsertValues,
+} from "@/lib/validators/eims-user-management";
 
 const statusOptions = [
   { label: "Active", value: "ACTIVE" as const },
@@ -52,17 +56,15 @@ const roleOptions = [
   { label: "Attendance", value: "ATTENDANCE" as const },
 ];
 
-type StaffDraft = {
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  nic: string;
-  role: "ADMIN" | "MANAGER" | "ATTENDANCE";
-  status: "ACTIVE" | "INACTIVE";
-};
+const genderOptions = [
+  { label: "Male", value: "MALE" as const },
+  { label: "Female", value: "FEMALE" as const },
+];
 
-const createEmptyStaff = (): StaffDraft => ({
+type StaffCreateErrorState = Partial<Record<keyof StaffCreateValues, string>>;
+type StaffEditErrorState = Partial<Record<keyof StaffUpsertValues, string>>;
+
+const createEmptyStaff = (): StaffCreateValues => ({
   name: "",
   email: "",
   phone: "",
@@ -70,6 +72,11 @@ const createEmptyStaff = (): StaffDraft => ({
   nic: "",
   role: "MANAGER",
   status: "ACTIVE",
+  password: "",
+  dob: "",
+  joinDate: "",
+  gender: undefined,
+  profileImage: "",
 });
 
 export function StaffManagement() {
@@ -79,8 +86,46 @@ export function StaffManagement() {
   const [listError, setListError] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffRecord | null>(null);
-  const [newStaff, setNewStaff] = useState<StaffDraft>(createEmptyStaff);
+  const [newStaff, setNewStaff] =
+    useState<StaffCreateValues>(createEmptyStaff);
   const [isPending, startTransition] = useTransition();
+  const [editStaffPassword, setEditStaffPassword] = useState("");
+  const [newStaffErrors, setNewStaffErrors] =
+    useState<StaffCreateErrorState>({});
+  const [editStaffErrors, setEditStaffErrors] =
+    useState<StaffEditErrorState>({});
+
+  const formatDateForInput = (value?: string | null) =>
+    value ? value.slice(0, 10) : "";
+
+  const collectFieldErrors = (issues: z.ZodIssue[]) => {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of issues) {
+      const key = issue.path[0];
+      if (typeof key === "string" && !fieldErrors[key]) {
+        fieldErrors[key] = issue.message;
+      }
+    }
+    return fieldErrors;
+  };
+
+  const clearNewStaffError = (field: keyof StaffCreateValues) => {
+    setNewStaffErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const clearEditStaffError = (field: keyof StaffUpsertValues) => {
+    setEditStaffErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   // Load staff from API
   useEffect(() => {
@@ -103,6 +148,11 @@ export function StaffManagement() {
     };
   }, []);
 
+  useEffect(() => {
+    setEditStaffPassword("");
+    setEditStaffErrors({});
+  }, [editingStaff]);
+
   // Derived filtered staff
   const filteredStaff = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -116,8 +166,22 @@ export function StaffManagement() {
 
   // Create staff
   const handleCreateStaff = () => {
+    const validation = staffCreateSchema.safeParse(newStaff);
+
+    if (!validation.success) {
+      const fieldErrors = collectFieldErrors(validation.error.issues);
+      setNewStaffErrors(fieldErrors as StaffCreateErrorState);
+      toast.error(
+        validation.error.issues[0]?.message ??
+          "Please correct the highlighted fields."
+      );
+      return;
+    }
+
+    setNewStaffErrors({});
+
     startTransition(async () => {
-      const result = await createStaff(newStaff);
+      const result = await createStaff(validation.data);
       if (result.success) {
         setStaffMembers((prev) => [result.data, ...prev]);
         setIsAddDialogOpen(false);
@@ -132,19 +196,38 @@ export function StaffManagement() {
   // Update staff
   const handleUpdateStaff = () => {
     if (!editingStaff) return;
+    const payload: StaffUpsertValues = {
+      id: editingStaff.id,
+      name: editingStaff.name,
+      email: editingStaff.email,
+      role: editingStaff.role,
+      status: editingStaff.status,
+      phone: editingStaff.phone ?? "",
+      address: editingStaff.address ?? "",
+      nic: editingStaff.nic ?? "",
+      dob: editingStaff.dob ?? "",
+      joinDate: editingStaff.joinDate ?? "",
+      password: editStaffPassword,
+      gender: editingStaff.gender ?? undefined,
+      profileImage: editingStaff.profileImage ?? "",
+    };
+
+    const validation = staffUpsertSchema.safeParse(payload);
+
+    if (!validation.success) {
+      const fieldErrors = collectFieldErrors(validation.error.issues);
+      setEditStaffErrors(fieldErrors as StaffEditErrorState);
+      toast.error(
+        validation.error.issues[0]?.message ??
+          "Please correct the highlighted fields."
+      );
+      return;
+    }
+
+    setEditStaffErrors({});
+
     startTransition(async () => {
-      const result = await updateStaff({
-        id: editingStaff.id,
-        name: editingStaff.name,
-        email: editingStaff.email,
-        role: editingStaff.role,
-        status: editingStaff.status,
-        phone: editingStaff.phone ?? "",
-        address: editingStaff.address ?? "",
-        nic: editingStaff.nic ?? "",
-        dob: editingStaff.dob ?? "",
-        joinDate: editingStaff.joinDate ?? "",
-      });
+      const result = await updateStaff(validation.data);
       if (result.success) {
         setStaffMembers((prev) =>
           prev.map((s) => (s.id === result.data.id ? result.data : s))
@@ -196,7 +279,16 @@ export function StaffManagement() {
           <Users className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold">Staff Management</h1>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <Dialog
+          open={isAddDialogOpen}
+          onOpenChange={(open) => {
+            setIsAddDialogOpen(open);
+            if (!open) {
+              setNewStaff(createEmptyStaff());
+              setNewStaffErrors({});
+            }
+          }}
+        >
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -213,10 +305,17 @@ export function StaffManagement() {
                 <Input
                   id="staff-name"
                   value={newStaff.name}
-                  onChange={(e) =>
-                    setNewStaff({ ...newStaff, name: e.target.value })
-                  }
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setNewStaff((prev) => ({ ...prev, name: value }));
+                    clearNewStaffError("name");
+                  }}
                 />
+                {newStaffErrors.name && (
+                  <p className="text-xs text-destructive">
+                    {newStaffErrors.name}
+                  </p>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="staff-email">Email</Label>
@@ -224,10 +323,35 @@ export function StaffManagement() {
                   id="staff-email"
                   type="email"
                   value={newStaff.email}
-                  onChange={(e) =>
-                    setNewStaff({ ...newStaff, email: e.target.value })
-                  }
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setNewStaff((prev) => ({ ...prev, email: value }));
+                    clearNewStaffError("email");
+                  }}
                 />
+                {newStaffErrors.email && (
+                  <p className="text-xs text-destructive">
+                    {newStaffErrors.email}
+                  </p>
+                )}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="staff-password">Password</Label>
+                <Input
+                  id="staff-password"
+                  type="password"
+                  value={newStaff.password}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setNewStaff((prev) => ({ ...prev, password: value }));
+                    clearNewStaffError("password");
+                  }}
+                />
+                {newStaffErrors.password && (
+                  <p className="text-xs text-destructive">
+                    {newStaffErrors.password}
+                  </p>
+                )}
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <div>
@@ -235,21 +359,29 @@ export function StaffManagement() {
                   <Input
                     id="staff-phone"
                     value={newStaff.phone}
-                    onChange={(e) =>
-                      setNewStaff({ ...newStaff, phone: e.target.value })
-                    }
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setNewStaff((prev) => ({ ...prev, phone: value }));
+                      clearNewStaffError("phone");
+                    }}
                   />
+                  {newStaffErrors.phone && (
+                    <p className="text-xs text-destructive">
+                      {newStaffErrors.phone}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="staff-status">Status</Label>
                   <Select
                     value={newStaff.status}
-                    onValueChange={(v) =>
-                      setNewStaff({
-                        ...newStaff,
-                        status: v as StaffDraft["status"],
-                      })
-                    }
+                    onValueChange={(value) => {
+                      setNewStaff((prev) => ({
+                        ...prev,
+                        status: value as StaffCreateValues["status"],
+                      }));
+                      clearNewStaffError("status");
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
@@ -266,15 +398,106 @@ export function StaffManagement() {
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <div>
+                  <Label htmlFor="staff-dob">Date of birth</Label>
+                  <Input
+                    id="staff-dob"
+                    type="date"
+                    value={newStaff.dob}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setNewStaff((prev) => ({ ...prev, dob: value }));
+                      clearNewStaffError("dob");
+                    }}
+                  />
+                  {newStaffErrors.dob && (
+                    <p className="text-xs text-destructive">
+                      {newStaffErrors.dob}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="staff-join-date">Join date</Label>
+                  <Input
+                    id="staff-join-date"
+                    type="date"
+                    value={newStaff.joinDate}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setNewStaff((prev) => ({ ...prev, joinDate: value }));
+                      clearNewStaffError("joinDate");
+                    }}
+                  />
+                  {newStaffErrors.joinDate && (
+                    <p className="text-xs text-destructive">
+                      {newStaffErrors.joinDate}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="staff-gender">Gender</Label>
+                  <Select
+                    value={newStaff.gender}
+                    onValueChange={(value) => {
+                      setNewStaff((prev) => ({
+                        ...prev,
+                        gender: value as StaffCreateValues["gender"],
+                      }));
+                      clearNewStaffError("gender");
+                    }}
+                  >
+                    <SelectTrigger id="staff-gender">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {genderOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {newStaffErrors.gender && (
+                    <p className="text-xs text-destructive">
+                      {newStaffErrors.gender}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="staff-profile-image">Profile image URL</Label>
+                  <Input
+                    id="staff-profile-image"
+                    type="url"
+                    value={newStaff.profileImage}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setNewStaff((prev) => ({
+                        ...prev,
+                        profileImage: value,
+                      }));
+                      clearNewStaffError("profileImage");
+                    }}
+                  />
+                  {newStaffErrors.profileImage && (
+                    <p className="text-xs text-destructive">
+                      {newStaffErrors.profileImage}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div>
                   <Label htmlFor="staff-role">Role</Label>
                   <Select
                     value={newStaff.role}
-                    onValueChange={(v) =>
-                      setNewStaff({
-                        ...newStaff,
-                        role: v as StaffDraft["role"],
-                      })
-                    }
+                    onValueChange={(value) => {
+                      setNewStaff((prev) => ({
+                        ...prev,
+                        role: value as StaffCreateValues["role"],
+                      }));
+                      clearNewStaffError("role");
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select role" />
@@ -293,10 +516,17 @@ export function StaffManagement() {
                   <Input
                     id="staff-nic"
                     value={newStaff.nic}
-                    onChange={(e) =>
-                      setNewStaff({ ...newStaff, nic: e.target.value })
-                    }
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setNewStaff((prev) => ({ ...prev, nic: value }));
+                      clearNewStaffError("nic");
+                    }}
                   />
+                  {newStaffErrors.nic && (
+                    <p className="text-xs text-destructive">
+                      {newStaffErrors.nic}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="grid gap-2">
@@ -304,10 +534,17 @@ export function StaffManagement() {
                 <Input
                   id="staff-address"
                   value={newStaff.address}
-                  onChange={(e) =>
-                    setNewStaff({ ...newStaff, address: e.target.value })
-                  }
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setNewStaff((prev) => ({ ...prev, address: value }));
+                    clearNewStaffError("address");
+                  }}
                 />
+                {newStaffErrors.address && (
+                  <p className="text-xs text-destructive">
+                    {newStaffErrors.address}
+                  </p>
+                )}
               </div>
               <Button onClick={handleCreateStaff} disabled={isPending}>
                 {isPending ? "Adding..." : "Add staff member"}
@@ -398,7 +635,16 @@ export function StaffManagement() {
 
       {/* Edit Dialog */}
       {editingStaff && (
-        <Dialog open onOpenChange={() => setEditingStaff(null)}>
+        <Dialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditingStaff(null);
+              setEditStaffErrors({});
+              setEditStaffPassword("");
+            }
+          }}
+        >
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Edit staff member</DialogTitle>
@@ -408,44 +654,90 @@ export function StaffManagement() {
                 <Label>Name</Label>
                 <Input
                   value={editingStaff.name}
-                  onChange={(e) =>
-                    setEditingStaff({ ...editingStaff, name: e.target.value })
-                  }
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setEditingStaff((prev) =>
+                      prev ? { ...prev, name: value } : prev
+                    );
+                    clearEditStaffError("name");
+                  }}
                 />
+                {editStaffErrors.name && (
+                  <p className="text-xs text-destructive">
+                    {editStaffErrors.name}
+                  </p>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label>Email</Label>
                 <Input
                   type="email"
                   value={editingStaff.email}
-                  onChange={(e) =>
-                    setEditingStaff({ ...editingStaff, email: e.target.value })
-                  }
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setEditingStaff((prev) =>
+                      prev ? { ...prev, email: value } : prev
+                    );
+                    clearEditStaffError("email");
+                  }}
                 />
+                {editStaffErrors.email && (
+                  <p className="text-xs text-destructive">
+                    {editStaffErrors.email}
+                  </p>
+                )}
+              </div>
+              <div className="grid gap-2">
+                <Label>Password</Label>
+                <Input
+                  type="password"
+                  value={editStaffPassword}
+                  placeholder="Leave blank to keep current password"
+                  onChange={(event) => {
+                    setEditStaffPassword(event.target.value);
+                    clearEditStaffError("password");
+                  }}
+                />
+                {editStaffErrors.password && (
+                  <p className="text-xs text-destructive">
+                    {editStaffErrors.password}
+                  </p>
+                )}
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <div>
                   <Label>Phone</Label>
                   <Input
                     value={editingStaff.phone ?? ""}
-                    onChange={(e) =>
-                      setEditingStaff({
-                        ...editingStaff,
-                        phone: e.target.value,
-                      })
-                    }
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setEditingStaff((prev) =>
+                        prev ? { ...prev, phone: value } : prev
+                      );
+                      clearEditStaffError("phone");
+                    }}
                   />
+                  {editStaffErrors.phone && (
+                    <p className="text-xs text-destructive">
+                      {editStaffErrors.phone}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label>Status</Label>
                   <Select
                     value={editingStaff.status}
-                    onValueChange={(v) =>
-                      setEditingStaff({
-                        ...editingStaff,
-                        status: v as StaffRecord["status"],
-                      })
-                    }
+                    onValueChange={(value) => {
+                      setEditingStaff((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              status: value as StaffRecord["status"],
+                            }
+                          : prev
+                      );
+                      clearEditStaffError("status");
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -458,6 +750,172 @@ export function StaffManagement() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div>
+                  <Label>Role</Label>
+                  <Select
+                    value={editingStaff.role}
+                    onValueChange={(value) => {
+                      setEditingStaff((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              role: value as StaffRecord["role"],
+                            }
+                          : prev
+                      );
+                      clearEditStaffError("role");
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roleOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>NIC</Label>
+                  <Input
+                    value={editingStaff.nic ?? ""}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setEditingStaff((prev) =>
+                        prev ? { ...prev, nic: value } : prev
+                      );
+                      clearEditStaffError("nic");
+                    }}
+                  />
+                  {editStaffErrors.nic && (
+                    <p className="text-xs text-destructive">
+                      {editStaffErrors.nic}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label>Address</Label>
+                <Input
+                  value={editingStaff.address ?? ""}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setEditingStaff((prev) =>
+                      prev ? { ...prev, address: value } : prev
+                    );
+                    clearEditStaffError("address");
+                  }}
+                />
+                {editStaffErrors.address && (
+                  <p className="text-xs text-destructive">
+                    {editStaffErrors.address}
+                  </p>
+                )}
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div>
+                  <Label>Date of birth</Label>
+                  <Input
+                    type="date"
+                    value={formatDateForInput(editingStaff.dob)}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setEditingStaff((prev) =>
+                        prev
+                          ? { ...prev, dob: value ? value : null }
+                          : prev
+                      );
+                      clearEditStaffError("dob");
+                    }}
+                  />
+                  {editStaffErrors.dob && (
+                    <p className="text-xs text-destructive">
+                      {editStaffErrors.dob}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label>Join date</Label>
+                  <Input
+                    type="date"
+                    value={formatDateForInput(editingStaff.joinDate)}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setEditingStaff((prev) =>
+                        prev
+                          ? { ...prev, joinDate: value ? value : null }
+                          : prev
+                      );
+                      clearEditStaffError("joinDate");
+                    }}
+                  />
+                  {editStaffErrors.joinDate && (
+                    <p className="text-xs text-destructive">
+                      {editStaffErrors.joinDate}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div>
+                  <Label>Gender</Label>
+                  <Select
+                    value={editingStaff.gender ?? undefined}
+                    onValueChange={(value) => {
+                      setEditingStaff((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              gender: value as StaffRecord["gender"],
+                            }
+                          : prev
+                      );
+                      clearEditStaffError("gender");
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {genderOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {editStaffErrors.gender && (
+                    <p className="text-xs text-destructive">
+                      {editStaffErrors.gender}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label>Profile image URL</Label>
+                  <Input
+                    type="url"
+                    value={editingStaff.profileImage ?? ""}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setEditingStaff((prev) =>
+                        prev
+                          ? { ...prev, profileImage: value }
+                          : prev
+                      );
+                      clearEditStaffError("profileImage");
+                    }}
+                  />
+                  {editStaffErrors.profileImage && (
+                    <p className="text-xs text-destructive">
+                      {editStaffErrors.profileImage}
+                    </p>
+                  )}
                 </div>
               </div>
               <Button onClick={handleUpdateStaff} disabled={isPending}>
