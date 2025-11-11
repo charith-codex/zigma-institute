@@ -12,7 +12,8 @@ const requestSchema = z.object({
 });
 
 const INSTITUTE_NAME = "Zigma Institute";
-const INSTITUTE_TAGLINE = "AI-powered personalised learning for ambitious students.";
+const INSTITUTE_TAGLINE =
+  "AI-powered personalised learning for ambitious students.";
 const INSTITUTE_ADDRESS = "Colombo Innovation Hub, 512 Galle Road, Colombo 03";
 
 export async function POST(request: Request) {
@@ -42,7 +43,10 @@ export async function POST(request: Request) {
   });
 
   if (registrations.length === 0) {
-    return NextResponse.json({ error: "No registrations found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "No registrations found" },
+      { status: 404 }
+    );
   }
 
   const contexts = [];
@@ -78,7 +82,9 @@ export async function POST(request: Request) {
   }
 
   const pdfBytes = renderStudentIdCardsPdf(contexts);
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const blob = new Blob([Uint8Array.from(pdfBytes)], {
+    type: "application/pdf",
+  });
 
   return new NextResponse(blob, {
     status: 200,
