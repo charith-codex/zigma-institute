@@ -9,7 +9,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { UploadDropzone } from "@/lib/uploadthing";
@@ -26,9 +33,7 @@ const registrationSchema = z.object({
     .optional()
     .or(z.literal("")),
   gender: z
-    .enum(["MALE", "FEMALE"], {
-      invalid_type_error: "Select a valid gender",
-    })
+    .enum(["MALE", "FEMALE"] as const)
     .optional()
     .or(z.literal("")),
   guardianEmail: z.string().email("Enter a valid guardian email"),
@@ -87,7 +92,10 @@ export function StudentRegistrationForm({
       selectedCourseIds?.includes(course.id)
     );
 
-    const amount = selected.reduce((sum, course) => sum + course.priceInCents, 0);
+    const amount = selected.reduce(
+      (sum, course) => sum + course.priceInCents,
+      0
+    );
     const currency = selected[0]?.currency ?? "USD";
 
     return {
@@ -149,10 +157,12 @@ export function StudentRegistrationForm({
     <div className="grid gap-8 lg:grid-cols-[2fr_1fr]" id="registration-form">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Secure student registration</CardTitle>
+          <CardTitle className="text-2xl">
+            Secure student registration
+          </CardTitle>
           <p className="text-muted-foreground text-sm">
-            Share accurate details and select the courses you wish to enrol in. We
-            will verify payment automatically and email LMS credentials once
+            Share accurate details and select the courses you wish to enrol in.
+            We will verify payment automatically and email LMS credentials once
             approved.
           </p>
         </CardHeader>
@@ -193,7 +203,11 @@ export function StudentRegistrationForm({
                     <FormItem>
                       <FormLabel>Student email *</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="student@example.com" {...field} />
+                        <Input
+                          type="email"
+                          placeholder="student@example.com"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -223,7 +237,9 @@ export function StudentRegistrationForm({
                           <select
                             className="w-full bg-transparent outline-none"
                             value={field.value ?? ""}
-                            onChange={(event) => field.onChange(event.target.value)}
+                            onChange={(event) =>
+                              field.onChange(event.target.value)
+                            }
                           >
                             <option value="">Select gender</option>
                             <option value="MALE">Male</option>
@@ -242,7 +258,11 @@ export function StudentRegistrationForm({
                     <FormItem>
                       <FormLabel>Parent / Guardian email *</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="guardian@example.com" {...field} />
+                        <Input
+                          type="email"
+                          placeholder="guardian@example.com"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -273,7 +293,9 @@ export function StudentRegistrationForm({
                 name="studentPhoto"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Student passport photo (JPEG, max 4MB) *</FormLabel>
+                    <FormLabel>
+                      Student passport photo (JPEG, max 4MB) *
+                    </FormLabel>
                     <div className="space-y-3">
                       {photoPreview ? (
                         <div className="flex items-center gap-4">
@@ -334,7 +356,8 @@ export function StudentRegistrationForm({
                     </FormLabel>
                     <div className="grid gap-3">
                       {courses.map((course) => {
-                        const checked = field.value?.includes(course.id) ?? false;
+                        const checked =
+                          field.value?.includes(course.id) ?? false;
                         return (
                           <div
                             key={course.id}
@@ -345,17 +368,25 @@ export function StudentRegistrationForm({
                                 {course.name}
                               </span>
                               <p className="text-sm text-muted-foreground">
-                                {formatCurrency(course.priceInCents, course.currency)}
+                                {formatCurrency(
+                                  course.priceInCents,
+                                  course.currency
+                                )}
                               </p>
                             </div>
                             <Checkbox
                               checked={checked}
                               onCheckedChange={(value) => {
                                 if (value) {
-                                  field.onChange([...(field.value ?? []), course.id]);
+                                  field.onChange([
+                                    ...(field.value ?? []),
+                                    course.id,
+                                  ]);
                                 } else {
                                   field.onChange(
-                                    (field.value ?? []).filter((id) => id !== course.id)
+                                    (field.value ?? []).filter(
+                                      (id) => id !== course.id
+                                    )
                                   );
                                 }
                               }}
@@ -407,11 +438,12 @@ export function StudentRegistrationForm({
               <li>Complete the registration form and choose courses.</li>
               <li>Pay securely through Stripe Checkout.</li>
               <li>
-                Our team verifies payment automatically and prepares your ID card.
+                Our team verifies payment automatically and prepares your ID
+                card.
               </li>
               <li>
-                Student and guardian receive LMS credentials, ID card, and next steps
-                via email.
+                Student and guardian receive LMS credentials, ID card, and next
+                steps via email.
               </li>
             </ol>
           </CardContent>
