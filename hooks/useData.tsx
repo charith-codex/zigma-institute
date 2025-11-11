@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Course, TeacherSummary } from '@/types';
+import { Course, TeacherSummary, StudentRegistrationStatus, StudentRegistrationSummary } from '@/types';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -149,6 +149,59 @@ export function useTeachers() {
   }, [refetch]);
 
   return { teachers, loading, error, refetch };
+}
+
+export function useStudentRegistrations(
+  statuses: StudentRegistrationStatus[] = ["PAID", "APPROVED"]
+) {
+  const [registrations, setRegistrations] = useState<StudentRegistrationSummary[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const queryString = statuses.map((status) => `status=${status}`).join("&");
+
+  const refetch = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/student-registration?${queryString}`);
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error ?? "Failed to load registrations");
+      }
+
+      const payload = await response.json();
+      const normalized: StudentRegistrationSummary[] = Array.isArray(payload)
+        ? payload
+            .filter((item): item is StudentRegistrationSummary =>
+              Boolean(item?.id)
+            )
+            .map((item) => ({
+              ...item,
+              createdAt: new Date(item.createdAt),
+            }))
+        : [];
+
+      setRegistrations(normalized);
+      setError(null);
+    } catch (fetchError) {
+      console.error('Failed to load student registrations', fetchError);
+      setRegistrations([]);
+      setError(
+        fetchError instanceof Error
+          ? fetchError.message
+          : 'Failed to load student registrations'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [queryString]);
+
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
+
+  return { registrations, loading, error, refetch };
 }
 
 const normalizeCourseToClassSummary = (

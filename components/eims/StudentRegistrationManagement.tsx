@@ -1,5 +1,12 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -18,7 +25,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -27,114 +33,192 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Search,
-  Eye,
-  Check,
-  X,
-  UserPlus,
-  Filter,
-  Download,
-} from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Download, Eye, Search, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
-interface StudentRegistration {
-  id: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  dateOfBirth: string;
-  address: string;
-  course: string;
-  feeAmount: number;
-  status: "pending" | "approved" | "rejected";
-  submittedAt: string;
-  guardianName?: string;
-  guardianPhone?: string;
-}
+import { formatCurrency } from "@/lib/utils";
+import { useStudentRegistrations } from "@/hooks/useData";
+import type {
+  StudentRegistrationSummary,
+  StudentRegistrationStatus,
+} from "@/types";
 
-const mockRegistrations: StudentRegistration[] = [
-  {
-    id: "REG-001",
-    fullName: "Alice Johnson",
-    email: "alice.johnson@email.com",
-    phone: "+1-555-0101",
-    dateOfBirth: "2005-03-15",
-    address: "123 Main St, Springfield, IL",
-    course: "Computer Science",
-    feeAmount: 5000,
-    status: "pending",
-    submittedAt: "2024-01-15T10:30:00",
-    guardianName: "Robert Johnson",
-    guardianPhone: "+1-555-0102",
-  },
-  {
-    id: "REG-002",
-    fullName: "Bob Smith",
-    email: "bob.smith@email.com",
-    phone: "+1-555-0103",
-    dateOfBirth: "2004-07-22",
-    address: "456 Oak Ave, Springfield, IL",
-    course: "Mathematics",
-    feeAmount: 4500,
-    status: "approved",
-    submittedAt: "2024-01-14T14:20:00",
-  },
-  {
-    id: "REG-003",
-    fullName: "Carol Davis",
-    email: "carol.davis@email.com",
-    phone: "+1-555-0104",
-    dateOfBirth: "2005-11-08",
-    address: "789 Pine Rd, Springfield, IL",
-    course: "Physics",
-    feeAmount: 4800,
-    status: "rejected",
-    submittedAt: "2024-01-13T09:45:00",
-  },
+const STATUS_OPTIONS: (
+  | { label: string; value: "all" }
+  | { label: string; value: StudentRegistrationStatus }
+)[] = [
+  { label: "All statuses", value: "all" },
+  { label: "Pending approval", value: "PAID" },
+  { label: "Approved", value: "APPROVED" },
 ];
 
 export function StudentRegistrationManagement() {
-  const [registrations, setRegistrations] =
-    useState<StudentRegistration[]>(mockRegistrations);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedRegistration, setSelectedRegistration] =
-    useState<StudentRegistration | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"all" | StudentRegistrationStatus>(
+    "PAID"
+  );
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const statuses: StudentRegistrationStatus[] =
+    statusFilter === "all" ? ["PAID", "APPROVED"] : [statusFilter];
+  const { registrations, loading, error, refetch } = useStudentRegistrations(statuses);
+  const [activeRegistration, setActiveRegistration] =
+    useState<StudentRegistrationSummary | null>(null);
 
-  const filteredRegistrations = registrations.filter((reg) => {
-    const matchesSearch =
-      reg.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.course.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || reg.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  useEffect(() => {
+    setSelected(new Set());
+  }, [statusFilter]);
 
-  const handleStatusChange = (
-    id: string,
-    newStatus: "approved" | "rejected"
-  ) => {
-    setRegistrations((prev) =>
-      prev.map((reg) => (reg.id === id ? { ...reg, status: newStatus } : reg))
-    );
-    toast.success(`Registration ${newStatus} successfully`);
+  useEffect(() => {
+    setSelected((prev) => {
+      const next = new Set<string>();
+      registrations.forEach((registration) => {
+        if (prev.has(registration.id)) {
+          next.add(registration.id);
+        }
+      });
+      return next;
+    });
+  }, [registrations]);
+
+  const filteredRegistrations = useMemo(() => {
+    return registrations.filter((registration) => {
+      const matchesSearch = [
+        `${registration.firstName} ${registration.lastName}`,
+        registration.email,
+        registration.guardianName,
+        registration.studentPublicId ?? "",
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === "all" || registration.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [registrations, searchTerm, statusFilter]);
+
+  const stats = useMemo(() => {
+    const total = registrations.length;
+    const paid = registrations.filter((registration) => registration.status === "PAID").length;
+    const approved = registrations.filter((registration) => registration.status === "APPROVED").length;
+    const idCardsReady = registrations.filter((registration) => Boolean(registration.idCardUrl)).length;
+
+    return { total, paid, approved, idCardsReady };
+  }, [registrations]);
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
-  const getStatusBadge = (status: string) => {
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelected(new Set(filteredRegistrations.map((registration) => registration.id)));
+    } else {
+      setSelected(new Set());
+    }
+  };
+
+  const handleStatusChange = async (
+    id: string,
+    status: StudentRegistrationStatus
+  ) => {
+    try {
+      const response = await fetch("/api/student-registration", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error ?? "Unable to update registration");
+      }
+
+      toast.success(
+        status === "APPROVED"
+          ? "Registration approved"
+          : "Registration status updated"
+      );
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      void refetch();
+    } catch (updateError) {
+      console.error("Failed to update registration", updateError);
+      toast.error(
+        updateError instanceof Error
+          ? updateError.message
+          : "Unable to update registration"
+      );
+    }
+  };
+
+  const handleDownloadSelected = async () => {
+    if (selected.size === 0) {
+      toast.error("Select at least one registration to download");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/student-registration/id-cards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selected) }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error ?? "Unable to download ID cards");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "zigma-student-id-cards.pdf";
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (downloadError) {
+      console.error("Failed to download ID cards", downloadError);
+      toast.error(
+        downloadError instanceof Error
+          ? downloadError.message
+          : "Unable to download ID cards"
+      );
+    }
+  };
+
+  const handlePreview = (registration: StudentRegistrationSummary) => {
+    setActiveRegistration(registration);
+  };
+
+  const statusBadge = (status: StudentRegistrationStatus) => {
     switch (status) {
-      case "pending":
-        return <Badge variant="secondary">Pending</Badge>;
-      case "approved":
+      case "PAID":
+        return <Badge variant="secondary">Awaiting approval</Badge>;
+      case "APPROVED":
         return (
           <Badge className="bg-success/10 text-success border-success/20">
             Approved
           </Badge>
         );
-      case "rejected":
-        return <Badge variant="destructive">Rejected</Badge>;
+      case "FAILED":
+        return <Badge variant="destructive">Failed</Badge>;
       default:
-        return <Badge variant="outline">Unknown</Badge>;
+        return <Badge variant="outline">Pending</Badge>;
     }
   };
 
@@ -142,43 +226,42 @@ export function StudentRegistrationManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">
-            Student Registration Management
-          </h1>
+          <h1 className="text-2xl font-bold">Student Registration Management</h1>
           <p className="text-muted-foreground">
-            Review and approve student registration requests
+            Review payments, approve enrolments, and download ID cards
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Export
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadSelected}
+            disabled={selected.size === 0 || loading}
+          >
+            <Download className="mr-2 h-4 w-4" /> Download selected
           </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Registrations
+              Total registrations
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{registrations.length}</div>
+            <div className="text-2xl font-bold">{stats.total}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pending
+              Awaiting approval
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-warning">
-              {registrations.filter((r) => r.status === "pending").length}
-            </div>
+            <div className="text-2xl font-bold text-warning">{stats.paid}</div>
           </CardContent>
         </Card>
         <Card>
@@ -188,290 +271,236 @@ export function StudentRegistrationManagement() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-success">
-              {registrations.filter((r) => r.status === "approved").length}
-            </div>
+            <div className="text-2xl font-bold text-success">{stats.approved}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Rejected
+              ID cards ready
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              {registrations.filter((r) => r.status === "rejected").length}
+            <div className="text-2xl font-bold text-muted-foreground">
+              {stats.idCardsReady}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters and Search */}
       <Card>
         <CardHeader>
-          <CardTitle>Registration Requests</CardTitle>
+          <CardTitle>Online registrations</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <div className="flex flex-wrap gap-4">
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by name, email, or course..."
+                placeholder="Search by student, email, or ID"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(event) => setSearchTerm(event.target.value)}
                 className="pl-10"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <Filter className="w-4 h-4 mr-2" />
+            <Select
+              value={statusFilter}
+              onValueChange={(value) =>
+                setStatusFilter(value as "all" | StudentRegistrationStatus)
+              }
+            >
+              <SelectTrigger className="w-48">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
+                {STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
+          {error ? (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+              {error}
+            </div>
+          ) : null}
+
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Registration ID</TableHead>
-                <TableHead>Student Name</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Fee Amount</TableHead>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={
+                      filteredRegistrations.length > 0 &&
+                      filteredRegistrations.every((registration) =>
+                        selected.has(registration.id)
+                      )
+                    }
+                    onCheckedChange={(value) => toggleSelectAll(value === true)}
+                    aria-label="Select all"
+                  />
+                </TableHead>
+                <TableHead>Student</TableHead>
+                <TableHead>Guardian</TableHead>
+                <TableHead>Courses</TableHead>
+                <TableHead>Total</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Submitted</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredRegistrations.map((registration) => (
                 <TableRow key={registration.id}>
-                  <TableCell className="font-medium">
-                    {registration.id}
+                  <TableCell>
+                    <Checkbox
+                      checked={selected.has(registration.id)}
+                      onCheckedChange={() => toggleSelect(registration.id)}
+                      aria-label={`Select ${registration.firstName}`}
+                    />
                   </TableCell>
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{registration.fullName}</div>
-                      <div className="text-sm text-muted-foreground">
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-foreground">
+                        {registration.firstName} {registration.lastName}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
                         {registration.email}
-                      </div>
+                      </span>
+                      {registration.studentPublicId ? (
+                        <span className="text-xs text-muted-foreground">
+                          ID: {registration.studentPublicId}
+                        </span>
+                      ) : null}
                     </div>
                   </TableCell>
-                  <TableCell>{registration.course}</TableCell>
                   <TableCell>
-                    ${registration.feeAmount.toLocaleString()}
+                    <div className="flex flex-col">
+                      <span className="font-medium text-foreground">
+                        {registration.guardianName}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {registration.guardianEmail}
+                      </span>
+                    </div>
                   </TableCell>
-                  <TableCell>{getStatusBadge(registration.status)}</TableCell>
                   <TableCell>
-                    {new Date(registration.submittedAt).toLocaleDateString()}
+                    <div className="text-sm text-muted-foreground">
+                      {registration.courses.join(", ") || "—"}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              setSelectedRegistration(registration)
-                            }
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>
-                              Registration Details - {registration.id}
-                            </DialogTitle>
-                            <DialogDescription>
-                              Complete registration information for{" "}
-                              {registration.fullName}
-                            </DialogDescription>
-                          </DialogHeader>
-
-                          {selectedRegistration && (
-                            <div className="grid grid-cols-2 gap-4 py-4">
-                              <div className="space-y-3">
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Full Name
-                                  </label>
-                                  <p className="text-sm">
-                                    {selectedRegistration.fullName}
-                                  </p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Email
-                                  </label>
-                                  <p className="text-sm">
-                                    {selectedRegistration.email}
-                                  </p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Phone
-                                  </label>
-                                  <p className="text-sm">
-                                    {selectedRegistration.phone}
-                                  </p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Date of Birth
-                                  </label>
-                                  <p className="text-sm">
-                                    {selectedRegistration.dateOfBirth}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="space-y-3">
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Course
-                                  </label>
-                                  <p className="text-sm">
-                                    {selectedRegistration.course}
-                                  </p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Fee Amount
-                                  </label>
-                                  <p className="text-sm">
-                                    $
-                                    {selectedRegistration.feeAmount.toLocaleString()}
-                                  </p>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Status
-                                  </label>
-                                  <div className="mt-1">
-                                    {getStatusBadge(
-                                      selectedRegistration.status
-                                    )}
-                                  </div>
-                                </div>
-                                <div>
-                                  <label className="text-sm font-medium text-muted-foreground">
-                                    Submitted At
-                                  </label>
-                                  <p className="text-sm">
-                                    {new Date(
-                                      selectedRegistration.submittedAt
-                                    ).toLocaleString()}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="col-span-2">
-                                <label className="text-sm font-medium text-muted-foreground">
-                                  Address
-                                </label>
-                                <p className="text-sm">
-                                  {selectedRegistration.address}
-                                </p>
-                              </div>
-
-                              {selectedRegistration.guardianName && (
-                                <div className="col-span-2 border-t pt-3">
-                                  <h4 className="font-medium mb-2">
-                                    Guardian Information
-                                  </h4>
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <label className="text-sm font-medium text-muted-foreground">
-                                        Guardian Name
-                                      </label>
-                                      <p className="text-sm">
-                                        {selectedRegistration.guardianName}
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <label className="text-sm font-medium text-muted-foreground">
-                                        Guardian Phone
-                                      </label>
-                                      <p className="text-sm">
-                                        {selectedRegistration.guardianPhone}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {selectedRegistration?.status === "pending" && (
-                            <DialogFooter>
-                              <Button
-                                variant="outline"
-                                onClick={() => {
-                                  handleStatusChange(
-                                    selectedRegistration.id,
-                                    "rejected"
-                                  );
-                                  setSelectedRegistration(null);
-                                }}
-                              >
-                                <X className="w-4 h-4 mr-2" />
-                                Reject
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  handleStatusChange(
-                                    selectedRegistration.id,
-                                    "approved"
-                                  );
-                                  setSelectedRegistration(null);
-                                }}
-                              >
-                                <Check className="w-4 h-4 mr-2" />
-                                Approve
-                              </Button>
-                            </DialogFooter>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-
-                      {registration.status === "pending" && (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleStatusChange(registration.id, "approved")
-                            }
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleStatusChange(registration.id, "rejected")
-                            }
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </>
+                    <div className="font-medium">
+                      {formatCurrency(
+                        registration.totalAmountInCents,
+                        registration.currency
                       )}
                     </div>
+                  </TableCell>
+                  <TableCell>{statusBadge(registration.status)}</TableCell>
+                  <TableCell className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handlePreview(registration)}
+                      aria-label="Preview registration"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    {registration.idCardUrl ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => window.open(registration.idCardUrl ?? "#", "_blank")}
+                        aria-label="Download ID card"
+                      >
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    ) : null}
+                    {registration.status === "PAID" ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleStatusChange(registration.id, "APPROVED")}
+                        aria-label="Approve registration"
+                      >
+                        <Check className="h-4 w-4 text-success" />
+                      </Button>
+                    ) : null}
+                    {registration.status === "PAID" ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleStatusChange(registration.id, "FAILED")}
+                        aria-label="Reject registration"
+                      >
+                        <X className="h-4 w-4 text-destructive" />
+                      </Button>
+                    ) : null}
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+
+          {filteredRegistrations.length === 0 && !loading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              No registrations found.
+            </div>
+          ) : null}
         </CardContent>
       </Card>
+
+      <Dialog open={Boolean(activeRegistration)} onOpenChange={() => setActiveRegistration(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registration details</DialogTitle>
+            <DialogDescription>
+              Review the information submitted during online registration.
+            </DialogDescription>
+          </DialogHeader>
+          {activeRegistration ? (
+            <div className="space-y-4 text-sm">
+              <div>
+                <p className="font-semibold text-foreground">Student</p>
+                <p>
+                  {activeRegistration.firstName} {activeRegistration.lastName}
+                </p>
+                <p className="text-muted-foreground">{activeRegistration.email}</p>
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">Guardian</p>
+                <p>{activeRegistration.guardianName}</p>
+                <p className="text-muted-foreground">
+                  {activeRegistration.guardianEmail}
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">Courses</p>
+                <p className="text-muted-foreground">
+                  {activeRegistration.courses.join(", ") || "Assigned post-approval"}
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">Total payment</p>
+                <p>
+                  {formatCurrency(
+                    activeRegistration.totalAmountInCents,
+                    activeRegistration.currency
+                  )}
+                </p>
+              </div>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setActiveRegistration(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
