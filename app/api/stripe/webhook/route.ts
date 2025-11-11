@@ -23,7 +23,7 @@ const INSTITUTE_INFO = {
 // Webhook handler
 export async function POST(req: NextRequest) {
   if (!stripe || !WEBHOOK_SECRET) {
-    console.error("❌ Stripe not configured properly");
+    console.error("Stripe not configured properly");
     return NextResponse.json(
       { error: "Webhook misconfigured" },
       { status: 500 }
@@ -45,14 +45,14 @@ export async function POST(req: NextRequest) {
 
     event = stripe.webhooks.constructEvent(body, signature, WEBHOOK_SECRET);
   } catch (error) {
-    console.error("❌ Stripe signature verification failed", error);
+    console.error("Stripe signature verification failed", error);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
   try {
-    if (event.type === "payment_intent.succeeded") {
-      const intent = event.data.object as Stripe.PaymentIntent;
-      await handlePaymentIntentSucceeded(intent);
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      await handleCheckoutSessionCompleted(session);
       return NextResponse.json({
         message: "Student registration processed successfully",
       });
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       message: `Unhandled event type: ${event.type}`,
     });
   } catch (error) {
-    console.error("❌ Webhook processing failed:", error);
+    console.error("Webhook processing failed:", error);
     return NextResponse.json(
       { error: "Webhook handler failed" },
       { status: 500 }
@@ -70,11 +70,13 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Handle successful payment intent
-async function handlePaymentIntentSucceeded(intent: Stripe.PaymentIntent) {
-  const registrationId = intent.metadata?.registrationId;
+// Handle successful checkout
+async function handleCheckoutSessionCompleted(
+  session: Stripe.Checkout.Session
+) {
+  const registrationId = session.metadata?.registrationId;
   if (!registrationId) {
-    console.warn("⚠️ Missing registrationId in payment metadata");
+    console.warn("Missing registrationId in metadata");
     return;
   }
 
@@ -84,12 +86,12 @@ async function handlePaymentIntentSucceeded(intent: Stripe.PaymentIntent) {
   });
 
   if (!registration) {
-    console.warn("⚠️ Registration not found:", registrationId);
+    console.warn("Registration not found:", registrationId);
     return;
   }
 
   if (registration.status !== "PENDING") {
-    console.info("ℹ️ Registration already processed:", registrationId);
+    console.info("Registration already processed:", registrationId);
     return;
   }
 
@@ -102,10 +104,11 @@ async function handlePaymentIntentSucceeded(intent: Stripe.PaymentIntent) {
       where: { id: registration.id },
       data: { status: "FAILED" },
     });
-    console.error("❌ User already exists:", registration.email);
+    console.error("User already exists:", registration.email);
     return;
   }
 
+  // Generate credentials and create records
   const plainPassword = generateRandomPassword();
   const hashedPassword = hashSync(plainPassword, 10);
 
@@ -188,7 +191,7 @@ async function handlePaymentIntentSucceeded(intent: Stripe.PaymentIntent) {
     : uploadResponse;
 
   if (!uploaded?.data?.url || !uploaded?.data?.key) {
-    throw new Error("❌ Failed to upload ID card");
+    throw new Error("Failed to upload ID card");
   }
 
   await prisma.student.update({
@@ -217,5 +220,5 @@ async function handlePaymentIntentSucceeded(intent: Stripe.PaymentIntent) {
     courses: cardData.courses,
   });
 
-  console.log(`✅ Student ${registration.email} onboarded successfully`);
+  console.log(`Student ${registration.email} onboarded successfully`);
 }
