@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -233,24 +233,33 @@ export function StudentRegistrationForm({
                     <FormItem>
                       <FormLabel>Gender</FormLabel>
                       <FormControl>
-                        <div className="flex h-10 items-center rounded-md border border-input bg-background px-3 text-sm shadow-sm">
-                          <select
-                            className="w-full bg-transparent outline-none"
-                            value={field.value ?? ""}
-                            onChange={(event) =>
-                              field.onChange(event.target.value)
-                            }
-                          >
-                            <option value="">Select gender</option>
-                            <option value="MALE">Male</option>
-                            <option value="FEMALE">Female</option>
-                          </select>
-                        </div>
+                        <RadioGroup
+                          className="flex gap-6"
+                          onValueChange={field.onChange}
+                          value={field.value ?? ""}
+                        >
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <RadioGroupItem value="MALE" />
+                            </FormControl>
+                            <FormLabel className="font-normal">Male</FormLabel>
+                          </FormItem>
+
+                          <FormItem className="flex items-center space-x-2">
+                            <FormControl>
+                              <RadioGroupItem value="FEMALE" />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              Female
+                            </FormLabel>
+                          </FormItem>
+                        </RadioGroup>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="guardianEmail"

@@ -52,3 +52,4 @@ npm i resend react-email @react-email/components @react-email/render
 npm i stripe @stripe/stripe-js @stripe/react-stripe-js
 
 npx shadcn@latest add form switch
+npx shadcn@latest add radio-group

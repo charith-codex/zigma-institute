@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { Gender } from "@prisma/client";
 
 import { prisma } from "@/db/prisma";
 import { stripe } from "@/lib/stripe";
@@ -11,7 +10,7 @@ const registrationRequestSchema = z.object({
   email: z.string().email(),
   phone: z.string().min(6),
   address: z.string().max(200).optional().nullable(),
-  gender: z.nativeEnum(Gender).optional().nullable(),
+  gender: z.enum(["MALE", "FEMALE"]).optional().nullable(),
   guardianEmail: z.string().email(),
   courses: z.array(z.string().min(1)).min(1),
   studentPhoto: z.object({ url: z.string().url(), key: z.string().min(1) }),
@@ -34,12 +33,17 @@ export async function POST(request: Request) {
   try {
     payload = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid JSON payload." },
+      { status: 400 }
+    );
   }
 
   const parseResult = registrationRequestSchema.safeParse(payload);
   if (!parseResult.success) {
-    const message = parseResult.error.issues.map((issue) => issue.message).join("\n");
+    const message = parseResult.error.issues
+      .map((issue) => issue.message)
+      .join("\n");
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
