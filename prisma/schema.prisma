@@ -280,17 +280,13 @@ enum StudentRegistrationStatus {
 
 model StudentRegistration {
   id                 String                    @id @default(uuid())
-  firstName          String
-  lastName           String
+  name               String
   email              String
   phone              String
+  address            String?
+  gender             Gender?
   dateOfBirth        DateTime
-  school             String?
-  guardianName       String
   guardianEmail      String
-  guardianPhone      String
-  contactPreference  String?
-  goals              String?
   studentPhotoUrl    String
   studentPhotoKey    String
   totalAmountInCents Int

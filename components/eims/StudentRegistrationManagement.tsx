@@ -84,9 +84,10 @@ export function StudentRegistrationManagement() {
   const filteredRegistrations = useMemo(() => {
     return registrations.filter((registration) => {
       const matchesSearch = [
-        `${registration.firstName} ${registration.lastName}`,
+        registration.name,
         registration.email,
-        registration.guardianName,
+        registration.phone,
+        registration.guardianEmail,
         registration.studentPublicId ?? "",
       ]
         .join(" ")
@@ -344,7 +345,7 @@ export function StudentRegistrationManagement() {
                   />
                 </TableHead>
                 <TableHead>Student</TableHead>
-                <TableHead>Guardian</TableHead>
+                <TableHead>Contact</TableHead>
                 <TableHead>Courses</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead>Status</TableHead>
@@ -358,13 +359,13 @@ export function StudentRegistrationManagement() {
                     <Checkbox
                       checked={selected.has(registration.id)}
                       onCheckedChange={() => toggleSelect(registration.id)}
-                      aria-label={`Select ${registration.firstName}`}
+                      aria-label={`Select ${registration.name}`}
                     />
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-semibold text-foreground">
-                        {registration.firstName} {registration.lastName}
+                        {registration.name}
                       </span>
                       <span className="text-sm text-muted-foreground">
                         {registration.email}
@@ -377,13 +378,9 @@ export function StudentRegistrationManagement() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-medium text-foreground">
-                        {registration.guardianName}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {registration.guardianEmail}
-                      </span>
+                    <div className="flex flex-col text-sm text-muted-foreground">
+                      <span>Guardian: {registration.guardianEmail}</span>
+                      <span>Phone: {registration.phone}</span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -465,18 +462,30 @@ export function StudentRegistrationManagement() {
             <div className="space-y-4 text-sm">
               <div>
                 <p className="font-semibold text-foreground">Student</p>
-                <p>
-                  {activeRegistration.firstName} {activeRegistration.lastName}
-                </p>
+                <p>{activeRegistration.name}</p>
                 <p className="text-muted-foreground">{activeRegistration.email}</p>
+                <p className="text-muted-foreground">Phone: {activeRegistration.phone}</p>
               </div>
               <div>
-                <p className="font-semibold text-foreground">Guardian</p>
-                <p>{activeRegistration.guardianName}</p>
+                <p className="font-semibold text-foreground">Guardian email</p>
                 <p className="text-muted-foreground">
                   {activeRegistration.guardianEmail}
                 </p>
               </div>
+              {activeRegistration.gender ? (
+                <div>
+                  <p className="font-semibold text-foreground">Gender</p>
+                  <p className="text-muted-foreground">
+                    {activeRegistration.gender === "MALE" ? "Male" : "Female"}
+                  </p>
+                </div>
+              ) : null}
+              {activeRegistration.address ? (
+                <div>
+                  <p className="font-semibold text-foreground">Postal address</p>
+                  <p className="text-muted-foreground">{activeRegistration.address}</p>
+                </div>
+              ) : null}
               <div>
                 <p className="font-semibold text-foreground">Courses</p>
                 <p className="text-muted-foreground">

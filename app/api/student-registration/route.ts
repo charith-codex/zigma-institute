@@ -35,11 +35,11 @@ export async function GET(request: Request) {
 
   const payload = registrations.map((registration) => ({
     id: registration.id,
-    firstName: registration.firstName,
-    lastName: registration.lastName,
+    name: registration.name,
     email: registration.email,
     phone: registration.phone,
-    guardianName: registration.guardianName,
+    address: registration.address,
+    gender: registration.gender,
     guardianEmail: registration.guardianEmail,
     status: registration.status,
     totalAmountInCents: registration.totalAmountInCents,

@@ -16,17 +16,22 @@ import { UploadDropzone } from "@/lib/uploadthing";
 import { formatCurrency } from "@/lib/utils";
 
 const registrationSchema = z.object({
-  firstName: z.string().min(2, "First name is required"),
-  lastName: z.string().min(2, "Last name is required"),
+  name: z.string().min(2, "Student name is required"),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
-  school: z.string().optional(),
-  studentEmail: z.string().email("Enter a valid email"),
+  email: z.string().email("Enter a valid email"),
   phone: z.string().min(6, "Enter a valid phone number"),
-  guardianName: z.string().min(2, "Guardian name is required"),
+  address: z
+    .string()
+    .max(200, "Address must be 200 characters or fewer")
+    .optional()
+    .or(z.literal("")),
+  gender: z
+    .enum(["MALE", "FEMALE"], {
+      invalid_type_error: "Select a valid gender",
+    })
+    .optional()
+    .or(z.literal("")),
   guardianEmail: z.string().email("Enter a valid guardian email"),
-  guardianPhone: z.string().min(6, "Enter a valid guardian phone"),
-  contactPreference: z.enum(["email", "phone", "whatsapp"]).default("email"),
-  goals: z.string().max(600).optional(),
   courses: z.array(z.string()).min(1, "Select at least one course"),
   studentPhoto: z
     .object({
@@ -64,17 +69,13 @@ export function StudentRegistrationForm({
   const form = useForm<StudentRegistrationFormValues>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
+      name: "",
       dateOfBirth: "",
-      school: "",
-      studentEmail: "",
+      email: "",
       phone: "",
-      guardianName: "",
+      address: "",
+      gender: "",
       guardianEmail: "",
-      guardianPhone: "",
-      contactPreference: "email",
-      goals: "",
       courses: [],
       studentPhoto: undefined,
     },
@@ -103,15 +104,24 @@ export function StudentRegistrationForm({
     }
 
     startTransition(() => {
+      const payload = {
+        name: values.name,
+        dateOfBirth: values.dateOfBirth,
+        email: values.email,
+        phone: values.phone,
+        address: values.address?.trim() ? values.address.trim() : null,
+        gender: values.gender ? values.gender : null,
+        guardianEmail: values.guardianEmail,
+        courses: values.courses,
+        studentPhoto: values.studentPhoto,
+      };
+
       fetch("/api/student-registration/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...values,
-          studentPhoto: values.studentPhoto,
-        }),
+        body: JSON.stringify(payload),
       })
         .then(async (response) => {
           if (!response.ok) {
@@ -152,25 +162,12 @@ export function StudentRegistrationForm({
               <div className="grid gap-6 md:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="firstName"
+                  name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>First name *</FormLabel>
+                      <FormLabel>Student full name *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Amaya" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last name *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Perera" {...field} />
+                        <Input placeholder="Amaya Perera" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -191,20 +188,7 @@ export function StudentRegistrationForm({
                 />
                 <FormField
                   control={form.control}
-                  name="school"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current school</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Royal College" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="studentEmail"
+                  name="email"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Student email *</FormLabel>
@@ -228,17 +212,24 @@ export function StudentRegistrationForm({
                     </FormItem>
                   )}
                 />
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="guardianName"
+                  name="gender"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Parent / Guardian name *</FormLabel>
+                      <FormLabel>Gender</FormLabel>
                       <FormControl>
-                        <Input placeholder="Sunethra Perera" {...field} />
+                        <div className="flex h-10 items-center rounded-md border border-input bg-background px-3 text-sm shadow-sm">
+                          <select
+                            className="w-full bg-transparent outline-none"
+                            value={field.value ?? ""}
+                            onChange={(event) => field.onChange(event.target.value)}
+                          >
+                            <option value="">Select gender</option>
+                            <option value="MALE">Male</option>
+                            <option value="FEMALE">Female</option>
+                          </select>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -257,54 +248,18 @@ export function StudentRegistrationForm({
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="guardianPhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Parent / Guardian phone *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="(+94) 71 987 6543" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="contactPreference"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Preferred contact method</FormLabel>
-                      <FormControl>
-                        <div className="flex h-10 items-center rounded-md border border-input bg-background px-3 text-sm shadow-sm">
-                          <select
-                            className="w-full bg-transparent outline-none"
-                            value={field.value}
-                            onChange={field.onChange}
-                          >
-                            <option value="email">Email</option>
-                            <option value="phone">Phone</option>
-                            <option value="whatsapp">WhatsApp</option>
-                          </select>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
 
               <FormField
                 control={form.control}
-                name="goals"
+                name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Learning goals</FormLabel>
+                    <FormLabel>Postal address</FormLabel>
                     <FormControl>
                       <Textarea
-                        rows={4}
-                        placeholder="Tell us about target exams or areas you want support in."
+                        rows={3}
+                        placeholder="House number, street, city"
                         {...field}
                       />
                     </FormControl>

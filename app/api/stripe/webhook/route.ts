@@ -107,11 +107,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
     const user = await tx.user.create({
       data: {
-        name: `${registration.firstName} ${registration.lastName}`.trim(),
+        name: registration.name,
         email: registration.email,
         password: hashedPassword,
         phone: registration.phone,
         dob: registration.dateOfBirth,
+        address: registration.address ?? undefined,
+        gender: registration.gender ?? undefined,
         role: "STUDENT",
         profileImage: registration.studentPhotoUrl,
       },
@@ -148,10 +150,10 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   });
 
   const cardData = {
-    studentName: `${registration.firstName} ${registration.lastName}`.trim(),
+    studentName: registration.name,
     studentPublicId,
     studentEmail: registration.email,
-    guardianName: registration.guardianName,
+    guardianEmail: registration.guardianEmail,
     courses: registration.courses
       .map((course) => course.course?.name)
       .filter((name): name is string => Boolean(name)),
@@ -198,8 +200,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   await sendStudentOnboardingEmail({
     studentEmail: registration.email,
     guardianEmail: registration.guardianEmail,
-    studentName: `${registration.firstName} ${registration.lastName}`.trim(),
-    guardianName: registration.guardianName,
+    studentName: registration.name,
     temporaryPassword: plainPassword,
     idCardUrl: uploadData.data.url,
     courses: cardData.courses,

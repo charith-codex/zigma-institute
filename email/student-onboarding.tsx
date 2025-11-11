@@ -15,7 +15,6 @@ import * as React from "react";
 
 interface StudentOnboardingEmailProps {
   studentName: string;
-  guardianName: string;
   studentEmail: string;
   temporaryPassword: string;
   idCardUrl: string;
@@ -24,7 +23,6 @@ interface StudentOnboardingEmailProps {
 
 export function StudentOnboardingEmail({
   studentName,
-  guardianName,
   studentEmail,
   temporaryPassword,
   idCardUrl,
@@ -42,7 +40,7 @@ export function StudentOnboardingEmail({
               Welcome to Zigma Institute
             </Heading>
             <Text className="mt-2 text-sm text-slate-600">
-              Hi {studentName} and {guardianName},
+              Hi {studentName},
             </Text>
             <Text className="mt-3 text-sm text-slate-600 leading-6">
               Your enrolment is confirmed and your learning workspace is ready. Use the

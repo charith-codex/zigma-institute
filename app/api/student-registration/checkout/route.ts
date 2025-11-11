@@ -1,21 +1,18 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Gender } from "@prisma/client";
 
 import { prisma } from "@/db/prisma";
 import { stripe } from "@/lib/stripe";
 
 const registrationRequestSchema = z.object({
-  firstName: z.string().min(2),
-  lastName: z.string().min(2),
+  name: z.string().min(2),
   dateOfBirth: z.string().refine((value) => !Number.isNaN(Date.parse(value))),
-  school: z.string().optional().nullable(),
-  studentEmail: z.string().email(),
+  email: z.string().email(),
   phone: z.string().min(6),
-  guardianName: z.string().min(2),
+  address: z.string().max(200).optional().nullable(),
+  gender: z.nativeEnum(Gender).optional().nullable(),
   guardianEmail: z.string().email(),
-  guardianPhone: z.string().min(6),
-  contactPreference: z.enum(["email", "phone", "whatsapp"]).optional(),
-  goals: z.string().max(600).optional().nullable(),
   courses: z.array(z.string().min(1)).min(1),
   studentPhoto: z.object({ url: z.string().url(), key: z.string().min(1) }),
 });
@@ -99,17 +96,13 @@ export async function POST(request: Request) {
 
   const registration = await prisma.studentRegistration.create({
     data: {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.studentEmail,
+      name: data.name.trim(),
+      email: data.email,
       phone: data.phone,
+      address: data.address?.trim() ? data.address.trim() : null,
+      gender: data.gender ?? null,
       dateOfBirth: dob,
-      school: data.school ?? null,
-      guardianName: data.guardianName,
       guardianEmail: data.guardianEmail,
-      guardianPhone: data.guardianPhone,
-      contactPreference: data.contactPreference ?? null,
-      goals: data.goals ?? null,
       studentPhotoUrl: data.studentPhoto.url,
       studentPhotoKey: data.studentPhoto.key,
       totalAmountInCents,
@@ -139,12 +132,12 @@ export async function POST(request: Request) {
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      customer_email: data.studentEmail,
+      customer_email: data.email,
       success_url: `${origin}${SUCCESS_PATH}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}${CANCEL_PATH}?canceled=1`,
       metadata: {
         registrationId: registration.id,
-        studentEmail: data.studentEmail,
+        studentEmail: data.email,
       },
       line_items: courses.map((course) => ({
         quantity: 1,

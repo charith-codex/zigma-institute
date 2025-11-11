@@ -20,7 +20,6 @@ interface StudentOnboardingEmailPayload {
   studentEmail: string;
   guardianEmail: string;
   studentName: string;
-  guardianName: string;
   temporaryPassword: string;
   idCardUrl: string;
   courses: string[];
@@ -30,7 +29,6 @@ export const sendStudentOnboardingEmail = async ({
   studentEmail,
   guardianEmail,
   studentName,
-  guardianName,
   temporaryPassword,
   idCardUrl,
   courses,
@@ -42,7 +40,6 @@ export const sendStudentOnboardingEmail = async ({
     react: (
       <StudentOnboardingEmail
         studentName={studentName}
-        guardianName={guardianName}
         studentEmail={studentEmail}
         temporaryPassword={temporaryPassword}
         idCardUrl={idCardUrl}

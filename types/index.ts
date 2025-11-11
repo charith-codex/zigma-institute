@@ -18,13 +18,15 @@ export interface TeacherSummary {
 
 export type StudentRegistrationStatus = "PENDING" | "PAID" | "APPROVED" | "FAILED";
 
+export type GenderValue = "MALE" | "FEMALE";
+
 export interface StudentRegistrationSummary {
   id: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   phone: string;
-  guardianName: string;
+  address: string | null;
+  gender: GenderValue | null;
   guardianEmail: string;
   status: StudentRegistrationStatus;
   totalAmountInCents: number;

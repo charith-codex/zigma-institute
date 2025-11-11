@@ -6,7 +6,7 @@ export interface StudentIdCardData {
   studentName: string;
   studentPublicId: string;
   studentEmail: string;
-  guardianName: string;
+  guardianEmail: string;
   courses: string[];
   instituteName: string;
   instituteTagline: string;
@@ -252,9 +252,9 @@ export function renderStudentIdCardSvg(
   )}</text>
   <text x="360" y="466" class="subtitle" fill="#9CA3AF">Courses</text>
   <text x="360" y="504" class="value" fill="#FFFFFF">${courseText}</text>
-  <text x="48" y="504" class="subtitle" fill="#9CA3AF">Guardian</text>
+  <text x="48" y="504" class="subtitle" fill="#9CA3AF">Guardian email</text>
   <text x="48" y="540" class="value" fill="#FFFFFF">${escapeXml(
-    data.guardianName
+    data.guardianEmail
   )}</text>
   <text x="620" y="110" class="subtitle" fill="#9CA3AF" text-anchor="end">${escapeXml(
     data.instituteAddress
@@ -470,8 +470,8 @@ export function renderStudentIdCardsPdf(cards: PdfCardContext[]): Uint8Array {
       drawText(line, 360, CARD_HEIGHT - 440 - lineIndex * 22, 18);
     });
 
-    drawText("Guardian", 48, CARD_HEIGHT - 412, 18, false, muted);
-    drawText(card.data.guardianName, 48, CARD_HEIGHT - 440, 18);
+    drawText("Guardian email", 48, CARD_HEIGHT - 412, 18, false, muted);
+    drawText(card.data.guardianEmail, 48, CARD_HEIGHT - 440, 18);
 
     drawText(
       card.data.instituteAddress,
