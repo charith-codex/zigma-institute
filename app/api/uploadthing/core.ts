@@ -20,6 +20,17 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ metadata }) => {
       return { uploadedBy: metadata.userId };
     }),
+  studentRegistrationPhoto: f({
+    image: {
+      maxFileSize: "4MB",
+    },
+  })
+    .onUploadComplete(async ({ file }) => {
+      if (!file.type?.includes("jpeg")) {
+        throw new UploadThingError("Student photo must be a JPEG image");
+      }
+      return { url: file.url, key: file.key };
+    }),
   studyMaterialUploader: f({
     blob: {
       maxFileSize: "64MB",

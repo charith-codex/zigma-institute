@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"  // -js added after prisma 6.0 only came with client
+  provider = "prisma-client-js" // -js added after prisma 6.0 only came with client
   output   = "../lib/generated/prisma"
 }
 
@@ -9,9 +9,9 @@ datasource db {
 }
 
 model User {
-  id            String      @id @default(uuid())
-  name          String      @default("NO_NAME")
-  email         String      @unique(map: "user_email_idx")
+  id            String     @id @default(uuid())
+  name          String     @default("NO_NAME")
+  email         String     @unique(map: "user_email_idx")
   emailVerified DateTime?
   password      String?
   address       String?
@@ -19,21 +19,21 @@ model User {
   dob           DateTime?
   joinDate      DateTime?
   profileImage  String?
-  gender        Gender? 
-  status        UserStatus  @default(ACTIVE)
+  gender        Gender?
+  status        UserStatus @default(ACTIVE)
   role          UserRole
 
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  student       Student?
-  teacher       Teacher?
-  staff         Staff?
-  
+  student Student?
+  teacher Teacher?
+  staff   Staff?
+
   studyMaterials StudyMaterial[]
-  questions      Question[]   @relation("QuestionCreatedBy")
-  createdExams   ExamPaper[]  @relation("ExamCreatedBy")
-  gradedAttempts ExamAttempt[] @relation("AttemptGradedBy")
+  questions      Question[]      @relation("QuestionCreatedBy")
+  createdExams   ExamPaper[]     @relation("ExamCreatedBy")
+  gradedAttempts ExamAttempt[]   @relation("AttemptGradedBy")
 }
 
 enum Gender {
@@ -73,12 +73,15 @@ model PasswordResetToken {
 }
 
 model Student {
-  userId          String   @id
-  studentPublicId String?   @unique
+  userId          String  @id
+  studentPublicId String? @unique
   parentEmail     String?
+  idCardUrl       String?
+  idCardKey       String?
 
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enrollments     Enrollment[]
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  registration StudentRegistration? @relation(name: "StudentRegistrationStudent")
+  enrollments  Enrollment[]
 }
 
 model Teacher {
@@ -86,61 +89,62 @@ model Teacher {
   qualification String?
   nic           String? @unique
 
-  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  courses       Course[]
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courses Course[]
 }
 
 model Staff {
-  userId   String  @id
-  nic      String? @unique
+  userId String  @id
+  nic    String? @unique
 
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Course {
-  id          String   @id @default(uuid())
-  name        String
-  slug        String   @unique
-  coverImage  String
-  description String
-  teacherName   String
-  priceInCents Int      @default(0)
-  currency     String   @default("usd")
+  id           String @id @default(uuid())
+  name         String
+  slug         String @unique
+  coverImage   String
+  description  String
+  teacherName  String
+  priceInCents Int    @default(0)
+  currency     String @default("usd")
 
-  teacherId     String?
-  teacher       Teacher?      @relation(fields: [teacherId], references: [userId], onDelete: SetNull)
+  teacherId String?
+  teacher   Teacher? @relation(fields: [teacherId], references: [userId], onDelete: SetNull)
 
-  enrollments   Enrollment[]
-  studyMaterials StudyMaterial[]
-  exams         ExamPaper[]
-  lessons       Lesson[]
+  enrollments            Enrollment[]
+  studyMaterials         StudyMaterial[]
+  exams                  ExamPaper[]
+  lessons                Lesson[]
+  registrationSelections StudentRegistrationCourse[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model StudyMaterial {
-  id            String   @id @default(uuid())
-  title         String
-  description   String?
-  fileUrl       String
-  fileKey       String
-  fileName      String
-  fileSize      Int?
-  uploadedById  String?
-  courseId      String?
-  lessonId      String?
+  id           String  @id @default(uuid())
+  title        String
+  description  String?
+  fileUrl      String
+  fileKey      String
+  fileName     String
+  fileSize     Int?
+  uploadedById String?
+  courseId     String?
+  lessonId     String?
 
-  uploadedBy    User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
-  course        Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  lesson        Lesson?  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  uploadedBy User?   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  course     Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson     Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Question {
-  id            String        @id @default(uuid())
+  id            String              @id @default(uuid())
   lessonTitle   String
   type          QuestionType
   questionText  String
@@ -152,17 +156,16 @@ model Question {
   sourceFileUrl String?
   createdById   String?
   courseId      String?
-  lessonId      String?    
+  lessonId      String?
 
-  createdBy     User?         @relation("QuestionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  lesson        Lesson?       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  exams         ExamQuestion[]
-  answers       ExamAnswer[]
+  createdBy User?          @relation("QuestionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  lesson    Lesson?        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  exams     ExamQuestion[]
+  answers   ExamAnswer[]
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
-
 
 enum QuestionType {
   MCQ
@@ -176,24 +179,23 @@ enum QuestionDifficulty {
 }
 
 model ExamPaper {
-  id           String        @id @default(uuid())
-  title        String
-  description  String?
-  courseId     String?
-  lessonId     String?
-  status       ExamStatus    @default(DRAFT)
-  publishedAt  DateTime?
-  createdById  String?
-  createdBy    User?         @relation("ExamCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  course       Course?       @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  lesson       Lesson?       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  questions    ExamQuestion[]
-  attempts     ExamAttempt[]
+  id          String         @id @default(uuid())
+  title       String
+  description String?
+  courseId    String?
+  lessonId    String?
+  status      ExamStatus     @default(DRAFT)
+  publishedAt DateTime?
+  createdById String?
+  createdBy   User?          @relation("ExamCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  course      Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson      Lesson?        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions   ExamQuestion[]
+  attempts    ExamAttempt[]
 
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
-
 
 enum ExamStatus {
   DRAFT
@@ -202,35 +204,35 @@ enum ExamStatus {
 }
 
 model ExamQuestion {
-  id          String     @id @default(uuid())
-  order       Int
-  marks       Int        @default(1)
-  examId      String
-  questionId  String
-  exam        ExamPaper  @relation(fields: [examId], references: [id], onDelete: Cascade)
-  question    Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  id         String    @id @default(uuid())
+  order      Int
+  marks      Int       @default(1)
+  examId     String
+  questionId String
+  exam       ExamPaper @relation(fields: [examId], references: [id], onDelete: Cascade)
+  question   Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([examId, questionId])
 }
 
 model ExamAttempt {
-  id           String             @id @default(uuid())
-  examId       String
-  studentId    String
-  studentName  String?
-  status       ExamAttemptStatus  @default(IN_PROGRESS)
-  startedAt    DateTime           @default(now())
-  submittedAt  DateTime?
-  gradedAt     DateTime?
-  score        Int?
-  gradedById   String?
+  id          String            @id @default(uuid())
+  examId      String
+  studentId   String
+  studentName String?
+  status      ExamAttemptStatus @default(IN_PROGRESS)
+  startedAt   DateTime          @default(now())
+  submittedAt DateTime?
+  gradedAt    DateTime?
+  score       Int?
+  gradedById  String?
 
-  exam         ExamPaper          @relation(fields: [examId], references: [id], onDelete: Cascade)
-  gradedBy     User?              @relation("AttemptGradedBy", fields: [gradedById], references: [id], onDelete: SetNull)
-  answers      ExamAnswer[]
+  exam     ExamPaper    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  gradedBy User?        @relation("AttemptGradedBy", fields: [gradedById], references: [id], onDelete: SetNull)
+  answers  ExamAnswer[]
 }
 
 enum ExamAttemptStatus {
@@ -240,46 +242,93 @@ enum ExamAttemptStatus {
 }
 
 model ExamAnswer {
-  id           String    @id @default(uuid())
-  attemptId    String
-  questionId   String
-  answerText   String?
+  id             String      @id @default(uuid())
+  attemptId      String
+  questionId     String
+  answerText     String?
   selectedOption String?
-  isCorrect    Boolean?
-  marksAwarded Int?
-  feedback     String?
-  attempt      ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-  question     Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  isCorrect      Boolean?
+  marksAwarded   Int?
+  feedback       String?
+  attempt        ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question       Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([attemptId, questionId])
 }
 
 model Enrollment {
-  id          String   @id @default(uuid())
-  studentId   String
-  courseId    String
-  enrolledAt  DateTime @default(now())
+  id         String   @id @default(uuid())
+  studentId  String
+  courseId   String
+  enrolledAt DateTime @default(now())
 
-  student     Student  @relation(fields: [studentId], references: [userId], onDelete: Cascade)
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, courseId])
 }
 
+enum StudentRegistrationStatus {
+  PENDING
+  PAID
+  APPROVED
+  FAILED
+}
+
+model StudentRegistration {
+  id                 String                    @id @default(uuid())
+  name               String
+  email              String
+  phone              String
+  address            String?
+  gender             Gender?
+  dateOfBirth        DateTime
+  guardianEmail      String
+  studentPhotoUrl    String
+  studentPhotoKey    String
+  totalAmountInCents Int
+  currency           String                    @default("usd")
+  status             StudentRegistrationStatus @default(PENDING)
+  stripeSessionId    String?                   @unique
+  studentUserId      String?                   @unique
+  studentPublicId    String?
+  idCardUrl          String?
+  idCardKey          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student?                    @relation(name: "StudentRegistrationStudent", fields: [studentUserId], references: [userId], onDelete: SetNull)
+  courses StudentRegistrationCourse[]
+}
+
+model StudentRegistrationCourse {
+  id             String @id @default(uuid())
+  registrationId String
+  courseId       String
+
+  registration StudentRegistration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  course       Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([registrationId, courseId])
+}
+
 model Lesson {
-  id            String        @id @default(uuid())
-  title         String
-  description   String?
-  courseId      String
-  course        Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  id          String  @id @default(uuid())
+  title       String
+  description String?
+  courseId    String
+  course      Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   studyMaterials StudyMaterial[]
   questions      Question[]
   exams          ExamPaper[]
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

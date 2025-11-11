@@ -15,3 +15,25 @@ export interface TeacherSummary {
   name: string;
   email: string | null;
 }
+
+export type StudentRegistrationStatus = "PENDING" | "PAID" | "APPROVED" | "FAILED";
+
+export type GenderValue = "MALE" | "FEMALE";
+
+export interface StudentRegistrationSummary {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string | null;
+  gender: GenderValue | null;
+  guardianEmail: string;
+  status: StudentRegistrationStatus;
+  totalAmountInCents: number;
+  currency: string;
+  createdAt: Date;
+  idCardUrl: string | null;
+  studentPublicId: string | null;
+  studentUserId: string | null;
+  courses: string[];
+}
