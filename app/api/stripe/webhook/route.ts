@@ -25,7 +25,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Webhook misconfigured" }, { status: 500 });
   }
 
-  const signature = headers().get("stripe-signature");
+  const headersList = await headers();
+  const signature = headersList.get("stripe-signature");
   if (!signature) {
     return NextResponse.json({ error: "Missing Stripe signature" }, { status: 400 });
   }
