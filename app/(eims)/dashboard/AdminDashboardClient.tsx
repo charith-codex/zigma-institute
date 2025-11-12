@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Users, PieChart, UserCheck } from "lucide-react";
-import { AdminSidebar } from "@/components/eims/AdminSidebar";
+import { DashboardSidebar } from "@/components/eims/DashboardSidebar";
 import { DashboardContent } from "@/components/eims/DashboardContent";
 import { cn } from "@/lib/utils";
 
@@ -156,7 +156,7 @@ export function AdminDashboardClient({ session }: { session: SessionLike }) {
 
   return (
     <div className="flex w-full pr-4 pb-4 flex-col min-h-[calc(100vh-3.5rem)] lg:flex-row">
-      <AdminSidebar
+      <DashboardSidebar
         activeModule={activeModule}
         onModuleChange={setActiveModule}
       />

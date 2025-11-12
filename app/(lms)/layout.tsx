@@ -1,5 +1,5 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
-import LmsHeader from "@/components/lms/lms-header";
+import LmsHeader from "@/components/lms/LmsHeader";
 
 export default function LmsLayout({
   children,

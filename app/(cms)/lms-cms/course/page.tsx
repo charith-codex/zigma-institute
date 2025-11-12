@@ -17,7 +17,7 @@ import {
 import { TeacherCourseList } from "@/components/cms/TeacherCourseList";
 import { CourseContentManager } from "@/components/cms/CourseContentManager";
 import { useParams, useRouter } from "next/navigation";
-import TeacherSidebar from "@/components/cms/cms-sidebar";
+
 import { useSession } from "next-auth/react";
 
 const LMSCMS = () => {
@@ -103,7 +103,7 @@ const LMSCMS = () => {
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] w-full flex-col bg-muted/20 lg:flex-row">
       {/* Sidebar */}
-      {/* <TeacherSidebar
+      {/* <CmsSidebar
         sidebarItems={menuItems}
         activeModule={activeModule}
         setActiveModule={setActiveModule}

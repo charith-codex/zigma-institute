@@ -18,7 +18,7 @@ import {
   Award,
   BarChart3,
 } from "lucide-react";
-import { StudentSidebar } from "@/components/lms/StudentSidebar";
+import { LmsSidebar } from "@/components/lms/LmsSidebar";
 import TutorialManager from "@/components/lms/TutorialManager";
 import { CourseDetailView } from "@/components/lms/CourseDetailView";
 import { DailyQuotes } from "@/components/lms/DailyQuotes";
@@ -92,7 +92,7 @@ const LMS = () => {
   return (
     <div className="flex w-full min-h-[calc(100vh-3.5rem)]">
       {/* Sidebar */}
-      <StudentSidebar
+      <LmsSidebar
         activeModule={activeModule}
         onModuleChange={setActiveModule}
       />

@@ -1,322 +1,138 @@
 "use client";
-import React, { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+
+import React, { useState, useCallback } from "react";
+import { Scanner } from "@yudiel/react-qr-scanner";
+import { QrCode, Loader2, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useQRAttendanceSessions, useClasses } from "@/hooks/useData";
-import { useToast } from "@/hooks/use-toast";
-import { QrCode, Clock, Users, CheckCircle } from "lucide-react";
-import { useSession } from "next-auth/react";
+
+type MarkedStudent = {
+  id: string;
+  timestamp: string;
+};
 
 const AttendanceQR = () => {
-  const { qrSessions, loading, refetch } = useQRAttendanceSessions();
-  const { classes } = useClasses();
-  const { data: session } = useSession();
-  const { toast } = useToast();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedClass, setSelectedClass] = useState("");
-  const [qrCode, setQrCode] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const [scannedStudent, setScannedStudent] = useState<string | null>(null);
+  const [students, setStudents] = useState<MarkedStudent[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const generateQRSession = async () => {
-    if (!selectedClass) {
-      toast({
-        title: "Error",
-        description: "Please select a class",
-      });
-      return;
-    }
-
+  // Mock function to mark attendance (you can replace with API/DB call)
+  const markAttendance = useCallback(async (studentId: string) => {
+    setLoading(true);
     try {
-      const sessionCode = Math.random().toString(36).substring(2, 15);
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 2); // 2 hour expiry
+      // Example delay (simulate API call)
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
-      // TODO: Implement with Neon PostgreSQL
-      const error = null; // Replace with actual database call
+      const timestamp = new Date().toLocaleString();
+      setStudents((prev) => [
+        { id: studentId, timestamp },
+        ...prev.filter((s) => s.id !== studentId),
+      ]);
+      setScannedStudent(studentId);
+    } catch {
+      setError("Failed to mark attendance");
+    } finally {
+      setLoading(false);
+      setScanning(false);
+    }
+  }, []);
 
-      if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleScan = (result: any) => {
+    if (!result) return;
+    let studentId = "";
+    if (typeof result === "string") studentId = result.trim();
+    else if (Array.isArray(result) && result[0]?.rawValue)
+      studentId = result[0].rawValue.trim();
 
-      setQrCode(sessionCode);
-      toast({
-        title: "QR Session Created",
-        description:
-          "Attendance QR code session has been generated successfully.",
-      });
-
-      refetch();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-      });
+    if (studentId) {
+      markAttendance(studentId);
     }
   };
 
-  const markAttendance = async (sessionCode: string) => {
-    try {
-      // TODO: Implement with Neon PostgreSQL
-      const sessionData = null; // Replace with actual session lookup
-      const error = null; // Replace with actual database call
-
-      if (!sessionData) {
-        toast({
-          title: "Error",
-          description: "Invalid QR code or session expired",
-        });
-        return;
-      }
-
-      toast({
-        title: "Attendance Marked",
-        description: "Your attendance has been successfully recorded.",
-      });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-      });
-    }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleError = (err: any) => {
+    setError(err?.message || "Camera access or scan error");
+    setScanning(false);
   };
-
-  const endSession = async (sessionId: string) => {
-    try {
-      // TODO: Implement with Neon PostgreSQL
-      const error = null; // Replace with actual database call
-
-      if (error) throw error;
-
-      toast({
-        title: "Session Ended",
-        description: "QR attendance session has been ended.",
-      });
-
-      refetch();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-      });
-    }
-  };
-
-  if (loading) return <div>Loading attendance QR...</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">QR Code Attendance</h2>
-          <p className="text-muted-foreground">
-            Manage attendance through QR code scanning
-          </p>
-        </div>
-        {(session?.user?.role === "teacher" ||
-          session?.user?.role === "admin") && (
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <QrCode className="mr-2 h-4 w-4" />
-                Generate QR Session
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Generate QR Attendance Session</DialogTitle>
-                <DialogDescription>
-                  Create a QR code for students to mark their attendance
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Select
-                    value={selectedClass}
-                    onValueChange={setSelectedClass}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a class" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {classes.map((cls) => (
-                        <SelectItem key={cls.id} value={cls.id}>
-                          {cls.name}
-                          {cls.code ? ` (${cls.code})` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button onClick={generateQRSession} className="w-full">
-                  Generate QR Code
-                </Button>
-
-                {qrCode && (
-                  <div className="text-center space-y-4">
-                    <div className="text-sm text-muted-foreground">
-                      QR Code Generated: {qrCode}
-                    </div>
-                    <div className="bg-white p-4 border rounded-lg inline-block">
-                      {/* In a real implementation, you'd generate an actual QR code image */}
-                      <div className="w-32 h-32 bg-black text-white flex items-center justify-center text-xs">
-                        QR: {qrCode}
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Students can scan this code to mark attendance
-                    </p>
-                  </div>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
-
-      {session?.user?.role === "student" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Mark Attendance</CardTitle>
-            <CardDescription>
-              Scan the QR code shown by your teacher to mark attendance
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  placeholder="Enter QR code or scan"
-                  className="flex-1 px-3 py-2 border rounded-md"
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      markAttendance((e.target as HTMLInputElement).value);
-                      (e.target as HTMLInputElement).value = "";
-                    }
-                  }}
-                />
-                <Button variant="outline">
-                  <QrCode className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Sessions
-            </CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {qrSessions.filter((session) => session.is_active).length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Sessions
-            </CardTitle>
-            <QrCode className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{qrSessions.length}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
+    <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-6">
+      <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>QR Attendance Sessions</CardTitle>
-          <CardDescription>All QR code attendance sessions</CardDescription>
+          <CardTitle className="text-center text-xl font-semibold">
+            Student Attendance
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Course</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>QR Code</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Expires</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {qrSessions.map((session) => (
-                <TableRow key={session.id}>
-                  <TableCell>{session.class?.name}</TableCell>
-                  <TableCell>
-                    {new Date(session.session_date).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm">
-                    {session.qr_code}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={session.is_active ? "default" : "secondary"}
-                    >
-                      {session.is_active ? "Active" : "Ended"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(session.expires_at).toLocaleString()}
-                  </TableCell>
-                  <TableCell>
-                    {session.is_active &&
-                      (session?.user?.role === "teacher" ||
-                        session?.user?.role === "admin") && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => endSession(session.id)}
-                        >
-                          End Session
-                        </Button>
-                      )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <CardContent className="flex flex-col items-center space-y-4">
+          {!scanning ? (
+            <Button
+              onClick={() => {
+                setError(null);
+                setScannedStudent(null);
+                setScanning(true);
+              }}
+            >
+              <QrCode className="mr-2 h-4 w-4" />
+              Scan Student ID
+            </Button>
+          ) : (
+            <div className="relative w-full aspect-square bg-black rounded-lg overflow-hidden">
+              <Scanner
+                onScan={handleScan}
+                onError={handleError}
+                allowMultiple={false}
+                components={{ finder: true }}
+                constraints={{ facingMode: "environment" }}
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                className="absolute top-2 right-2 z-10"
+                onClick={() => setScanning(false)}
+              >
+                Stop
+              </Button>
+            </div>
+          )}
+
+          {/* Loading / success message */}
+          {loading && (
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <Loader2 className="animate-spin h-4 w-4" />
+              <span>Marking attendance...</span>
+            </div>
+          )}
+          {scannedStudent && !loading && (
+            <div className="flex items-center space-x-2 text-green-600 text-sm">
+              <CheckCircle className="h-4 w-4" />
+              <span>Attendance marked for ID: {scannedStudent}</span>
+            </div>
+          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
+
+          {/* List of marked students */}
+          {students.length > 0 && (
+            <div className="w-full mt-4 space-y-2">
+              <h4 className="font-medium text-sm text-muted-foreground">
+                Marked Students
+              </h4>
+              <div className="border rounded-md p-2 space-y-1 text-sm">
+                {students.map((s) => (
+                  <div
+                    key={s.id}
+                    className="flex justify-between items-center py-1 border-b last:border-0"
+                  >
+                    <span className="font-mono">{s.id}</span>
+                    <Badge variant="secondary">{s.timestamp}</Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

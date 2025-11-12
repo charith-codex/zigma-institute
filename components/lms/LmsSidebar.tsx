@@ -19,7 +19,7 @@ import {
   Paperclip,
 } from "lucide-react";
 
-interface StudentSidebarProps {
+interface LmsSidebarProps {
   activeModule: string;
   onModuleChange: (module: string) => void;
 }
@@ -34,10 +34,7 @@ const menuItems = [
   { id: "payments", label: "Payments", icon: CreditCard },
 ];
 
-export function StudentSidebar({
-  activeModule,
-  onModuleChange,
-}: StudentSidebarProps) {
+export function LmsSidebar({ activeModule, onModuleChange }: LmsSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
-const TeacherSidebar = ({
+const CmsSidebar = ({
   sidebarItems,
   activeModule,
   setActiveModule,
@@ -64,4 +64,4 @@ any) => {
   );
 };
 
-export default TeacherSidebar;
+export default CmsSidebar;

@@ -41,7 +41,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-interface AdminSidebarProps {
+interface DashboardSidebarProps {
   activeModule: string;
   onModuleChange: (module: string) => void;
 }
@@ -114,10 +114,10 @@ const menuEntries: MenuEntry[] = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
-export function AdminSidebar({
+export function DashboardSidebar({
   activeModule,
   onModuleChange,
-}: AdminSidebarProps) {
+}: DashboardSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 

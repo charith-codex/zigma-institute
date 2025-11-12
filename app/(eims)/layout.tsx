@@ -1,4 +1,4 @@
-import DashboardHeader from "@/components/eims/dashboard-header";
+import DashboardHeader from "@/components/eims/DashboardHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { SessionProvider } from "next-auth/react";
 
