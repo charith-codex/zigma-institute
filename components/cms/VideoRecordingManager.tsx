@@ -1,0 +1,225 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { PlayCircle } from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface VideoRecording {
+  id: string;
+  title: string;
+  description: string | null;
+  fileUrl: string;
+}
+
+export function VideoRecordingManager() {
+  const [videos, setVideos] = useState<VideoRecording[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [formState, setFormState] = useState({
+    title: "",
+    description: "",
+    fileUrl: "",
+  });
+
+  const fetchVideos = useCallback(
+    async (options?: { showLoading?: boolean }) => {
+      if (options?.showLoading) setIsLoading(true);
+
+      try {
+        const response = await fetch("/api/video-recordings", {
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error("Failed to fetch video recordings");
+
+        const data = (await response.json()) as VideoRecording[];
+        setVideos(data);
+      } catch (error) {
+        console.error(error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch video recordings"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    void fetchVideos({ showLoading: true });
+  }, [fetchVideos]);
+
+  const handleSubmit = async () => {
+    try {
+      const { title, description, fileUrl } = formState;
+      if (!title || !fileUrl) {
+        toast.error("Title and video URL are required.");
+        return;
+      }
+
+      const response = await fetch("/api/video-recordings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, description, fileUrl }),
+      });
+
+      if (!response.ok) throw new Error("Failed to add video recording");
+
+      toast.success("Video recording added successfully.");
+      setFormState({ title: "", description: "", fileUrl: "" });
+      setIsDialogOpen(false);
+      await fetchVideos();
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to add video"
+      );
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <CardTitle>Video Recordings</CardTitle>
+          <CardDescription>
+            Add and view your recorded sessions or tutorials.
+          </CardDescription>
+        </div>
+
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <PlayCircle className="mr-2 h-4 w-4" />
+              Add Video
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Add a Video Recording</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="video-title">Title</Label>
+                <Input
+                  id="video-title"
+                  placeholder="e.g. React Hooks Tutorial"
+                  value={formState.title}
+                  onChange={(e) =>
+                    setFormState((prev) => ({ ...prev, title: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="video-description">Description</Label>
+                <Textarea
+                  id="video-description"
+                  placeholder="Add a short note (optional)"
+                  value={formState.description}
+                  onChange={(e) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="video-url">Video URL</Label>
+                <Input
+                  id="video-url"
+                  placeholder="https://example.com/video.mp4"
+                  value={formState.fileUrl}
+                  onChange={(e) =>
+                    setFormState((prev) => ({
+                      ...prev,
+                      fileUrl: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <Button onClick={handleSubmit} className="w-full">
+                Save Video
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </CardHeader>
+
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+        ) : videos.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-muted-foreground/30 p-8 text-center text-sm text-muted-foreground">
+            <PlayCircle className="h-8 w-8" />
+            <p>No video recordings added yet.</p>
+            <p>Use the add button above to include your first video.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {videos.map((video) => {
+              return (
+                <div
+                  key={video.id}
+                  className="flex flex-col gap-3 rounded-lg border bg-card p-4 shadow-sm cursor-pointer hover:bg-muted/40 transition"
+                  onClick={() => setIsPlaying((prev) => !prev)}
+                >
+                  <div>
+                    <h3 className="font-medium flex items-center gap-2">
+                      <PlayCircle className="h-4 w-4 text-muted-foreground" />
+                      {video.title}
+                    </h3>
+                    {video.description && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {video.description}
+                      </p>
+                    )}
+                  </div>
+
+                  {isPlaying && (
+                    <div className="aspect-video w-full rounded-lg overflow-hidden">
+                      <video
+                        src={video.fileUrl}
+                        controls
+                        autoPlay
+                        className="w-full h-full rounded-lg"
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+export default VideoRecordingManager;

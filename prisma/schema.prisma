@@ -30,10 +30,11 @@ model User {
   teacher Teacher?
   staff   Staff?
 
-  studyMaterials StudyMaterial[]
-  questions      Question[]      @relation("QuestionCreatedBy")
-  createdExams   ExamPaper[]     @relation("ExamCreatedBy")
-  gradedAttempts ExamAttempt[]   @relation("AttemptGradedBy")
+  studyMaterials  StudyMaterial[]
+  videoRecordings VideoRecording[]
+  questions       Question[]       @relation("QuestionCreatedBy")
+  createdExams    ExamPaper[]      @relation("ExamCreatedBy")
+  gradedAttempts  ExamAttempt[]    @relation("AttemptGradedBy")
 }
 
 enum Gender {
@@ -115,6 +116,7 @@ model Course {
 
   enrollments            Enrollment[]
   studyMaterials         StudyMaterial[]
+  videoRecordings        VideoRecording[]
   exams                  ExamPaper[]
   lessons                Lesson[]
   registrationSelections StudentRegistrationCourse[]
@@ -131,6 +133,23 @@ model StudyMaterial {
   fileKey      String
   fileName     String
   fileSize     Int?
+  uploadedById String?
+  courseId     String?
+  lessonId     String?
+
+  uploadedBy User?   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  course     Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson     Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VideoRecording {
+  id           String  @id @default(uuid())
+  title        String
+  description  String?
+  fileUrl      String
   uploadedById String?
   courseId     String?
   lessonId     String?
@@ -325,9 +344,10 @@ model Lesson {
   courseId    String
   course      Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  studyMaterials StudyMaterial[]
-  questions      Question[]
-  exams          ExamPaper[]
+  studyMaterials  StudyMaterial[]
+  videoRecordings VideoRecording[]
+  questions       Question[]
+  exams           ExamPaper[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -23,7 +23,8 @@ import TutorialManager from "@/components/lms/TutorialManager";
 import { CourseDetailView } from "@/components/lms/CourseDetailView";
 import { DailyQuotes } from "@/components/lms/DailyQuotes";
 import { PaymentSection } from "@/components/lms/PaymentSection";
-import StudyMaterialManager from "@/components/lms/StudyMaterialManager";
+import StudyMaterialManager from "@/components/cms/StudyMaterialManager";
+import VideoRecordingManager from "@/components/cms/VideoRecordingManager";
 
 type EnrolledClass = {
   id: string;
@@ -286,6 +287,7 @@ const LMS = () => {
 
             {activeModule === "study-tools" && (
               <div className="space-y-6">
+                <VideoRecordingManager />
                 <StudyMaterialManager />
                 <TutorialManager />
               </div>
