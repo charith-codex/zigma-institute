@@ -12,10 +12,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const prompt = `Generate ${count} flashcards from the following content. Format each flashcard as a JSON object with "question" and "answer" fields. Return only a JSON array of flashcards.
+    const prompt = `Generate exactly ${count} flashcards from the following content. Format each flashcard as a JSON object with "question" and "answer" fields.
 
 Content: ${content}
 
+IMPORTANT: Return ONLY a valid JSON array, nothing else. No explanations, no markdown formatting.
 Return format: [{"question": "...", "answer": "..."}, ...]`;
 
     const { text } = await generateText({
