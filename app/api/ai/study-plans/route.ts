@@ -12,7 +12,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const prompt = `Create a concise ${duration || "2-week"} study plan for learning "${topic}" at ${difficulty} level.
+    const prompt = `Create a concise ${duration || "2-week"} short mini study plan for learning "${topic}" at ${difficulty} level.
 
 Format as a clear, organized plan with:
 • Weekly breakdown (use headers like "Week 1:", "Week 2:")
@@ -20,7 +20,7 @@ Format as a clear, organized plan with:
 • Key milestones
 • Recommended practice
 
-Keep it concise and well-formatted with clear sections. Use markdown formatting for better readability.`;
+Keep it concise and well-formatted with clear sections. give response as table`;
 
     const { text } = await generateText({
       model: google("gemini-2.0-flash"),

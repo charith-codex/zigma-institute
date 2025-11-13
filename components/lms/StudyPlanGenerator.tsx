@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Target, RefreshCw, Sparkles } from "lucide-react";
+import { MarkdownView } from "../MarkdownView";
 
 export default function StudyPlanGenerator() {
   const [topic, setTopic] = useState("");
@@ -122,8 +123,13 @@ export default function StudyPlanGenerator() {
               <Target className="w-4 h-4" />
               Your Personalized Study Plan
             </h4>
-            <div className="text-sm leading-relaxed whitespace-pre-wrap prose prose-sm max-w-none dark:prose-invert [&>*]:mb-3 [&_h1]:text-base [&_h1]:font-semibold [&_h2]:text-sm [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-medium [&_ul]:ml-4 [&_ol]:ml-4 [&_li]:mb-1">
-              {plan}
+            <div
+              className="text-sm leading-relaxed prose prose-sm max-w-none dark:prose-invert overflow-x-auto
+             [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_td]:border
+             [&_th]:p-2 [&_td]:p-2 [&_th]:bg-accent/10 [&_tr:nth-child(even)]:bg-accent/5
+             whitespace-pre-wrap"
+            >
+              <MarkdownView content={plan} />
             </div>
           </div>
         )}

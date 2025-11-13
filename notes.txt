@@ -55,3 +55,5 @@ npx shadcn@latest add form switch
 npx shadcn@latest add radio-group
 
 npm install @yudiel/react-qr-scanner@^2.3.1 jsqr@^1.4.0
+
+npm i react-markdown remark-gfm
