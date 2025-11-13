@@ -59,8 +59,22 @@ Return format: [{"question": "...", "answer": "..."}, ...]`;
     return Response.json({ flashcards: validFlashcards });
   } catch (error) {
     console.error("Error generating flashcards:", error);
+    
+    // Provide more specific error messages
+    let errorMessage = "Failed to generate flashcards";
+    
+    if (error instanceof SyntaxError) {
+      errorMessage = "Invalid response format from AI. Please try again.";
+    } else if (error instanceof Error) {
+      if (error.message.includes("Invalid flashcards format")) {
+        errorMessage = "AI did not return valid flashcards. Please try again.";
+      } else if (error.message.includes("No valid flashcards")) {
+        errorMessage = "No valid flashcards were generated. Please try with different content.";
+      }
+    }
+    
     return Response.json(
-      { error: "Failed to generate flashcards" },
+      { error: errorMessage },
       { status: 500 }
     );
   }
