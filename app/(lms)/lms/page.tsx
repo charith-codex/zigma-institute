@@ -25,6 +25,9 @@ import { DailyQuotes } from "@/components/lms/DailyQuotes";
 import { PaymentSection } from "@/components/lms/PaymentSection";
 import StudyMaterialManager from "@/components/cms/StudyMaterialManager";
 import VideoRecordingManager from "@/components/cms/VideoRecordingManager";
+import FlashcardGenerator from "@/components/lms/FlashcardGenerator";
+import SummaryGenerator from "@/components/lms/SummaryGenerator";
+import StudyPlanGenerator from "@/components/lms/StudyPlanGenerator";
 
 type EnrolledClass = {
   id: string;
@@ -287,9 +290,30 @@ const LMS = () => {
 
             {activeModule === "study-tools" && (
               <div className="space-y-6">
-                <VideoRecordingManager />
-                <StudyMaterialManager />
-                <TutorialManager />
+                <div>
+                  <h1 className="text-2xl font-bold mb-2">AI Study Tools</h1>
+                  <p className="text-muted-foreground mb-6">
+                    Use AI-powered tools to enhance your learning experience
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                  <FlashcardGenerator />
+                  <SummaryGenerator />
+                </div>
+
+                <StudyPlanGenerator />
+
+                <div className="border-t pt-6 mt-6">
+                  <h2 className="text-xl font-semibold mb-4">
+                    Additional Study Resources
+                  </h2>
+                  <div className="space-y-6">
+                    <VideoRecordingManager />
+                    <StudyMaterialManager />
+                    <TutorialManager />
+                  </div>
+                </div>
               </div>
             )}
 
