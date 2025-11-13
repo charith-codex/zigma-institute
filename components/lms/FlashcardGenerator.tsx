@@ -126,15 +126,11 @@ export default function FlashcardGenerator() {
             </div>
 
             <div
-              className="relative h-64 cursor-pointer perspective-1000"
+              className="h-64 cursor-pointer"
               onClick={() => setIsFlipped(!isFlipped)}
             >
-              <div
-                className={`absolute w-full h-full transition-transform duration-500 transform-style-3d ${
-                  isFlipped ? "rotate-y-180" : ""
-                }`}
-              >
-                <div className="absolute w-full h-full backface-hidden bg-primary/5 border-2 border-primary rounded-lg p-6 flex items-center justify-center">
+              {!isFlipped ? (
+                <div className="w-full h-full bg-primary/5 border-2 border-primary rounded-lg p-6 flex items-center justify-center transition-opacity duration-300">
                   <div className="text-center space-y-2">
                     <p className="text-xs text-muted-foreground uppercase">
                       Question
@@ -144,7 +140,8 @@ export default function FlashcardGenerator() {
                     </p>
                   </div>
                 </div>
-                <div className="absolute w-full h-full backface-hidden bg-secondary/5 border-2 border-secondary rounded-lg p-6 flex items-center justify-center rotate-y-180">
+              ) : (
+                <div className="w-full h-full bg-secondary/5 border-2 border-secondary rounded-lg p-6 flex items-center justify-center transition-opacity duration-300">
                   <div className="text-center space-y-2">
                     <p className="text-xs text-muted-foreground uppercase">
                       Answer
@@ -154,7 +151,7 @@ export default function FlashcardGenerator() {
                     </p>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="flex justify-between items-center">
