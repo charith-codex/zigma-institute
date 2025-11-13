@@ -12,14 +12,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const prompt = `Create a ${duration || "2-week"} study plan for learning "${topic}" at ${difficulty} level. Include:
-1. Weekly breakdown of topics to cover
-2. Daily study goals
-3. Recommended resources
-4. Practice exercises
-5. Milestones and checkpoints
+    const prompt = `Create a concise ${duration || "2-week"} study plan for learning "${topic}" at ${difficulty} level.
 
-Format the response as a structured study plan.`;
+Format as a clear, organized plan with:
+• Weekly breakdown (use headers like "Week 1:", "Week 2:")
+• Daily study goals (bullet points, keep brief)
+• Key milestones
+• Recommended practice
+
+Keep it concise and well-formatted with clear sections. Use markdown formatting for better readability.`;
 
     const { text } = await generateText({
       model: google("gemini-2.0-flash"),
