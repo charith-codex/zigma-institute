@@ -106,14 +106,14 @@ export default function SummaryGenerator() {
         </Button>
 
         {summary && (
-          <div className="mt-6 p-4 bg-secondary/5 border border-secondary/20 rounded-lg">
-            <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+          <div className="mt-6 p-6 bg-secondary/5 border border-secondary/20 rounded-lg">
+            <h4 className="text-sm font-medium mb-3 flex items-center gap-2 text-secondary">
               <FileText className="w-4 h-4" />
               Generated Summary
             </h4>
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+            <div className="text-sm leading-relaxed whitespace-pre-wrap prose prose-sm max-w-none dark:prose-invert">
               {summary}
-            </p>
+            </div>
           </div>
         )}
       </CardContent>

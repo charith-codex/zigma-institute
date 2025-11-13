@@ -117,12 +117,12 @@ export default function StudyPlanGenerator() {
         </Button>
 
         {plan && (
-          <div className="mt-6 p-4 bg-accent/5 border border-accent/20 rounded-lg">
-            <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
+          <div className="mt-6 p-6 bg-accent/5 border border-accent/20 rounded-lg">
+            <h4 className="text-sm font-medium mb-4 flex items-center gap-2 text-accent">
               <Target className="w-4 h-4" />
               Your Personalized Study Plan
             </h4>
-            <div className="text-sm leading-relaxed whitespace-pre-wrap prose prose-sm max-w-none">
+            <div className="text-sm leading-relaxed whitespace-pre-wrap prose prose-sm max-w-none dark:prose-invert [&>*]:mb-3 [&_h1]:text-base [&_h1]:font-semibold [&_h2]:text-sm [&_h2]:font-semibold [&_h3]:text-sm [&_h3]:font-medium [&_ul]:ml-4 [&_ol]:ml-4 [&_li]:mb-1">
               {plan}
             </div>
           </div>
