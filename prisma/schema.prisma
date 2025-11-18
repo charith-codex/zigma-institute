@@ -337,6 +337,29 @@ model StudentRegistrationCourse {
   @@unique([registrationId, courseId])
 }
 
+model AttendanceSession {
+  id          String   @id @default(uuid())
+  courseId    String?
+  courseName  String
+  sessionDate DateTime
+  createdAt   DateTime @default(now())
+
+  entries AttendanceEntry[]
+}
+
+model AttendanceEntry {
+  id               String   @id @default(uuid())
+  sessionId        String
+  studentPublicId  String
+  studentName      String
+  registrationId   String?
+  markedAt         DateTime @default(now())
+
+  session AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, studentPublicId])
+}
+
 model Lesson {
   id          String  @id @default(uuid())
   title       String
