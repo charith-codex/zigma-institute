@@ -37,6 +37,5 @@ export async function POST(request: Request) {
   return NextResponse.json({
     success: true,
     idCardUrl: result.idCardUrl,
-    idCardKey: result.idCardKey,
   });
 }

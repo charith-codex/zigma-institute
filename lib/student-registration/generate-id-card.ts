@@ -1,9 +1,6 @@
-import { UTApi } from "uploadthing/server";
+import { Buffer } from "node:buffer";
+
 import { prisma } from "@/db/prisma";
-import {
-  prepareStudentIdCardAssets,
-  renderStudentIdCardSvg,
-} from "./id-card";
 
 const INSTITUTE_INFO = {
   name: "Zigma Institute",
@@ -14,8 +11,76 @@ const INSTITUTE_INFO = {
 interface GenerateIdCardResult {
   success: boolean;
   idCardUrl?: string;
-  idCardKey?: string;
   error?: string;
+}
+
+interface SimpleIdCardData {
+  studentName: string;
+  studentPublicId: string;
+  studentEmail: string;
+  guardianEmail: string;
+  courses: string[];
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("")
+    .padEnd(2, "•");
+}
+
+function getCourseSummary(courses: string[]): string {
+  if (!courses.length) {
+    return "Courses will be assigned after approval";
+  }
+
+  if (courses.length === 1) {
+    return courses[0];
+  }
+
+  const [first, second, ...rest] = courses;
+  if (rest.length === 0) {
+    return `${first} • ${second}`;
+  }
+  return `${first}, ${second} +${rest.length} more`;
+}
+
+function buildSimpleIdCardSvg(data: SimpleIdCardData): string {
+  const issuedOn = new Date().toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+  const initials = getInitials(data.studentName);
+  const courseSummary = getCourseSummary(data.courses);
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+  <svg width="960" height="560" viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#0f172a" />
+        <stop offset="100%" stop-color="#1d4ed8" />
+      </linearGradient>
+    </defs>
+    <rect width="960" height="560" rx="32" fill="url(#cardGradient)" />
+    <rect x="24" y="24" width="912" height="512" rx="24" fill="#0b1220" opacity="0.35" />
+    <text x="60" y="100" font-size="42" font-weight="600" fill="#f8fafc">${INSTITUTE_INFO.name}</text>
+    <text x="60" y="140" font-size="22" fill="#cbd5f5">${INSTITUTE_INFO.tagline}</text>
+    <text x="60" y="220" font-size="32" font-weight="600" fill="#f1f5f9">${data.studentName}</text>
+    <text x="60" y="260" font-size="18" fill="#cbd5f5">Student ID • ${data.studentPublicId}</text>
+    <text x="60" y="300" font-size="18" fill="#94a3b8">Email • ${data.studentEmail}</text>
+    <text x="60" y="340" font-size="18" fill="#94a3b8">Guardian • ${data.guardianEmail}</text>
+    <text x="60" y="400" font-size="20" fill="#cbd5f5">Registered courses</text>
+    <text x="60" y="440" font-size="18" fill="#f8fafc">${courseSummary}</text>
+    <text x="60" y="480" font-size="16" fill="#94a3b8">Issued ${issuedOn}</text>
+    <rect x="640" y="120" width="240" height="320" rx="24" fill="#1e293b" opacity="0.8" />
+    <text x="760" y="260" text-anchor="middle" font-size="96" font-weight="700" fill="#1d4ed8" opacity="0.3">${initials}</text>
+    <text x="760" y="420" text-anchor="middle" font-size="18" fill="#cbd5f5">${INSTITUTE_INFO.address}</text>
+  </svg>`;
 }
 
 /**
@@ -46,70 +111,44 @@ export async function generateAndUploadIdCard(
       return { success: false, error: "Student ID not assigned yet" };
     }
 
-    // Prepare card data
-    const cardData = {
+    const cardData: SimpleIdCardData = {
       studentName: registration.name,
       studentPublicId: registration.studentPublicId,
       studentEmail: registration.email,
       guardianEmail: registration.guardianEmail,
       courses: registration.courses
         .map((c) => c.course?.name)
-        .filter((n): n is string => Boolean(n)),
-      instituteName: INSTITUTE_INFO.name,
-      instituteTagline: INSTITUTE_INFO.tagline,
-      instituteAddress: INSTITUTE_INFO.address,
-      studentPhotoUrl: registration.studentPhotoUrl,
+        .filter((name): name is string => Boolean(name)),
     };
 
-    // Generate ID card
-    const assets = await prepareStudentIdCardAssets(cardData);
-    const svg = renderStudentIdCardSvg(cardData, assets);
+    const svg = buildSimpleIdCardSvg(cardData);
+    const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 
-    // Create file for upload
-    const file = new File([svg], `${registration.studentPublicId}-id-card.svg`, {
-      type: "image/svg+xml",
-    });
-
-    // Upload to UploadThing
-    const utapi = new UTApi();
-    const uploadResponse = await utapi.uploadFiles(file);
-    const uploaded = Array.isArray(uploadResponse)
-      ? uploadResponse[0]
-      : uploadResponse;
-
-    if (!uploaded?.data?.url || !uploaded?.data?.key) {
-      console.error("UploadThing response:", uploadResponse);
-      return { success: false, error: "Failed to upload ID card to UploadThing" };
-    }
-
-    // Update registration record
     await prisma.studentRegistration.update({
       where: { id: registration.id },
       data: {
-        idCardUrl: uploaded.data.url,
-        idCardKey: uploaded.data.key,
+        idCardUrl: dataUrl,
+        idCardKey: null,
       },
     });
 
-    // Update student record if exists
     if (registration.studentUserId) {
       await prisma.student.update({
         where: { userId: registration.studentUserId },
         data: {
-          idCardUrl: uploaded.data.url,
-          idCardKey: uploaded.data.key,
+          idCardUrl: dataUrl,
+          idCardKey: null,
         },
       });
     }
 
     console.log(
-      `ID card generated and uploaded successfully for ${registration.studentPublicId}`
+      `ID card generated successfully for ${registration.studentPublicId}`
     );
 
     return {
       success: true,
-      idCardUrl: uploaded.data.url,
-      idCardKey: uploaded.data.key,
+      idCardUrl: dataUrl,
     };
   } catch (error) {
     console.error("Failed to generate/upload ID card:", error);
