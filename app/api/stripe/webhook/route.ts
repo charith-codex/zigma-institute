@@ -176,8 +176,10 @@ async function handleCheckoutSessionCompleted(
 
   const assets = await prepareStudentIdCardAssets(cardData);
   const svg = renderStudentIdCardSvg(cardData, assets);
+
+   // Create file for upload
   const file = new File(
-    [new Blob([svg], { type: "image/svg+xml" })],
+    [svg],
     `${studentPublicId}-id-card.svg`,
     {
       type: "image/svg+xml",
@@ -191,7 +193,8 @@ async function handleCheckoutSessionCompleted(
     : uploadResponse;
 
   if (!uploaded?.data?.url || !uploaded?.data?.key) {
-    throw new Error("Failed to upload ID card");
+    console.error("UploadThing response:", uploadResponse);
+    throw new Error("Failed to upload ID card to UploadThing");
   }
 
   await prisma.student.update({
