@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, FileText, Users } from "lucide-react";
 import { TeacherCourseList } from "@/components/cms/TeacherCourseList";
+import { TeacherNotificationComposer } from "@/components/cms/TeacherNotificationComposer";
 import { useTeacherDashboardData } from "@/hooks/useTeacherDashboardData";
 
 const metricIcons = {
@@ -82,14 +83,17 @@ export default function LmsCmsOverviewPage() {
         />
       </section>
 
-      <section className="rounded-2xl border border-border/60 bg-background shadow-sm">
-        <div className="p-6">
-          <TeacherCourseList
-            onSelectClass={(courseId) => router.push(`/lms-cms/${courseId}`)}
-            classes={accessibleClasses}
-            loading={combinedLoading}
-          />
+      <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+        <div className="rounded-2xl border border-border/60 bg-background shadow-sm">
+          <div className="p-6">
+            <TeacherCourseList
+              onSelectClass={(courseId) => router.push(`/lms-cms/${courseId}`)}
+              classes={accessibleClasses}
+              loading={combinedLoading}
+            />
+          </div>
         </div>
+        <TeacherNotificationComposer />
       </section>
     </div>
   );

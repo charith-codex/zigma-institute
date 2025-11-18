@@ -40,7 +40,7 @@ const CmsHeader = ({ title }: { title: string }) => {
       {/* Right side - Notifications and Profile */}
       <div className="flex items-center gap-4">
         <ModeToggle />
-        <NotificationDropdown />
+        <NotificationDropdown channel="cms" />
         <UserButton />
       </div>
     </header>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -37,10 +37,21 @@ import {
   Eye,
 } from "lucide-react";
 import { format } from "date-fns";
+import {
+  NotificationChannel,
+  useNotificationCenter,
+} from "@/components/providers/notification-provider";
 
 interface Notification {
   id: string;
-  type: "student" | "exam" | "payment" | "system" | "class" | "teacher";
+  type:
+    | "student"
+    | "exam"
+    | "payment"
+    | "system"
+    | "class"
+    | "teacher"
+    | "announcement";
   title: string;
   message: string;
   timestamp: Date;
@@ -48,79 +59,31 @@ interface Notification {
   priority: "low" | "medium" | "high";
   actionUrl?: string;
   sender?: string;
+  targets: NotificationChannel[];
 }
 
-const mockNotifications: Notification[] = [
-  {
-    id: "1",
-    type: "student",
-    title: "New Student Registration",
-    message:
-      "Sarah Johnson has registered for Computer Science course. Approval required.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-    read: false,
-    priority: "high",
-    sender: "Registration System",
-  },
-  {
-    id: "2",
-    type: "exam",
-    title: "Exam Schedule Updated",
-    message:
-      "Mathematics exam has been rescheduled to December 15, 2024 at 10:00 AM.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-    read: false,
-    priority: "medium",
-    sender: "Exam Department",
-  },
-  {
-    id: "3",
-    type: "payment",
-    title: "Fee Payment Received",
-    message: "John Smith has paid $1,200 for Spring 2024 semester fees.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4), // 4 hours ago
-    read: true,
-    priority: "low",
-    sender: "Finance Department",
-  },
-  {
-    id: "4",
-    type: "system",
-    title: "System Maintenance Notice",
-    message:
-      "Scheduled maintenance on December 10, 2024 from 2:00 AM to 4:00 AM EST.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6), // 6 hours ago
-    read: false,
-    priority: "medium",
-    sender: "IT Department",
-  },
-  {
-    id: "5",
-    type: "class",
-    title: "Course Cancelled",
-    message:
-      "Advanced Physics class on December 8, 2024 has been cancelled due to teacher illness.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8), // 8 hours ago
-    read: true,
-    priority: "high",
-    sender: "Academic Office",
-  },
-  {
-    id: "6",
-    type: "teacher",
-    title: "New Teacher Application",
-    message:
-      "Dr. Michael Brown has submitted an application for Mathematics position.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 12), // 12 hours ago
-    read: true,
-    priority: "medium",
-    sender: "HR Department",
-  },
-];
-
 export function Notifications() {
-  const [notifications, setNotifications] =
-    useState<Notification[]>(mockNotifications);
+  const {
+    notifications: storedNotifications,
+    sendNotification: pushNotification,
+    markNotificationAsRead,
+    deleteNotification: removeNotification,
+  } = useNotificationCenter();
+  const notifications = useMemo<Notification[]>(
+    () =>
+      storedNotifications.map((notification) => ({
+        id: notification.id,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        timestamp: new Date(notification.createdAt),
+        read: notification.readBy.length === notification.targets.length,
+        priority: notification.priority,
+        sender: notification.sender,
+        targets: notification.targets,
+      })),
+    [storedNotifications]
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterRead, setFilterRead] = useState<string>("all");
@@ -129,10 +92,13 @@ export function Notifications() {
   // Compose notification state
   const [composeTitle, setComposeTitle] = useState("");
   const [composeMessage, setComposeMessage] = useState("");
-  const [composeRecipients, setComposeRecipients] = useState("");
   const [composePriority, setComposePriority] = useState<
     "low" | "medium" | "high"
   >("medium");
+  const [composeTargets, setComposeTargets] = useState<NotificationChannel[]>([
+    "lms",
+    "cms",
+  ]);
 
   const getNotificationIcon = (type: Notification["type"]) => {
     const iconMap = {
@@ -199,44 +165,48 @@ export function Notifications() {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((notification) =>
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
+    markNotificationAsRead(id);
   };
 
   const markAllAsRead = () => {
-    setNotifications((prev) =>
-      prev.map((notification) => ({ ...notification, read: true }))
+    notifications.forEach((notification) =>
+      markNotificationAsRead(notification.id)
     );
   };
 
   const deleteNotification = (id: string) => {
-    setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== id)
+    removeNotification(id);
+  };
+
+  const toggleComposeTarget = (target: NotificationChannel) => {
+    setComposeTargets((prev) =>
+      prev.includes(target)
+        ? prev.filter((value) => value !== target)
+        : [...prev, target]
     );
   };
 
-  const sendNotification = () => {
-    if (!composeTitle.trim() || !composeMessage.trim()) return;
+  const canSend =
+    composeTitle.trim().length > 0 &&
+    composeMessage.trim().length > 0 &&
+    composeTargets.length > 0;
 
-    const newNotification: Notification = {
-      id: Date.now().toString(),
-      type: "system",
+  const sendNotification = () => {
+    if (!canSend) return;
+
+    pushNotification({
       title: composeTitle,
       message: composeMessage,
-      timestamp: new Date(),
-      read: false,
       priority: composePriority,
-      sender: "Admin",
-    };
+      type: "system",
+      sender: "Management",
+      targets: composeTargets,
+    });
 
-    setNotifications((prev) => [newNotification, ...prev]);
     setComposeTitle("");
     setComposeMessage("");
-    setComposeRecipients("");
     setComposePriority("medium");
+    setComposeTargets(["lms", "cms"]);
     setActiveTab("inbox");
   };
 
@@ -393,6 +363,17 @@ export function Notifications() {
                             <p className="text-sm text-muted-foreground line-clamp-2">
                               {notification.message}
                             </p>
+                            <div className="flex flex-wrap gap-2">
+                              {notification.targets.map((target) => (
+                                <Badge
+                                  key={`${notification.id}-${target}`}
+                                  variant="outline"
+                                  className="text-[11px] uppercase"
+                                >
+                                  {target === "lms" ? "LMS" : "CMS"}
+                                </Badge>
+                              ))}
+                            </div>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <Clock className="h-3 w-3" />
                               {format(
@@ -453,26 +434,29 @@ export function Notifications() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Recipients</label>
-                <Select
-                  value={composeRecipients}
-                  onValueChange={setComposeRecipients}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select recipients" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all-students">All Students</SelectItem>
-                    <SelectItem value="all-teachers">All Teachers</SelectItem>
-                    <SelectItem value="all-admins">
-                      All Administrators
-                    </SelectItem>
-                    <SelectItem value="specific-class">
-                      Specific Course
-                    </SelectItem>
-                    <SelectItem value="custom">Custom Recipients</SelectItem>
-                  </SelectContent>
-                </Select>
+                <label className="text-sm font-medium">Deliver to</label>
+                <div className="flex flex-wrap gap-2">
+                  {[{ id: "lms", label: "Student LMS" }, { id: "cms", label: "Teacher CMS" }].map(
+                    (option) => (
+                      <Button
+                        key={option.id}
+                        type="button"
+                        variant={
+                          composeTargets.includes(option.id as NotificationChannel)
+                            ? "default"
+                            : "outline"
+                        }
+                        className="h-9"
+                        onClick={() => toggleComposeTarget(option.id as NotificationChannel)}
+                      >
+                        {option.label}
+                      </Button>
+                    )
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Management and IT admins can alert LMS, CMS or both platforms at once.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -521,13 +505,17 @@ export function Notifications() {
                   onClick={() => {
                     setComposeTitle("");
                     setComposeMessage("");
-                    setComposeRecipients("");
                     setComposePriority("medium");
+                    setComposeTargets(["lms", "cms"]);
                   }}
                 >
                   Clear
                 </Button>
-                <Button onClick={sendNotification} className="btn-primary">
+                <Button
+                  onClick={sendNotification}
+                  className="btn-primary"
+                  disabled={!canSend}
+                >
                   <Send className="h-4 w-4 mr-2" />
                   Send Notification
                 </Button>
