@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "@/lib/utils";
+import { generateAndUploadIdCard } from "@/lib/student-registration/generate-id-card";
 
 const statusFilterSchema = z
   .array(z.enum(["PENDING", "PAID", "APPROVED", "FAILED"]))
@@ -86,6 +87,16 @@ export async function PATCH(request: Request) {
       status: data.data.status,
     },
   });
+
+  // When approving a registration, generate ID card if it doesn't exist
+  if (data.data.status === "APPROVED" && !registration.idCardUrl) {
+    console.log(`Generating missing ID card for registration ${registration.id}`);
+    const idCardResult = await generateAndUploadIdCard(registration.id);
+    if (!idCardResult.success) {
+      console.error(`Failed to generate ID card on approval: ${idCardResult.error}`);
+      // Don't fail the approval - ID card can be regenerated later
+    }
+  }
 
   return NextResponse.json({ id: updated.id, status: updated.status });
 }

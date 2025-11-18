@@ -34,7 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Download, Eye, Search, Check, X } from "lucide-react";
+import { Download, Eye, Search, Check, X, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import { formatCurrency } from "@/lib/utils";
@@ -59,6 +59,7 @@ export function StudentRegistrationManagement() {
     "PAID"
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [regenerating, setRegenerating] = useState<Set<string>>(new Set());
   const statuses: StudentRegistrationStatus[] =
     statusFilter === "all" ? ["PAID", "APPROVED"] : [statusFilter];
   const { registrations, loading, error, refetch } = useStudentRegistrations(statuses);
@@ -199,6 +200,39 @@ export function StudentRegistrationManagement() {
           ? downloadError.message
           : "Unable to download ID cards"
       );
+    }
+  };
+
+  const handleRegenerateIdCard = async (registrationId: string) => {
+    setRegenerating((prev) => new Set(prev).add(registrationId));
+    
+    try {
+      const response = await fetch("/api/student-registration/regenerate-id-card", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ registrationId }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error ?? "Unable to generate ID card");
+      }
+
+      toast.success("ID card generated successfully");
+      void refetch();
+    } catch (regenerateError) {
+      console.error("Failed to regenerate ID card", regenerateError);
+      toast.error(
+        regenerateError instanceof Error
+          ? regenerateError.message
+          : "Unable to generate ID card"
+      );
+    } finally {
+      setRegenerating((prev) => {
+        const next = new Set(prev);
+        next.delete(registrationId);
+        return next;
+      });
     }
   };
 
@@ -415,7 +449,17 @@ export function StudentRegistrationManagement() {
                       >
                         <Download className="h-4 w-4" />
                       </Button>
-                    ) : null}
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRegenerateIdCard(registration.id)}
+                        disabled={regenerating.has(registration.id)}
+                        aria-label="Generate ID card"
+                      >
+                        <RefreshCw className={`h-4 w-4 ${regenerating.has(registration.id) ? "animate-spin" : ""}`} />
+                      </Button>
+                    )}
                     {registration.status === "PAID" ? (
                       <Button
                         variant="ghost"
