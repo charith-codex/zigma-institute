@@ -108,6 +108,7 @@ export function Notifications() {
       system: Settings,
       class: BookOpen,
       teacher: GraduationCap,
+      announcement: Bell,
     };
     const IconComponent = iconMap[type];
     return <IconComponent className="h-4 w-4" />;
@@ -436,26 +437,32 @@ export function Notifications() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Deliver to</label>
                 <div className="flex flex-wrap gap-2">
-                  {[{ id: "lms", label: "Student LMS" }, { id: "cms", label: "Teacher CMS" }].map(
-                    (option) => (
-                      <Button
-                        key={option.id}
-                        type="button"
-                        variant={
-                          composeTargets.includes(option.id as NotificationChannel)
-                            ? "default"
-                            : "outline"
-                        }
-                        className="h-9"
-                        onClick={() => toggleComposeTarget(option.id as NotificationChannel)}
-                      >
-                        {option.label}
-                      </Button>
-                    )
-                  )}
+                  {[
+                    { id: "lms", label: "Student LMS" },
+                    { id: "cms", label: "Teacher CMS" },
+                  ].map((option) => (
+                    <Button
+                      key={option.id}
+                      type="button"
+                      variant={
+                        composeTargets.includes(
+                          option.id as NotificationChannel
+                        )
+                          ? "default"
+                          : "outline"
+                      }
+                      className="h-9"
+                      onClick={() =>
+                        toggleComposeTarget(option.id as NotificationChannel)
+                      }
+                    >
+                      {option.label}
+                    </Button>
+                  ))}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Management and IT admins can alert LMS, CMS or both platforms at once.
+                  Management and IT admins can alert LMS, CMS or both platforms
+                  at once.
                 </p>
               </div>
 
