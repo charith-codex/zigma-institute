@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Download, Loader2 } from "lucide-react";
@@ -32,34 +32,98 @@ export default function StudentRegistrationSuccessPage({
   const [registration, setRegistration] = useState<RegistrationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [generatingIdCard, setGeneratingIdCard] = useState(false);
+  const lastRequestedIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
+  const fetchRegistration = useCallback(async () => {
     if (!sessionId) {
       setLoading(false);
       return;
     }
 
-    const fetchRegistration = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `/api/student-registration/by-session?sessionId=${encodeURIComponent(sessionId)}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch registration data");
+      }
+
+      const data = await response.json();
+      setRegistration(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  }, [sessionId]);
+
+  useEffect(() => {
+    fetchRegistration();
+  }, [fetchRegistration]);
+
+  useEffect(() => {
+    if (!registration?.id || registration.idCardUrl) {
+      return;
+    }
+
+    let interval: number | null = null;
+    let cancelled = false;
+
+    if (lastRequestedIdRef.current && lastRequestedIdRef.current !== registration.id) {
+      lastRequestedIdRef.current = null;
+    }
+
+    const regenerateIdCard = async () => {
+      if (lastRequestedIdRef.current === registration.id || generatingIdCard) {
+        return;
+      }
+      lastRequestedIdRef.current = registration.id;
+      setGeneratingIdCard(true);
       try {
         const response = await fetch(
-          `/api/student-registration/by-session?sessionId=${encodeURIComponent(sessionId)}`
+          "/api/student-registration/regenerate-id-card",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ registrationId: registration.id }),
+          }
         );
 
         if (!response.ok) {
-          throw new Error("Failed to fetch registration data");
+          const errorBody = await response.json().catch(() => ({}));
+          throw new Error(errorBody.error || "Unable to generate ID card");
         }
-
-        const data = await response.json();
-        setRegistration(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        setError(err instanceof Error ? err.message : "Failed to generate ID card");
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setGeneratingIdCard(false);
+        }
       }
     };
 
+    regenerateIdCard();
+
+    interval = window.setInterval(() => {
+      fetchRegistration();
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      if (interval) {
+        window.clearInterval(interval);
+      }
+    };
+  }, [fetchRegistration, generatingIdCard, registration?.id, registration?.idCardUrl]);
+
+  const handleManualRefresh = () => {
     fetchRegistration();
-  }, [sessionId]);
+  };
 
   const handleDownload = async () => {
     if (!registration?.idCardUrl) return;
@@ -126,8 +190,20 @@ export default function StudentRegistrationSuccessPage({
           {!loading && !error && !registration?.idCardUrl && sessionId && (
             <div className="rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4">
               <p className="text-yellow-800 dark:text-yellow-200 font-medium">
-                Your ID card is being generated. Please check your email or refresh this page in a few moments.
+                {generatingIdCard
+                  ? "We are generating your ID card now. This usually takes a few seconds."
+                  : "Your ID card is being generated. Please check back shortly."}
               </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleManualRefresh}
+                  disabled={loading}
+                >
+                  Refresh status
+                </Button>
+              </div>
             </div>
           )}
 
