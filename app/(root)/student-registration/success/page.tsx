@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Download, Loader2 } from "lucide-react";
@@ -32,34 +32,145 @@ export default function StudentRegistrationSuccessPage({
   const [registration, setRegistration] = useState<RegistrationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [generatingIdCard, setGeneratingIdCard] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const lastGenerationKeyRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (!sessionId) {
-      setLoading(false);
-      return;
-    }
+  const fetchRegistration = useCallback(
+    async (options?: { background?: boolean }) => {
+      if (!sessionId) {
+        setLoading(false);
+        return;
+      }
 
-    const fetchRegistration = async () => {
+      const isBackground = options?.background ?? false;
+
+      if (!isBackground) {
+        setLoading(true);
+      }
+
       try {
         const response = await fetch(
           `/api/student-registration/by-session?sessionId=${encodeURIComponent(sessionId)}`
         );
 
+        const payload = (await response.json().catch(() => null)) as
+          | RegistrationData
+          | { error?: string }
+          | null;
+
         if (!response.ok) {
-          throw new Error("Failed to fetch registration data");
+          const message =
+            (payload && "error" in payload && payload.error) ||
+            "Failed to fetch registration data";
+          throw new Error(message);
         }
 
-        const data = await response.json();
-        setRegistration(data);
+        if (payload && "id" in payload) {
+          setRegistration(payload as RegistrationData);
+          setError(null);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
-        setLoading(false);
+        if (!isBackground) {
+          setLoading(false);
+        }
+      }
+    },
+    [sessionId]
+  );
+
+  useEffect(() => {
+    fetchRegistration();
+  }, [fetchRegistration]);
+
+  useEffect(() => {
+    if (!registration?.id || registration.idCardUrl) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      fetchRegistration({ background: true });
+    }, 5000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [fetchRegistration, registration?.id, registration?.idCardUrl]);
+
+  const registrationId = registration?.id;
+  const generationKey =
+    registrationId &&
+    registration?.studentPublicId &&
+    !registration.idCardUrl
+      ? `${registrationId}:${registration.studentPublicId}`
+      : null;
+
+  useEffect(() => {
+    if (!generationKey || !registrationId) {
+      return;
+    }
+
+    if (lastGenerationKeyRef.current === generationKey) {
+      return;
+    }
+
+    let cancelled = false;
+    lastGenerationKeyRef.current = generationKey;
+    setGeneratingIdCard(true);
+
+    const regenerateIdCard = async () => {
+      try {
+        const response = await fetch(
+          "/api/student-registration/regenerate-id-card",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ registrationId }),
+          }
+        );
+
+        const errorBody = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+
+        if (!response.ok) {
+          throw new Error(errorBody?.error || "Unable to generate ID card");
+        }
+
+        await fetchRegistration({ background: true });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to generate ID card");
+        lastGenerationKeyRef.current = null;
+      } finally {
+        if (!cancelled) {
+          setGeneratingIdCard(false);
+        }
       }
     };
 
-    fetchRegistration();
-  }, [sessionId]);
+    regenerateIdCard();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchRegistration, generationKey, registrationId]);
+
+  const handleManualRefresh = async () => {
+    if (refreshing) {
+      return;
+    }
+
+    setRefreshing(true);
+    try {
+      await fetchRegistration({ background: true });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleDownload = async () => {
     if (!registration?.idCardUrl) return;
@@ -99,6 +210,12 @@ export default function StudentRegistrationSuccessPage({
             </div>
           )}
 
+          {error && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-destructive">
+              {error}
+            </div>
+          )}
+
           {!loading && registration?.idCardUrl && (
             <div className="space-y-4">
               <div className="rounded-lg border bg-card p-4">
@@ -123,11 +240,23 @@ export default function StudentRegistrationSuccessPage({
             </div>
           )}
 
-          {!loading && !error && !registration?.idCardUrl && sessionId && (
+          {!loading && !registration?.idCardUrl && sessionId && (
             <div className="rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4">
               <p className="text-yellow-800 dark:text-yellow-200 font-medium">
-                Your ID card is being generated. Please check your email or refresh this page in a few moments.
+                {generatingIdCard
+                  ? "We are generating your ID card now. This usually takes a few seconds."
+                  : "Your ID card is being generated. Please check back shortly."}
               </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleManualRefresh}
+                  disabled={loading || refreshing}
+                >
+                  {refreshing ? "Refreshing..." : "Refresh status"}
+                </Button>
+              </div>
             </div>
           )}
 
