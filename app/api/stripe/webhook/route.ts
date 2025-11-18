@@ -159,7 +159,7 @@ async function handleCheckoutSessionCompleted(
     }
   );
 
-  // Generate student ID card
+  // Prepare card data for ID generation and email
   const cardData = {
     studentName: registration.name,
     studentPublicId,
@@ -174,44 +174,54 @@ async function handleCheckoutSessionCompleted(
     studentPhotoUrl: registration.studentPhotoUrl,
   };
 
-  const assets = await prepareStudentIdCardAssets(cardData);
-  const svg = renderStudentIdCardSvg(cardData, assets);
+  // Generate student ID card (non-critical - can be regenerated later if it fails)
+  let idCardUrl: string | null = null;
+  try {
+    const assets = await prepareStudentIdCardAssets(cardData);
+    const svg = renderStudentIdCardSvg(cardData, assets);
+    
+    // Create file for upload
+    const file = new File(
+      [svg],
+      `${studentPublicId}-id-card.svg`,
+      {
+        type: "image/svg+xml",
+      }
+    );
 
-   // Create file for upload
-  const file = new File(
-    [svg],
-    `${studentPublicId}-id-card.svg`,
-    {
-      type: "image/svg+xml",
+    const utapi = new UTApi();
+    const uploadResponse = await utapi.uploadFiles(file);
+    const uploaded = Array.isArray(uploadResponse)
+      ? uploadResponse[0]
+      : uploadResponse;
+
+    if (!uploaded?.data?.url || !uploaded?.data?.key) {
+      console.error("UploadThing response:", uploadResponse);
+      throw new Error("Failed to upload ID card to UploadThing");
     }
-  );
 
-  const utapi = new UTApi();
-  const uploadResponse = await utapi.uploadFiles(file);
-  const uploaded = Array.isArray(uploadResponse)
-    ? uploadResponse[0]
-    : uploadResponse;
+    await prisma.student.update({
+      where: { userId: studentUserId },
+      data: {
+        idCardUrl: uploaded.data.url,
+        idCardKey: uploaded.data.key,
+      },
+    });
 
-  if (!uploaded?.data?.url || !uploaded?.data?.key) {
-    console.error("UploadThing response:", uploadResponse);
-    throw new Error("Failed to upload ID card to UploadThing");
+    await prisma.studentRegistration.update({
+      where: { id: registration.id },
+      data: {
+        idCardUrl: uploaded.data.url,
+        idCardKey: uploaded.data.key,
+      },
+    });
+
+    idCardUrl = uploaded.data.url;
+    console.log(`ID card generated and uploaded successfully for ${studentPublicId}`);
+  } catch (error) {
+    console.error(`Failed to generate/upload ID card for ${studentPublicId}:`, error);
+    // Continue anyway - ID card can be regenerated from dashboard later
   }
-
-  await prisma.student.update({
-    where: { userId: studentUserId },
-    data: {
-      idCardUrl: uploaded.data.url,
-      idCardKey: uploaded.data.key,
-    },
-  });
-
-  await prisma.studentRegistration.update({
-    where: { id: registration.id },
-    data: {
-      idCardUrl: uploaded.data.url,
-      idCardKey: uploaded.data.key,
-    },
-  });
 
   // Send onboarding email
   await sendStudentOnboardingEmail({
@@ -219,7 +229,7 @@ async function handleCheckoutSessionCompleted(
     guardianEmail: registration.guardianEmail,
     studentName: registration.name,
     temporaryPassword: plainPassword,
-    idCardUrl: uploaded.data.url,
+    idCardUrl: idCardUrl || "", // Empty string if ID card generation failed
     courses: cardData.courses,
   });
 

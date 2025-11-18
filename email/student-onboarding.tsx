@@ -58,21 +58,34 @@ export function StudentOnboardingEmail({
                 Temporary password: <span className="font-semibold">{temporaryPassword}</span>
               </Text>
             </Section>
-            <Section className="mt-6 rounded-lg bg-slate-100 p-4">
-              <Text className="m-0 text-xs uppercase tracking-wide text-slate-500">
-                Download your student ID card
-              </Text>
-              <EmailLink
-                href={idCardUrl}
-                className="mt-2 inline-block text-sm font-medium text-indigo-600"
-              >
-                View ID card
-              </EmailLink>
-              <Text className="mt-2 text-xs text-slate-500">
-                Keep this digital ID saved. You can present it for onsite verification or
-                print it for quick access.
-              </Text>
-            </Section>
+            {idCardUrl && (
+              <Section className="mt-6 rounded-lg bg-slate-100 p-4">
+                <Text className="m-0 text-xs uppercase tracking-wide text-slate-500">
+                  Download your student ID card
+                </Text>
+                <EmailLink
+                  href={idCardUrl}
+                  className="mt-2 inline-block text-sm font-medium text-indigo-600"
+                >
+                  View ID card
+                </EmailLink>
+                <Text className="mt-2 text-xs text-slate-500">
+                  Keep this digital ID saved. You can present it for onsite verification or
+                  print it for quick access.
+                </Text>
+              </Section>
+            )}
+            {!idCardUrl && (
+              <Section className="mt-6 rounded-lg bg-amber-50 p-4 border border-amber-200">
+                <Text className="m-0 text-xs uppercase tracking-wide text-amber-700">
+                  ID Card Generation Pending
+                </Text>
+                <Text className="mt-2 text-xs text-amber-600">
+                  Your student ID card is being processed and will be emailed to you shortly. 
+                  You can also download it from the student portal once available.
+                </Text>
+              </Section>
+            )}
             <Section className="mt-6">
               <Text className="text-sm font-medium text-slate-800">Assigned courses</Text>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-600">

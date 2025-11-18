@@ -52,10 +52,12 @@ export async function POST(request: Request) {
   const contexts = [];
 
   for (const registration of registrations) {
-    if (!registration.studentPublicId || !registration.idCardUrl) {
+    // Skip if no student ID assigned yet (payment not completed)
+    if (!registration.studentPublicId) {
       continue;
     }
 
+    // Generate ID card on-the-fly (works even if idCardUrl is missing)
     const cardData = {
       studentName: registration.name,
       studentPublicId: registration.studentPublicId,
@@ -76,7 +78,7 @@ export async function POST(request: Request) {
 
   if (contexts.length === 0) {
     return NextResponse.json(
-      { error: "Selected registrations do not have generated ID cards" },
+      { error: "No valid registrations found. Please ensure students have completed payment and have a student ID assigned." },
       { status: 400 }
     );
   }
