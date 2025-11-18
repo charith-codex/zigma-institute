@@ -112,6 +112,7 @@ export default function StudentRegistrationSuccessPage({
                     width={960}
                     height={560}
                     className="w-full max-w-2xl rounded-lg shadow-lg"
+                    unoptimized
                   />
                   <Button onClick={handleDownload} size="lg" className="gap-2">
                     <Download className="h-5 w-5" />
