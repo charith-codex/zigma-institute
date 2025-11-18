@@ -1,21 +1,140 @@
-import { UTApi } from "uploadthing/server";
+import { Buffer } from "node:buffer";
+
 import { prisma } from "@/db/prisma";
-import {
-  prepareStudentIdCardAssets,
-  renderStudentIdCardSvg,
-} from "./id-card";
+import { createQrMatrix } from "./qr";
 
 const INSTITUTE_INFO = {
   name: "Zigma Institute",
   tagline: "AI-powered personalised learning for ambitious students.",
-  address: "Colombo Innovation Hub, 512 Galle Road, Colombo 03",
 };
 
 interface GenerateIdCardResult {
   success: boolean;
   idCardUrl?: string;
-  idCardKey?: string;
   error?: string;
+}
+
+interface SimpleIdCardData {
+  studentName: string;
+  studentPublicId: string;
+  studentEmail: string;
+  guardianEmail: string;
+  studentPhotoUrl: string | null;
+  qrMatrix: boolean[][];
+}
+
+interface StudentQrPayload {
+  type: "ZIGMA_STUDENT_ID";
+  registrationId: string;
+  studentPublicId: string;
+  studentName: string;
+  studentEmail: string;
+}
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("")
+    .padEnd(2, "•");
+}
+
+function buildQrSvg(matrix: boolean[][]): string {
+  const cellSize = 12;
+  const quietZone = 2;
+  const size = matrix.length + quietZone * 2;
+  let cells = "";
+
+  for (let row = 0; row < matrix.length; row += 1) {
+    for (let col = 0; col < matrix[row]!.length; col += 1) {
+      if (matrix[row]![col]) {
+        const x = (col + quietZone) * cellSize;
+        const y = (row + quietZone) * cellSize;
+        cells += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" />`;
+      }
+    }
+  }
+
+  const dimension = size * cellSize;
+
+  return `
+    <svg width="220" height="220" viewBox="0 0 ${dimension} ${dimension}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100%" height="100%" fill="#fff" rx="18" />
+      <g fill="#0f172a">${cells}</g>
+    </svg>
+  `;
+}
+
+function buildSimpleIdCardSvg(data: SimpleIdCardData): string {
+  const issuedOn = new Date().toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+  const initials = getInitials(data.studentName);
+  const qrSvg = buildQrSvg(data.qrMatrix);
+  const safeName = escapeXml(data.studentName);
+  const safePublicId = escapeXml(data.studentPublicId);
+  const safeStudentEmail = escapeXml(data.studentEmail);
+  const safeGuardianEmail = escapeXml(data.guardianEmail);
+  const safePhoto = data.studentPhotoUrl ? escapeXml(data.studentPhotoUrl) : null;
+  const clipId = `photoClip-${
+    data.studentPublicId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() || "default"
+  }`;
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+  <svg width="960" height="560" viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#0f172a" />
+        <stop offset="100%" stop-color="#1d4ed8" />
+      </linearGradient>
+    </defs>
+    <rect width="960" height="560" rx="32" fill="url(#cardGradient)" />
+    <rect x="24" y="24" width="912" height="512" rx="24" fill="#0b1220" opacity="0.35" />
+    <text x="60" y="100" font-size="42" font-weight="600" fill="#f8fafc">${INSTITUTE_INFO.name}</text>
+    <text x="60" y="140" font-size="22" fill="#cbd5f5">${INSTITUTE_INFO.tagline}</text>
+    <text x="60" y="220" font-size="32" font-weight="600" fill="#f1f5f9">${safeName}</text>
+    <text x="60" y="260" font-size="18" fill="#cbd5f5">Student ID • ${safePublicId}</text>
+    <text x="60" y="300" font-size="18" fill="#94a3b8">Email • ${safeStudentEmail}</text>
+    <text x="60" y="340" font-size="18" fill="#94a3b8">Guardian • ${safeGuardianEmail}</text>
+    <text x="60" y="400" font-size="18" fill="#cbd5f5">Scan QR to mark attendance</text>
+    <text x="60" y="440" font-size="16" fill="#94a3b8">Issued ${issuedOn}</text>
+    <g transform="translate(640, 120)">
+      <rect width="240" height="320" rx="32" fill="#0f172a" opacity="0.9" />
+      <rect x="20" y="20" width="200" height="200" rx="24" fill="#fff" opacity="0.1" />
+      <clipPath id="${clipId}">
+        <rect x="20" y="20" width="200" height="200" rx="24" />
+      </clipPath>
+      ${
+        safePhoto
+          ? `<image x="20" y="20" width="200" height="200" preserveAspectRatio="xMidYMid slice" href="${safePhoto}" clip-path="url(#${clipId})" />`
+          : `<text x="120" y="140" text-anchor="middle" font-size="72" font-weight="700" fill="#1d4ed8" opacity="0.6">${initials}</text>`
+      }
+      <foreignObject x="10" y="230" width="220" height="80">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#e2e8f0;font-family:'Inter',sans-serif;">
+          <strong style="font-size:16px">${safeName}</strong>
+          <span style="font-size:12px;opacity:0.8">${safePublicId}</span>
+        </div>
+      </foreignObject>
+    </g>
+    <g transform="translate(360, 350)">
+      ${qrSvg}
+      <text x="110" y="250" text-anchor="middle" font-size="14" fill="#cbd5f5">QR attendance</text>
+    </g>
+  </svg>`;
 }
 
 /**
@@ -29,13 +148,6 @@ export async function generateAndUploadIdCard(
     // Fetch registration with courses
     const registration = await prisma.studentRegistration.findUnique({
       where: { id: registrationId },
-      include: {
-        courses: {
-          include: {
-            course: true,
-          },
-        },
-      },
     });
 
     if (!registration) {
@@ -46,70 +158,51 @@ export async function generateAndUploadIdCard(
       return { success: false, error: "Student ID not assigned yet" };
     }
 
-    // Prepare card data
-    const cardData = {
+    const qrPayload: StudentQrPayload = {
+      type: "ZIGMA_STUDENT_ID",
+      registrationId: registration.id,
+      studentPublicId: registration.studentPublicId,
+      studentName: registration.name,
+      studentEmail: registration.email,
+    };
+
+    const cardData: SimpleIdCardData = {
       studentName: registration.name,
       studentPublicId: registration.studentPublicId,
       studentEmail: registration.email,
       guardianEmail: registration.guardianEmail,
-      courses: registration.courses
-        .map((c) => c.course?.name)
-        .filter((n): n is string => Boolean(n)),
-      instituteName: INSTITUTE_INFO.name,
-      instituteTagline: INSTITUTE_INFO.tagline,
-      instituteAddress: INSTITUTE_INFO.address,
-      studentPhotoUrl: registration.studentPhotoUrl,
+      studentPhotoUrl: registration.studentPhotoUrl ?? null,
+      qrMatrix: createQrMatrix(JSON.stringify(qrPayload)),
     };
 
-    // Generate ID card
-    const assets = await prepareStudentIdCardAssets(cardData);
-    const svg = renderStudentIdCardSvg(cardData, assets);
+    const svg = buildSimpleIdCardSvg(cardData);
+    const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 
-    // Create file for upload
-    const file = new File([svg], `${registration.studentPublicId}-id-card.svg`, {
-      type: "image/svg+xml",
-    });
-
-    // Upload to UploadThing
-    const utapi = new UTApi();
-    const uploadResponse = await utapi.uploadFiles(file);
-    const uploaded = Array.isArray(uploadResponse)
-      ? uploadResponse[0]
-      : uploadResponse;
-
-    if (!uploaded?.data?.url || !uploaded?.data?.key) {
-      console.error("UploadThing response:", uploadResponse);
-      return { success: false, error: "Failed to upload ID card to UploadThing" };
-    }
-
-    // Update registration record
     await prisma.studentRegistration.update({
       where: { id: registration.id },
       data: {
-        idCardUrl: uploaded.data.url,
-        idCardKey: uploaded.data.key,
+        idCardUrl: dataUrl,
+        idCardKey: null,
       },
     });
 
-    // Update student record if exists
     if (registration.studentUserId) {
       await prisma.student.update({
         where: { userId: registration.studentUserId },
         data: {
-          idCardUrl: uploaded.data.url,
-          idCardKey: uploaded.data.key,
+          idCardUrl: dataUrl,
+          idCardKey: null,
         },
       });
     }
 
     console.log(
-      `ID card generated and uploaded successfully for ${registration.studentPublicId}`
+      `ID card generated successfully for ${registration.studentPublicId}`
     );
 
     return {
       success: true,
-      idCardUrl: uploaded.data.url,
-      idCardKey: uploaded.data.key,
+      idCardUrl: dataUrl,
     };
   } catch (error) {
     console.error("Failed to generate/upload ID card:", error);
