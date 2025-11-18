@@ -33,32 +33,53 @@ export default function StudentRegistrationSuccessPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generatingIdCard, setGeneratingIdCard] = useState(false);
-  const lastRequestedIdRef = useRef<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const lastGenerationKeyRef = useRef<string | null>(null);
 
-  const fetchRegistration = useCallback(async () => {
-    if (!sessionId) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `/api/student-registration/by-session?sessionId=${encodeURIComponent(sessionId)}`
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch registration data");
+  const fetchRegistration = useCallback(
+    async (options?: { background?: boolean }) => {
+      if (!sessionId) {
+        setLoading(false);
+        return;
       }
 
-      const data = await response.json();
-      setRegistration(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
-  }, [sessionId]);
+      const isBackground = options?.background ?? false;
+
+      if (!isBackground) {
+        setLoading(true);
+      }
+
+      try {
+        const response = await fetch(
+          `/api/student-registration/by-session?sessionId=${encodeURIComponent(sessionId)}`
+        );
+
+        const payload = (await response.json().catch(() => null)) as
+          | RegistrationData
+          | { error?: string }
+          | null;
+
+        if (!response.ok) {
+          const message =
+            (payload && "error" in payload && payload.error) ||
+            "Failed to fetch registration data";
+          throw new Error(message);
+        }
+
+        if (payload && "id" in payload) {
+          setRegistration(payload as RegistrationData);
+          setError(null);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        if (!isBackground) {
+          setLoading(false);
+        }
+      }
+    },
+    [sessionId]
+  );
 
   useEffect(() => {
     fetchRegistration();
@@ -69,19 +90,37 @@ export default function StudentRegistrationSuccessPage({
       return;
     }
 
-    let interval: number | null = null;
-    let cancelled = false;
+    const interval = window.setInterval(() => {
+      fetchRegistration({ background: true });
+    }, 5000);
 
-    if (lastRequestedIdRef.current && lastRequestedIdRef.current !== registration.id) {
-      lastRequestedIdRef.current = null;
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [fetchRegistration, registration?.id, registration?.idCardUrl]);
+
+  const registrationId = registration?.id;
+  const generationKey =
+    registrationId &&
+    registration?.studentPublicId &&
+    !registration.idCardUrl
+      ? `${registrationId}:${registration.studentPublicId}`
+      : null;
+
+  useEffect(() => {
+    if (!generationKey || !registrationId) {
+      return;
     }
 
+    if (lastGenerationKeyRef.current === generationKey) {
+      return;
+    }
+
+    let cancelled = false;
+    lastGenerationKeyRef.current = generationKey;
+    setGeneratingIdCard(true);
+
     const regenerateIdCard = async () => {
-      if (lastRequestedIdRef.current === registration.id || generatingIdCard) {
-        return;
-      }
-      lastRequestedIdRef.current = registration.id;
-      setGeneratingIdCard(true);
       try {
         const response = await fetch(
           "/api/student-registration/regenerate-id-card",
@@ -90,16 +129,22 @@ export default function StudentRegistrationSuccessPage({
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ registrationId: registration.id }),
+            body: JSON.stringify({ registrationId }),
           }
         );
 
+        const errorBody = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+
         if (!response.ok) {
-          const errorBody = await response.json().catch(() => ({}));
-          throw new Error(errorBody.error || "Unable to generate ID card");
+          throw new Error(errorBody?.error || "Unable to generate ID card");
         }
+
+        await fetchRegistration({ background: true });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to generate ID card");
+        lastGenerationKeyRef.current = null;
       } finally {
         if (!cancelled) {
           setGeneratingIdCard(false);
@@ -109,20 +154,22 @@ export default function StudentRegistrationSuccessPage({
 
     regenerateIdCard();
 
-    interval = window.setInterval(() => {
-      fetchRegistration();
-    }, 5000);
-
     return () => {
       cancelled = true;
-      if (interval) {
-        window.clearInterval(interval);
-      }
     };
-  }, [fetchRegistration, generatingIdCard, registration?.id, registration?.idCardUrl]);
+  }, [fetchRegistration, generationKey, registrationId]);
 
-  const handleManualRefresh = () => {
-    fetchRegistration();
+  const handleManualRefresh = async () => {
+    if (refreshing) {
+      return;
+    }
+
+    setRefreshing(true);
+    try {
+      await fetchRegistration({ background: true });
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleDownload = async () => {
@@ -163,6 +210,12 @@ export default function StudentRegistrationSuccessPage({
             </div>
           )}
 
+          {error && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-destructive">
+              {error}
+            </div>
+          )}
+
           {!loading && registration?.idCardUrl && (
             <div className="space-y-4">
               <div className="rounded-lg border bg-card p-4">
@@ -187,7 +240,7 @@ export default function StudentRegistrationSuccessPage({
             </div>
           )}
 
-          {!loading && !error && !registration?.idCardUrl && sessionId && (
+          {!loading && !registration?.idCardUrl && sessionId && (
             <div className="rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4">
               <p className="text-yellow-800 dark:text-yellow-200 font-medium">
                 {generatingIdCard
@@ -199,9 +252,9 @@ export default function StudentRegistrationSuccessPage({
                   variant="outline"
                   size="sm"
                   onClick={handleManualRefresh}
-                  disabled={loading}
+                  disabled={loading || refreshing}
                 >
-                  Refresh status
+                  {refreshing ? "Refreshing..." : "Refresh status"}
                 </Button>
               </div>
             </div>
