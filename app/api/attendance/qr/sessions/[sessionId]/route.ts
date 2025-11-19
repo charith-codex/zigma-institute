@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/db/prisma";
@@ -9,10 +9,11 @@ const paramsSchema = z.object({
 });
 
 export async function GET(
-  _request: Request,
-  context: { params: { sessionId: string } }
+  _request: NextRequest,
+  context: { params: Promise<{ sessionId: string }> }
 ) {
-  const validation = paramsSchema.safeParse(context.params);
+  const params = await context.params;
+  const validation = paramsSchema.safeParse(params);
 
   if (!validation.success) {
     return NextResponse.json({ error: "Invalid session ID" }, { status: 400 });
