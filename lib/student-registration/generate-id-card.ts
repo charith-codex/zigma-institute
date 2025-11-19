@@ -75,8 +75,7 @@ function buildSimpleIdCardSvg(data: SimpleIdCardData): string {
     <text x="60" y="260" font-size="18" fill="#cbd5f5">Student ID • ${safePublicId}</text>
     <text x="60" y="300" font-size="18" fill="#94a3b8">Email • ${safeStudentEmail}</text>
     <text x="60" y="340" font-size="18" fill="#94a3b8">Guardian • ${safeGuardianEmail}</text>
-    <text x="60" y="400" font-size="18" fill="#cbd5f5">Valid student identification</text>
-    <text x="60" y="440" font-size="16" fill="#94a3b8">Issued ${issuedOn}</text>
+    <text x="60" y="400" font-size="16" fill="#cbd5f5">Issued ${issuedOn}</text>
     <g transform="translate(640, 120)">
       <rect width="240" height="320" rx="32" fill="#0f172a" opacity="0.9" />
       <rect x="20" y="20" width="200" height="200" rx="24" fill="#fff" opacity="0.1" />
@@ -91,14 +90,8 @@ function buildSimpleIdCardSvg(data: SimpleIdCardData): string {
       <foreignObject x="10" y="230" width="220" height="80">
         <div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#e2e8f0;font-family:'Inter',sans-serif;">
           <strong style="font-size:16px">${safeName}</strong>
-          <span style="font-size:12px;opacity:0.8">${safePublicId}</span>
         </div>
       </foreignObject>
-    </g>
-    <g transform="translate(360, 360)">
-      <rect width="520" height="160" rx="26" fill="#020617" opacity="0.55" />
-      <text x="60" y="80" font-size="18" fill="#cbd5f5">Keep this card visible while on campus</text>
-      <text x="60" y="120" font-size="14" fill="#94a3b8">For assistance contact student-affairs@zigma.edu</text>
     </g>
   </svg>`;
 }
