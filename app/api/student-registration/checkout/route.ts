@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { prisma } from "@/db/prisma";
 import { stripe } from "@/lib/stripe";
+import { processPaidRegistration } from "@/lib/student-registration/process-registration";
 
 const registrationRequestSchema = z.object({
   name: z.string().min(2),
@@ -21,12 +22,7 @@ const CANCEL_PATH = "/student-registration";
 const INSTITUTE_NAME = "Zigma Institute";
 
 export async function POST(request: Request) {
-  if (!stripe) {
-    return NextResponse.json(
-      { error: "Stripe secret key is not configured." },
-      { status: 500 }
-    );
-  }
+  const isStripeConfigured = Boolean(stripe);
 
   let payload: unknown;
 
@@ -131,6 +127,33 @@ export async function POST(request: Request) {
       { error: "Unable to determine application URL for checkout." },
       { status: 500 }
     );
+  }
+
+  // In environments where Stripe is not configured (e.g. local demos),
+  // immediately process the registration and skip checkout.
+  if (!isStripeConfigured) {
+    const offlineSessionId = `offline_${registration.id}`;
+
+    await prisma.studentRegistration.update({
+      where: { id: registration.id },
+      data: { stripeSessionId: offlineSessionId },
+    });
+
+    try {
+      await processPaidRegistration(registration.id);
+    } catch (error) {
+      console.error("Failed to process offline registration", error);
+      return NextResponse.json(
+        { error: "Unable to finalise registration." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      url: `${origin}${SUCCESS_PATH}?session_id=${encodeURIComponent(
+        offlineSessionId
+      )}`,
+    });
   }
 
   try {
