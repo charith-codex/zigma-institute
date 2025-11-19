@@ -1,11 +1,11 @@
 import { Buffer } from "node:buffer";
 
 import { prisma } from "@/db/prisma";
+import QRCode from "qrcode";
 
 const INSTITUTE_INFO = {
   name: "Zigma Institute",
   tagline: "AI-powered personalised learning for ambitious students.",
-  address: "Colombo Innovation Hub, 512 Galle Road, Colombo 03",
 };
 
 interface GenerateIdCardResult {
@@ -19,7 +19,25 @@ interface SimpleIdCardData {
   studentPublicId: string;
   studentEmail: string;
   guardianEmail: string;
-  courses: string[];
+  studentPhotoUrl: string | null;
+  qrDataUrl: string;
+}
+
+interface StudentQrPayload {
+  type: "ZIGMA_STUDENT_ID";
+  registrationId: string;
+  studentPublicId: string;
+  studentName: string;
+  studentEmail: string;
+}
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function getInitials(name: string): string {
@@ -32,22 +50,6 @@ function getInitials(name: string): string {
     .padEnd(2, "•");
 }
 
-function getCourseSummary(courses: string[]): string {
-  if (!courses.length) {
-    return "Courses will be assigned after approval";
-  }
-
-  if (courses.length === 1) {
-    return courses[0];
-  }
-
-  const [first, second, ...rest] = courses;
-  if (rest.length === 0) {
-    return `${first} • ${second}`;
-  }
-  return `${first}, ${second} +${rest.length} more`;
-}
-
 function buildSimpleIdCardSvg(data: SimpleIdCardData): string {
   const issuedOn = new Date().toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -56,7 +58,15 @@ function buildSimpleIdCardSvg(data: SimpleIdCardData): string {
   });
 
   const initials = getInitials(data.studentName);
-  const courseSummary = getCourseSummary(data.courses);
+  const safeName = escapeXml(data.studentName);
+  const safePublicId = escapeXml(data.studentPublicId);
+  const safeStudentEmail = escapeXml(data.studentEmail);
+  const safeGuardianEmail = escapeXml(data.guardianEmail);
+  const safePhoto = data.studentPhotoUrl ? escapeXml(data.studentPhotoUrl) : null;
+  const safeQrDataUrl = escapeXml(data.qrDataUrl);
+  const clipId = `photoClip-${
+    data.studentPublicId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() || "default"
+  }`;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
   <svg width="960" height="560" viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg">
@@ -70,16 +80,35 @@ function buildSimpleIdCardSvg(data: SimpleIdCardData): string {
     <rect x="24" y="24" width="912" height="512" rx="24" fill="#0b1220" opacity="0.35" />
     <text x="60" y="100" font-size="42" font-weight="600" fill="#f8fafc">${INSTITUTE_INFO.name}</text>
     <text x="60" y="140" font-size="22" fill="#cbd5f5">${INSTITUTE_INFO.tagline}</text>
-    <text x="60" y="220" font-size="32" font-weight="600" fill="#f1f5f9">${data.studentName}</text>
-    <text x="60" y="260" font-size="18" fill="#cbd5f5">Student ID • ${data.studentPublicId}</text>
-    <text x="60" y="300" font-size="18" fill="#94a3b8">Email • ${data.studentEmail}</text>
-    <text x="60" y="340" font-size="18" fill="#94a3b8">Guardian • ${data.guardianEmail}</text>
-    <text x="60" y="400" font-size="20" fill="#cbd5f5">Registered courses</text>
-    <text x="60" y="440" font-size="18" fill="#f8fafc">${courseSummary}</text>
-    <text x="60" y="480" font-size="16" fill="#94a3b8">Issued ${issuedOn}</text>
-    <rect x="640" y="120" width="240" height="320" rx="24" fill="#1e293b" opacity="0.8" />
-    <text x="760" y="260" text-anchor="middle" font-size="96" font-weight="700" fill="#1d4ed8" opacity="0.3">${initials}</text>
-    <text x="760" y="420" text-anchor="middle" font-size="18" fill="#cbd5f5">${INSTITUTE_INFO.address}</text>
+    <text x="60" y="220" font-size="32" font-weight="600" fill="#f1f5f9">${safeName}</text>
+    <text x="60" y="260" font-size="18" fill="#cbd5f5">Student ID • ${safePublicId}</text>
+    <text x="60" y="300" font-size="18" fill="#94a3b8">Email • ${safeStudentEmail}</text>
+    <text x="60" y="340" font-size="18" fill="#94a3b8">Guardian • ${safeGuardianEmail}</text>
+    <text x="60" y="400" font-size="18" fill="#cbd5f5">Scan QR to mark attendance</text>
+    <text x="60" y="440" font-size="16" fill="#94a3b8">Issued ${issuedOn}</text>
+    <g transform="translate(640, 120)">
+      <rect width="240" height="320" rx="32" fill="#0f172a" opacity="0.9" />
+      <rect x="20" y="20" width="200" height="200" rx="24" fill="#fff" opacity="0.1" />
+      <clipPath id="${clipId}">
+        <rect x="20" y="20" width="200" height="200" rx="24" />
+      </clipPath>
+      ${
+        safePhoto
+          ? `<image x="20" y="20" width="200" height="200" preserveAspectRatio="xMidYMid slice" href="${safePhoto}" clip-path="url(#${clipId})" />`
+          : `<text x="120" y="140" text-anchor="middle" font-size="72" font-weight="700" fill="#1d4ed8" opacity="0.6">${initials}</text>`
+      }
+      <foreignObject x="10" y="230" width="220" height="80">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#e2e8f0;font-family:'Inter',sans-serif;">
+          <strong style="font-size:16px">${safeName}</strong>
+          <span style="font-size:12px;opacity:0.8">${safePublicId}</span>
+        </div>
+      </foreignObject>
+    </g>
+    <g transform="translate(360, 330)">
+      <rect width="240" height="260" rx="28" fill="#020617" opacity="0.75" />
+      <image x="10" y="10" width="220" height="220" href="${safeQrDataUrl}" />
+      <text x="120" y="245" text-anchor="middle" font-size="14" fill="#cbd5f5">QR attendance</text>
+    </g>
   </svg>`;
 }
 
@@ -94,13 +123,6 @@ export async function generateAndUploadIdCard(
     // Fetch registration with courses
     const registration = await prisma.studentRegistration.findUnique({
       where: { id: registrationId },
-      include: {
-        courses: {
-          include: {
-            course: true,
-          },
-        },
-      },
     });
 
     if (!registration) {
@@ -111,14 +133,30 @@ export async function generateAndUploadIdCard(
       return { success: false, error: "Student ID not assigned yet" };
     }
 
+    const qrPayload: StudentQrPayload = {
+      type: "ZIGMA_STUDENT_ID",
+      registrationId: registration.id,
+      studentPublicId: registration.studentPublicId,
+      studentName: registration.name,
+      studentEmail: registration.email,
+    };
+
+    const qrDataUrl = await QRCode.toDataURL(JSON.stringify(qrPayload), {
+      width: 220,
+      margin: 1,
+      color: {
+        dark: "#0f172a",
+        light: "#ffffff",
+      },
+    });
+
     const cardData: SimpleIdCardData = {
       studentName: registration.name,
       studentPublicId: registration.studentPublicId,
       studentEmail: registration.email,
       guardianEmail: registration.guardianEmail,
-      courses: registration.courses
-        .map((c) => c.course?.name)
-        .filter((name): name is string => Boolean(name)),
+      studentPhotoUrl: registration.studentPhotoUrl ?? null,
+      qrDataUrl,
     };
 
     const svg = buildSimpleIdCardSvg(cardData);
