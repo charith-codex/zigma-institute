@@ -1,7 +1,6 @@
 import { Buffer } from "node:buffer";
 
 import { prisma } from "@/db/prisma";
-import QRCode from "qrcode";
 
 const INSTITUTE_INFO = {
   name: "Zigma Institute",
@@ -20,15 +19,6 @@ interface SimpleIdCardData {
   studentEmail: string;
   guardianEmail: string;
   studentPhotoUrl: string | null;
-  qrDataUrl: string;
-}
-
-interface StudentQrPayload {
-  type: "ZIGMA_STUDENT_ID";
-  registrationId: string;
-  studentPublicId: string;
-  studentName: string;
-  studentEmail: string;
 }
 
 function escapeXml(value: string): string {
@@ -62,8 +52,9 @@ function buildSimpleIdCardSvg(data: SimpleIdCardData): string {
   const safePublicId = escapeXml(data.studentPublicId);
   const safeStudentEmail = escapeXml(data.studentEmail);
   const safeGuardianEmail = escapeXml(data.guardianEmail);
-  const safePhoto = data.studentPhotoUrl ? escapeXml(data.studentPhotoUrl) : null;
-  const safeQrDataUrl = escapeXml(data.qrDataUrl);
+  const safePhoto = data.studentPhotoUrl
+    ? escapeXml(data.studentPhotoUrl)
+    : null;
   const clipId = `photoClip-${
     data.studentPublicId.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() || "default"
   }`;
@@ -84,7 +75,7 @@ function buildSimpleIdCardSvg(data: SimpleIdCardData): string {
     <text x="60" y="260" font-size="18" fill="#cbd5f5">Student ID • ${safePublicId}</text>
     <text x="60" y="300" font-size="18" fill="#94a3b8">Email • ${safeStudentEmail}</text>
     <text x="60" y="340" font-size="18" fill="#94a3b8">Guardian • ${safeGuardianEmail}</text>
-    <text x="60" y="400" font-size="18" fill="#cbd5f5">Scan QR to mark attendance</text>
+    <text x="60" y="400" font-size="18" fill="#cbd5f5">Valid student identification</text>
     <text x="60" y="440" font-size="16" fill="#94a3b8">Issued ${issuedOn}</text>
     <g transform="translate(640, 120)">
       <rect width="240" height="320" rx="32" fill="#0f172a" opacity="0.9" />
@@ -104,10 +95,10 @@ function buildSimpleIdCardSvg(data: SimpleIdCardData): string {
         </div>
       </foreignObject>
     </g>
-    <g transform="translate(360, 330)">
-      <rect width="240" height="260" rx="28" fill="#020617" opacity="0.75" />
-      <image x="10" y="10" width="220" height="220" href="${safeQrDataUrl}" />
-      <text x="120" y="245" text-anchor="middle" font-size="14" fill="#cbd5f5">QR attendance</text>
+    <g transform="translate(360, 360)">
+      <rect width="520" height="160" rx="26" fill="#020617" opacity="0.55" />
+      <text x="60" y="80" font-size="18" fill="#cbd5f5">Keep this card visible while on campus</text>
+      <text x="60" y="120" font-size="14" fill="#94a3b8">For assistance contact student-affairs@zigma.edu</text>
     </g>
   </svg>`;
 }
@@ -133,30 +124,12 @@ export async function generateAndUploadIdCard(
       return { success: false, error: "Student ID not assigned yet" };
     }
 
-    const qrPayload: StudentQrPayload = {
-      type: "ZIGMA_STUDENT_ID",
-      registrationId: registration.id,
-      studentPublicId: registration.studentPublicId,
-      studentName: registration.name,
-      studentEmail: registration.email,
-    };
-
-    const qrDataUrl = await QRCode.toDataURL(JSON.stringify(qrPayload), {
-      width: 220,
-      margin: 1,
-      color: {
-        dark: "#0f172a",
-        light: "#ffffff",
-      },
-    });
-
     const cardData: SimpleIdCardData = {
       studentName: registration.name,
       studentPublicId: registration.studentPublicId,
       studentEmail: registration.email,
       guardianEmail: registration.guardianEmail,
       studentPhotoUrl: registration.studentPhotoUrl ?? null,
-      qrDataUrl,
     };
 
     const svg = buildSimpleIdCardSvg(cardData);
