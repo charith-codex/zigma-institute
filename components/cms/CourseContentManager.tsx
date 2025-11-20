@@ -9,9 +9,6 @@ import {
   Video,
   Brain,
   Plus,
-  Edit,
-  Trash2,
-  Eye,
   BookOpen,
   Users,
   BarChart3,
@@ -19,9 +16,6 @@ import {
   Target,
 } from "lucide-react";
 import { toast } from "sonner";
-import { WeekNavigation } from "../lms/WeekNavigation";
-import { Material, WeekContentView } from "../lms/WeekContentView";
-import { Week, WeekManager } from "../lms/WeekManager";
 import { QuestionCreation } from "./QuestionCreation";
 import { ExamBuilder } from "./ExamBuilder";
 import { ExamScheduler } from "./ExamScheduler";
@@ -40,6 +34,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import type { ClassSummary } from "@/hooks/useData";
 import { useLessons } from "@/hooks/useData";
+import { StudyMaterialManager } from "./StudyMaterialManager";
+import { VideoRecordingManager } from "./VideoRecordingManager";
 
 interface CourseContentManagerProps {
   courseId: string;
@@ -49,7 +45,7 @@ interface CourseContentManagerProps {
 
 const navigationItems = [
   { id: "lessons", label: "Lessons", icon: BookOpen },
-  { id: "weeks", label: "Weekly Content", icon: ClipboardList },
+  { id: "materials", label: "Resources", icon: ClipboardList },
   { id: "recordings", label: "Course Recordings", icon: Video },
   { id: "students", label: "Students", icon: Users },
   { id: "quizzes", label: "Question Bank", icon: ClipboardList },
@@ -67,104 +63,12 @@ export function CourseContentManager({
 }: CourseContentManagerProps) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState("lessons");
-  const [selectedWeek, setSelectedWeek] = useState<string>("");
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
   const [lessonForm, setLessonForm] = useState({
     title: "",
     description: "",
   });
   const [creatingLesson, setCreatingLesson] = useState(false);
-
-  // Week-wise data management
-  const [weeks, setWeeks] = useState<Week[]>([
-    {
-      id: "week-1",
-      title: "Week 1: Introduction to React",
-      description: "Basic concepts of React, JSX, and components",
-      startDate: "2024-01-15",
-      endDate: "2024-01-21",
-      order: 1,
-      isActive: true,
-      materialCount: 3,
-    },
-    {
-      id: "week-2",
-      title: "Week 2: State and Props",
-      description: "Understanding state management and prop passing",
-      startDate: "2024-01-22",
-      endDate: "2024-01-28",
-      order: 2,
-      isActive: true,
-      materialCount: 2,
-    },
-  ]);
-
-  const [materials, setMaterials] = useState<Material[]>([
-    {
-      id: "mat-001",
-      title: "Introduction to React Hooks",
-      type: "document",
-      weekId: "week-1",
-      uploadDate: "2024-01-15",
-      size: "2.5 MB",
-      downloads: 45,
-    },
-    {
-      id: "mat-002",
-      title: "Component Lifecycle Lecture",
-      type: "video",
-      weekId: "week-1",
-      uploadDate: "2024-01-14",
-      size: "125 MB",
-      views: 38,
-    },
-    {
-      id: "mat-003",
-      title: "React Quiz - Week 1",
-      type: "quiz",
-      weekId: "week-1",
-      uploadDate: "2024-01-13",
-      questions: 15,
-      submissions: 22,
-    },
-    {
-      id: "mat-004",
-      title: "State Management Tutorial",
-      type: "document",
-      weekId: "week-2",
-      uploadDate: "2024-01-22",
-      size: "1.8 MB",
-      downloads: 32,
-    },
-    {
-      id: "mat-005",
-      title: "Props Deep Dive Video",
-      type: "video",
-      weekId: "week-2",
-      uploadDate: "2024-01-23",
-      size: "89 MB",
-      views: 28,
-    },
-  ]);
-
-  // Update material count when materials change
-  const updateWeekMaterialCounts = (updatedMaterials: Material[]) => {
-    const updatedWeeks = weeks.map((week) => ({
-      ...week,
-      materialCount: updatedMaterials.filter((m) => m.weekId === week.id)
-        .length,
-    }));
-    setWeeks(updatedWeeks);
-  };
-
-  const handleMaterialsChange = (updatedMaterials: Material[]) => {
-    setMaterials(updatedMaterials);
-    updateWeekMaterialCounts(updatedMaterials);
-  };
-
-  const handleWeeksChange = (updatedWeeks: Week[]) => {
-    setWeeks(updatedWeeks);
-  };
 
   console.log("CourseContentManager - courseId:", courseId);
   console.log("CourseContentManager - classes:", classes);
@@ -210,21 +114,6 @@ export function CourseContentManager({
       );
     } finally {
       setCreatingLesson(false);
-    }
-  };
-
-  const handleFileUpload = () => {
-    toast.success("File uploaded successfully!");
-  };
-
-  const getFileIcon = (type: string) => {
-    switch (type) {
-      case "video":
-        return <Video className="w-4 h-4" />;
-      case "quiz":
-        return <ClipboardList className="w-4 h-4" />;
-      default:
-        return <FileText className="w-4 h-4" />;
     }
   };
 
@@ -390,92 +279,14 @@ export function CourseContentManager({
           </div>
         );
 
-      case "weeks":
-        return (
-          <div className="flex h-full">
-            <div className="w-80 border-r border-border/50 bg-card/30">
-              <div className="p-4 border-b border-border/50">
-                <h3 className="font-semibold">Course Weeks</h3>
-              </div>
-              <WeekNavigation
-                weeks={weeks}
-                selectedWeek={selectedWeek}
-                onSelectWeek={setSelectedWeek}
-              />
-            </div>
-            <div className="flex-1 p-6">
-              {selectedWeek ? (
-                <WeekContentView
-                  selectedWeek={
-                    weeks.find((w) => w.id === selectedWeek) || null
-                  }
-                  materials={materials}
-                  onMaterialsChange={handleMaterialsChange}
-                />
-              ) : (
-                <WeekManager
-                  weeks={weeks}
-                  onWeeksChange={handleWeeksChange}
-                  onSelectWeek={setSelectedWeek}
-                  selectedWeek={selectedWeek}
-                />
-              )}
-            </div>
-          </div>
-        );
-
       case "recordings":
-        return (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Course Recordings</h3>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Upload Recording
-              </Button>
-            </div>
+        return <VideoRecordingManager />;
 
-            <div className="grid gap-4">
-              {materials
-                .filter((m) => m.type === "video")
-                .map((recording) => (
-                  <Card
-                    key={recording.id}
-                    className="hover:shadow-md transition-shadow"
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="p-2 bg-muted rounded-lg">
-                          <Video className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold">{recording.title}</h4>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>Recorded: {recording.uploadDate}</span>
-                            <span>Size: {recording.size}</span>
-                            <span>Views: {recording.views}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {weeks.find((w) => w.id === recording.weekId)
-                                ?.title || "No week"}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-            </div>
+      case "materials":
+        return (
+          <div className="space-y-6">
+            <StudyMaterialManager />
+            <VideoRecordingManager />
           </div>
         );
 
@@ -634,11 +445,7 @@ export function CourseContentManager({
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-hidden">
-        {activeSection === "weeks" ? (
-          renderContent()
-        ) : (
-          <div className="p-8">{renderContent()}</div>
-        )}
+        <div className="p-8">{renderContent()}</div>
       </div>
     </div>
   );
