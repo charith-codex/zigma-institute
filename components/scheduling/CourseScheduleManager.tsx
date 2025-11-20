@@ -250,7 +250,6 @@ export function CourseScheduleManager({
                   ? draftDate.toISOString().split("T")[0]
                   : selectedDateKey
               }
-              onCancel={closeDialog}
               checkConflicts={checkConflicts}
               submitting={submitting}
               onDelete={activeEvent ? handleDelete : undefined}

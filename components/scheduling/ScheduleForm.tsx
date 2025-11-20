@@ -37,7 +37,6 @@ interface ScheduleFormProps {
   onSubmit: (payload: SchedulePayload) => Promise<void> | void;
   initialValues?: ScheduleEvent;
   defaultDate?: string;
-  onCancel?: () => void;
   checkConflicts?: (
     date: string,
     startTime: string,
@@ -64,7 +63,6 @@ export function ScheduleForm({
   onSubmit,
   initialValues,
   defaultDate,
-  onCancel,
   checkConflicts,
   submitting = false,
   onDelete,
@@ -241,10 +239,7 @@ export function ScheduleForm({
         </p>
       ) : null}
 
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs text-muted-foreground">
-          Sessions automatically inherit the selected course instructor.
-        </p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
         <div className="flex flex-wrap gap-2">
           {showDeleteAction ? (
             <Button
@@ -258,16 +253,6 @@ export function ScheduleForm({
               {deleting ? "Deleting..." : "Delete"}
             </Button>
           ) : null}
-          {onCancel ? (
-            <Button
-              variant="outline"
-              onClick={onCancel}
-              type="button"
-              disabled={isBusy}
-            >
-              Cancel
-            </Button>
-          ) : null}
           <Button
             type="button"
             onClick={() => void handleSubmit()}
@@ -276,10 +261,10 @@ export function ScheduleForm({
             {initialValues
               ? isSubmitting
                 ? "Saving..."
-                : "Save Changes"
+                : "Save"
               : isSubmitting
                 ? "Adding..."
-                : "Add Schedule"}
+                : "Scheduled"}
           </Button>
         </div>
       </div>
