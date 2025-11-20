@@ -31,7 +31,15 @@ interface VideoRecording {
   fileUrl: string;
 }
 
-export function VideoRecordingManager() {
+interface VideoRecordingManagerProps {
+  lessonId?: string;
+  lessonTitle?: string;
+}
+
+export function VideoRecordingManager({
+  lessonId,
+  lessonTitle,
+}: VideoRecordingManagerProps) {
   const [videos, setVideos] = useState<VideoRecording[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -47,7 +55,10 @@ export function VideoRecordingManager() {
       if (options?.showLoading) setIsLoading(true);
 
       try {
-        const response = await fetch("/api/video-recordings", {
+        const endpoint = lessonId
+          ? `/api/video-recordings?lessonId=${encodeURIComponent(lessonId)}`
+          : "/api/video-recordings";
+        const response = await fetch(endpoint, {
           cache: "no-store",
         });
         if (!response.ok) throw new Error("Failed to fetch video recordings");
@@ -65,7 +76,7 @@ export function VideoRecordingManager() {
         setIsLoading(false);
       }
     },
-    []
+    [lessonId]
   );
 
   useEffect(() => {
@@ -80,10 +91,13 @@ export function VideoRecordingManager() {
         return;
       }
 
-      const response = await fetch("/api/video-recordings", {
+      const endpoint = lessonId
+        ? `/api/video-recordings?lessonId=${encodeURIComponent(lessonId)}`
+        : "/api/video-recordings";
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description, fileUrl }),
+        body: JSON.stringify({ title, description, fileUrl, lessonId }),
       });
 
       if (!response.ok) throw new Error("Failed to add video recording");
@@ -104,9 +118,12 @@ export function VideoRecordingManager() {
     <Card>
       <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <CardTitle>Video Recordings</CardTitle>
+          <CardTitle>
+            Video Recordings{lessonTitle ? ` • ${lessonTitle}` : ""}
+          </CardTitle>
           <CardDescription>
-            Add and view your recorded sessions or tutorials.
+            Add and view your recorded sessions or tutorials
+            {lessonTitle ? ` for ${lessonTitle}` : ""}.
           </CardDescription>
         </div>
 

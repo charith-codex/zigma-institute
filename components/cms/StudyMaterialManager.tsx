@@ -38,6 +38,11 @@ interface StudyMaterial {
   createdAt: string;
 }
 
+interface StudyMaterialManagerProps {
+  lessonId?: string;
+  lessonTitle?: string;
+}
+
 function formatFileSize(size: number | null | undefined) {
   if (!size || size <= 0) {
     return null;
@@ -76,7 +81,10 @@ function getFileExtension(name: string) {
   return name.slice(lastDotIndex + 1).toUpperCase();
 }
 
-export function StudyMaterialManager() {
+export function StudyMaterialManager({
+  lessonId,
+  lessonTitle,
+}: StudyMaterialManagerProps) {
   const [materials, setMaterials] = useState<StudyMaterial[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -97,8 +105,9 @@ export function StudyMaterialManager() {
     return {
       title,
       description: description.length > 0 ? description : undefined,
+      lessonId,
     };
-  }, [formState.description, formState.title]);
+  }, [formState.description, formState.title, lessonId]);
 
   const fetchMaterials = useCallback(
     async (options?: { showLoading?: boolean }) => {
@@ -107,7 +116,10 @@ export function StudyMaterialManager() {
       }
 
       try {
-        const response = await fetch("/api/study-materials", {
+        const endpoint = lessonId
+          ? `/api/study-materials?lessonId=${encodeURIComponent(lessonId)}`
+          : "/api/study-materials";
+        const response = await fetch(endpoint, {
           cache: "no-store",
         });
 
@@ -128,12 +140,12 @@ export function StudyMaterialManager() {
         setIsLoading(false);
       }
     },
-    []
+    [lessonId]
   );
 
   useEffect(() => {
     void fetchMaterials({ showLoading: true });
-  }, [fetchMaterials]);
+  }, [fetchMaterials, lessonId]);
 
   const resetForm = () => {
     setFormState({ title: "", description: "" });
@@ -165,9 +177,12 @@ export function StudyMaterialManager() {
     <Card>
       <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <CardTitle>Study Material Library</CardTitle>
+          <CardTitle>
+            Study Material Library{lessonTitle ? ` • ${lessonTitle}` : ""}
+          </CardTitle>
           <CardDescription>
-            Upload tutorials, notes, and other resources for quick access.
+            Upload tutorials, notes, and other resources for quick access
+            {lessonTitle ? ` in ${lessonTitle}` : ""}.
           </CardDescription>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
