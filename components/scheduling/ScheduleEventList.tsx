@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScheduleEvent } from "@/hooks/useSchedules";
 import { CalendarClock, Clock, Edit2, MapPin, Trash2, User } from "lucide-react";
@@ -12,13 +11,6 @@ interface ScheduleEventListProps {
   onDelete: (id: string) => void;
   heading?: string;
 }
-
-const statusStyles: Record<ScheduleEvent["status"], string> = {
-  approved: "bg-success/10 text-success border-success/20",
-  pending_staff_approval: "bg-warning/10 text-warning border-warning/20",
-  pending_teacher_confirmation: "bg-secondary/10 text-secondary border-secondary/20",
-  rejected: "bg-destructive/10 text-destructive border-destructive/20",
-};
 
 function formatTimeRange(startTime: string, endTime: string) {
   return `${startTime} - ${endTime}`;
@@ -55,9 +47,11 @@ export function ScheduleEventList({ events, onEdit, onDelete, heading }: Schedul
                 <span className="inline-flex items-center gap-1">
                   <Clock className="h-4 w-4" /> {formatTimeRange(event.startTime, event.endTime)}
                 </span>
-                <span className="inline-flex items-center gap-1">
-                  <User className="h-4 w-4" /> {event.teacherName}
-                </span>
+                {event.teacherName ? (
+                  <span className="inline-flex items-center gap-1">
+                    <User className="h-4 w-4" /> {event.teacherName}
+                  </span>
+                ) : null}
                 {event.notes ? (
                   <span className="inline-flex items-center gap-1">
                     <MapPin className="h-4 w-4" /> {event.notes}
@@ -65,7 +59,6 @@ export function ScheduleEventList({ events, onEdit, onDelete, heading }: Schedul
                 ) : null}
               </div>
             </div>
-            <Badge className={statusStyles[event.status]}>{event.status.replace(/_/g, " ")}</Badge>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={() => onEdit(event)}>

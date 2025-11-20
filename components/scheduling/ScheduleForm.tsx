@@ -22,15 +22,13 @@ export interface SchedulePayload {
   date: string;
   startTime: string;
   endTime: string;
-  teacherId: string;
-  teacherName: string;
   notes?: string;
   recurring?: boolean;
 }
 
 interface ScheduleFormProps {
   courseOptions: CourseOption[];
-  onSubmit: (payload: SchedulePayload) => void;
+  onSubmit: (payload: SchedulePayload) => Promise<void> | void;
   initialValues?: ScheduleEvent;
   defaultDate?: string;
   onCancel?: () => void;
@@ -40,6 +38,7 @@ interface ScheduleFormProps {
     endTime: string,
     excludeId?: string
   ) => ConflictCheck;
+  submitting?: boolean;
 }
 
 const defaultTimes = {
@@ -59,6 +58,7 @@ export function ScheduleForm({
   defaultDate,
   onCancel,
   checkConflicts,
+  submitting = false,
 }: ScheduleFormProps) {
   const [courseId, setCourseId] = useState<string>(
     initialValues?.courseId ?? courseOptions[0]?.id ?? ""
@@ -77,6 +77,9 @@ export function ScheduleForm({
     Boolean(initialValues?.recurring)
   );
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const isSubmitting = submitting || saving;
 
   const selectedCourse = useMemo(
     () => courseOptions.find((option) => option.id === courseId),
@@ -89,7 +92,7 @@ export function ScheduleForm({
     }
   }, [courseId, courseOptions]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!courseId || !selectedCourse) {
       setValidationError("Please select a course to schedule.");
       return;
@@ -113,14 +116,17 @@ export function ScheduleForm({
       date,
       startTime,
       endTime,
-      teacherId: selectedCourse.teacherId,
-      teacherName: selectedCourse.teacherName,
       notes: notes.trim() || undefined,
       recurring,
     };
 
-    onSubmit(payload);
-    setValidationError(null);
+    try {
+      setSaving(true);
+      await onSubmit(payload);
+      setValidationError(null);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -149,6 +155,7 @@ export function ScheduleForm({
             type="date"
             value={date}
             onChange={(event) => setDate(event.target.value)}
+            disabled={isSubmitting}
           />
         </div>
 
@@ -159,6 +166,7 @@ export function ScheduleForm({
             type="time"
             value={startTime}
             onChange={(event) => setStartTime(event.target.value)}
+            disabled={isSubmitting}
           />
         </div>
 
@@ -169,6 +177,7 @@ export function ScheduleForm({
             type="time"
             value={endTime}
             onChange={(event) => setEndTime(event.target.value)}
+            disabled={isSubmitting}
           />
         </div>
 
@@ -181,6 +190,7 @@ export function ScheduleForm({
           placeholder="Add any notes or requirements for this session"
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
+          disabled={isSubmitting}
         />
       </div>
 
@@ -189,6 +199,7 @@ export function ScheduleForm({
           id="recurring"
           checked={recurring}
           onCheckedChange={(value) => setRecurring(Boolean(value))}
+          disabled={isSubmitting}
         />
         <Label htmlFor="recurring" className="text-sm text-muted-foreground">
           Repeat weekly on {getDayOfWeek(date)}
@@ -207,12 +218,23 @@ export function ScheduleForm({
         </p>
         <div className="flex gap-2">
           {onCancel ? (
-            <Button variant="outline" onClick={onCancel} type="button">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              type="button"
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
           ) : null}
-          <Button type="button" onClick={handleSubmit}>
-            {initialValues ? "Save Changes" : "Add Schedule"}
+          <Button type="button" onClick={() => void handleSubmit()} disabled={isSubmitting}>
+            {initialValues
+              ? isSubmitting
+                ? "Saving..."
+                : "Save Changes"
+              : isSubmitting
+                ? "Adding..."
+                : "Add Schedule"}
           </Button>
         </div>
       </div>

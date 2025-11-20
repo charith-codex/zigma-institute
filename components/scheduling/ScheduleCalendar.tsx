@@ -58,7 +58,6 @@ export function ScheduleCalendar({
 
   const eventsByDate = useMemo(() => {
     return events.reduce<Record<string, ScheduleEvent[]>>((accumulator, event) => {
-      if (event.status === "rejected") return accumulator;
       const dayKey = event.date;
       if (!accumulator[dayKey]) {
         accumulator[dayKey] = [];

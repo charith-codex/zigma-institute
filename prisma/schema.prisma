@@ -123,26 +123,6 @@ model Course {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  schedules Schedule[]
-}
-
-model Schedule {
-  id        String   @id @default(uuid())
-  courseId  String
-  className String
-  date      DateTime
-  startTime String
-  endTime   String
-  dayOfWeek String
-  notes     String?
-  recurring Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  @@index([date])
 }
 
 model StudyMaterial {
