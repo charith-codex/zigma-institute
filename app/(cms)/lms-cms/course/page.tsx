@@ -694,7 +694,8 @@ const LMSCMS = () => {
                       <CourseScheduleManager
                         courseOptions={scheduleCourseOptions}
                         heading="Course Scheduling"
-                        description="Publish new sessions, resolve conflicts, and keep learners aligned."
+                        description="View course sessions on a large, responsive calendar."
+                        mode="view"
                       />
                     )}
                   </div>

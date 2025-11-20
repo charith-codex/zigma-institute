@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useEnrollments, useAssignments, usePayments } from "@/hooks/useData";
+import { useEnrollments, useAssignments, usePayments, useCourses } from "@/hooks/useData";
 import {
   BookOpen,
   Clock,
@@ -49,63 +49,32 @@ const LMS = () => {
   const { enrollments, loading: enrollmentsLoading } = useEnrollments();
   const { assignments, loading: assignmentsLoading } = useAssignments();
   const { payments, loading: paymentsLoading } = usePayments();
+  const { courses } = useCourses();
 
-  // Hardcoded enrolled classes for the student
   const enrolledClasses = useMemo<EnrolledClass[]>(
-    () => [
-      {
-        id: "cs101",
-        code: "CS101",
-        name: "Computer Science Fundamentals",
-        instructor: "Dr. Sarah Johnson",
-        progress: 75,
+    () =>
+      courses.map((course) => ({
+        id: course.id,
+        code: course.slug?.toUpperCase() ?? course.id.slice(0, 8).toUpperCase(),
+        name: course.name,
+        instructor: course.teacherName ?? "Instructor",
+        progress: 0,
         status: "active",
-        weeks: 12,
-        completedWeeks: 9,
-      },
-      {
-        id: "math201",
-        code: "MATH201",
-        name: "Advanced Mathematics",
-        instructor: "Prof. Michael Chen",
-        progress: 60,
-        status: "active",
-        weeks: 14,
-        completedWeeks: 8,
-      },
-      {
-        id: "phys301",
-        code: "PHYS301",
-        name: "Physics for Engineers",
-        instructor: "Dr. Emma Wilson",
-        progress: 45,
-        status: "active",
-        weeks: 16,
-        completedWeeks: 7,
-      },
-      {
-        id: "cs205",
-        code: "CS205",
-        name: "Database Systems",
-        instructor: "Prof. David Rodriguez",
-        progress: 90,
-        status: "active",
-        weeks: 12,
-        completedWeeks: 11,
-      },
-    ],
-    []
+        weeks: 0,
+        completedWeeks: 0,
+      })),
+    [courses]
   );
 
   const scheduleCourseOptions = useMemo(
     () =>
-      enrolledClasses.map((course) => ({
+      courses.map((course) => ({
         id: course.id,
         name: course.name,
-        teacherId: `${course.id}-teacher`,
-        teacherName: course.instructor,
+        teacherId: course.teacherId ?? `${course.id}-teacher`,
+        teacherName: course.teacherName ?? "Instructor",
       })),
-    [enrolledClasses]
+    [courses]
   );
 
   return (
@@ -294,7 +263,8 @@ const LMS = () => {
               <CourseScheduleManager
                 courseOptions={scheduleCourseOptions}
                 heading="My Course Schedule"
-                description="Add sessions, review upcoming classes, and keep your timetable organised."
+                description="Check upcoming classes on a responsive calendar."
+                mode="view"
               />
             )}
 

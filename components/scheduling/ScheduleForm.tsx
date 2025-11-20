@@ -22,8 +22,6 @@ export interface SchedulePayload {
   date: string;
   startTime: string;
   endTime: string;
-  status: ScheduleEvent["status"];
-  createdBy: ScheduleEvent["createdBy"];
   teacherId: string;
   teacherName: string;
   notes?: string;
@@ -34,6 +32,7 @@ interface ScheduleFormProps {
   courseOptions: CourseOption[];
   onSubmit: (payload: SchedulePayload) => void;
   initialValues?: ScheduleEvent;
+  defaultDate?: string;
   onCancel?: () => void;
   checkConflicts?: (
     date: string,
@@ -57,6 +56,7 @@ export function ScheduleForm({
   courseOptions,
   onSubmit,
   initialValues,
+  defaultDate,
   onCancel,
   checkConflicts,
 }: ScheduleFormProps) {
@@ -64,19 +64,13 @@ export function ScheduleForm({
     initialValues?.courseId ?? courseOptions[0]?.id ?? ""
   );
   const [date, setDate] = useState<string>(
-    initialValues?.date ?? new Date().toISOString().split("T")[0]
+    initialValues?.date ?? defaultDate ?? new Date().toISOString().split("T")[0]
   );
   const [startTime, setStartTime] = useState<string>(
     initialValues?.startTime ?? defaultTimes.startTime
   );
   const [endTime, setEndTime] = useState<string>(
     initialValues?.endTime ?? defaultTimes.endTime
-  );
-  const [status, setStatus] = useState<ScheduleEvent["status"]>(
-    initialValues?.status ?? "pending_staff_approval"
-  );
-  const [createdBy, setCreatedBy] = useState<ScheduleEvent["createdBy"]>(
-    initialValues?.createdBy ?? "teacher"
   );
   const [notes, setNotes] = useState<string>(initialValues?.notes ?? "");
   const [recurring, setRecurring] = useState<boolean>(
@@ -119,8 +113,6 @@ export function ScheduleForm({
       date,
       startTime,
       endTime,
-      status,
-      createdBy,
       teacherId: selectedCourse.teacherId,
       teacherName: selectedCourse.teacherName,
       notes: notes.trim() || undefined,
@@ -180,33 +172,6 @@ export function ScheduleForm({
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
-          <Select value={status} onValueChange={(value) => setStatus(value as ScheduleEvent["status"])}>
-            <SelectTrigger id="status">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="pending_staff_approval">Pending Staff Approval</SelectItem>
-              <SelectItem value="pending_teacher_confirmation">Pending Teacher Confirmation</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="createdBy">Created By</Label>
-          <Select value={createdBy} onValueChange={(value) => setCreatedBy(value as ScheduleEvent["createdBy"])}>
-            <SelectTrigger id="createdBy">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="teacher">Teacher</SelectItem>
-              <SelectItem value="staff">Staff</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
       <div className="space-y-2">

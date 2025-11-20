@@ -3,12 +3,12 @@
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScheduleEvent, useSchedules } from "@/hooks/useSchedules";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Clock, MapPin, User } from "lucide-react";
 import { ScheduleCalendar } from "@/components/scheduling/ScheduleCalendar";
 import { ScheduleForm, type SchedulePayload } from "@/components/scheduling/ScheduleForm";
-import { ScheduleEventList } from "@/components/scheduling/ScheduleEventList";
-import { Badge } from "@/components/ui/badge";
+import { ScheduleEvent, useSchedules } from "@/hooks/useSchedules";
 
 export interface CourseOption {
   id: string;
@@ -21,6 +21,7 @@ interface CourseScheduleManagerProps {
   courseOptions: CourseOption[];
   heading: string;
   description: string;
+  mode?: "view" | "manage";
 }
 
 function getDayOfWeek(date: string) {
@@ -28,7 +29,47 @@ function getDayOfWeek(date: string) {
   return parsed.toLocaleDateString(undefined, { weekday: "long" });
 }
 
-export function CourseScheduleManager({ courseOptions, heading, description }: CourseScheduleManagerProps) {
+function EventDetails({ event, courseName }: { event: ScheduleEvent; courseName?: string }) {
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="text-sm text-muted-foreground">Course</p>
+        <p className="text-base font-semibold">{courseName ?? event.className}</p>
+      </div>
+      <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+        <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
+          <Clock className="h-4 w-4" />
+          <div>
+            <p className="font-semibold">
+              {event.startTime} – {event.endTime}
+            </p>
+            <p className="text-xs text-muted-foreground">{event.dayOfWeek}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
+          <User className="h-4 w-4" />
+          <div>
+            <p className="font-semibold">{event.teacherName}</p>
+            <p className="text-xs text-muted-foreground">Instructor</p>
+          </div>
+        </div>
+      </div>
+      {event.notes ? (
+        <div className="flex items-start gap-2 rounded-lg bg-primary/5 p-3">
+          <MapPin className="mt-1 h-4 w-4 text-primary" />
+          <p className="text-sm text-foreground">{event.notes}</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function CourseScheduleManager({
+  courseOptions,
+  heading,
+  description,
+  mode = "view",
+}: CourseScheduleManagerProps) {
   const {
     schedules,
     addSchedule,
@@ -36,31 +77,65 @@ export function CourseScheduleManager({ courseOptions, heading, description }: C
     deleteSchedule,
     checkConflicts,
   } = useSchedules();
+
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
+  const [activeEvent, setActiveEvent] = useState<ScheduleEvent | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [draftDate, setDraftDate] = useState<Date | null>(null);
 
   const visibleSchedules = useMemo(() => {
     const allowedIds = new Set(courseOptions.map((course) => course.id));
     return schedules.filter((event) => allowedIds.has(event.courseId));
   }, [courseOptions, schedules]);
 
-  const selectedDateKey = selectedDate.toISOString().split("T")[0];
-  const eventsForSelectedDate = visibleSchedules.filter(
-    (event) => event.date === selectedDateKey
+  const courseNames = useMemo(
+    () =>
+      courseOptions.reduce<Record<string, string>>((accumulator, option) => {
+        accumulator[option.id] = option.name;
+        return accumulator;
+      }, {}),
+    [courseOptions]
   );
 
-  const addEvent = (payload: SchedulePayload) => {
-    addSchedule({
-      ...payload,
-      dayOfWeek: getDayOfWeek(payload.date),
-    });
+  const selectedDateKey = selectedDate.toISOString().split("T")[0];
+
+  const openCreateDialog = (date: Date) => {
+    if (mode !== "manage") return;
+    setDraftDate(date);
+    setActiveEvent(null);
+    setDialogOpen(true);
   };
 
-  const updateEvent = (payload: SchedulePayload & { id: string }) => {
-    updateScheduleDetails(payload.id, {
-      ...payload,
-      dayOfWeek: getDayOfWeek(payload.date),
-    });
+  const openEventDialog = (event: ScheduleEvent) => {
+    setSelectedDate(new Date(event.date));
+    setActiveEvent(event);
+    setDialogOpen(true);
+  };
+
+  const closeDialog = () => {
+    setDialogOpen(false);
+    setActiveEvent(null);
+    setDraftDate(null);
+  };
+
+  const handleSubmit = (payload: SchedulePayload) => {
+    if (activeEvent) {
+      updateScheduleDetails(activeEvent.id, {
+        ...payload,
+        dayOfWeek: getDayOfWeek(payload.date),
+        status: activeEvent.status,
+        createdBy: activeEvent.createdBy,
+      });
+    } else {
+      addSchedule({
+        ...payload,
+        dayOfWeek: getDayOfWeek(payload.date),
+        status: "approved",
+        createdBy: "staff",
+      });
+    }
+
+    closeDialog();
   };
 
   return (
@@ -70,75 +145,100 @@ export function CourseScheduleManager({ courseOptions, heading, description }: C
         <p className="text-muted-foreground">{description}</p>
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
           <Badge variant="outline">{visibleSchedules.length} scheduled sessions</Badge>
-          <Badge variant="secondary">{courseOptions.length} courses available</Badge>
+          <Badge variant="secondary">{courseOptions.length} courses</Badge>
         </div>
+        {courseOptions.length === 0 ? (
+          <p className="text-sm text-destructive">
+            No courses available. Add courses to start scheduling sessions.
+          </p>
+        ) : null}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-        <Card className="border-border/70">
-          <CardHeader>
-            <CardTitle>Create or edit sessions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScheduleForm
-              courseOptions={courseOptions}
-              onSubmit={(payload) => addEvent(payload)}
-              checkConflicts={checkConflicts}
-            />
-          </CardContent>
-        </Card>
+      <ScheduleCalendar
+        events={visibleSchedules}
+        selectedDate={selectedDate}
+        onSelectDate={setSelectedDate}
+        onCreate={openCreateDialog}
+        onEventSelect={(event) => {
+          if (mode === "manage") {
+            openEventDialog(event);
+          } else {
+            setActiveEvent(event);
+            setDialogOpen(true);
+          }
+        }}
+        courseNames={courseNames}
+        allowCreate={mode === "manage"}
+      />
 
-        <ScheduleCalendar
-          events={visibleSchedules}
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-        />
-      </div>
-
-      <Tabs defaultValue="selected">
-        <TabsList>
-          <TabsTrigger value="selected">Selected Date</TabsTrigger>
-          <TabsTrigger value="upcoming">Upcoming Sessions</TabsTrigger>
-        </TabsList>
-        <TabsContent value="selected">
-          <ScheduleEventList
-            events={eventsForSelectedDate}
-            heading="Sessions on selected date"
-            onEdit={(event) => setEditingEvent(event)}
-            onDelete={deleteSchedule}
-          />
-        </TabsContent>
-        <TabsContent value="upcoming">
-          <ScheduleEventList
-            events={visibleSchedules
-              .filter((event) => event.status !== "rejected")
-              .sort((a, b) => a.date.localeCompare(b.date))}
-            heading="All scheduled sessions"
-            onEdit={(event) => setEditingEvent(event)}
-            onDelete={deleteSchedule}
-          />
-        </TabsContent>
-      </Tabs>
-
-      <Dialog open={Boolean(editingEvent)} onOpenChange={() => setEditingEvent(null)}>
-        <DialogContent>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeDialog();
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Edit schedule</DialogTitle>
+            <DialogTitle>
+              {mode === "manage"
+                ? activeEvent
+                  ? "Update session"
+                  : "Add session"
+                : "Session details"}
+            </DialogTitle>
           </DialogHeader>
-          {editingEvent ? (
+
+          {mode === "manage" ? (
             <ScheduleForm
               courseOptions={courseOptions}
-              onSubmit={(payload) => {
-                updateEvent({ ...payload, id: editingEvent.id });
-                setEditingEvent(null);
-              }}
-              initialValues={editingEvent}
-              onCancel={() => setEditingEvent(null)}
+              onSubmit={handleSubmit}
+              initialValues={activeEvent ?? undefined}
+              defaultDate={draftDate ? draftDate.toISOString().split("T")[0] : selectedDateKey}
+              onCancel={closeDialog}
               checkConflicts={checkConflicts}
             />
+          ) : activeEvent ? (
+            <div className="space-y-4">
+              <EventDetails event={activeEvent} courseName={courseNames[activeEvent.courseId]} />
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={closeDialog}>
+                  Close
+                </Button>
+              </div>
+            </div>
           ) : null}
         </DialogContent>
       </Dialog>
+
+      {mode === "manage" ? (
+        <Card className="border-border/70">
+          <CardHeader>
+            <CardTitle className="text-lg">Quick actions</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-3">
+            <Button
+              variant="outline"
+              onClick={() => openCreateDialog(selectedDate)}
+              disabled={courseOptions.length === 0}
+            >
+              Add session on {selectedDateKey}
+            </Button>
+            {activeEvent ? (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  deleteSchedule(activeEvent.id);
+                  closeDialog();
+                }}
+              >
+                Delete selected session
+              </Button>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

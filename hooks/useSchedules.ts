@@ -29,68 +29,23 @@ export interface ConflictCheck {
 
 const STORAGE_KEY = "zigma_schedules";
 
-// Mock hardcoded data for demo
-const MOCK_SCHEDULES: ScheduleEvent[] = [
-  {
-    id: "sched-1",
-    courseId: "cs101",
-    className: "Computer Science Fundamentals",
-    date: "2024-12-09",
-    startTime: "09:00",
-    endTime: "10:30",
-    dayOfWeek: "Monday",
-    status: "approved",
-    createdBy: "teacher",
-    teacherId: "teacher-1",
-    teacherName: "Dr. Sarah Johnson",
-    recurring: true,
-    createdAt: "2024-12-01T00:00:00Z",
-  },
-  {
-    id: "sched-2",
-    courseId: "math201",
-    className: "Advanced Mathematics",
-    date: "2024-12-10",
-    startTime: "11:00",
-    endTime: "12:30",
-    dayOfWeek: "Tuesday",
-    status: "approved",
-    createdBy: "staff",
-    teacherId: "teacher-2",
-    teacherName: "Prof. Michael Chen",
-    recurring: true,
-    createdAt: "2024-12-01T00:00:00Z",
-  },
-  {
-    id: "sched-3",
-    courseId: "phys301",
-    className: "Physics for Engineers",
-    date: "2024-12-11",
-    startTime: "14:00",
-    endTime: "15:30",
-    dayOfWeek: "Wednesday",
-    status: "pending_staff_approval",
-    createdBy: "teacher",
-    teacherId: "teacher-3",
-    teacherName: "Dr. Emma Wilson",
-    recurring: false,
-    createdAt: "2024-12-02T00:00:00Z",
-  },
-];
-
 export function useSchedules() {
   const [schedules, setSchedules] = useState<ScheduleEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Initialize with mock data
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      setSchedules(JSON.parse(stored));
+      try {
+        const parsed = JSON.parse(stored) as ScheduleEvent[];
+        setSchedules(parsed);
+      } catch (error) {
+        console.error("Failed to parse stored schedules", error);
+        setSchedules([]);
+      }
     } else {
-      setSchedules(MOCK_SCHEDULES);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(MOCK_SCHEDULES));
+      setSchedules([]);
     }
     setLoading(false);
   }, []);
@@ -112,11 +67,7 @@ export function useSchedules() {
     setSchedules((prev) => [...prev, newSchedule]);
     toast({
       title: "Schedule Created",
-      description: `Schedule for ${schedule.className} has been submitted for ${
-        schedule.createdBy === "teacher"
-          ? "staff approval"
-          : "teacher confirmation"
-      }.`,
+      description: `Scheduled ${schedule.className} on ${schedule.date} at ${schedule.startTime}.`,
     });
 
     return newSchedule;
