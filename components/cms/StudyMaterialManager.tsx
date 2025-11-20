@@ -38,6 +38,11 @@ interface StudyMaterial {
   createdAt: string;
 }
 
+interface StudyMaterialManagerProps {
+  lessonId?: string;
+  lessonTitle?: string;
+}
+
 function formatFileSize(size: number | null | undefined) {
   if (!size || size <= 0) {
     return null;
@@ -76,7 +81,10 @@ function getFileExtension(name: string) {
   return name.slice(lastDotIndex + 1).toUpperCase();
 }
 
-export function StudyMaterialManager() {
+export function StudyMaterialManager({
+  lessonId,
+  lessonTitle,
+}: StudyMaterialManagerProps) {
   const [materials, setMaterials] = useState<StudyMaterial[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -97,17 +105,27 @@ export function StudyMaterialManager() {
     return {
       title,
       description: description.length > 0 ? description : undefined,
+      lessonId,
     };
-  }, [formState.description, formState.title]);
+  }, [formState.description, formState.title, lessonId]);
 
   const fetchMaterials = useCallback(
     async (options?: { showLoading?: boolean }) => {
+      if (!lessonId) {
+        setMaterials([]);
+        setIsLoading(false);
+        return;
+      }
+
       if (options?.showLoading) {
         setIsLoading(true);
       }
 
       try {
-        const response = await fetch("/api/study-materials", {
+        const endpoint = `/api/study-materials?lessonId=${encodeURIComponent(
+          lessonId
+        )}`;
+        const response = await fetch(endpoint, {
           cache: "no-store",
         });
 
@@ -128,18 +146,23 @@ export function StudyMaterialManager() {
         setIsLoading(false);
       }
     },
-    []
+    [lessonId]
   );
 
   useEffect(() => {
     void fetchMaterials({ showLoading: true });
-  }, [fetchMaterials]);
+  }, [fetchMaterials, lessonId]);
 
   const resetForm = () => {
     setFormState({ title: "", description: "" });
   };
 
   const handleDialogChange = (open: boolean) => {
+    if (open && !lessonId) {
+      toast.error("Select a lesson before uploading materials.");
+      return;
+    }
+
     setIsDialogOpen(open);
     if (!open) {
       resetForm();
@@ -165,14 +188,17 @@ export function StudyMaterialManager() {
     <Card>
       <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <CardTitle>Study Material Library</CardTitle>
+          <CardTitle>
+            Study Material Library{lessonTitle ? ` • ${lessonTitle}` : ""}
+          </CardTitle>
           <CardDescription>
-            Upload tutorials, notes, and other resources for quick access.
+            Upload tutorials, notes, and other resources for quick access
+            {lessonTitle ? ` in ${lessonTitle}` : ""}.
           </CardDescription>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
           <DialogTrigger asChild>
-            <Button>
+            <Button disabled={!lessonId}>
               <Upload className="mr-2 h-4 w-4" />
               Upload material
             </Button>
@@ -246,7 +272,11 @@ export function StudyMaterialManager() {
         </Dialog>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {!lessonId ? (
+          <div className="rounded-lg border border-dashed border-muted-foreground/30 p-6 text-sm text-muted-foreground">
+            Select a lesson to view or upload study materials.
+          </div>
+        ) : isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
