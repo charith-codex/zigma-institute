@@ -1,10 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useEnrollments, useAssignments, usePayments } from "@/hooks/useData";
+import { useEnrollments, useAssignments, usePayments, useCourses } from "@/hooks/useData";
 import {
   BookOpen,
   Clock,
@@ -28,6 +28,7 @@ import VideoRecordingManager from "@/components/cms/VideoRecordingManager";
 import FlashcardGenerator from "@/components/lms/FlashcardGenerator";
 import SummaryGenerator from "@/components/lms/SummaryGenerator";
 import StudyPlanGenerator from "@/components/lms/StudyPlanGenerator";
+import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleManager";
 
 type EnrolledClass = {
   id: string;
@@ -48,50 +49,33 @@ const LMS = () => {
   const { enrollments, loading: enrollmentsLoading } = useEnrollments();
   const { assignments, loading: assignmentsLoading } = useAssignments();
   const { payments, loading: paymentsLoading } = usePayments();
+  const { courses } = useCourses();
 
-  // Hardcoded enrolled classes for the student
-  const enrolledClasses = [
-    {
-      id: "cs101",
-      code: "CS101",
-      name: "Computer Science Fundamentals",
-      instructor: "Dr. Sarah Johnson",
-      progress: 75,
-      status: "active",
-      weeks: 12,
-      completedWeeks: 9,
-    },
-    {
-      id: "math201",
-      code: "MATH201",
-      name: "Advanced Mathematics",
-      instructor: "Prof. Michael Chen",
-      progress: 60,
-      status: "active",
-      weeks: 14,
-      completedWeeks: 8,
-    },
-    {
-      id: "phys301",
-      code: "PHYS301",
-      name: "Physics for Engineers",
-      instructor: "Dr. Emma Wilson",
-      progress: 45,
-      status: "active",
-      weeks: 16,
-      completedWeeks: 7,
-    },
-    {
-      id: "cs205",
-      code: "CS205",
-      name: "Database Systems",
-      instructor: "Prof. David Rodriguez",
-      progress: 90,
-      status: "active",
-      weeks: 12,
-      completedWeeks: 11,
-    },
-  ];
+  const enrolledClasses = useMemo<EnrolledClass[]>(
+    () =>
+      courses.map((course) => ({
+        id: course.id,
+        code: course.slug?.toUpperCase() ?? course.id.slice(0, 8).toUpperCase(),
+        name: course.name,
+        instructor: course.teacherName ?? "Instructor",
+        progress: 0,
+        status: "active",
+        weeks: 0,
+        completedWeeks: 0,
+      })),
+    [courses]
+  );
+
+  const scheduleCourseOptions = useMemo(
+    () =>
+      courses.map((course) => ({
+        id: course.id,
+        name: course.name,
+        teacherId: course.teacherId ?? `${course.id}-teacher`,
+        teacherName: course.teacherName ?? "Instructor",
+      })),
+    [courses]
+  );
 
   return (
     <div className="flex w-full min-h-[calc(100vh-3.5rem)]">
@@ -276,16 +260,12 @@ const LMS = () => {
               ))}
 
             {activeModule === "schedule" && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h1 className="text-2xl font-bold">My Course Schedule</h1>
-                    <p className="text-muted-foreground">
-                      View your upcoming classes and sessions
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <CourseScheduleManager
+                courseOptions={scheduleCourseOptions}
+                heading="My Course Schedule"
+                description="Check upcoming classes on a responsive calendar."
+                mode="view"
+              />
             )}
 
             {activeModule === "study-tools" && (
