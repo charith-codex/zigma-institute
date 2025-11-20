@@ -101,3 +101,38 @@ export const createUserSchema = z.object({
       "Join Date must be a valid date"
     ),
 });
+
+const timeString = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:MM (24h) format");
+
+export const scheduleSchema = z
+  .object({
+    courseId: z.string().trim().min(1, "Course is required"),
+    className: z.string().trim().min(1, "Class name is required"),
+    date: z
+      .string()
+      .trim()
+      .refine((value) => !Number.isNaN(Date.parse(value)), {
+        message: "Date must be a valid date",
+      }),
+    startTime: timeString,
+    endTime: timeString,
+    dayOfWeek: z.string().trim().min(2, "Day of week is required"),
+    notes: z.string().trim().optional(),
+    recurring: z.boolean().optional(),
+  })
+  .refine((value) => value.endTime > value.startTime, {
+    message: "End time must be after the start time",
+    path: ["endTime"],
+  });
+
+export const scheduleUpdateSchema = scheduleSchema.partial().superRefine((value, ctx) => {
+  if (value.startTime && value.endTime && value.endTime <= value.startTime) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "End time must be after the start time",
+      path: ["endTime"],
+    });
+  }
+});
