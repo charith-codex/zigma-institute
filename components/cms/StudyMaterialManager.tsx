@@ -111,14 +111,20 @@ export function StudyMaterialManager({
 
   const fetchMaterials = useCallback(
     async (options?: { showLoading?: boolean }) => {
+      if (!lessonId) {
+        setMaterials([]);
+        setIsLoading(false);
+        return;
+      }
+
       if (options?.showLoading) {
         setIsLoading(true);
       }
 
       try {
-        const endpoint = lessonId
-          ? `/api/study-materials?lessonId=${encodeURIComponent(lessonId)}`
-          : "/api/study-materials";
+        const endpoint = `/api/study-materials?lessonId=${encodeURIComponent(
+          lessonId
+        )}`;
         const response = await fetch(endpoint, {
           cache: "no-store",
         });
@@ -152,6 +158,11 @@ export function StudyMaterialManager({
   };
 
   const handleDialogChange = (open: boolean) => {
+    if (open && !lessonId) {
+      toast.error("Select a lesson before uploading materials.");
+      return;
+    }
+
     setIsDialogOpen(open);
     if (!open) {
       resetForm();
@@ -187,7 +198,7 @@ export function StudyMaterialManager({
         </div>
         <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
           <DialogTrigger asChild>
-            <Button>
+            <Button disabled={!lessonId}>
               <Upload className="mr-2 h-4 w-4" />
               Upload material
             </Button>
@@ -261,7 +272,11 @@ export function StudyMaterialManager({
         </Dialog>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {!lessonId ? (
+          <div className="rounded-lg border border-dashed border-muted-foreground/30 p-6 text-sm text-muted-foreground">
+            Select a lesson to view or upload study materials.
+          </div>
+        ) : isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
