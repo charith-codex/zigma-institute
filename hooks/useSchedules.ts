@@ -51,7 +51,7 @@ export function useSchedules() {
       date: formatDateOnly(value.date),
       notes: value.notes ?? undefined,
       recurring: Boolean(value.recurring),
-      teacherName: value.teacherName ?? value.course?.teacherName ?? undefined,
+      teacherName: value.course?.teacherName ?? undefined,
     };
   }, []);
 
