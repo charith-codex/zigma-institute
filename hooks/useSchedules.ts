@@ -122,6 +122,22 @@ export function useSchedules() {
     return newSchedule;
   };
 
+  const updateScheduleDetails = (
+    scheduleId: string,
+    updates: Partial<Omit<ScheduleEvent, "id" | "createdAt">>
+  ) => {
+    setSchedules((prev) =>
+      prev.map((schedule) =>
+        schedule.id === scheduleId ? { ...schedule, ...updates } : schedule
+      )
+    );
+
+    toast({
+      title: "Schedule Updated",
+      description: "Schedule details have been saved.",
+    });
+  };
+
   const updateScheduleStatus = (
     scheduleId: string,
     status: ScheduleEvent["status"],
@@ -193,6 +209,7 @@ export function useSchedules() {
     schedules,
     loading,
     addSchedule,
+    updateScheduleDetails,
     updateScheduleStatus,
     deleteSchedule,
     checkConflicts,
