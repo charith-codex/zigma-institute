@@ -98,7 +98,7 @@ export function StudyMaterialManager({
     const title = formState.title.trim();
     const description = formState.description.trim();
 
-    if (!title) {
+    if (!title || !lessonId) {
       return undefined;
     }
 
