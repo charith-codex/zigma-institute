@@ -1,21 +1,14 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import {
-  ArrowLeft,
-  BookOpen,
-  Video,
-  FileText,
-  Download,
-  Play,
-  Eye,
-  Clock,
-  X,
-} from "lucide-react";
-import { VideoPlayer } from "./VideoPlayer";
-import { WeekNavigation } from "./WeekNavigation";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BookOpen, CalendarClock, Play, Video } from "lucide-react";
+import { LessonNavigation } from "./LessonNavigation";
+import StudyMaterialManager from "../cms/StudyMaterialManager";
+import VideoRecordingManager from "../cms/VideoRecordingManager";
+import { useLessons } from "@/hooks/useData";
 
 interface CourseDetailViewProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,228 +16,46 @@ interface CourseDetailViewProps {
   onBack: () => void;
 }
 
-export const CourseDetailView = ({
-  classData,
-  onBack,
-}: CourseDetailViewProps) => {
-  const [selectedWeek, setSelectedWeek] = useState<string>("");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedVideo, setSelectedVideo] = useState<any>(null);
+export const CourseDetailView = ({ classData, onBack }: CourseDetailViewProps) => {
+  const { lessons, loading: lessonsLoading } = useLessons(classData?.id);
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
 
-  // Demo video sources
-  const demoVideoSources = [
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-  ];
+  useEffect(() => {
+    if (lessonsLoading) {
+      return;
+    }
 
-  // Hardcoded weekly data for the class
-  const weeklyData = Array.from({ length: classData.weeks }, (_, index) => {
-    const weekNum = index + 1;
-    return {
-      id: `week-${weekNum}`,
-      order: weekNum,
-      title: `Introduction to ${
-        classData.name.split(" ")[0]
-      } - Week ${weekNum}`,
-      description: `Week ${weekNum} course materials and assignments`,
-      startDate: new Date(2024, 0, weekNum * 7).toISOString(),
-      endDate: new Date(2024, 0, weekNum * 7 + 6).toISOString(),
-      isActive: weekNum <= classData.completedWeeks + 1,
-      materialCount: Math.floor(Math.random() * 8) + 4, // 4-12 materials per week
-      materials: {
-        tutorials: [
-          {
-            id: `t${weekNum}-1`,
-            name: `Lecture Notes - Week ${weekNum}`,
-            type: "pdf",
-            size: "2.3 MB",
-            viewed: Math.random() > 0.5,
-          },
-          {
-            id: `t${weekNum}-2`,
-            name: `Reading Assignment ${weekNum}`,
-            type: "pdf",
-            size: "1.8 MB",
-            viewed: Math.random() > 0.5,
-          },
-        ],
-        recordings: [
-          {
-            id: `r${weekNum}-1`,
-            name: `Lecture Recording - Week ${weekNum}`,
-            duration: "1h 25m",
-            viewed: Math.random() > 0.5,
-            progress: Math.floor(Math.random() * 100),
-            videoSrc: demoVideoSources[0],
-            instructor: classData.instructor,
-            classDate: new Date(2024, 0, weekNum * 7).toLocaleDateString(),
-            description: `Complete lecture recording for week ${weekNum} covering the fundamental concepts and practical examples.`,
-          },
-          {
-            id: `r${weekNum}-2`,
-            name: `Lab Session ${weekNum}`,
-            duration: "45m",
-            viewed: Math.random() > 0.5,
-            progress: Math.floor(Math.random() * 100),
-            videoSrc: demoVideoSources[1],
-            instructor: classData.instructor,
-            classDate: new Date(2024, 0, weekNum * 7 + 2).toLocaleDateString(),
-            description: `Hands-on laboratory session with practical exercises and problem-solving activities.`,
-          },
-        ],
-        assignments: [
-          {
-            id: `a${weekNum}-1`,
-            name: `Assignment ${weekNum}`,
-            dueDate: new Date(2024, 0, weekNum * 7 + 5).toLocaleDateString(),
-            status: Math.random() > 0.5 ? "submitted" : "pending",
-          },
-          {
-            id: `a${weekNum}-2`,
-            name: `Quiz ${weekNum}`,
-            dueDate: new Date(2024, 0, weekNum * 7 + 7).toLocaleDateString(),
-            status: Math.random() > 0.5 ? "completed" : "available",
-          },
-        ],
-        others: [
-          {
-            id: `o${weekNum}-1`,
-            name: `Supplementary Material ${weekNum}`,
-            type: "pdf",
-            size: "950 KB",
-          },
-          {
-            id: `o${weekNum}-2`,
-            name: `Reference Links Week ${weekNum}`,
-            type: "link",
-          },
-        ],
-      },
-    };
-  });
+    if (lessons.length === 0) {
+      setSelectedLessonId(null);
+      return;
+    }
 
-  // Set first week as default
-  if (!selectedWeek && weeklyData.length > 0) {
-    setSelectedWeek(weeklyData[0].id);
-  }
-
-  const currentWeek = weeklyData.find((week) => week.id === selectedWeek);
-
-  const MaterialCard = ({
-    material,
-    type,
-  }: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    material: any;
-    type: string;
-  }) => {
-    const getIcon = () => {
-      switch (type) {
-        case "tutorials":
-          return <FileText className="w-4 h-4" />;
-        case "recordings":
-          return <Video className="w-4 h-4" />;
-        case "assignments":
-          return <BookOpen className="w-4 h-4" />;
-        default:
-          return <Download className="w-4 h-4" />;
+    setSelectedLessonId((previous) => {
+      if (previous && lessons.some((lesson) => lesson.id === previous)) {
+        return previous;
       }
-    };
+      return lessons[0]?.id ?? null;
+    });
+  }, [lessons, lessonsLoading]);
 
-    const getStatusBadge = () => {
-      if (type === "recordings") {
-        return material.viewed ? (
-          <Badge variant="outline" className="text-xs">
-            {material.progress}% watched
-          </Badge>
-        ) : (
-          <Badge variant="secondary" className="text-xs">
-            Not watched
-          </Badge>
-        );
-      }
-      if (type === "assignments") {
-        return (
-          <Badge
-            variant={
-              material.status === "submitted" || material.status === "completed"
-                ? "default"
-                : "outline"
-            }
-            className="text-xs"
-          >
-            {material.status}
-          </Badge>
-        );
-      }
-      if (type === "tutorials") {
-        return material.viewed ? (
-          <Badge variant="default" className="text-xs">
-            Viewed
-          </Badge>
-        ) : (
-          <Badge variant="outline" className="text-xs">
-            New
-          </Badge>
-        );
-      }
-      return null;
-    };
-
-    return (
-      <Card className="p-4 hover:shadow-md transition-shadow">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 flex-1">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              {getIcon()}
-            </div>
-            <div className="flex-1">
-              <p className="font-medium text-sm">{material.name}</p>
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                {material.duration && (
-                  <>
-                    <Clock className="w-3 h-3" />
-                    <span>{material.duration}</span>
-                  </>
-                )}
-                {material.size && <span>{material.size}</span>}
-                {material.dueDate && <span>Due: {material.dueDate}</span>}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {getStatusBadge()}
-            <Button size="sm" variant="ghost">
-              {type === "recordings" ? (
-                <Play className="w-4 h-4" />
-              ) : (
-                <Eye className="w-4 h-4" />
-              )}
-            </Button>
-          </div>
-        </div>
-      </Card>
-    );
-  };
+  const selectedLesson = useMemo(() => {
+    return lessons.find((lesson) => lesson.id === selectedLessonId) ?? null;
+  }, [lessons, selectedLessonId]);
 
   return (
-    <div className="h-full flex">
-      {/* Left Sidebar - Week Navigation */}
-      <div className="w-80 border-r border-border">
-        <div className="p-4 border-b border-border">
+    <div className="flex h-full">
+      <div className="flex w-80 flex-col border-r border-border">
+        <div className="border-b border-border p-4">
           <Button variant="ghost" onClick={onBack} className="mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <Play className="mr-2 h-4 w-4 rotate-180" />
             Back to Courses
           </Button>
 
           <div className="space-y-2">
-            <h2 className="font-semibold text-lg">{classData.name}</h2>
+            <h2 className="text-lg font-semibold">{classData.name}</h2>
             <p className="text-sm text-muted-foreground">
               {classData.code} • {classData.instructor}
             </p>
-
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Progress</span>
@@ -255,235 +66,83 @@ export const CourseDetailView = ({
           </div>
         </div>
 
-        <WeekNavigation
-          weeks={weeklyData}
-          selectedWeek={selectedWeek}
-          onSelectWeek={(weekId) => {
-            setSelectedWeek(weekId);
-            setSelectedVideo(null); // Clear selected video when switching weeks
-          }}
+        <LessonNavigation
+          lessons={lessons}
+          selectedLessonId={selectedLessonId}
+          onSelectLesson={setSelectedLessonId}
+          isLoading={lessonsLoading}
         />
       </div>
 
-      {/* Right Content Area */}
-      <div className="flex-1 p-6 overflow-auto bg-muted/20">
-        {currentWeek ? (
-          <div className="space-y-6">
-            {/* Video Recordings - Large Section */}
-            {selectedVideo ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Button
-                    variant="ghost"
-                    onClick={() => setSelectedVideo(null)}
-                    className="text-sm"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Recordings List
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedVideo(null)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-
-                <VideoPlayer
-                  src={selectedVideo.videoSrc}
-                  title={selectedVideo.name}
-                  description={selectedVideo.description}
-                  duration={selectedVideo.duration}
-                  instructor={selectedVideo.instructor}
-                  classDate={selectedVideo.classDate}
-                />
-              </div>
-            ) : (
-              <Card className="min-h-[300px] bg-muted/50 border-dashed">
-                <CardHeader className="pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Video className="w-5 h-5" />
-                    Video Recordings
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {currentWeek.materials.recordings.map((material) => (
-                    <Card
-                      key={material.id}
-                      className="p-4 hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => setSelectedVideo(material)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Play className="w-6 h-6 text-primary" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-sm">
-                              {material.name}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Clock className="w-3 h-3" />
-                              <span>{material.duration}</span>
-                              <span>•</span>
-                              <span>{material.instructor}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {material.viewed ? (
-                            <Badge variant="outline" className="text-xs">
-                              {material.progress}% watched
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs">
-                              Not watched
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                  {currentWeek.materials.recordings.length === 0 && (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Video className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                      <p>No recordings available for this week</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Bottom Three Sections */}
-            <div className="grid grid-cols-3 gap-6">
-              {/* Tutes */}
-              <Card className="bg-muted/30">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-base">Tutes</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {currentWeek.materials.tutorials.map((material) => (
-                    <div
-                      key={material.id}
-                      className="p-3 rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium truncate">
-                            {material.name}
-                          </span>
-                        </div>
-                        {material.viewed && (
-                          <div className="w-2 h-2 rounded-full bg-primary"></div>
-                        )}
-                      </div>
-                      {material.size && (
-                        <p className="text-xs text-muted-foreground mt-1 ml-6">
-                          {material.size}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                  {currentWeek.materials.tutorials.length === 0 && (
-                    <p className="text-center text-muted-foreground text-sm py-4">
-                      No tutorials available
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Papers */}
-              <Card className="bg-muted/30">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-base">Papers</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {currentWeek.materials.assignments.map((material) => (
-                    <div
-                      key={material.id}
-                      className="p-3 rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <BookOpen className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium truncate">
-                            {material.name}
-                          </span>
-                        </div>
-                        <Badge
-                          variant={
-                            material.status === "submitted" ||
-                            material.status === "completed"
-                              ? "default"
-                              : "outline"
-                          }
-                          className="text-xs"
-                        >
-                          {material.status}
-                        </Badge>
-                      </div>
-                      {material.dueDate && (
-                        <p className="text-xs text-muted-foreground mt-1 ml-6">
-                          Due: {material.dueDate}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                  {currentWeek.materials.assignments.length === 0 && (
-                    <p className="text-center text-muted-foreground text-sm py-4">
-                      No papers available
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Other Study Materials */}
-              <Card className="bg-muted/30">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-base">
-                    Other Study Materials
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {currentWeek.materials.others.map((material) => (
-                    <div
-                      key={material.id}
-                      className="p-3 rounded-lg bg-background hover:bg-muted/50 transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Download className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm font-medium truncate">
-                          {material.name}
-                        </span>
-                      </div>
-                      {material.size && (
-                        <p className="text-xs text-muted-foreground mt-1 ml-6">
-                          {material.size}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                  {currentWeek.materials.others.length === 0 && (
-                    <p className="text-center text-muted-foreground text-sm py-4">
-                      No materials available
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+      <div className="flex-1 overflow-auto bg-muted/20 p-6">
+        {lessonsLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-64 w-full" />
+            <Skeleton className="h-56 w-full" />
+          </div>
+        ) : !selectedLesson ? (
+          <div className="py-12 text-center">
+            <BookOpen className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
+            <h3 className="mb-2 text-lg font-semibold">No lessons available</h3>
+            <p className="text-muted-foreground">
+              Lessons will appear here once they are created for this course.
+            </p>
           </div>
         ) : (
-          <div className="text-center py-12">
-            <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-semibold mb-2">Select a Week</h3>
-            <p className="text-muted-foreground">
-              Choose a week from the sidebar to view materials
-            </p>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-xl">{selectedLesson.title}</CardTitle>
+                  {selectedLesson.description && (
+                    <p className="text-sm text-muted-foreground">
+                      {selectedLesson.description}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <CalendarClock className="h-3.5 w-3.5" />
+                      Created {new Date(selectedLesson.createdAt).toLocaleDateString()}
+                    </span>
+                    <Badge variant="outline">Lesson</Badge>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Video className="h-4 w-4" />
+                  <span>Uploads are scoped to this lesson</span>
+                </div>
+              </CardHeader>
+              <CardContent className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
+                  Manage and view recordings for this lesson. Videos stay tied to
+                  {" "}
+                  <span className="font-medium text-foreground">
+                    {selectedLesson.title}
+                  </span>
+                  .
+                </div>
+                <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
+                  Upload study materials like notes, tutorials, and references for
+                  this lesson.
+                </div>
+              </CardContent>
+            </Card>
+
+            <VideoRecordingManager
+              lessonId={selectedLesson.id}
+              lessonTitle={selectedLesson.title}
+            />
+
+            <StudyMaterialManager
+              lessonId={selectedLesson.id}
+              lessonTitle={selectedLesson.title}
+            />
           </div>
         )}
       </div>
     </div>
   );
 };
+
+export default CourseDetailView;

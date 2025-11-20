@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,6 @@ import {
   Video,
   Brain,
   Plus,
-  Edit,
-  Trash2,
-  Eye,
   BookOpen,
   Users,
   BarChart3,
@@ -19,9 +16,6 @@ import {
   Target,
 } from "lucide-react";
 import { toast } from "sonner";
-import { WeekNavigation } from "../lms/WeekNavigation";
-import { Material, WeekContentView } from "../lms/WeekContentView";
-import { Week, WeekManager } from "../lms/WeekManager";
 import { QuestionCreation } from "./QuestionCreation";
 import { ExamBuilder } from "./ExamBuilder";
 import { ExamScheduler } from "./ExamScheduler";
@@ -40,6 +34,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import type { ClassSummary } from "@/hooks/useData";
 import { useLessons } from "@/hooks/useData";
+import { StudyMaterialManager } from "./StudyMaterialManager";
+import { VideoRecordingManager } from "./VideoRecordingManager";
 
 interface CourseContentManagerProps {
   courseId: string;
@@ -49,7 +45,6 @@ interface CourseContentManagerProps {
 
 const navigationItems = [
   { id: "lessons", label: "Lessons", icon: BookOpen },
-  { id: "weeks", label: "Weekly Content", icon: ClipboardList },
   { id: "recordings", label: "Course Recordings", icon: Video },
   { id: "students", label: "Students", icon: Users },
   { id: "quizzes", label: "Question Bank", icon: ClipboardList },
@@ -67,104 +62,15 @@ export function CourseContentManager({
 }: CourseContentManagerProps) {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState("lessons");
-  const [selectedWeek, setSelectedWeek] = useState<string>("");
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
   const [lessonForm, setLessonForm] = useState({
     title: "",
     description: "",
   });
   const [creatingLesson, setCreatingLesson] = useState(false);
-
-  // Week-wise data management
-  const [weeks, setWeeks] = useState<Week[]>([
-    {
-      id: "week-1",
-      title: "Week 1: Introduction to React",
-      description: "Basic concepts of React, JSX, and components",
-      startDate: "2024-01-15",
-      endDate: "2024-01-21",
-      order: 1,
-      isActive: true,
-      materialCount: 3,
-    },
-    {
-      id: "week-2",
-      title: "Week 2: State and Props",
-      description: "Understanding state management and prop passing",
-      startDate: "2024-01-22",
-      endDate: "2024-01-28",
-      order: 2,
-      isActive: true,
-      materialCount: 2,
-    },
-  ]);
-
-  const [materials, setMaterials] = useState<Material[]>([
-    {
-      id: "mat-001",
-      title: "Introduction to React Hooks",
-      type: "document",
-      weekId: "week-1",
-      uploadDate: "2024-01-15",
-      size: "2.5 MB",
-      downloads: 45,
-    },
-    {
-      id: "mat-002",
-      title: "Component Lifecycle Lecture",
-      type: "video",
-      weekId: "week-1",
-      uploadDate: "2024-01-14",
-      size: "125 MB",
-      views: 38,
-    },
-    {
-      id: "mat-003",
-      title: "React Quiz - Week 1",
-      type: "quiz",
-      weekId: "week-1",
-      uploadDate: "2024-01-13",
-      questions: 15,
-      submissions: 22,
-    },
-    {
-      id: "mat-004",
-      title: "State Management Tutorial",
-      type: "document",
-      weekId: "week-2",
-      uploadDate: "2024-01-22",
-      size: "1.8 MB",
-      downloads: 32,
-    },
-    {
-      id: "mat-005",
-      title: "Props Deep Dive Video",
-      type: "video",
-      weekId: "week-2",
-      uploadDate: "2024-01-23",
-      size: "89 MB",
-      views: 28,
-    },
-  ]);
-
-  // Update material count when materials change
-  const updateWeekMaterialCounts = (updatedMaterials: Material[]) => {
-    const updatedWeeks = weeks.map((week) => ({
-      ...week,
-      materialCount: updatedMaterials.filter((m) => m.weekId === week.id)
-        .length,
-    }));
-    setWeeks(updatedWeeks);
-  };
-
-  const handleMaterialsChange = (updatedMaterials: Material[]) => {
-    setMaterials(updatedMaterials);
-    updateWeekMaterialCounts(updatedMaterials);
-  };
-
-  const handleWeeksChange = (updatedWeeks: Week[]) => {
-    setWeeks(updatedWeeks);
-  };
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(
+    null
+  );
 
   console.log("CourseContentManager - courseId:", courseId);
   console.log("CourseContentManager - classes:", classes);
@@ -181,6 +87,36 @@ export function CourseContentManager({
     error: lessonsError,
     createLesson,
   } = useLessons(classItem?.id);
+
+  const sortedLessons = useMemo(
+    () =>
+      [...lessons].sort(
+        (first, second) =>
+          new Date(first.createdAt).getTime() -
+          new Date(second.createdAt).getTime()
+      ),
+    [lessons]
+  );
+
+  useEffect(() => {
+    if (sortedLessons.length === 0) {
+      setSelectedLessonId(null);
+      return;
+    }
+
+    setSelectedLessonId((previous) => {
+      if (previous && sortedLessons.some((lesson) => lesson.id === previous)) {
+        return previous;
+      }
+
+      return sortedLessons[0]?.id ?? null;
+    });
+  }, [sortedLessons]);
+
+  const selectedLesson = useMemo(
+    () => sortedLessons.find((lesson) => lesson.id === selectedLessonId) ?? null,
+    [selectedLessonId, sortedLessons]
+  );
 
   const resetLessonForm = () => {
     setLessonForm({ title: "", description: "" });
@@ -213,21 +149,6 @@ export function CourseContentManager({
     }
   };
 
-  const handleFileUpload = () => {
-    toast.success("File uploaded successfully!");
-  };
-
-  const getFileIcon = (type: string) => {
-    switch (type) {
-      case "video":
-        return <Video className="w-4 h-4" />;
-      case "quiz":
-        return <ClipboardList className="w-4 h-4" />;
-      default:
-        return <FileText className="w-4 h-4" />;
-    }
-  };
-
   const renderContent = () => {
     switch (activeSection) {
       case "lessons":
@@ -238,7 +159,8 @@ export function CourseContentManager({
                 <h3 className="text-2xl font-semibold">Course Lessons</h3>
                 <p className="text-sm text-muted-foreground">
                   Create lessons to organize materials, exams, and student
-                  activities for this course.
+                  activities for this course. Select a lesson to upload study
+                  materials and videos for it.
                 </p>
               </div>
               <Dialog
@@ -346,138 +268,100 @@ export function CourseContentManager({
                 </p>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {lessons.map((lesson) => {
-                  const createdDate = new Date(lesson.createdAt);
-                  const formattedDate = isNaN(createdDate.getTime())
-                    ? "Recently created"
-                    : createdDate.toLocaleString();
+              <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
+                <Card className="h-full">
+                  <CardContent className="p-0">
+                    <div className="divide-y">
+                      {sortedLessons.map((lesson) => {
+                        const createdDate = new Date(lesson.createdAt);
+                        const formattedDate = isNaN(createdDate.getTime())
+                          ? "Recently created"
+                          : createdDate.toLocaleString();
 
-                  return (
-                    <Card
-                      key={lesson.id}
-                      className="flex h-full flex-col justify-between border-border/60 bg-card"
-                    >
-                      <CardContent className="space-y-4 p-5">
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-lg font-semibold line-clamp-2">
-                              {lesson.title}
+                        const isSelected = selectedLesson?.id === lesson.id;
+
+                        return (
+                          <button
+                            key={lesson.id}
+                            type="button"
+                            onClick={() => setSelectedLessonId(lesson.id)}
+                            className={`flex w-full flex-col items-start gap-2 px-4 py-3 text-left transition-colors ${
+                              isSelected
+                                ? "bg-primary/5"
+                                : "hover:bg-muted/50"
+                            }`}
+                          >
+                            <div className="flex w-full items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Badge variant={isSelected ? "default" : "outline"}>
+                                  Lesson
+                                </Badge>
+                                <span className="text-sm font-semibold">
+                                  {lesson.title}
+                                </span>
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {formattedDate}
+                              </span>
+                            </div>
+                            {lesson.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                {lesson.description}
+                              </p>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="space-y-4">
+                  {selectedLesson ? (
+                    <Card className="border-border/60 bg-card">
+                      <CardContent className="space-y-3 p-5">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <h4 className="text-xl font-semibold">
+                              {selectedLesson.title}
                             </h4>
-                            <Badge variant="outline">Lesson</Badge>
+                            {selectedLesson.description && (
+                              <p className="text-sm text-muted-foreground">
+                                {selectedLesson.description}
+                              </p>
+                            )}
                           </div>
-                          <p className="text-xs text-muted-foreground">
-                            Created {formattedDate}
-                          </p>
+                          <Badge variant="outline">
+                            ID: {selectedLesson.id.slice(0, 8).toUpperCase()}
+                          </Badge>
                         </div>
-                        {lesson.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-3">
-                            {lesson.description}
-                          </p>
-                        )}
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <span>Course ID: {lesson.courseId}</span>
-                          <span>
-                            Lesson ID: {lesson.id.slice(0, 8).toUpperCase()}
-                          </span>
+                        <div className="grid gap-4">
+                          <StudyMaterialManager
+                            lessonId={selectedLesson.id}
+                            lessonTitle={selectedLesson.title}
+                          />
+                          <VideoRecordingManager
+                            lessonId={selectedLesson.id}
+                            lessonTitle={selectedLesson.title}
+                          />
                         </div>
                       </CardContent>
                     </Card>
-                  );
-                })}
+                  ) : (
+                    <Card className="border-dashed">
+                      <CardContent className="p-8 text-center text-muted-foreground">
+                        Select a lesson to manage study materials and videos.
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               </div>
             )}
           </div>
         );
 
-      case "weeks":
-        return (
-          <div className="flex h-full">
-            <div className="w-80 border-r border-border/50 bg-card/30">
-              <div className="p-4 border-b border-border/50">
-                <h3 className="font-semibold">Course Weeks</h3>
-              </div>
-              <WeekNavigation
-                weeks={weeks}
-                selectedWeek={selectedWeek}
-                onSelectWeek={setSelectedWeek}
-              />
-            </div>
-            <div className="flex-1 p-6">
-              {selectedWeek ? (
-                <WeekContentView
-                  selectedWeek={
-                    weeks.find((w) => w.id === selectedWeek) || null
-                  }
-                  materials={materials}
-                  onMaterialsChange={handleMaterialsChange}
-                />
-              ) : (
-                <WeekManager
-                  weeks={weeks}
-                  onWeeksChange={handleWeeksChange}
-                  onSelectWeek={setSelectedWeek}
-                  selectedWeek={selectedWeek}
-                />
-              )}
-            </div>
-          </div>
-        );
-
       case "recordings":
-        return (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Course Recordings</h3>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Upload Recording
-              </Button>
-            </div>
-
-            <div className="grid gap-4">
-              {materials
-                .filter((m) => m.type === "video")
-                .map((recording) => (
-                  <Card
-                    key={recording.id}
-                    className="hover:shadow-md transition-shadow"
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="p-2 bg-muted rounded-lg">
-                          <Video className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold">{recording.title}</h4>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>Recorded: {recording.uploadDate}</span>
-                            <span>Size: {recording.size}</span>
-                            <span>Views: {recording.views}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {weeks.find((w) => w.id === recording.weekId)
-                                ?.title || "No week"}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-            </div>
-          </div>
-        );
+        return <VideoRecordingManager />;
 
       case "quizzes":
         return <QuestionCreation />;
@@ -634,11 +518,7 @@ export function CourseContentManager({
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-hidden">
-        {activeSection === "weeks" ? (
-          renderContent()
-        ) : (
-          <div className="p-8">{renderContent()}</div>
-        )}
+        <div className="p-8">{renderContent()}</div>
       </div>
     </div>
   );

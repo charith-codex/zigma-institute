@@ -40,6 +40,7 @@ export const ourFileRouter = {
       z.object({
         title: z.string().min(1, "Title is required"),
         description: z.string().optional(),
+        lessonId: z.string().min(1, "lessonId is required"),
       })
     )
     .middleware(async ({ input }) => {
@@ -52,6 +53,7 @@ export const ourFileRouter = {
         userId: session.user.id,
         title: input.title,
         description: input.description,
+        lessonId: input.lessonId,
       };
     })
     .onUploadComplete(async ({ file, metadata }) => {
@@ -64,6 +66,7 @@ export const ourFileRouter = {
           fileName: file.name,
           fileSize: file.size,
           uploadedById: metadata.userId,
+          lessonId: metadata.lessonId,
         },
       });
 
