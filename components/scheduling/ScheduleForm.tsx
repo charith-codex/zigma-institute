@@ -4,7 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScheduleEvent, type ConflictCheck } from "@/hooks/useSchedules";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -39,6 +45,8 @@ interface ScheduleFormProps {
     excludeId?: string
   ) => ConflictCheck;
   submitting?: boolean;
+  onDelete?: () => Promise<void> | void;
+  deleting?: boolean;
 }
 
 const defaultTimes = {
@@ -59,6 +67,8 @@ export function ScheduleForm({
   onCancel,
   checkConflicts,
   submitting = false,
+  onDelete,
+  deleting = false,
 }: ScheduleFormProps) {
   const [courseId, setCourseId] = useState<string>(
     initialValues?.courseId ?? courseOptions[0]?.id ?? ""
@@ -80,6 +90,8 @@ export function ScheduleForm({
   const [saving, setSaving] = useState(false);
 
   const isSubmitting = submitting || saving;
+  const showDeleteAction = Boolean(initialValues && onDelete);
+  const isBusy = isSubmitting || deleting;
 
   const selectedCourse = useMemo(
     () => courseOptions.find((option) => option.id === courseId),
@@ -103,10 +115,17 @@ export function ScheduleForm({
       return;
     }
 
-    const conflict = checkConflicts?.(date, startTime, endTime, initialValues?.id);
+    const conflict = checkConflicts?.(
+      date,
+      startTime,
+      endTime,
+      initialValues?.id
+    );
 
     if (conflict?.hasConflict) {
-      setValidationError("The selected time conflicts with another scheduled session.");
+      setValidationError(
+        "The selected time conflicts with another scheduled session."
+      );
       return;
     }
 
@@ -126,6 +145,17 @@ export function ScheduleForm({
       setValidationError(null);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!onDelete) return;
+    try {
+      await onDelete();
+    } catch (error) {
+      if (error instanceof Error) {
+        setValidationError(error.message);
+      }
     }
   };
 
@@ -155,7 +185,7 @@ export function ScheduleForm({
             type="date"
             value={date}
             onChange={(event) => setDate(event.target.value)}
-            disabled={isSubmitting}
+            disabled={isBusy}
           />
         </div>
 
@@ -166,7 +196,7 @@ export function ScheduleForm({
             type="time"
             value={startTime}
             onChange={(event) => setStartTime(event.target.value)}
-            disabled={isSubmitting}
+            disabled={isBusy}
           />
         </div>
 
@@ -177,10 +207,9 @@ export function ScheduleForm({
             type="time"
             value={endTime}
             onChange={(event) => setEndTime(event.target.value)}
-            disabled={isSubmitting}
+            disabled={isBusy}
           />
         </div>
-
       </div>
 
       <div className="space-y-2">
@@ -190,7 +219,7 @@ export function ScheduleForm({
           placeholder="Add any notes or requirements for this session"
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
-          disabled={isSubmitting}
+          disabled={isBusy}
         />
       </div>
 
@@ -199,7 +228,7 @@ export function ScheduleForm({
           id="recurring"
           checked={recurring}
           onCheckedChange={(value) => setRecurring(Boolean(value))}
-          disabled={isSubmitting}
+          disabled={isBusy}
         />
         <Label htmlFor="recurring" className="text-sm text-muted-foreground">
           Repeat weekly on {getDayOfWeek(date)}
@@ -216,18 +245,34 @@ export function ScheduleForm({
         <p className="text-xs text-muted-foreground">
           Sessions automatically inherit the selected course instructor.
         </p>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {showDeleteAction ? (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                void handleDelete();
+              }}
+              disabled={isSubmitting || deleting}
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </Button>
+          ) : null}
           {onCancel ? (
             <Button
               variant="outline"
               onClick={onCancel}
               type="button"
-              disabled={isSubmitting}
+              disabled={isBusy}
             >
               Cancel
             </Button>
           ) : null}
-          <Button type="button" onClick={() => void handleSubmit()} disabled={isSubmitting}>
+          <Button
+            type="button"
+            onClick={() => void handleSubmit()}
+            disabled={isBusy}
+          >
             {initialValues
               ? isSubmitting
                 ? "Saving..."

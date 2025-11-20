@@ -2,12 +2,20 @@
 
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, MapPin, User } from "lucide-react";
 import { ScheduleCalendar } from "@/components/scheduling/ScheduleCalendar";
-import { ScheduleForm, type SchedulePayload } from "@/components/scheduling/ScheduleForm";
+import {
+  ScheduleForm,
+  type SchedulePayload,
+} from "@/components/scheduling/ScheduleForm";
 import { ScheduleEvent, useSchedules } from "@/hooks/useSchedules";
 
 export interface CourseOption {
@@ -42,7 +50,9 @@ function EventDetails({
     <div className="space-y-3">
       <div>
         <p className="text-sm text-muted-foreground">Course</p>
-        <p className="text-base font-semibold">{courseName ?? event.className}</p>
+        <p className="text-base font-semibold">
+          {courseName ?? event.className}
+        </p>
       </div>
       <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
         <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
@@ -181,7 +191,9 @@ export function CourseScheduleManager({
         <p className="text-muted-foreground">{description}</p>
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
           <Badge variant="outline">
-            {loading ? "Loading schedules..." : `${visibleSchedules.length} scheduled sessions`}
+            {loading
+              ? "Loading schedules..."
+              : `${visibleSchedules.length} scheduled sessions`}
           </Badge>
           <Badge variant="secondary">{courseOptions.length} courses</Badge>
         </div>
@@ -233,17 +245,26 @@ export function CourseScheduleManager({
               courseOptions={courseOptions}
               onSubmit={handleSubmit}
               initialValues={activeEvent ?? undefined}
-              defaultDate={draftDate ? draftDate.toISOString().split("T")[0] : selectedDateKey}
+              defaultDate={
+                draftDate
+                  ? draftDate.toISOString().split("T")[0]
+                  : selectedDateKey
+              }
               onCancel={closeDialog}
               checkConflicts={checkConflicts}
               submitting={submitting}
+              onDelete={activeEvent ? handleDelete : undefined}
+              deleting={deleting}
             />
           ) : activeEvent ? (
             <div className="space-y-4">
               <EventDetails
                 event={activeEvent}
                 courseName={courseNames[activeEvent.courseId]}
-                teacherName={activeEvent.teacherName ?? courseTeachers[activeEvent.courseId]}
+                teacherName={
+                  activeEvent.teacherName ??
+                  courseTeachers[activeEvent.courseId]
+                }
               />
               <div className="flex justify-end">
                 <Button variant="outline" onClick={closeDialog}>

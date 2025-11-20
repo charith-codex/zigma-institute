@@ -259,17 +259,10 @@ export function DashboardContent({
       case "scheduling":
         return (
           <div className="space-y-6">
-            <div>
-              <h1 className="text-2xl font-bold">Scheduling</h1>
-              <p className="text-muted-foreground">
-                Add, edit, or remove course sessions directly from the calendar.
-              </p>
-            </div>
-
             <CourseScheduleManager
               courseOptions={scheduleCourseOptions}
-              heading="Scheduling calendar"
-              description="Tap a date to add staff-managed course sessions."
+              heading="Scheduling Calendar"
+              description=" Tap a date to add and update course schedule."
               mode="manage"
             />
           </div>
