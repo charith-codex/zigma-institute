@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,6 @@ interface CourseContentManagerProps {
 
 const navigationItems = [
   { id: "lessons", label: "Lessons", icon: BookOpen },
-  { id: "materials", label: "Resources", icon: ClipboardList },
   { id: "recordings", label: "Course Recordings", icon: Video },
   { id: "students", label: "Students", icon: Users },
   { id: "quizzes", label: "Question Bank", icon: ClipboardList },
@@ -69,6 +68,9 @@ export function CourseContentManager({
     description: "",
   });
   const [creatingLesson, setCreatingLesson] = useState(false);
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(
+    null
+  );
 
   console.log("CourseContentManager - courseId:", courseId);
   console.log("CourseContentManager - classes:", classes);
@@ -85,6 +87,36 @@ export function CourseContentManager({
     error: lessonsError,
     createLesson,
   } = useLessons(classItem?.id);
+
+  const sortedLessons = useMemo(
+    () =>
+      [...lessons].sort(
+        (first, second) =>
+          new Date(first.createdAt).getTime() -
+          new Date(second.createdAt).getTime()
+      ),
+    [lessons]
+  );
+
+  useEffect(() => {
+    if (sortedLessons.length === 0) {
+      setSelectedLessonId(null);
+      return;
+    }
+
+    setSelectedLessonId((previous) => {
+      if (previous && sortedLessons.some((lesson) => lesson.id === previous)) {
+        return previous;
+      }
+
+      return sortedLessons[0]?.id ?? null;
+    });
+  }, [sortedLessons]);
+
+  const selectedLesson = useMemo(
+    () => sortedLessons.find((lesson) => lesson.id === selectedLessonId) ?? null,
+    [selectedLessonId, sortedLessons]
+  );
 
   const resetLessonForm = () => {
     setLessonForm({ title: "", description: "" });
@@ -127,7 +159,8 @@ export function CourseContentManager({
                 <h3 className="text-2xl font-semibold">Course Lessons</h3>
                 <p className="text-sm text-muted-foreground">
                   Create lessons to organize materials, exams, and student
-                  activities for this course.
+                  activities for this course. Select a lesson to upload study
+                  materials and videos for it.
                 </p>
               </div>
               <Dialog
@@ -235,45 +268,93 @@ export function CourseContentManager({
                 </p>
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {lessons.map((lesson) => {
-                  const createdDate = new Date(lesson.createdAt);
-                  const formattedDate = isNaN(createdDate.getTime())
-                    ? "Recently created"
-                    : createdDate.toLocaleString();
+              <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
+                <Card className="h-full">
+                  <CardContent className="p-0">
+                    <div className="divide-y">
+                      {sortedLessons.map((lesson) => {
+                        const createdDate = new Date(lesson.createdAt);
+                        const formattedDate = isNaN(createdDate.getTime())
+                          ? "Recently created"
+                          : createdDate.toLocaleString();
 
-                  return (
-                    <Card
-                      key={lesson.id}
-                      className="flex h-full flex-col justify-between border-border/60 bg-card"
-                    >
-                      <CardContent className="space-y-4 p-5">
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-lg font-semibold line-clamp-2">
-                              {lesson.title}
+                        const isSelected = selectedLesson?.id === lesson.id;
+
+                        return (
+                          <button
+                            key={lesson.id}
+                            type="button"
+                            onClick={() => setSelectedLessonId(lesson.id)}
+                            className={`flex w-full flex-col items-start gap-2 px-4 py-3 text-left transition-colors ${
+                              isSelected
+                                ? "bg-primary/5"
+                                : "hover:bg-muted/50"
+                            }`}
+                          >
+                            <div className="flex w-full items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Badge variant={isSelected ? "default" : "outline"}>
+                                  Lesson
+                                </Badge>
+                                <span className="text-sm font-semibold">
+                                  {lesson.title}
+                                </span>
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {formattedDate}
+                              </span>
+                            </div>
+                            {lesson.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                {lesson.description}
+                              </p>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="space-y-4">
+                  {selectedLesson ? (
+                    <Card className="border-border/60 bg-card">
+                      <CardContent className="space-y-3 p-5">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <h4 className="text-xl font-semibold">
+                              {selectedLesson.title}
                             </h4>
-                            <Badge variant="outline">Lesson</Badge>
+                            {selectedLesson.description && (
+                              <p className="text-sm text-muted-foreground">
+                                {selectedLesson.description}
+                              </p>
+                            )}
                           </div>
-                          <p className="text-xs text-muted-foreground">
-                            Created {formattedDate}
-                          </p>
+                          <Badge variant="outline">
+                            ID: {selectedLesson.id.slice(0, 8).toUpperCase()}
+                          </Badge>
                         </div>
-                        {lesson.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-3">
-                            {lesson.description}
-                          </p>
-                        )}
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <span>Course ID: {lesson.courseId}</span>
-                          <span>
-                            Lesson ID: {lesson.id.slice(0, 8).toUpperCase()}
-                          </span>
+                        <div className="grid gap-4">
+                          <StudyMaterialManager
+                            lessonId={selectedLesson.id}
+                            lessonTitle={selectedLesson.title}
+                          />
+                          <VideoRecordingManager
+                            lessonId={selectedLesson.id}
+                            lessonTitle={selectedLesson.title}
+                          />
                         </div>
                       </CardContent>
                     </Card>
-                  );
-                })}
+                  ) : (
+                    <Card className="border-dashed">
+                      <CardContent className="p-8 text-center text-muted-foreground">
+                        Select a lesson to manage study materials and videos.
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -281,14 +362,6 @@ export function CourseContentManager({
 
       case "recordings":
         return <VideoRecordingManager />;
-
-      case "materials":
-        return (
-          <div className="space-y-6">
-            <StudyMaterialManager />
-            <VideoRecordingManager />
-          </div>
-        );
 
       case "quizzes":
         return <QuestionCreation />;
