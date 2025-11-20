@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { PlayCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VideoPlayer } from "@/components/lms/VideoPlayer";
 
 interface VideoRecording {
   id: string;
@@ -43,12 +44,16 @@ export function VideoRecordingManager({
   const [videos, setVideos] = useState<VideoRecording[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [formState, setFormState] = useState({
     title: "",
     description: "",
     fileUrl: "",
   });
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+
+  const selectedVideo = useMemo(() => {
+    return videos.find((video) => video.id === selectedVideoId) ?? null;
+  }, [selectedVideoId, videos]);
 
   const fetchVideos = useCallback(
     async (options?: { showLoading?: boolean }) => {
@@ -62,7 +67,7 @@ export function VideoRecordingManager({
 
       try {
         const endpoint = `/api/video-recordings?lessonId=${encodeURIComponent(
-          lessonId
+          lessonId,
         )}`;
         const response = await fetch(endpoint, {
           cache: "no-store",
@@ -71,23 +76,35 @@ export function VideoRecordingManager({
 
         const data = (await response.json()) as VideoRecording[];
         setVideos(data);
+        setSelectedVideoId((previous) => {
+          if (previous && data.some((video) => video.id === previous)) {
+            return previous;
+          }
+          return data[0]?.id ?? null;
+        });
       } catch (error) {
         console.error(error);
         toast.error(
           error instanceof Error
             ? error.message
-            : "Failed to fetch video recordings"
+            : "Failed to fetch video recordings",
         );
       } finally {
         setIsLoading(false);
       }
     },
-    [lessonId]
+    [lessonId],
   );
 
   useEffect(() => {
     void fetchVideos({ showLoading: true });
   }, [fetchVideos]);
+
+  useEffect(() => {
+    if (!lessonId) {
+      setSelectedVideoId(null);
+    }
+  }, [lessonId]);
 
   const handleSubmit = async () => {
     if (!lessonId) {
@@ -103,7 +120,7 @@ export function VideoRecordingManager({
       }
 
       const endpoint = `/api/video-recordings?lessonId=${encodeURIComponent(
-        lessonId
+        lessonId,
       )}`;
       const response = await fetch(endpoint, {
         method: "POST",
@@ -120,7 +137,7 @@ export function VideoRecordingManager({
     } catch (error) {
       console.error(error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to add video"
+        error instanceof Error ? error.message : "Failed to add video",
       );
     }
   };
@@ -214,7 +231,7 @@ export function VideoRecordingManager({
         ) : isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-48 w-full" />
           </div>
         ) : videos.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-muted-foreground/30 p-8 text-center text-sm text-muted-foreground">
@@ -223,39 +240,51 @@ export function VideoRecordingManager({
             <p>Use the add button above to include your first video.</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {videos.map((video) => {
-              return (
-                <div
-                  key={video.id}
-                  className="flex flex-col gap-3 rounded-lg border bg-card p-4 shadow-sm cursor-pointer hover:bg-muted/40 transition"
-                  onClick={() => setIsPlaying((prev) => !prev)}
-                >
-                  <div>
-                    <h3 className="font-medium flex items-center gap-2">
-                      <PlayCircle className="h-4 w-4 text-muted-foreground" />
-                      {video.title}
-                    </h3>
-                    {video.description && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {video.description}
-                      </p>
-                    )}
-                  </div>
-
-                  {isPlaying && (
-                    <div className="aspect-video w-full rounded-lg overflow-hidden">
-                      <video
-                        src={video.fileUrl}
-                        controls
-                        autoPlay
-                        className="w-full h-full rounded-lg"
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+            <div className="rounded-lg border bg-muted/30 p-4">
+              {selectedVideo ? (
+                <VideoPlayer
+                  src={selectedVideo.fileUrl}
+                  title={selectedVideo.title}
+                  description={selectedVideo.description ?? undefined}
+                />
+              ) : (
+                <div className="flex min-h-[240px] items-center justify-center text-sm text-muted-foreground">
+                  Select a video to start playing.
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              {videos.map((video) => {
+                const isActive = video.id === selectedVideoId;
+                return (
+                  <button
+                    key={video.id}
+                    type="button"
+                    onClick={() => setSelectedVideoId(video.id)}
+                    className={`w-full rounded-lg border p-4 text-left transition hover:bg-muted/60 ${
+                      isActive ? "border-primary bg-primary/10" : "bg-card"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="font-medium text-foreground">{video.title}</p>
+                        {video.description && (
+                          <p className="text-sm text-muted-foreground">
+                            {video.description}
+                          </p>
+                        )}
+                      </div>
+                      <PlayCircle
+                        className={`h-4 w-4 ${
+                          isActive ? "text-primary" : "text-muted-foreground"
+                        }`}
                       />
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </CardContent>
