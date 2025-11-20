@@ -4,7 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useEnrollments, useAssignments, usePayments, useCourses } from "@/hooks/useData";
+import {
+  useEnrollments,
+  useAssignments,
+  usePayments,
+  useCourses,
+} from "@/hooks/useData";
 import {
   BookOpen,
   Clock,
@@ -29,6 +34,7 @@ import FlashcardGenerator from "@/components/lms/FlashcardGenerator";
 import SummaryGenerator from "@/components/lms/SummaryGenerator";
 import StudyPlanGenerator from "@/components/lms/StudyPlanGenerator";
 import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleManager";
+import { PublishedExams } from "@/components/lms/PublishedExams";
 
 type EnrolledClass = {
   id: string;
@@ -258,6 +264,13 @@ const LMS = () => {
                   </div>
                 </div>
               ))}
+
+            {activeModule === "exams" && (
+              <PublishedExams
+                heading="Exams"
+                description="Browse available exams and start a session when you're ready."
+              />
+            )}
 
             {activeModule === "schedule" && (
               <CourseScheduleManager
