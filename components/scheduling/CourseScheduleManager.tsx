@@ -29,7 +29,15 @@ function getDayOfWeek(date: string) {
   return parsed.toLocaleDateString(undefined, { weekday: "long" });
 }
 
-function EventDetails({ event, courseName }: { event: ScheduleEvent; courseName?: string }) {
+function EventDetails({
+  event,
+  courseName,
+  teacherName,
+}: {
+  event: ScheduleEvent;
+  courseName?: string;
+  teacherName?: string;
+}) {
   return (
     <div className="space-y-3">
       <div>
@@ -46,13 +54,15 @@ function EventDetails({ event, courseName }: { event: ScheduleEvent; courseName?
             <p className="text-xs text-muted-foreground">{event.dayOfWeek}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
-          <User className="h-4 w-4" />
-          <div>
-            <p className="font-semibold">{event.teacherName}</p>
-            <p className="text-xs text-muted-foreground">Instructor</p>
+        {teacherName ? (
+          <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
+            <User className="h-4 w-4" />
+            <div>
+              <p className="font-semibold">{teacherName}</p>
+              <p className="text-xs text-muted-foreground">Instructor</p>
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
       {event.notes ? (
         <div className="flex items-start gap-2 rounded-lg bg-primary/5 p-3">
@@ -76,12 +86,15 @@ export function CourseScheduleManager({
     updateScheduleDetails,
     deleteSchedule,
     checkConflicts,
+    loading,
   } = useSchedules();
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeEvent, setActiveEvent] = useState<ScheduleEvent | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [draftDate, setDraftDate] = useState<Date | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const visibleSchedules = useMemo(() => {
     const allowedIds = new Set(courseOptions.map((course) => course.id));
@@ -92,6 +105,17 @@ export function CourseScheduleManager({
     () =>
       courseOptions.reduce<Record<string, string>>((accumulator, option) => {
         accumulator[option.id] = option.name;
+        return accumulator;
+      }, {}),
+    [courseOptions]
+  );
+
+  const courseTeachers = useMemo(
+    () =>
+      courseOptions.reduce<Record<string, string>>((accumulator, option) => {
+        if (option.teacherName) {
+          accumulator[option.id] = option.teacherName;
+        }
         return accumulator;
       }, {}),
     [courseOptions]
@@ -118,24 +142,36 @@ export function CourseScheduleManager({
     setDraftDate(null);
   };
 
-  const handleSubmit = (payload: SchedulePayload) => {
-    if (activeEvent) {
-      updateScheduleDetails(activeEvent.id, {
-        ...payload,
-        dayOfWeek: getDayOfWeek(payload.date),
-        status: activeEvent.status,
-        createdBy: activeEvent.createdBy,
-      });
-    } else {
-      addSchedule({
-        ...payload,
-        dayOfWeek: getDayOfWeek(payload.date),
-        status: "approved",
-        createdBy: "staff",
-      });
-    }
+  const handleSubmit = async (payload: SchedulePayload) => {
+    try {
+      setSubmitting(true);
+      if (activeEvent) {
+        await updateScheduleDetails(activeEvent.id, {
+          ...payload,
+          dayOfWeek: getDayOfWeek(payload.date),
+        });
+      } else {
+        await addSchedule({
+          ...payload,
+          dayOfWeek: getDayOfWeek(payload.date),
+        });
+      }
 
-    closeDialog();
+      closeDialog();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!activeEvent) return;
+    try {
+      setDeleting(true);
+      await deleteSchedule(activeEvent.id);
+      closeDialog();
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -144,7 +180,9 @@ export function CourseScheduleManager({
         <h2 className="text-2xl font-bold">{heading}</h2>
         <p className="text-muted-foreground">{description}</p>
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-          <Badge variant="outline">{visibleSchedules.length} scheduled sessions</Badge>
+          <Badge variant="outline">
+            {loading ? "Loading schedules..." : `${visibleSchedules.length} scheduled sessions`}
+          </Badge>
           <Badge variant="secondary">{courseOptions.length} courses</Badge>
         </div>
         {courseOptions.length === 0 ? (
@@ -198,10 +236,15 @@ export function CourseScheduleManager({
               defaultDate={draftDate ? draftDate.toISOString().split("T")[0] : selectedDateKey}
               onCancel={closeDialog}
               checkConflicts={checkConflicts}
+              submitting={submitting}
             />
           ) : activeEvent ? (
             <div className="space-y-4">
-              <EventDetails event={activeEvent} courseName={courseNames[activeEvent.courseId]} />
+              <EventDetails
+                event={activeEvent}
+                courseName={courseNames[activeEvent.courseId]}
+                teacherName={activeEvent.teacherName ?? courseTeachers[activeEvent.courseId]}
+              />
               <div className="flex justify-end">
                 <Button variant="outline" onClick={closeDialog}>
                   Close
@@ -221,19 +264,17 @@ export function CourseScheduleManager({
             <Button
               variant="outline"
               onClick={() => openCreateDialog(selectedDate)}
-              disabled={courseOptions.length === 0}
+              disabled={courseOptions.length === 0 || loading}
             >
               Add session on {selectedDateKey}
             </Button>
             {activeEvent ? (
               <Button
                 variant="ghost"
-                onClick={() => {
-                  deleteSchedule(activeEvent.id);
-                  closeDialog();
-                }}
+                onClick={() => void handleDelete()}
+                disabled={deleting}
               >
-                Delete selected session
+                {deleting ? "Deleting..." : "Delete selected session"}
               </Button>
             ) : null}
           </CardContent>
