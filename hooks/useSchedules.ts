@@ -32,6 +32,7 @@ interface ScheduleResponse {
   notes?: string | null;
   recurring?: boolean | null;
   createdAt: string;
+  teacherName?: string | null;
   course?: { teacherName?: string | null };
 }
 
@@ -51,7 +52,7 @@ export function useSchedules() {
       date: formatDateOnly(value.date),
       notes: value.notes ?? undefined,
       recurring: Boolean(value.recurring),
-      teacherName: value.course?.teacherName ?? undefined,
+      teacherName: value.teacherName ?? value.course?.teacherName ?? undefined,
     };
   }, []);
 
@@ -85,7 +86,6 @@ export function useSchedules() {
           error instanceof Error
             ? error.message
             : "Please refresh the page and try again.",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -110,7 +110,9 @@ export function useSchedules() {
           throw new Error(body?.error ?? "Failed to create schedule");
         }
 
-        const created = mapSchedule((await response.json()) as ScheduleResponse);
+        const created = mapSchedule(
+          (await response.json()) as ScheduleResponse
+        );
         setSchedules((prev) => [...prev, created]);
 
         toast({
@@ -123,10 +125,7 @@ export function useSchedules() {
         toast({
           title: "Unable to create schedule",
           description:
-            error instanceof Error
-              ? error.message
-              : "Please try again later.",
-          variant: "destructive",
+            error instanceof Error ? error.message : "Please try again later.",
         });
         throw error;
       }
@@ -151,7 +150,9 @@ export function useSchedules() {
           throw new Error(body?.error ?? "Failed to update schedule");
         }
 
-        const updated = mapSchedule((await response.json()) as ScheduleResponse);
+        const updated = mapSchedule(
+          (await response.json()) as ScheduleResponse
+        );
         setSchedules((prev) =>
           prev.map((schedule) =>
             schedule.id === scheduleId ? { ...schedule, ...updated } : schedule
@@ -168,10 +169,7 @@ export function useSchedules() {
         toast({
           title: "Unable to update schedule",
           description:
-            error instanceof Error
-              ? error.message
-              : "Please try again later.",
-          variant: "destructive",
+            error instanceof Error ? error.message : "Please try again later.",
         });
         throw error;
       }
@@ -203,10 +201,7 @@ export function useSchedules() {
         toast({
           title: "Unable to delete schedule",
           description:
-            error instanceof Error
-              ? error.message
-              : "Please try again later.",
-          variant: "destructive",
+            error instanceof Error ? error.message : "Please try again later.",
         });
         throw error;
       }
