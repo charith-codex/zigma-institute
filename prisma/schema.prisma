@@ -126,6 +126,7 @@ model Course {
   videoRecordings        VideoRecording[]
   exams                  ExamPaper[]
   lessons                Lesson[]
+  physicalExamMarks      PhysicalExamMark[]
   registrationSelections StudentRegistrationCourse[]
   paymentTransactions    PaymentTransaction[]
   schedules              Schedule[]
@@ -187,6 +188,24 @@ model VideoRecording {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model PhysicalExamMark {
+  id                    String    @id @default(uuid())
+  courseId              String
+  studentRegistrationId String
+  studentPublicId       String
+  studentName           String
+  examTitle             String
+  paperUrl              String
+  score                 Float
+  recordedAt            DateTime  @default(now())
+
+  course              Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  studentRegistration StudentRegistration @relation(fields: [studentRegistrationId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentRegistrationId, examTitle])
+  @@index([courseId])
 }
 
 model Question {
@@ -349,6 +368,7 @@ model StudentRegistration {
 
   student Student?                    @relation(name: "StudentRegistrationStudent", fields: [studentUserId], references: [userId], onDelete: SetNull)
   courses StudentRegistrationCourse[]
+  physicalExamMarks PhysicalExamMark[]
   paymentTransactions PaymentTransaction[]
 }
 
