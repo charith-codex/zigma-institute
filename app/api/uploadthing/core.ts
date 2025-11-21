@@ -72,6 +72,51 @@ export const ourFileRouter = {
 
       return { uploadedBy: metadata.userId, materialId: material.id };
     }),
+  physicalExamPaper: f({
+    blob: {
+      maxFileSize: "64MB",
+    },
+  })
+    .input(
+      z.object({
+        courseId: z.string().min(1, "courseId is required"),
+        examTitle: z.string().min(1, "examTitle is required"),
+      })
+    )
+    .middleware(async ({ input }) => {
+      const session = await auth();
+
+      if (!session?.user?.id) {
+        throw new UploadThingError("Unauthorized");
+      }
+
+      return {
+        userId: session.user.id,
+        courseId: input.courseId,
+        examTitle: input.examTitle,
+      };
+    })
+    .onUploadComplete(async ({ file, metadata }) => {
+      const material = await prisma.studyMaterial.create({
+        data: {
+          title: metadata.examTitle,
+          description: null,
+          fileUrl: file.url,
+          fileKey: file.key,
+          fileName: file.name,
+          fileSize: file.size,
+          uploadedById: metadata.userId,
+          courseId: metadata.courseId,
+          lessonId: null,
+        },
+      });
+
+      return {
+        uploadedBy: metadata.userId,
+        materialId: material.id,
+        fileUrl: file.url,
+      };
+    }),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;
