@@ -14,6 +14,7 @@ import {
   BarChart3,
   ClipboardList,
   Target,
+  HeartPulse,
 } from "lucide-react";
 import { toast } from "sonner";
 import { QuestionCreation } from "./QuestionCreation";
@@ -36,6 +37,7 @@ import type { ClassSummary } from "@/hooks/useData";
 import { useLessons } from "@/hooks/useData";
 import { StudyMaterialManager } from "./StudyMaterialManager";
 import { VideoRecordingManager } from "./VideoRecordingManager";
+import { PhysicalExamUploader } from "./PhysicalExamUploader";
 
 interface CourseContentManagerProps {
   courseId: string;
@@ -51,6 +53,7 @@ const navigationItems = [
   { id: "exams", label: "Exam Papers", icon: FileText },
   { id: "exam-sessions", label: "Exam Sessions", icon: Target },
   { id: "exam-results", label: "Exam Results", icon: BarChart3 },
+  { id: "physical-exams", label: "Physical Exam Marks", icon: HeartPulse },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "ai-tools", label: "AI Tools", icon: Brain },
 ];
@@ -374,6 +377,9 @@ export function CourseContentManager({
 
       case "exam-results":
         return <ExamResults courseId={courseId} />;
+
+      case "physical-exams":
+        return <PhysicalExamUploader courseId={courseId} />;
 
       case "analytics":
         return (
