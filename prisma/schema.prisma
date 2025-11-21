@@ -30,6 +30,8 @@ model User {
   teacher Teacher?
   staff   Staff?
 
+  paymentTransactions PaymentTransaction[]
+
   studyMaterials  StudyMaterial[]
   videoRecordings VideoRecording[]
   questions       Question[]       @relation("QuestionCreatedBy")
@@ -101,6 +103,11 @@ model Staff {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+enum PaymentType {
+  REGISTRATION
+  INSTALLMENT
+}
+
 model Course {
   id           String @id @default(uuid())
   name         String
@@ -120,6 +127,7 @@ model Course {
   exams                  ExamPaper[]
   lessons                Lesson[]
   registrationSelections StudentRegistrationCourse[]
+  paymentTransactions    PaymentTransaction[]
   schedules              Schedule[]
 
   createdAt DateTime @default(now())
@@ -341,6 +349,7 @@ model StudentRegistration {
 
   student Student?                    @relation(name: "StudentRegistrationStudent", fields: [studentUserId], references: [userId], onDelete: SetNull)
   courses StudentRegistrationCourse[]
+  paymentTransactions PaymentTransaction[]
 }
 
 model StudentRegistrationCourse {
@@ -354,6 +363,29 @@ model StudentRegistrationCourse {
   createdAt DateTime @default(now())
 
   @@unique([registrationId, courseId])
+}
+
+model PaymentTransaction {
+  id             String       @id @default(uuid())
+  studentId      String
+  courseId       String?
+  registrationId String?
+  amountInCents  Int
+  currency       String       @default("usd")
+  paymentType    PaymentType
+  monthNumber    Int?
+  discountRate   Float        @default(0)
+  transactionId  String       @unique
+  paidAt         DateTime     @default(now())
+  notes          String?
+
+  student      User                @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course       Course?             @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  registration StudentRegistration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+
+  @@index([studentId])
+  @@index([courseId])
+  @@index([paidAt])
 }
 
 model AttendanceSession {
