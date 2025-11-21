@@ -7,7 +7,6 @@ import { Progress } from "@/components/ui/progress";
 import {
   useEnrollments,
   useAssignments,
-  usePayments,
   useCourses,
 } from "@/hooks/useData";
 import {
@@ -54,7 +53,6 @@ const LMS = () => {
   );
   const { enrollments, loading: enrollmentsLoading } = useEnrollments();
   const { assignments, loading: assignmentsLoading } = useAssignments();
-  const { payments, loading: paymentsLoading } = usePayments();
   const { courses } = useCourses();
 
   const enrolledClasses = useMemo<EnrolledClass[]>(

@@ -496,24 +496,78 @@ export function useAssignments() {
   return { assignments, loading, error, refetch };
 }
 
+export interface FeeRecord {
+  id: string;
+  studentId: string | null;
+  studentName: string;
+  studentEmail: string | null;
+  courseId: string | null;
+  courseName: string | null;
+  amountInCents: number;
+  currency: string;
+  paidAt: string;
+  paymentType: "INSTALLMENT" | "REGISTRATION";
+  transactionId: string | null;
+  monthNumber: number | null;
+  discountRate: number | null;
+}
+
+export interface FeeSummary {
+  totalIncomeInCents: number;
+  monthlyIncome: { month: string; totalInCents: number }[];
+  courseTotals: {
+    courseId: string;
+    courseName: string;
+    totalInCents: number;
+    payments: number;
+  }[];
+  studentTotals: {
+    studentId: string | null;
+    studentName: string;
+    studentEmail: string | null;
+    totalInCents: number;
+    payments: number;
+  }[];
+}
+
 export function usePayments() {
-  const [payments, setPayments] = useState<any[]>([]);
+  const [payments, setPayments] = useState<FeeRecord[]>([]);
+  const [summary, setSummary] = useState<FeeSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refetch = async () => {
-    setLoading(true);
-    setTimeout(() => {
-      setPayments([]);
-      setLoading(false);
-    }, 1000);
-  };
+  const refetch = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/fees', { cache: 'no-store' });
 
-  useEffect(() => {
-    refetch();
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error ?? 'Failed to load fees');
+      }
+
+      const payload = await response.json();
+
+      setPayments(Array.isArray(payload?.records) ? payload.records : []);
+      setSummary(payload?.summary ?? null);
+      setError(null);
+    } catch (fetchError) {
+      console.error('Failed to load fee data', fetchError);
+      setPayments([]);
+      setSummary(null);
+      setError(
+        fetchError instanceof Error ? fetchError.message : 'Failed to load fee data'
+      );
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return { payments, loading, error, refetch };
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
+
+  return { payments, summary, loading, error, refetch };
 }
 
 export function useDashboardStats() {

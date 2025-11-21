@@ -65,6 +65,8 @@ interface PaymentReceipt {
   amountPaidInCents: number;
   monthNumber: number;
   transactionId: string;
+  currency?: string;
+  paymentType?: "INSTALLMENT" | "REGISTRATION";
 }
 
 const formatCurrency = (cents: number, currency: string) =>
@@ -145,6 +147,28 @@ export const PaymentSection = () => {
     }
   }, []);
 
+  const fetchPaymentHistory = useCallback(async () => {
+    if (!student) return;
+
+    try {
+      const response = await fetch("/api/payments/history", { cache: "no-store" });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const payload = (await response.json()) as PaymentReceipt[];
+      setHistory(
+        payload.map((entry) => ({
+          ...entry,
+          monthNumber: entry.monthNumber ?? 1,
+        }))
+      );
+    } catch (historyError) {
+      console.error("Failed to load payment history", historyError);
+    }
+  }, [student]);
+
   useEffect(() => {
     void fetchPaymentData();
   }, [fetchPaymentData]);
@@ -203,6 +227,10 @@ export const PaymentSection = () => {
   }, [history, student]);
 
   useEffect(() => {
+    void fetchPaymentHistory();
+  }, [fetchPaymentHistory]);
+
+  useEffect(() => {
     if (!student) return;
 
     const paymentStatus = searchParams.get("payment");
@@ -253,9 +281,13 @@ export const PaymentSection = () => {
           amountPaidInCents: paidAmount,
           monthNumber,
           transactionId: payload.transactionId ?? `SESSION-${sessionId}`,
+          currency: payload.currency ?? activeCurrency,
+          paymentType: "INSTALLMENT",
         };
 
         setHistory((previous) => [...previous, receipt]);
+
+        void fetchPaymentHistory();
 
         setPlans((previous) =>
           previous.flatMap((plan) => {
@@ -563,7 +595,10 @@ export const PaymentSection = () => {
                           <div className="space-y-1">
                             <p className="text-sm text-muted-foreground">{receipt.courseName}</p>
                             <p className="font-semibold text-foreground">
-                              {formatCurrency(receipt.amountPaidInCents, activeCurrency)}
+                              {formatCurrency(
+                                receipt.amountPaidInCents,
+                                receipt.currency ?? activeCurrency
+                              )}
                             </p>
                             <p className="text-xs text-muted-foreground">
                               Month {receipt.monthNumber} • Transaction {receipt.transactionId}

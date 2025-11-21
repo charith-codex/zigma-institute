@@ -194,6 +194,59 @@ export async function GET(request: Request) {
       );
     }
 
+    const courseId = checkoutSession.metadata?.courseId ?? null;
+    const discountRate = Number(checkoutSession.metadata?.discountRate ?? 0);
+    const estimatedBase = Number(
+      checkoutSession.metadata?.baseMonthlyAmount ?? 0
+    );
+
+    const course = courseId
+      ? await prisma.course.findUnique({
+          where: { id: courseId },
+          select: { currency: true },
+        })
+      : null;
+
+    const transactionId =
+      typeof checkoutSession.payment_intent === "string"
+        ? checkoutSession.payment_intent
+        : checkoutSession.payment_intent?.id ?? checkoutSession.id;
+
+    const amountInCents =
+      checkoutSession.amount_total ??
+      (estimatedBase > 0
+        ? Math.max(
+            Math.round(estimatedBase * (1 - discountRate)),
+            estimatedBase
+          )
+        : null);
+
+    if (checkoutSession.payment_status === "paid" && amountInCents && courseId) {
+      const paidAt = checkoutSession.created
+        ? new Date(checkoutSession.created * 1000)
+        : new Date();
+
+      await prisma.paymentTransaction.upsert({
+        where: { transactionId },
+        update: {
+          amountInCents,
+          currency: checkoutSession.currency ?? course?.currency ?? "usd",
+          paidAt,
+        },
+        create: {
+          transactionId,
+          studentId: session.user.id,
+          courseId,
+          amountInCents,
+          currency: checkoutSession.currency ?? course?.currency ?? "usd",
+          paymentType: "INSTALLMENT",
+          monthNumber: null,
+          discountRate,
+          paidAt,
+        },
+      });
+    }
+
     const response: PaymentVerificationResponse = {
       paid: checkoutSession.payment_status === "paid",
       courseId: checkoutSession.metadata?.courseId ?? null,
