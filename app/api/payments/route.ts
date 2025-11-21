@@ -64,20 +64,27 @@ export async function GET() {
     orderBy: { enrolledAt: "desc" },
   });
 
-  const courses = enrollments
-    .map((enrollment) => enrollment.course)
-    .filter((course): course is PaymentCoursePayload => Boolean(course))
-    .map((course) => ({
-      id: course.id,
-      name: course.name,
-      description: course.description,
-      coverImage: course.coverImage,
-      teacherName: course.teacherName,
-      priceInCents: course.priceInCents,
-      currency: course.currency,
-      createdAt: course.createdAt,
-      updatedAt: course.updatedAt,
-    }));
+  const courses: PaymentCoursePayload[] = enrollments.flatMap((enrollment) => {
+    const course = enrollment.course;
+
+    if (!course) {
+      return [];
+    }
+
+    return [
+      {
+        id: course.id,
+        name: course.name,
+        description: course.description,
+        coverImage: course.coverImage,
+        teacherName: course.teacherName,
+        priceInCents: course.priceInCents,
+        currency: course.currency,
+        createdAt: course.createdAt,
+        updatedAt: course.updatedAt,
+      },
+    ];
+  });
 
   const payload: PaymentResponse = {
     student: {
