@@ -1,16 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AlertCircle, Calendar, CheckCircle, Clock, CreditCard, DollarSign, Percent, User } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  calculateDiscountRate,
+  computeDurationInMonths,
+  deriveMonthlyAmount,
+} from "@/lib/payments";
 
 const PLAN_STORAGE_KEY = "lms-course-payment-plans";
 const HISTORY_STORAGE_KEY = "lms-course-payment-history";
-const MINIMUM_MONTHLY_CENTS = 2500;
 
 interface PaymentCourse {
   id: string;
@@ -31,6 +36,15 @@ interface PaymentStudent {
 interface PaymentResponse {
   student: PaymentStudent;
   courses: PaymentCourse[];
+}
+
+interface PaymentVerificationResult {
+  paid: boolean;
+  courseId: string | null;
+  planId: string | null;
+  amountPaidInCents: number | null;
+  currency: string | null;
+  transactionId: string | null;
 }
 
 interface CoursePaymentPlan {
@@ -58,27 +72,10 @@ const formatCurrency = (cents: number, currency: string) =>
     cents / 100
   );
 
-const calculateDiscountRate = (courseCount: number) => {
-  if (courseCount >= 5) return 0.15;
-  if (courseCount >= 3) return 0.1;
-  return 0;
-};
-
 const addMonths = (date: string | Date, months: number) => {
   const next = new Date(date);
   next.setMonth(next.getMonth() + months);
   return next.toISOString();
-};
-
-const computeDuration = (course: PaymentCourse) => {
-  const normalizedPrice = Math.max(course.priceInCents, MINIMUM_MONTHLY_CENTS);
-  const estimatedMonths = Math.ceil(normalizedPrice / 15000);
-  return Math.min(12, Math.max(4, estimatedMonths));
-};
-
-const deriveMonthlyAmount = (course: PaymentCourse) => {
-  const duration = computeDuration(course);
-  return Math.max(Math.round(course.priceInCents / duration), MINIMUM_MONTHLY_CENTS);
 };
 
 const buildDefaultPlan = (
@@ -86,14 +83,14 @@ const buildDefaultPlan = (
   index: number,
   discountRate: number
 ): CoursePaymentPlan => {
-  const duration = computeDuration(course);
+  const duration = computeDurationInMonths(course.priceInCents);
   const offsetDate = addMonths(new Date(), index % 2 === 0 ? 0 : 1);
 
   return {
     id: `plan-${course.id}`,
     courseId: course.id,
     courseName: course.name,
-    monthlyAmountInCents: deriveMonthlyAmount(course),
+    monthlyAmountInCents: deriveMonthlyAmount(course.priceInCents),
     discountRate,
     monthsRemaining: duration,
     totalMonths: duration,
@@ -112,6 +109,7 @@ export const PaymentSection = () => {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   const discountRate = useMemo(
     () => calculateDiscountRate(courses.length),
@@ -204,6 +202,96 @@ export const PaymentSection = () => {
     localStorage.setItem(historyStorageKey(student.id), JSON.stringify(history));
   }, [history, student]);
 
+  useEffect(() => {
+    if (!student) return;
+
+    const paymentStatus = searchParams.get("payment");
+    const sessionId = searchParams.get("session_id");
+    const returnedPlanId = searchParams.get("planId");
+    const returnedCourseId = searchParams.get("courseId");
+
+    if (paymentStatus !== "success" || !sessionId) return;
+
+    const finalizePayment = async () => {
+      setProcessingId(returnedPlanId);
+
+      try {
+        const response = await fetch(
+          `/api/payments/checkout?session_id=${encodeURIComponent(sessionId)}`,
+          { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+          throw new Error("Unable to verify payment session.");
+        }
+
+        const payload = (await response.json()) as PaymentVerificationResult;
+
+        if (!payload.paid || !payload.courseId) {
+          return;
+        }
+
+        const targetPlan =
+          plans.find(
+            (plan) =>
+              plan.id === (payload.planId ?? returnedPlanId ?? "") ||
+              plan.courseId === (payload.courseId ?? returnedCourseId ?? "")
+          ) ?? null;
+
+        if (!targetPlan) return;
+
+        const paidAmount =
+          payload.amountPaidInCents ??
+          Math.round(targetPlan.monthlyAmountInCents * (1 - targetPlan.discountRate));
+
+        const monthNumber = targetPlan.totalMonths - targetPlan.monthsRemaining + 1;
+
+        const receipt: PaymentReceipt = {
+          id: payload.transactionId ?? `receipt-${Date.now()}`,
+          courseName: targetPlan.courseName,
+          paidOn: new Date().toISOString(),
+          amountPaidInCents: paidAmount,
+          monthNumber,
+          transactionId: payload.transactionId ?? `SESSION-${sessionId}`,
+        };
+
+        setHistory((previous) => [...previous, receipt]);
+
+        setPlans((previous) =>
+          previous.flatMap((plan) => {
+            if (plan.id !== targetPlan.id) return plan;
+
+            const remaining = Math.max(0, plan.monthsRemaining - 1);
+            if (remaining === 0) {
+              return [];
+            }
+
+            return [
+              {
+                ...plan,
+                monthsRemaining: remaining,
+                nextDueDate: addMonths(plan.nextDueDate, 1),
+              },
+            ];
+          })
+        );
+      } catch (verificationError) {
+        console.error("Failed to record payment", verificationError);
+      } finally {
+        setProcessingId(null);
+
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.delete("payment");
+        currentUrl.searchParams.delete("courseId");
+        currentUrl.searchParams.delete("planId");
+        currentUrl.searchParams.delete("session_id");
+        window.history.replaceState({}, document.title, currentUrl.toString());
+      }
+    };
+
+    void finalizePayment();
+  }, [plans, searchParams, student]);
+
   const totalPending = useMemo(
     () =>
       plans.reduce(
@@ -214,50 +302,41 @@ export const PaymentSection = () => {
     [plans]
   );
 
-  const handlePayment = (planId: string) => {
+  const handlePayment = async (planId: string, courseId: string) => {
     const targetPlan = plans.find((plan) => plan.id === planId);
     if (!targetPlan) return;
 
     setProcessingId(planId);
+    setError(null);
 
-    setTimeout(() => {
-      const paidAmount = Math.round(
-        targetPlan.monthlyAmountInCents * (1 - targetPlan.discountRate)
-      );
-      const monthNumber = targetPlan.totalMonths - targetPlan.monthsRemaining + 1;
+    try {
+      const response = await fetch("/api/payments/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId, planId }),
+      });
 
-      const receipt: PaymentReceipt = {
-        id: `receipt-${Date.now()}`,
-        courseName: targetPlan.courseName,
-        paidOn: new Date().toISOString(),
-        amountPaidInCents: paidAmount,
-        monthNumber,
-        transactionId: `TXN-${Math.floor(Math.random() * 1_000_000)}`,
-      };
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error ?? "Unable to start checkout.");
+      }
 
-      setHistory((previous) => [...previous, receipt]);
+      const payload = (await response.json()) as { url?: string };
 
-      setPlans((previous) =>
-        previous.flatMap((plan) => {
-          if (plan.id !== planId) return plan;
+      if (!payload.url) {
+        throw new Error("Invalid checkout response from server.");
+      }
 
-          const remaining = Math.max(0, plan.monthsRemaining - 1);
-          if (remaining === 0) {
-            return [];
-          }
-
-          return [
-            {
-              ...plan,
-              monthsRemaining: remaining,
-              nextDueDate: addMonths(plan.nextDueDate, 1),
-            },
-          ];
-        })
-      );
-
+      window.location.href = payload.url;
+    } catch (paymentError) {
+      console.error("Failed to initiate payment", paymentError);
       setProcessingId(null);
-    }, 400);
+      setError(
+        paymentError instanceof Error
+          ? paymentError.message
+          : "Unable to start checkout."
+      );
+    }
   };
 
   if (loading) {
@@ -444,7 +523,7 @@ export const PaymentSection = () => {
                           <div className="flex flex-wrap gap-2">
                             <Button
                               className="gap-2"
-                              onClick={() => handlePayment(plan.id)}
+                              onClick={() => handlePayment(plan.id, plan.courseId)}
                               disabled={processingId === plan.id}
                             >
                               <CreditCard className="h-4 w-4" />
