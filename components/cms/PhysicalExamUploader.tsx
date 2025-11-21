@@ -298,12 +298,7 @@ function ExamPaperUpload({
             onUploadingChange(false);
             const result = res?.[0];
             if (result?.url) {
-              const materialId =
-                typeof result.serverData === "object" && result.serverData
-                  ? (result.serverData as { materialId?: string }).materialId
-                  : undefined;
-
-              onUploadComplete({ url: result.url, materialId });
+              onUploadComplete({ url: result.url });
               toast.success("Exam paper uploaded and saved.");
             }
           }}
