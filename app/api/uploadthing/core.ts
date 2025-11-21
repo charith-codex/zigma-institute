@@ -97,23 +97,8 @@ export const ourFileRouter = {
       };
     })
     .onUploadComplete(async ({ file, metadata }) => {
-      const material = await prisma.studyMaterial.create({
-        data: {
-          title: metadata.examTitle,
-          description: null,
-          fileUrl: file.url,
-          fileKey: file.key,
-          fileName: file.name,
-          fileSize: file.size,
-          uploadedById: metadata.userId,
-          courseId: metadata.courseId,
-          lessonId: null,
-        },
-      });
-
       return {
         uploadedBy: metadata.userId,
-        materialId: material.id,
         fileUrl: file.url,
       };
     }),

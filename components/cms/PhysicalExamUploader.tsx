@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { Loader2, Search, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,20 +16,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UploadButton } from "@/lib/uploadthing";
-import { useStudentRegistrations } from "@/hooks/useData";
+import {
+  getEnrolledStudentsForCourse,
+  getPhysicalExamMarks,
+  PhysicalExamMarkRecord,
+  savePhysicalExamMarks,
+} from "@/lib/actions/physical-exam";
 
-type StudentSummary = {
-  id: string;
-  name: string;
-};
-
-type SavedMarkRecord = {
-  studentId: string;
+type EnrolledStudent = {
+  registrationId: string;
+  studentPublicId: string;
   studentName: string;
-  score: number;
-  examTitle: string;
-  paperUrl: string;
-  savedAt: string;
 };
 
 interface ExamPaperUploadProps {
@@ -37,61 +34,95 @@ interface ExamPaperUploadProps {
   examTitle: string;
   onExamTitleChange: (value: string) => void;
   paperUrl: string | null;
-  onUploadComplete: (payload: { url: string; materialId?: string }) => void;
+  onUploadComplete: (payload: { url: string }) => void;
   uploading: boolean;
   onUploadingChange: (value: boolean) => void;
 }
 
 interface StudentMarksProps {
-  students: StudentSummary[];
+  students: EnrolledStudent[];
   searchTerm: string;
   onSearch: (value: string) => void;
   scores: Record<string, string>;
   onScoreChange: (studentId: string, value: string) => void;
   disabled: boolean;
+  loading: boolean;
 }
 
 interface SavedMarksListProps {
-  records: SavedMarkRecord[];
+  records: PhysicalExamMarkRecord[];
+  loading: boolean;
 }
 
 export function PhysicalExamUploader({ courseId }: { courseId: string }) {
-  const { registrations, loading: studentsLoading } = useStudentRegistrations();
-
   const [examTitle, setExamTitle] = useState<string>("");
   const [paperUrl, setPaperUrl] = useState<string | null>(null);
-  const [paperMaterialId, setPaperMaterialId] = useState<string | null>(null);
   const [uploadingPaper, setUploadingPaper] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [scores, setScores] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState<boolean>(false);
-  const [records, setRecords] = useState<SavedMarkRecord[]>([]);
+  const [students, setStudents] = useState<EnrolledStudent[]>([]);
+  const [records, setRecords] = useState<PhysicalExamMarkRecord[]>([]);
+  const [studentsLoading, setStudentsLoading] = useState<boolean>(true);
+  const [marksLoading, setMarksLoading] = useState<boolean>(true);
+  const [saving, startSaving] = useTransition();
 
-  const enrolledStudents = useMemo<StudentSummary[]>(() => {
-    return registrations
-      .filter((registration) =>
-        Array.isArray(registration.courses)
-          ? registration.courses.includes(courseId)
-          : false
-      )
-      .map((registration) => ({
-        id: registration.studentPublicId ?? registration.id,
-        name: registration.name,
-      }));
-  }, [courseId, registrations]);
+  useEffect(() => {
+    let active = true;
 
-  const filteredStudents = useMemo<StudentSummary[]>(() => {
+    const loadStudents = async () => {
+      setStudentsLoading(true);
+      try {
+        const loaded = await getEnrolledStudentsForCourse(courseId);
+        if (active) {
+          setStudents(loaded);
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to load enrolled students.");
+      } finally {
+        if (active) {
+          setStudentsLoading(false);
+        }
+      }
+    };
+
+    const loadMarks = async () => {
+      setMarksLoading(true);
+      try {
+        const saved = await getPhysicalExamMarks(courseId);
+        if (active) {
+          setRecords(saved);
+        }
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to load saved marks.");
+      } finally {
+        if (active) {
+          setMarksLoading(false);
+        }
+      }
+    };
+
+    void loadStudents();
+    void loadMarks();
+
+    return () => {
+      active = false;
+    };
+  }, [courseId]);
+
+  const filteredStudents = useMemo<EnrolledStudent[]>(() => {
     const query = searchTerm.trim().toLowerCase();
     if (!query) {
-      return enrolledStudents;
+      return students;
     }
 
-    return enrolledStudents.filter(
+    return students.filter(
       (student) =>
-        student.name.toLowerCase().includes(query) ||
-        student.id.toLowerCase().includes(query)
+        student.studentName.toLowerCase().includes(query) ||
+        student.studentPublicId.toLowerCase().includes(query)
     );
-  }, [enrolledStudents, searchTerm]);
+  }, [students, searchTerm]);
 
   const marksReady = Boolean(examTitle.trim() && paperUrl);
 
@@ -107,43 +138,50 @@ export function PhysicalExamUploader({ courseId }: { courseId: string }) {
   };
 
   const handleSaveMarks = () => {
-    if (!marksReady) {
+    if (!marksReady || !paperUrl) {
       toast.error("Add an exam title and upload the paper first.");
       return;
     }
 
-    const validEntries: SavedMarkRecord[] = [];
+    const validEntries = students
+      .map((student) => {
+        const value = scores[student.registrationId];
+        if (!value) return null;
 
-    enrolledStudents.forEach((student) => {
-      const value = scores[student.id];
-      if (!value) {
-        return;
-      }
+        const parsedScore = Number.parseFloat(value);
+        if (Number.isNaN(parsedScore) || parsedScore < 0 || parsedScore > 100) {
+          return null;
+        }
 
-      const parsedScore = Number.parseFloat(value);
-      if (Number.isNaN(parsedScore) || parsedScore < 0 || parsedScore > 100) {
-        return;
-      }
-
-      validEntries.push({
-        studentId: student.id,
-        studentName: student.name,
-        score: parsedScore,
-        examTitle: examTitle.trim(),
-        paperUrl: paperUrl!,
-        savedAt: new Date().toISOString(),
-      });
-    });
+        return { studentRegistrationId: student.registrationId, score: parsedScore };
+      })
+      .filter(
+        (entry): entry is { studentRegistrationId: string; score: number } =>
+          entry !== null
+      );
 
     if (validEntries.length === 0) {
       toast.error("Enter at least one valid score between 0 and 100.");
       return;
     }
 
-    setSaving(true);
-    setRecords((previous) => [...validEntries, ...previous]);
-    toast.success("Physical exam marks saved.");
-    setSaving(false);
+    startSaving(() =>
+      savePhysicalExamMarks({
+        courseId,
+        examTitle: examTitle.trim(),
+        paperUrl,
+        scores: validEntries,
+      })
+        .then((saved) => {
+          setRecords(saved);
+          toast.success("Physical exam marks saved.");
+        })
+        .catch((error: unknown) => {
+          const message =
+            error instanceof Error ? error.message : "Failed to save marks.";
+          toast.error(message);
+        })
+    );
   };
 
   return (
@@ -164,18 +202,13 @@ export function PhysicalExamUploader({ courseId }: { courseId: string }) {
             paperUrl={paperUrl}
             onUploadComplete={(payload) => {
               setPaperUrl(payload.url);
-              setPaperMaterialId(payload.materialId ?? null);
             }}
             uploading={uploadingPaper}
             onUploadingChange={setUploadingPaper}
           />
 
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {paperMaterialId ? (
-              <Badge variant="secondary">File saved to library</Badge>
-            ) : (
-              <Badge variant="outline">Upload creates a saved record</Badge>
-            )}
+            <Badge variant="outline">Upload ready for grading</Badge>
             <span>Course ID: {courseId}</span>
           </div>
         </CardContent>
@@ -196,7 +229,8 @@ export function PhysicalExamUploader({ courseId }: { courseId: string }) {
             onSearch={setSearchTerm}
             scores={scores}
             onScoreChange={handleScoreChange}
-            disabled={!marksReady || studentsLoading || uploadingPaper}
+            disabled={!marksReady || studentsLoading || uploadingPaper || saving}
+            loading={studentsLoading}
           />
 
           <div className="flex justify-end">
@@ -208,7 +242,7 @@ export function PhysicalExamUploader({ courseId }: { courseId: string }) {
         </CardContent>
       </Card>
 
-      <SavedMarksList records={records} />
+      <SavedMarksList records={records} loading={marksLoading} />
     </div>
   );
 }
@@ -264,12 +298,7 @@ function ExamPaperUpload({
             onUploadingChange(false);
             const result = res?.[0];
             if (result?.url) {
-              const materialId =
-                typeof result.serverData === "object" && result.serverData
-                  ? (result.serverData as { materialId?: string }).materialId
-                  : undefined;
-
-              onUploadComplete({ url: result.url, materialId });
+              onUploadComplete({ url: result.url });
               toast.success("Exam paper uploaded and saved.");
             }
           }}
@@ -295,6 +324,7 @@ function StudentMarks({
   scores,
   onScoreChange,
   disabled,
+  loading,
 }: StudentMarksProps) {
   return (
     <div className="space-y-4">
@@ -309,20 +339,26 @@ function StudentMarks({
       </div>
 
       <div className="space-y-3">
-        {students.length === 0 ? (
+        {loading ? (
+          <p className="text-sm text-muted-foreground">
+            Loading enrolled students…
+          </p>
+        ) : students.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No enrolled students found for this course.
           </p>
         ) : (
           students.map((student) => (
             <div
-              key={student.id}
+              key={student.registrationId}
               className="flex flex-col gap-3 rounded-lg border border-border/60 bg-card/60 p-4 md:flex-row md:items-center md:justify-between"
             >
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary">{student.id}</Badge>
-                  <span className="font-semibold text-foreground">{student.name}</span>
+                  <Badge variant="secondary">{student.studentPublicId}</Badge>
+                  <span className="font-semibold text-foreground">
+                    {student.studentName}
+                  </span>
                 </div>
                 <p className="text-xs text-muted-foreground">Course enrollment verified</p>
               </div>
@@ -333,8 +369,10 @@ function StudentMarks({
                   min={0}
                   max={100}
                   step={0.1}
-                  value={scores[student.id] ?? ""}
-                  onChange={(event) => onScoreChange(student.id, event.target.value)}
+                  value={scores[student.registrationId] ?? ""}
+                  onChange={(event) =>
+                    onScoreChange(student.registrationId, event.target.value)
+                  }
                   placeholder="Score"
                   disabled={disabled}
                 />
@@ -352,7 +390,23 @@ function StudentMarks({
   );
 }
 
-function SavedMarksList({ records }: SavedMarksListProps) {
+function SavedMarksList({ records, loading }: SavedMarksListProps) {
+  if (loading) {
+    return (
+      <Card className="border-border/60">
+        <CardHeader>
+          <CardTitle>Saved marks</CardTitle>
+          <CardDescription>
+            Loading previously saved physical exam scores.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">Fetching saved grades…</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (records.length === 0) {
     return (
       <Card className="border-border/60">
@@ -378,12 +432,13 @@ function SavedMarksList({ records }: SavedMarksListProps) {
       <CardContent className="space-y-3">
         {records.map((record) => (
           <div
-            key={`${record.studentId}-${record.savedAt}`}
+            key={record.id}
             className="flex flex-col gap-2 rounded-lg border border-border/70 bg-card/70 p-4 sm:flex-row sm:items-center sm:justify-between"
           >
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="secondary">{record.examTitle}</Badge>
+                <Badge variant="outline">{record.studentPublicId}</Badge>
                 <span className="font-semibold text-foreground">
                   {record.studentName}
                 </span>
@@ -392,7 +447,7 @@ function SavedMarksList({ records }: SavedMarksListProps) {
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground">
-                Saved on {new Date(record.savedAt).toLocaleString()}
+                Saved on {new Date(record.recordedAt).toLocaleString()}
               </p>
               <p className="text-xs text-muted-foreground truncate">
                 Paper URL: {record.paperUrl}
