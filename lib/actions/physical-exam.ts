@@ -23,6 +23,10 @@ export interface PhysicalExamMarkRecord {
   recordedAt: string;
 }
 
+export type SavePhysicalExamMarksResult =
+  | { success: true; records: PhysicalExamMarkRecord[] }
+  | { success: false; message: string };
+
 const saveMarksSchema = z.object({
   courseId: z.string().min(1),
   examTitle: z.string().min(1),
@@ -107,79 +111,93 @@ export async function getPhysicalExamMarks(
 
 export async function savePhysicalExamMarks(
   input: SavePhysicalExamMarksInput
-): Promise<PhysicalExamMarkRecord[]> {
-  const payload = saveMarksSchema.parse(input);
-  const trimmedCourseId = payload.courseId.trim();
-  const trimmedExamTitle = payload.examTitle.trim();
+): Promise<SavePhysicalExamMarksResult> {
+  try {
+    const payload = saveMarksSchema.parse(input);
+    const trimmedCourseId = payload.courseId.trim();
+    const trimmedExamTitle = payload.examTitle.trim();
 
-  const registrations = await prisma.studentRegistrationCourse.findMany({
-    where: {
-      courseId: trimmedCourseId,
-      registration: {
-        status: { in: ["PAID", "APPROVED"] },
-      },
-    },
-    include: { registration: true },
-  });
-
-  const allowedRegistrations = new Map(
-    registrations
-      .filter((record) => Boolean(record.registration))
-      .map((record) => {
-        const registration = record.registration!;
-        return [registration.id, registration];
-      })
-  );
-
-  const validScores = payload.scores.filter((entry) =>
-    allowedRegistrations.has(entry.studentRegistrationId)
-  );
-
-  if (validScores.length === 0) {
-    throw new Error("No eligible students found for this course.");
-  }
-
-  const now = new Date();
-
-  const transactions = validScores.map((entry) => {
-    const registration = allowedRegistrations.get(entry.studentRegistrationId)!;
-
-    return prisma.physicalExamMark.upsert({
+    const registrations = await prisma.studentRegistrationCourse.findMany({
       where: {
-        courseId_studentRegistrationId_examTitle: {
-          courseId: trimmedCourseId,
-          studentRegistrationId: entry.studentRegistrationId,
-          examTitle: trimmedExamTitle,
+        courseId: trimmedCourseId,
+        registration: {
+          status: { in: ["PAID", "APPROVED"] },
         },
       },
-      update: {
-        paperUrl: payload.paperUrl,
-        score: entry.score,
-        recordedAt: now,
-      },
-      create: {
-        courseId: trimmedCourseId,
-        studentRegistrationId: entry.studentRegistrationId,
-        studentPublicId: registration.studentPublicId || registration.id,
-        studentName: registration.name,
-        examTitle: trimmedExamTitle,
-        paperUrl: payload.paperUrl,
-        score: entry.score,
-        recordedAt: now,
-      },
+      include: { registration: true },
     });
-  });
 
-  const savedMarks = await prisma.$transaction(transactions);
+    const allowedRegistrations = new Map(
+      registrations
+        .filter((record) => Boolean(record.registration))
+        .map((record) => {
+          const registration = record.registration!;
+          return [registration.id, registration];
+        })
+    );
 
-  return convertToPlainObject(
-    savedMarks
-      .map((mark) => ({
-        ...mark,
-        recordedAt: mark.recordedAt.toISOString(),
-      }))
-      .sort(
-        (a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime()
-      )
-  );
+    const validScores = payload.scores.filter((entry) =>
+      allowedRegistrations.has(entry.studentRegistrationId)
+    );
+
+    if (validScores.length === 0) {
+      return {
+        success: false,
+        message: "No eligible students found for this course.",
+      };
+    }
+
+    const now = new Date();
+
+    const transactions = validScores.map((entry) => {
+      const registration = allowedRegistrations.get(entry.studentRegistrationId)!;
+
+      return prisma.physicalExamMark.upsert({
+        where: {
+          courseId_studentRegistrationId_examTitle: {
+            courseId: trimmedCourseId,
+            studentRegistrationId: entry.studentRegistrationId,
+            examTitle: trimmedExamTitle,
+          },
+        },
+        update: {
+          paperUrl: payload.paperUrl,
+          score: entry.score,
+          recordedAt: now,
+        },
+        create: {
+          courseId: trimmedCourseId,
+          studentRegistrationId: entry.studentRegistrationId,
+          studentPublicId: registration.studentPublicId || registration.id,
+          studentName: registration.name,
+          examTitle: trimmedExamTitle,
+          paperUrl: payload.paperUrl,
+          score: entry.score,
+          recordedAt: now,
+        },
+      });
+    });
+
+    const savedMarks = await prisma.$transaction(transactions);
+
+    return {
+      success: true,
+      records: convertToPlainObject(
+        savedMarks
+          .map((mark) => ({
+            ...mark,
+            recordedAt: mark.recordedAt.toISOString(),
+          }))
+          .sort(
+            (a, b) =>
+              new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime()
+          )
+      ),
+    } satisfies SavePhysicalExamMarksResult;
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to save physical exam marks.";
+
+    return { success: false, message } satisfies SavePhysicalExamMarksResult;
+  }
 }

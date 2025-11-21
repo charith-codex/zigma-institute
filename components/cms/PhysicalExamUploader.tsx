@@ -171,16 +171,15 @@ export function PhysicalExamUploader({ courseId }: { courseId: string }) {
         examTitle: examTitle.trim(),
         paperUrl,
         scores: validEntries,
+      }).then((result) => {
+        if (!result.success) {
+          toast.error(result.message);
+          return;
+        }
+
+        setRecords(result.records);
+        toast.success("Physical exam marks saved.");
       })
-        .then((saved) => {
-          setRecords(saved);
-          toast.success("Physical exam marks saved.");
-        })
-        .catch((error: unknown) => {
-          const message =
-            error instanceof Error ? error.message : "Failed to save marks.";
-          toast.error(message);
-        })
     );
   };
 
