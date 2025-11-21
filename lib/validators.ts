@@ -1,5 +1,31 @@
 import { z } from "zod";
 
+const phoneNumberSchema = z.string().regex(/^[0-9]{10,15}$/, {
+  message: "Phone number must contain only digits (10–15 digits)",
+});
+
+const optionalString = (maxLength: number) =>
+  z
+    .string()
+    .trim()
+    .max(maxLength, { message: `Must be less than ${maxLength} characters` })
+    .optional()
+    .transform((value) => (value === "" ? undefined : value));
+
+const optionalDateString = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (value === "" ? undefined : value))
+  .refine((value) => !value || !Number.isNaN(Date.parse(value)), {
+    message: "Date must be a valid date",
+  });
+
+const optionalGender = z
+  .enum(["MALE", "FEMALE"])
+  .optional()
+  .transform((value) => value ?? undefined);
+
 // schema for inserting courses
 export const courseSchema = z.object({
   name: z
@@ -102,9 +128,7 @@ export const createUserSchema = z.object({
     .max(255, { message: "Address must be less than 255 characters" })
     .optional(),
 
-  phone: z.string().regex(/^[0-9]{10,15}$/, {
-    message: "Phone number must contain only digits (10–15 digits)",
-  }),
+  phone: phoneNumberSchema,
 
   dob: z
     .string()
@@ -120,6 +144,18 @@ export const createUserSchema = z.object({
       (val) => !val || !isNaN(Date.parse(val)),
       "Join Date must be a valid date"
     ),
+});
+
+export const profileUpdateSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(3, { message: "Name must be at least 3 characters" })
+    .max(100, { message: "Name must be less than 100 characters" }),
+  phone: phoneNumberSchema,
+  address: optionalString(255),
+  dob: optionalDateString,
+  gender: optionalGender,
 });
 
 const timeString = z
