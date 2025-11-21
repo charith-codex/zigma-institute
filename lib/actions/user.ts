@@ -10,6 +10,7 @@ import { z } from "zod";
 import {
   createUserSchema,
   forgotPasswordSchema,
+  profileUpdateSchema,
   resetPasswordSchema,
   signInFormSchema,
 } from "../validators";
@@ -245,4 +246,59 @@ export async function getUsers() {
   });
 
   return convertToPlainObject(users);
+}
+
+export async function updateUserProfile(
+  prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        message: "You must be signed in to update your profile.",
+      };
+    }
+
+    const parsed = profileUpdateSchema.parse({
+      name: formData.get("name"),
+      phone: formData.get("phone"),
+      address: formData.get("address"),
+      dob: formData.get("dob"),
+      gender: formData.get("gender"),
+    });
+
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        name: parsed.name,
+        phone: parsed.phone,
+        address: parsed.address,
+        dob: parsed.dob ? new Date(parsed.dob) : null,
+        gender: parsed.gender ?? null,
+      },
+    });
+
+    revalidatePath("/user/profile");
+
+    return {
+      success: true,
+      message: "Profile updated successfully.",
+    };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        message: error.issues[0]?.message ?? "Invalid profile details.",
+      };
+    }
+
+    console.error("Failed to update profile:", error);
+    return {
+      success: false,
+      message: "Unable to update profile right now. Please try again.",
+    };
+  }
 }
