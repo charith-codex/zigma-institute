@@ -144,7 +144,7 @@ export default function ExamAttemptPage() {
         toast.error(
           error instanceof Error ? error.message : "Unable to load exam"
         );
-        router.push("/lms/exams");
+        router.push("/lms");
       } finally {
         setLoading(false);
       }
@@ -493,7 +493,7 @@ export default function ExamAttemptPage() {
                   Check latest marks
                 </Button>
                 <Button variant="link" asChild className="px-0">
-                  <Link href="/lms/exams">Return to exam list</Link>
+                  <Link href="/lms">Return to exam list</Link>
                 </Button>
               </div>
             </div>
