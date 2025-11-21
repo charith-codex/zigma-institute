@@ -1,0 +1,92 @@
+import { NextResponse } from "next/server";
+
+import { auth } from "@/auth";
+import { prisma } from "@/db/prisma";
+import { convertToPlainObject } from "@/lib/utils";
+
+interface PaymentCoursePayload {
+  id: string;
+  name: string;
+  description: string;
+  coverImage: string;
+  teacherName: string;
+  priceInCents: number;
+  currency: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface PaymentStudentPayload {
+  id: string;
+  name: string | null;
+  email: string | null;
+}
+
+interface PaymentResponse {
+  student: PaymentStudentPayload;
+  courses: PaymentCoursePayload[];
+}
+
+export async function GET() {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (session.user.role !== "STUDENT") {
+    return NextResponse.json(
+      { error: "Only students can view payment information." },
+      { status: 403 }
+    );
+  }
+
+  const student = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      student: true,
+    },
+  });
+
+  if (!student || !student.student) {
+    return NextResponse.json(
+      { error: "Student profile not found for this account." },
+      { status: 404 }
+    );
+  }
+
+  const enrollments = await prisma.enrollment.findMany({
+    where: { studentId: session.user.id },
+    include: { course: true },
+    orderBy: { enrolledAt: "desc" },
+  });
+
+  const courses = enrollments
+    .map((enrollment) => enrollment.course)
+    .filter((course): course is PaymentCoursePayload => Boolean(course))
+    .map((course) => ({
+      id: course.id,
+      name: course.name,
+      description: course.description,
+      coverImage: course.coverImage,
+      teacherName: course.teacherName,
+      priceInCents: course.priceInCents,
+      currency: course.currency,
+      createdAt: course.createdAt,
+      updatedAt: course.updatedAt,
+    }));
+
+  const payload: PaymentResponse = {
+    student: {
+      id: student.id,
+      name: student.name,
+      email: student.email,
+    },
+    courses,
+  };
+
+  return NextResponse.json(convertToPlainObject(payload));
+}
