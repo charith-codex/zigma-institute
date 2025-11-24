@@ -57,6 +57,11 @@ enum UserStatus {
   INACTIVE
 }
 
+enum NotificationChannel {
+  LMS
+  CMS
+}
+
 model VerificationToken {
   id      String   @id @default(uuid())
   email   String
@@ -103,9 +108,16 @@ model Staff {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-enum PaymentType {
-  REGISTRATION
-  INSTALLMENT
+model Notification {
+  id        String                 @id @default(uuid())
+  title     String
+  message   String
+  targets   NotificationChannel[]
+  readBy    NotificationChannel[]  @default([])
+  hiddenFor NotificationChannel[]  @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Course {
@@ -383,6 +395,11 @@ model StudentRegistrationCourse {
   createdAt DateTime @default(now())
 
   @@unique([registrationId, courseId])
+}
+
+enum PaymentType {
+  REGISTRATION
+  INSTALLMENT
 }
 
 model PaymentTransaction {

@@ -14,20 +14,10 @@ import {
   Bell,
   X,
   Clock,
-  User,
-  FileText,
-  AlertCircle,
-  CheckCircle,
-  BookOpen,
   Calendar,
-  MessageSquare,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import {
-  NotificationChannel,
-  NotificationRecord,
-  useNotificationCenter,
-} from "@/components/providers/notification-provider";
+import { NotificationChannel, useNotificationCenter } from "@/components/providers/notification-provider";
 
 interface NotificationDropdownProps {
   channel?: NotificationChannel;
@@ -51,54 +41,16 @@ export function NotificationDropdown({
   );
   const unreadCount = getUnreadCount(channel);
 
-  const getNotificationIcon = (type: NotificationRecord["type"]) => {
-    switch (type) {
-      case "student":
-        return <User className="w-4 h-4 text-primary" />;
-      case "exam":
-        return <FileText className="w-4 h-4 text-warning" />;
-      case "payment":
-        return <FileText className="w-4 h-4 text-warning" />;
-      case "class":
-        return <BookOpen className="w-4 h-4 text-accent" />;
-      case "announcement":
-        return <AlertCircle className="w-4 h-4 text-secondary" />;
-      case "teacher":
-        return <MessageSquare className="w-4 h-4 text-primary" />;
-      case "system":
-        return <CheckCircle className="w-4 h-4 text-success" />;
-      default:
-        return <Bell className="w-4 h-4 text-muted-foreground" />;
-    }
+  const markAsRead = async (id: string) => {
+    await markNotificationAsRead(id, channel);
   };
 
-  const getPriorityColor = (
-    priority: NotificationRecord["priority"],
-    read: boolean
-  ) => {
-    if (read) return "text-muted-foreground";
-    switch (priority) {
-      case "high":
-        return "text-destructive";
-      case "medium":
-        return "text-warning";
-      case "low":
-        return "text-foreground";
-      default:
-        return "text-muted-foreground";
-    }
+  const markAllAsRead = async () => {
+    await markChannelAsRead(channel);
   };
 
-  const markAsRead = (id: string) => {
-    markNotificationAsRead(id, channel);
-  };
-
-  const markAllAsRead = () => {
-    markChannelAsRead(channel);
-  };
-
-  const deleteNotification = (id: string) => {
-    dismissNotification(id, channel);
+  const deleteNotification = async (id: string) => {
+    await dismissNotification(id, channel);
   };
 
   return (
@@ -165,10 +117,10 @@ export function NotificationDropdown({
                         }`}
                         onClick={() => markAsRead(notification.id)}
                       >
-                        <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 mt-1">
-                            {getNotificationIcon(notification.type)}
-                          </div>
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-1">
+                          <Bell className="w-4 h-4 text-primary" />
+                        </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between mb-1">
                               <h4
@@ -198,7 +150,9 @@ export function NotificationDropdown({
                               </div>
                             </div>
                             <p
-                              className={`text-xs mb-2 ${getPriorityColor(notification.priority, isRead)}`}
+                              className={`text-xs mb-2 ${
+                                isRead ? "text-muted-foreground" : "text-foreground"
+                              }`}
                             >
                               {notification.message}
                             </p>
@@ -209,22 +163,6 @@ export function NotificationDropdown({
                                   addSuffix: true,
                                 })}
                               </div>
-                              {notification.priority === "high" && !isRead && (
-                                <Badge
-                                  variant="destructive"
-                                  className="text-xs px-1 py-0"
-                                >
-                                  High
-                                </Badge>
-                              )}
-                              {notification.priority === "medium" && !isRead && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs px-1 py-0 border-warning text-warning"
-                                >
-                                  Medium
-                                </Badge>
-                              )}
                             </div>
                           </div>
                         </div>

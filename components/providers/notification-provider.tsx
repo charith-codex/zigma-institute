@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import {
   createContext,
   useCallback,
@@ -8,136 +9,67 @@ import {
   useMemo,
   useState,
 } from "react";
+import {
+  createNotification as createNotificationAction,
+  deleteNotification as deleteNotificationAction,
+  dismissNotification as dismissNotificationAction,
+  listNotifications,
+  markChannelRead as markChannelReadAction,
+  markNotificationRead as markNotificationReadAction,
+} from "@/app/actions/notifications";
+import type {
+  CreateNotificationInput,
+  NotificationChannel,
+  NotificationRecord,
+} from "@/types/notifications";
 
-const STORAGE_KEY = "zigma-notifications";
-
-export type NotificationChannel = "lms" | "cms";
-export type NotificationCategory =
-  | "student"
-  | "exam"
-  | "payment"
-  | "system"
-  | "class"
-  | "teacher"
-  | "announcement";
-
-export type NotificationPriority = "low" | "medium" | "high";
-
-export interface NotificationRecord {
-  id: string;
-  title: string;
-  message: string;
-  type: NotificationCategory;
-  priority: NotificationPriority;
-  sender?: string;
-  createdAt: string;
-  targets: NotificationChannel[];
-  readBy: NotificationChannel[];
-  hiddenFor: NotificationChannel[];
-}
-
-export interface CreateNotificationInput {
-  title: string;
-  message: string;
-  type?: NotificationCategory;
-  priority?: NotificationPriority;
-  sender?: string;
-  targets: NotificationChannel[];
-}
+export type {
+  CreateNotificationInput,
+  NotificationChannel,
+  NotificationRecord,
+} from "@/types/notifications";
 
 interface NotificationContextValue {
   notifications: NotificationRecord[];
+  isLoading: boolean;
+  refresh: () => Promise<void>;
   getNotificationsFor: (channel: NotificationChannel) => NotificationRecord[];
   getUnreadCount: (channel: NotificationChannel) => number;
-  sendNotification: (input: CreateNotificationInput) => void;
-  markNotificationAsRead: (id: string, channel?: NotificationChannel) => void;
-  markChannelAsRead: (channel: NotificationChannel) => void;
-  dismissNotification: (id: string, channel: NotificationChannel) => void;
-  deleteNotification: (id: string) => void;
+  sendNotification: (input: CreateNotificationInput) => Promise<void>;
+  markNotificationAsRead: (
+    id: string,
+    channel?: NotificationChannel
+  ) => Promise<void>;
+  markChannelAsRead: (channel: NotificationChannel) => Promise<void>;
+  dismissNotification: (id: string, channel: NotificationChannel) => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
 }
 
-const defaultNotifications: NotificationRecord[] = [
-  {
-    id: "notif-default-1",
-    title: "New Student Registration",
-    message: "Sarah Johnson has registered for Computer Science.",
-    type: "student",
-    priority: "high",
-    sender: "Registration System",
-    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-    targets: ["lms", "cms"],
-    readBy: [],
-    hiddenFor: [],
-  },
-  {
-    id: "notif-default-2",
-    title: "Exam Schedule Updated",
-    message: "Mathematics exam moved to December 15, 10:00 AM.",
-    type: "exam",
-    priority: "medium",
-    sender: "Exam Department",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    targets: ["lms"],
-    readBy: [],
-    hiddenFor: [],
-  },
-  {
-    id: "notif-default-3",
-    title: "Faculty Sync",
-    message: "Weekly CMS sync today at 4:00 PM.",
-    type: "announcement",
-    priority: "low",
-    sender: "IT Department",
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-    targets: ["cms"],
-    readBy: [],
-    hiddenFor: [],
-  },
-];
-
 const NotificationContext = createContext<NotificationContextValue | null>(null);
-
-const loadStoredNotifications = (): NotificationRecord[] => {
-  if (typeof window === "undefined") {
-    return defaultNotifications;
-  }
-
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (!stored) {
-      return defaultNotifications;
-    }
-
-    const parsed = JSON.parse(stored) as NotificationRecord[];
-    if (!Array.isArray(parsed)) {
-      return defaultNotifications;
-    }
-
-    return parsed.map((notification) => ({
-      ...notification,
-      createdAt: notification.createdAt || new Date().toISOString(),
-      readBy: notification.readBy || [],
-      hiddenFor: notification.hiddenFor || [],
-    }));
-  } catch (error) {
-    console.warn("Unable to read notifications from storage", error);
-    return defaultNotifications;
-  }
-};
 
 export function NotificationProvider({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
-  const [notifications, setNotifications] = useState<NotificationRecord[]>(() =>
-    loadStoredNotifications()
-  );
+  const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await listNotifications();
+      setNotifications(data);
+    } catch (error) {
+      console.error("Failed to load notifications", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
-  }, [notifications]);
+    void refresh();
+  }, [refresh]);
 
   const getNotificationsFor = useCallback(
     (channel: NotificationChannel) =>
@@ -158,120 +90,70 @@ export function NotificationProvider({
   );
 
   const sendNotification = useCallback(
-    (input: CreateNotificationInput) => {
-      if (!input.title.trim() || !input.message.trim()) {
-        return;
+    async (input: CreateNotificationInput) => {
+      try {
+        await createNotificationAction(input);
+        await refresh();
+      } catch (error) {
+        console.error("Failed to send notification", error);
       }
-
-      const uniqueTargets = Array.from(new Set(input.targets));
-
-      setNotifications((prev) => [
-        {
-          id: crypto.randomUUID(),
-          title: input.title.trim(),
-          message: input.message.trim(),
-          type: input.type ?? "system",
-          priority: input.priority ?? "medium",
-          sender: input.sender,
-          createdAt: new Date().toISOString(),
-          targets: uniqueTargets,
-          readBy: [],
-          hiddenFor: [],
-        },
-        ...prev,
-      ]);
     },
-    []
+    [refresh]
   );
 
   const markNotificationAsRead = useCallback(
-    (id: string, channel?: NotificationChannel) => {
-      setNotifications((prev) =>
-        prev.map((notification) => {
-          if (notification.id !== id) {
-            return notification;
-          }
-
-          if (!channel) {
-            return {
-              ...notification,
-              readBy: Array.from(
-                new Set([...notification.readBy, ...notification.targets])
-              ),
-            };
-          }
-
-          if (!notification.targets.includes(channel)) {
-            return notification;
-          }
-
-          if (notification.readBy.includes(channel)) {
-            return notification;
-          }
-
-          return {
-            ...notification,
-            readBy: [...notification.readBy, channel],
-          };
-        })
-      );
+    async (id: string, channel?: NotificationChannel) => {
+      try {
+        await markNotificationReadAction(id, channel);
+        await refresh();
+      } catch (error) {
+        console.error("Failed to mark notification as read", error);
+      }
     },
-    []
+    [refresh]
   );
 
   const markChannelAsRead = useCallback(
-    (channel: NotificationChannel) => {
-      setNotifications((prev) =>
-        prev.map((notification) => {
-          if (!notification.targets.includes(channel)) {
-            return notification;
-          }
-
-          if (notification.readBy.includes(channel)) {
-            return notification;
-          }
-
-          return {
-            ...notification,
-            readBy: [...notification.readBy, channel],
-          };
-        })
-      );
+    async (channel: NotificationChannel) => {
+      try {
+        await markChannelReadAction(channel);
+        await refresh();
+      } catch (error) {
+        console.error("Failed to mark channel as read", error);
+      }
     },
-    []
+    [refresh]
   );
 
   const dismissNotification = useCallback(
-    (id: string, channel: NotificationChannel) => {
-      setNotifications((prev) =>
-        prev.map((notification) => {
-          if (notification.id !== id) {
-            return notification;
-          }
-
-          if (notification.hiddenFor.includes(channel)) {
-            return notification;
-          }
-
-          return {
-            ...notification,
-            hiddenFor: [...notification.hiddenFor, channel],
-          };
-        })
-      );
+    async (id: string, channel: NotificationChannel) => {
+      try {
+        await dismissNotificationAction(id, channel);
+        await refresh();
+      } catch (error) {
+        console.error("Failed to dismiss notification", error);
+      }
     },
-    []
+    [refresh]
   );
 
-  const deleteNotification = useCallback((id: string) => {
-    setNotifications((prev) =>
-      prev.filter((notification) => notification.id !== id)
-    );
-  }, []);
+  const deleteNotification = useCallback(
+    async (id: string) => {
+      try {
+        await deleteNotificationAction(id);
+        await refresh();
+      } catch (error) {
+        console.error("Failed to delete notification", error);
+      }
+    },
+    [refresh]
+  );
 
   const value = useMemo<NotificationContextValue>(
     () => ({
       notifications,
+      isLoading,
+      refresh,
       getNotificationsFor,
       getUnreadCount,
       sendNotification,
@@ -282,6 +164,8 @@ export function NotificationProvider({
     }),
     [
       notifications,
+      isLoading,
+      refresh,
       getNotificationsFor,
       getUnreadCount,
       sendNotification,

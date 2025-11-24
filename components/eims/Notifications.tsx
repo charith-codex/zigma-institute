@@ -22,19 +22,13 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Bell,
   Search,
-  Filter,
   Clock,
   CheckCheck,
   Trash2,
   Send,
-  Users,
-  Calendar,
-  DollarSign,
-  BookOpen,
-  GraduationCap,
-  Settings,
   Archive,
   Eye,
+  Settings,
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -44,21 +38,10 @@ import {
 
 interface Notification {
   id: string;
-  type:
-    | "student"
-    | "exam"
-    | "payment"
-    | "system"
-    | "class"
-    | "teacher"
-    | "announcement";
   title: string;
   message: string;
   timestamp: Date;
   read: boolean;
-  priority: "low" | "medium" | "high";
-  actionUrl?: string;
-  sender?: string;
   targets: NotificationChannel[];
 }
 
@@ -73,110 +56,55 @@ export function Notifications() {
     () =>
       storedNotifications.map((notification) => ({
         id: notification.id,
-        type: notification.type,
         title: notification.title,
         message: notification.message,
         timestamp: new Date(notification.createdAt),
         read: notification.readBy.length === notification.targets.length,
-        priority: notification.priority,
-        sender: notification.sender,
         targets: notification.targets,
       })),
     [storedNotifications]
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<string>("all");
   const [filterRead, setFilterRead] = useState<string>("all");
   const [activeTab, setActiveTab] = useState("inbox");
 
   // Compose notification state
   const [composeTitle, setComposeTitle] = useState("");
   const [composeMessage, setComposeMessage] = useState("");
-  const [composePriority, setComposePriority] = useState<
-    "low" | "medium" | "high"
-  >("medium");
   const [composeTargets, setComposeTargets] = useState<NotificationChannel[]>([
     "lms",
     "cms",
   ]);
 
-  const getNotificationIcon = (type: Notification["type"]) => {
-    const iconMap = {
-      student: Users,
-      exam: Calendar,
-      payment: DollarSign,
-      system: Settings,
-      class: BookOpen,
-      teacher: GraduationCap,
-      announcement: Bell,
-    };
-    const IconComponent = iconMap[type];
-    return <IconComponent className="h-4 w-4" />;
-  };
-
-  const getPriorityColor = (
-    priority: Notification["priority"],
-    read: boolean
-  ) => {
-    if (read) return "text-muted-foreground";
-
-    switch (priority) {
-      case "high":
-        return "text-destructive";
-      case "medium":
-        return "text-warning";
-      case "low":
-        return "text-success";
-      default:
-        return "text-foreground";
-    }
-  };
-
-  const getPriorityBadge = (priority: Notification["priority"]) => {
-    const variants = {
-      high: "destructive",
-      medium: "secondary",
-      low: "outline",
-    } as const;
-
-    return (
-      <Badge variant={variants[priority]} className="text-xs">
-        {priority.charAt(0).toUpperCase() + priority.slice(1)}
-      </Badge>
-    );
-  };
-
   const filteredNotifications = notifications.filter((notification) => {
     const matchesSearch =
       notification.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      notification.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      notification.sender?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesType =
-      filterType === "all" || notification.type === filterType;
+      notification.message.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesRead =
       filterRead === "all" ||
       (filterRead === "read" && notification.read) ||
       (filterRead === "unread" && !notification.read);
 
-    return matchesSearch && matchesType && matchesRead;
+    return matchesSearch && matchesRead;
   });
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const markAsRead = (id: string) => {
-    markNotificationAsRead(id);
+  const markAsRead = async (id: string) => {
+    await markNotificationAsRead(id);
   };
 
-  const markAllAsRead = () => {
-    notifications.forEach((notification) =>
-      markNotificationAsRead(notification.id)
+  const markAllAsRead = async () => {
+    await Promise.all(
+      notifications.map((notification) =>
+        markNotificationAsRead(notification.id)
+      )
     );
   };
 
-  const deleteNotification = (id: string) => {
-    removeNotification(id);
+  const deleteNotification = async (id: string) => {
+    await removeNotification(id);
   };
 
   const toggleComposeTarget = (target: NotificationChannel) => {
@@ -192,21 +120,17 @@ export function Notifications() {
     composeMessage.trim().length > 0 &&
     composeTargets.length > 0;
 
-  const sendNotification = () => {
+  const sendNotification = async () => {
     if (!canSend) return;
 
-    pushNotification({
+    await pushNotification({
       title: composeTitle,
       message: composeMessage,
-      priority: composePriority,
-      type: "system",
-      sender: "Management",
       targets: composeTargets,
     });
 
     setComposeTitle("");
     setComposeMessage("");
-    setComposePriority("medium");
     setComposeTargets(["lms", "cms"]);
     setActiveTab("inbox");
   };
@@ -287,22 +211,6 @@ export function Notifications() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger className="w-40">
-                      <Filter className="h-4 w-4 mr-2" />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="student">Student</SelectItem>
-                      <SelectItem value="exam">Exam</SelectItem>
-                      <SelectItem value="payment">Payment</SelectItem>
-                      <SelectItem value="system">System</SelectItem>
-                      <SelectItem value="class">Course</SelectItem>
-                      <SelectItem value="teacher">Teacher</SelectItem>
-                    </SelectContent>
-                  </Select>
-
                   <Select value={filterRead} onValueChange={setFilterRead}>
                     <SelectTrigger className="w-32">
                       <SelectValue />
@@ -327,7 +235,6 @@ export function Notifications() {
                     </h3>
                     <p className="text-sm text-muted-foreground">
                       {searchQuery ||
-                      filterType !== "all" ||
                       filterRead !== "all"
                         ? "Try adjusting your filters"
                         : "You're all caught up!"}
@@ -344,7 +251,7 @@ export function Notifications() {
                       <div
                         className={`p-2 rounded-lg ${!notification.read ? "bg-primary/10" : "bg-muted"}`}
                       >
-                        {getNotificationIcon(notification.type)}
+                        <Bell className="h-4 w-4" />
                       </div>
 
                       <div className="flex-1 space-y-1">
@@ -352,14 +259,17 @@ export function Notifications() {
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <h4
-                                className={`font-medium text-sm ${getPriorityColor(notification.priority, notification.read)}`}
+                                className={`font-medium text-sm ${
+                                  notification.read
+                                    ? "text-muted-foreground"
+                                    : "text-foreground"
+                                }`}
                               >
                                 {notification.title}
                               </h4>
                               {!notification.read && (
                                 <div className="h-2 w-2 bg-primary rounded-full"></div>
                               )}
-                              {getPriorityBadge(notification.priority)}
                             </div>
                             <p className="text-sm text-muted-foreground line-clamp-2">
                               {notification.message}
@@ -380,12 +290,6 @@ export function Notifications() {
                               {format(
                                 notification.timestamp,
                                 "MMM d, yyyy 'at' h:mm a"
-                              )}
-                              {notification.sender && (
-                                <>
-                                  <span>•</span>
-                                  <span>{notification.sender}</span>
-                                </>
                               )}
                             </div>
                           </div>
@@ -437,32 +341,26 @@ export function Notifications() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Deliver to</label>
                 <div className="flex flex-wrap gap-2">
-                  {[
-                    { id: "lms", label: "Student LMS" },
-                    { id: "cms", label: "Teacher CMS" },
-                  ].map((option) => (
-                    <Button
-                      key={option.id}
-                      type="button"
-                      variant={
-                        composeTargets.includes(
-                          option.id as NotificationChannel
-                        )
-                          ? "default"
-                          : "outline"
-                      }
-                      className="h-9"
-                      onClick={() =>
-                        toggleComposeTarget(option.id as NotificationChannel)
-                      }
-                    >
-                      {option.label}
-                    </Button>
-                  ))}
+                  {[{ id: "lms", label: "Student LMS" }, { id: "cms", label: "Teacher CMS" }].map(
+                    (option) => (
+                      <Button
+                        key={option.id}
+                        type="button"
+                        variant={
+                          composeTargets.includes(option.id as NotificationChannel)
+                            ? "default"
+                            : "outline"
+                        }
+                        className="h-9"
+                        onClick={() => toggleComposeTarget(option.id as NotificationChannel)}
+                      >
+                        {option.label}
+                      </Button>
+                    )
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Management and IT admins can alert LMS, CMS or both platforms
-                  at once.
+                  Management and IT admins can alert LMS, CMS or both platforms at once.
                 </p>
               </div>
 
@@ -474,25 +372,6 @@ export function Notifications() {
                     value={composeTitle}
                     onChange={(e) => setComposeTitle(e.target.value)}
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Priority</label>
-                  <Select
-                    value={composePriority}
-                    onValueChange={(value: "low" | "medium" | "high") =>
-                      setComposePriority(value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low Priority</SelectItem>
-                      <SelectItem value="medium">Medium Priority</SelectItem>
-                      <SelectItem value="high">High Priority</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
 
@@ -512,7 +391,6 @@ export function Notifications() {
                   onClick={() => {
                     setComposeTitle("");
                     setComposeMessage("");
-                    setComposePriority("medium");
                     setComposeTargets(["lms", "cms"]);
                   }}
                 >
@@ -539,7 +417,7 @@ export function Notifications() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
+                {[ 
                   {
                     title: "Exam Reminder",
                     description: "Remind students about upcoming exams",
@@ -547,7 +425,6 @@ export function Notifications() {
                       title: "Upcoming Exam Reminder",
                       message:
                         "This is a reminder that your [Subject] exam is scheduled for [Date] at [Time]. Please ensure you arrive 15 minutes early and bring required materials.",
-                      priority: "medium" as const,
                     },
                   },
                   {
@@ -557,7 +434,6 @@ export function Notifications() {
                       title: "Course Cancelled",
                       message:
                         "The [Subject] class scheduled for [Date] at [Time] has been cancelled due to [Reason]. We apologize for any inconvenience.",
-                      priority: "high" as const,
                     },
                   },
                   {
@@ -567,7 +443,6 @@ export function Notifications() {
                       title: "Fee Payment Reminder",
                       message:
                         "This is a friendly reminder that your fee payment of $[Amount] is due on [Date]. Please make the payment to avoid late fees.",
-                      priority: "medium" as const,
                     },
                   },
                   {
@@ -577,7 +452,6 @@ export function Notifications() {
                       title: "Scheduled System Maintenance",
                       message:
                         "The system will be under maintenance on [Date] from [Start Time] to [End Time]. During this period, the system will be temporarily unavailable.",
-                      priority: "low" as const,
                     },
                   },
                 ].map((template, index) => (
@@ -587,7 +461,6 @@ export function Notifications() {
                     onClick={() => {
                       setComposeTitle(template.template.title);
                       setComposeMessage(template.template.message);
-                      setComposePriority(template.template.priority);
                     }}
                   >
                     <h4 className="font-medium">{template.title}</h4>

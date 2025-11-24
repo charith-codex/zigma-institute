@@ -12,36 +12,27 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Send } from "lucide-react";
-import {
-  NotificationPriority,
-  useNotificationCenter,
-} from "@/components/providers/notification-provider";
+import { useNotificationCenter } from "@/components/providers/notification-provider";
 
 export function TeacherNotificationComposer() {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
-  const [priority, setPriority] = useState<NotificationPriority>("medium");
   const { sendNotification } = useNotificationCenter();
 
   const canSend = title.trim().length > 0 && message.trim().length > 0;
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!canSend) return;
 
-    sendNotification({
+    await sendNotification({
       title,
       message,
-      priority,
-      type: "class",
       targets: ["lms"],
-      sender: "Course Instructor",
     });
 
     setTitle("");
     setMessage("");
-    setPriority("medium");
   };
 
   return (
@@ -67,23 +58,6 @@ export function TeacherNotificationComposer() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="teacher-notification-priority">Priority</Label>
-          <Select
-            value={priority}
-            onValueChange={(value: NotificationPriority) => setPriority(value)}
-          >
-            <SelectTrigger id="teacher-notification-priority">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="low">Low</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
           <Label htmlFor="teacher-notification-message">Message</Label>
           <Textarea
             id="teacher-notification-message"
@@ -106,7 +80,6 @@ export function TeacherNotificationComposer() {
             onClick={() => {
               setTitle("");
               setMessage("");
-              setPriority("medium");
             }}
           >
             Reset
