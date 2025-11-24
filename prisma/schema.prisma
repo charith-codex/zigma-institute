@@ -55,6 +55,11 @@ enum UserStatus {
   INACTIVE
 }
 
+enum NotificationChannel {
+  LMS
+  CMS
+}
+
 model VerificationToken {
   id      String   @id @default(uuid())
   email   String
@@ -99,6 +104,16 @@ model Staff {
   nic    String? @unique
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String                 @id @default(uuid())
+  title     String
+  message   String
+  targets   NotificationChannel[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Course {
