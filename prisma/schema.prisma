@@ -113,8 +113,6 @@ model Notification {
   title     String
   message   String
   targets   NotificationChannel[]
-  readBy    NotificationChannel[]  @default([])
-  hiddenFor NotificationChannel[]  @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

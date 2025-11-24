@@ -6,8 +6,6 @@ export interface NotificationRecord {
   message: string;
   createdAt: string;
   targets: NotificationChannel[];
-  readBy: NotificationChannel[];
-  hiddenFor: NotificationChannel[];
 }
 
 export interface CreateNotificationInput {

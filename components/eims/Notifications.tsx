@@ -9,26 +9,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Bell,
   Search,
   Clock,
-  CheckCheck,
   Trash2,
   Send,
-  Archive,
-  Eye,
-  Settings,
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -41,7 +29,6 @@ interface Notification {
   title: string;
   message: string;
   timestamp: Date;
-  read: boolean;
   targets: NotificationChannel[];
 }
 
@@ -49,7 +36,6 @@ export function Notifications() {
   const {
     notifications: storedNotifications,
     sendNotification: pushNotification,
-    markNotificationAsRead,
     deleteNotification: removeNotification,
   } = useNotificationCenter();
   const notifications = useMemo<Notification[]>(
@@ -59,13 +45,11 @@ export function Notifications() {
         title: notification.title,
         message: notification.message,
         timestamp: new Date(notification.createdAt),
-        read: notification.readBy.length === notification.targets.length,
         targets: notification.targets,
       })),
     [storedNotifications]
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterRead, setFilterRead] = useState<string>("all");
   const [activeTab, setActiveTab] = useState("inbox");
 
   // Compose notification state
@@ -81,27 +65,10 @@ export function Notifications() {
       notification.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       notification.message.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesRead =
-      filterRead === "all" ||
-      (filterRead === "read" && notification.read) ||
-      (filterRead === "unread" && !notification.read);
-
-    return matchesSearch && matchesRead;
+    return matchesSearch;
   });
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const markAsRead = async (id: string) => {
-    await markNotificationAsRead(id);
-  };
-
-  const markAllAsRead = async () => {
-    await Promise.all(
-      notifications.map((notification) =>
-        markNotificationAsRead(notification.id)
-      )
-    );
-  };
+  const notificationCount = notifications.length;
 
   const deleteNotification = async (id: string) => {
     await removeNotification(id);
@@ -148,21 +115,14 @@ export function Notifications() {
             </h1>
             <p className="text-muted-foreground">
               Manage and view all system notifications
-              {unreadCount > 0 && (
-                <Badge variant="destructive" className="ml-2">
-                  {unreadCount} unread
+              {notificationCount > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {notificationCount} total
                 </Badge>
               )}
             </p>
           </div>
         </div>
-
-        {unreadCount > 0 && (
-          <Button onClick={markAllAsRead} variant="outline" size="sm">
-            <CheckCheck className="h-4 w-4 mr-2" />
-            Mark All Read
-          </Button>
-        )}
       </div>
 
       <Tabs
@@ -170,27 +130,14 @@ export function Notifications() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="inbox" className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
             Inbox
-            {unreadCount > 0 && (
-              <Badge variant="destructive" className="ml-1 text-xs">
-                {unreadCount}
-              </Badge>
-            )}
           </TabsTrigger>
           <TabsTrigger value="compose" className="flex items-center gap-2">
             <Send className="h-4 w-4" />
             Compose
-          </TabsTrigger>
-          <TabsTrigger value="archive" className="flex items-center gap-2">
-            <Archive className="h-4 w-4" />
-            Archive
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Settings
           </TabsTrigger>
         </TabsList>
 
@@ -209,19 +156,6 @@ export function Notifications() {
                     />
                   </div>
                 </div>
-
-                <div className="flex gap-2">
-                  <Select value={filterRead} onValueChange={setFilterRead}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="unread">Unread</SelectItem>
-                      <SelectItem value="read">Read</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             </CardHeader>
 
@@ -234,22 +168,19 @@ export function Notifications() {
                       No notifications found
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {searchQuery ||
-                      filterRead !== "all"
-                        ? "Try adjusting your filters"
+                      {searchQuery
+                        ? "Try a different search"
                         : "You're all caught up!"}
                     </p>
                   </div>
                 ) : (
-                  filteredNotifications.map((notification, index) => (
+                  filteredNotifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`flex items-start gap-3 p-4 hover:bg-muted/50 border-b border-border last:border-b-0 transition-colors ${
-                        !notification.read ? "bg-primary/5" : ""
-                      }`}
+                      className="flex items-start gap-3 p-4 hover:bg-muted/50 border-b border-border last:border-b-0 transition-colors"
                     >
                       <div
-                        className={`p-2 rounded-lg ${!notification.read ? "bg-primary/10" : "bg-muted"}`}
+                        className="p-2 rounded-lg bg-muted"
                       >
                         <Bell className="h-4 w-4" />
                       </div>
@@ -259,17 +190,10 @@ export function Notifications() {
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <h4
-                                className={`font-medium text-sm ${
-                                  notification.read
-                                    ? "text-muted-foreground"
-                                    : "text-foreground"
-                                }`}
+                                className="font-medium text-sm text-foreground"
                               >
                                 {notification.title}
                               </h4>
-                              {!notification.read && (
-                                <div className="h-2 w-2 bg-primary rounded-full"></div>
-                              )}
                             </div>
                             <p className="text-sm text-muted-foreground line-clamp-2">
                               {notification.message}
@@ -292,22 +216,12 @@ export function Notifications() {
                                 "MMM d, yyyy 'at' h:mm a"
                               )}
                             </div>
-                          </div>
+                        </div>
 
-                          <div className="flex items-center gap-1">
-                            {!notification.read && (
-                              <Button
-                                onClick={() => markAsRead(notification.id)}
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            )}
-                            <Button
-                              onClick={() =>
-                                deleteNotification(notification.id)
+                        <div className="flex items-center gap-1">
+                          <Button
+                            onClick={() =>
+                              deleteNotification(notification.id)
                               }
                               variant="ghost"
                               size="sm"
@@ -472,123 +386,6 @@ export function Notifications() {
                     </Button>
                   </div>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="archive" className="space-y-6">
-          <Card className="edu-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Archive className="h-5 w-5 text-primary" />
-                Notification Archive
-              </CardTitle>
-              <CardDescription>
-                View and manage archived notifications
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Archive className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-muted-foreground">
-                  No archived notifications
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Notifications will appear here when they are archived
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="settings" className="space-y-6">
-          <Card className="edu-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5 text-primary" />
-                Notification Settings
-              </CardTitle>
-              <CardDescription>
-                Configure notification preferences and templates
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <h4 className="font-medium">Auto-delete Settings</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 border border-border rounded-lg">
-                    <h5 className="font-medium mb-2">Read Notifications</h5>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Automatically delete read notifications after:
-                    </p>
-                    <Select defaultValue="30">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="7">7 days</SelectItem>
-                        <SelectItem value="30">30 days</SelectItem>
-                        <SelectItem value="90">90 days</SelectItem>
-                        <SelectItem value="never">Never</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="p-4 border border-border rounded-lg">
-                    <h5 className="font-medium mb-2">Unread Notifications</h5>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Automatically delete unread notifications after:
-                    </p>
-                    <Select defaultValue="never">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="30">30 days</SelectItem>
-                        <SelectItem value="90">90 days</SelectItem>
-                        <SelectItem value="180">180 days</SelectItem>
-                        <SelectItem value="never">Never</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h4 className="font-medium">Default Recipients</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
-                    {
-                      type: "Student Activities",
-                      recipients: "All Students, Course Teachers",
-                    },
-                    {
-                      type: "Exam Updates",
-                      recipients: "All Students, Academic Staff",
-                    },
-                    {
-                      type: "Fee Reminders",
-                      recipients: "Students, Finance Team",
-                    },
-                    { type: "System Alerts", recipients: "All Administrators" },
-                  ].map((setting, index) => (
-                    <div
-                      key={index}
-                      className="p-4 border border-border rounded-lg"
-                    >
-                      <h5 className="font-medium mb-2">{setting.type}</h5>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Current: {setting.recipients}
-                      </p>
-                      <Button variant="outline" size="sm">
-                        Configure
-                      </Button>
-                    </div>
-                  ))}
-                </div>
               </div>
             </CardContent>
           </Card>

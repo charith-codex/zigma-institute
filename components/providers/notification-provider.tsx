@@ -12,11 +12,8 @@ import {
 import {
   createNotification as createNotificationAction,
   deleteNotification as deleteNotificationAction,
-  dismissNotification as dismissNotificationAction,
   listNotifications,
-  markChannelRead as markChannelReadAction,
-  markNotificationRead as markNotificationReadAction,
-} from "@/lib/actions/notifications";
+} from "@/app/actions/notifications";
 import type {
   CreateNotificationInput,
   NotificationChannel,
@@ -36,12 +33,6 @@ interface NotificationContextValue {
   getNotificationsFor: (channel: NotificationChannel) => NotificationRecord[];
   getUnreadCount: (channel: NotificationChannel) => number;
   sendNotification: (input: CreateNotificationInput) => Promise<void>;
-  markNotificationAsRead: (
-    id: string,
-    channel?: NotificationChannel
-  ) => Promise<void>;
-  markChannelAsRead: (channel: NotificationChannel) => Promise<void>;
-  dismissNotification: (id: string, channel: NotificationChannel) => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
 }
 
@@ -73,19 +64,14 @@ export function NotificationProvider({
 
   const getNotificationsFor = useCallback(
     (channel: NotificationChannel) =>
-      notifications.filter(
-        (notification) =>
-          notification.targets.includes(channel) &&
-          !notification.hiddenFor.includes(channel)
+      notifications.filter((notification) =>
+        notification.targets.includes(channel)
       ),
     [notifications]
   );
 
   const getUnreadCount = useCallback(
-    (channel: NotificationChannel) =>
-      getNotificationsFor(channel).filter(
-        (notification) => !notification.readBy.includes(channel)
-      ).length,
+    (channel: NotificationChannel) => getNotificationsFor(channel).length,
     [getNotificationsFor]
   );
 
@@ -96,42 +82,6 @@ export function NotificationProvider({
         await refresh();
       } catch (error) {
         console.error("Failed to send notification", error);
-      }
-    },
-    [refresh]
-  );
-
-  const markNotificationAsRead = useCallback(
-    async (id: string, channel?: NotificationChannel) => {
-      try {
-        await markNotificationReadAction(id, channel);
-        await refresh();
-      } catch (error) {
-        console.error("Failed to mark notification as read", error);
-      }
-    },
-    [refresh]
-  );
-
-  const markChannelAsRead = useCallback(
-    async (channel: NotificationChannel) => {
-      try {
-        await markChannelReadAction(channel);
-        await refresh();
-      } catch (error) {
-        console.error("Failed to mark channel as read", error);
-      }
-    },
-    [refresh]
-  );
-
-  const dismissNotification = useCallback(
-    async (id: string, channel: NotificationChannel) => {
-      try {
-        await dismissNotificationAction(id, channel);
-        await refresh();
-      } catch (error) {
-        console.error("Failed to dismiss notification", error);
       }
     },
     [refresh]
@@ -157,9 +107,6 @@ export function NotificationProvider({
       getNotificationsFor,
       getUnreadCount,
       sendNotification,
-      markNotificationAsRead,
-      markChannelAsRead,
-      dismissNotification,
       deleteNotification,
     }),
     [
@@ -169,9 +116,6 @@ export function NotificationProvider({
       getNotificationsFor,
       getUnreadCount,
       sendNotification,
-      markNotificationAsRead,
-      markChannelAsRead,
-      dismissNotification,
       deleteNotification,
     ]
   );

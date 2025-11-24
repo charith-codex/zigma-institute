@@ -10,12 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import {
-  Bell,
-  X,
-  Clock,
-  Calendar,
-} from "lucide-react";
+import { Bell, Clock, Calendar } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { NotificationChannel, useNotificationCenter } from "@/components/providers/notification-provider";
 
@@ -30,9 +25,6 @@ export function NotificationDropdown({
   const {
     getNotificationsFor,
     getUnreadCount,
-    markNotificationAsRead,
-    markChannelAsRead,
-    dismissNotification,
   } = useNotificationCenter();
 
   const notifications = useMemo(
@@ -40,18 +32,6 @@ export function NotificationDropdown({
     [channel, getNotificationsFor]
   );
   const unreadCount = getUnreadCount(channel);
-
-  const markAsRead = async (id: string) => {
-    await markNotificationAsRead(id, channel);
-  };
-
-  const markAllAsRead = async () => {
-    await markChannelAsRead(channel);
-  };
-
-  const deleteNotification = async (id: string) => {
-    await dismissNotification(id, channel);
-  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -82,16 +62,6 @@ export function NotificationDropdown({
                   </Badge>
                 )}
               </CardTitle>
-              {unreadCount > 0 && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={markAllAsRead}
-                  className="text-xs h-7 px-3"
-                >
-                  Mark all read
-                </Button>
-              )}
             </div>
           </CardHeader>
           <Separator />
@@ -108,52 +78,22 @@ export function NotificationDropdown({
               ) : (
                 <div className="divide-y divide-border/50">
                   {notifications.map((notification) => {
-                    const isRead = notification.readBy.includes(channel);
                     return (
                       <div
                         key={notification.id}
-                        className={`p-4 hover:bg-muted/30 transition-colors cursor-pointer ${
-                          !isRead ? "bg-primary/5" : ""
-                        }`}
-                        onClick={() => markAsRead(notification.id)}
+                        className="p-4 hover:bg-muted/30 transition-colors"
                       >
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 mt-1">
-                          <Bell className="w-4 h-4 text-primary" />
-                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 mt-1">
+                            <Bell className="w-4 h-4 text-primary" />
+                          </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between mb-1">
-                              <h4
-                                className={`font-medium text-sm ${
-                                  !isRead
-                                    ? "text-foreground"
-                                    : "text-muted-foreground"
-                                }`}
-                              >
+                              <h4 className="font-medium text-sm text-foreground">
                                 {notification.title}
                               </h4>
-                              <div className="flex items-center gap-1 ml-2">
-                                {!isRead && (
-                                  <div className="w-2 h-2 bg-primary rounded-full" />
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    deleteNotification(notification.id);
-                                  }}
-                                  className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
-                                >
-                                  <X className="w-3 h-3" />
-                                </Button>
-                              </div>
                             </div>
-                            <p
-                              className={`text-xs mb-2 ${
-                                isRead ? "text-muted-foreground" : "text-foreground"
-                              }`}
-                            >
+                            <p className="text-xs mb-2 text-foreground">
                               {notification.message}
                             </p>
                             <div className="flex items-center gap-2">
