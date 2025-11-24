@@ -29,18 +29,16 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Eye, MessageCircle, Mail, Phone, Flag } from "lucide-react";
+import { Search, Eye, MessageCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 interface Inquiry {
   id: string;
   name: string;
   email: string;
-  phone: string;
   subject: string;
   message: string;
   inquiryType: "general" | "admission" | "technical" | "complaint" | "feedback";
-  priority: "low" | "medium" | "high" | "urgent";
   status: "new" | "in_progress" | "resolved" | "closed";
   submittedAt: string;
   respondedAt?: string;
@@ -53,12 +51,10 @@ const mockInquiries: Inquiry[] = [
     id: "INQ-001",
     name: "John Smith",
     email: "john.smith@email.com",
-    phone: "+1-555-0301",
     subject: "Course Information Request",
     message:
       "I would like to know more about your Computer Science program, including the curriculum, duration, and admission requirements.",
     inquiryType: "admission",
-    priority: "medium",
     status: "new",
     submittedAt: "2024-01-15T14:30:00",
   },
@@ -66,12 +62,10 @@ const mockInquiries: Inquiry[] = [
     id: "INQ-002",
     name: "Emily Johnson",
     email: "emily.johnson@email.com",
-    phone: "+1-555-0302",
     subject: "Technical Issue with Portal",
     message:
       "I'm having trouble accessing the student portal. It shows an error message when I try to log in with my credentials.",
     inquiryType: "technical",
-    priority: "high",
     status: "in_progress",
     submittedAt: "2024-01-14T16:45:00",
     assignedTo: "IT Support Team",
@@ -80,12 +74,10 @@ const mockInquiries: Inquiry[] = [
     id: "INQ-003",
     name: "Michael Davis",
     email: "michael.davis@email.com",
-    phone: "+1-555-0303",
     subject: "Fee Payment Query",
     message:
       "I need clarification on the fee structure for the Physics program and available payment plans.",
     inquiryType: "general",
-    priority: "low",
     status: "resolved",
     submittedAt: "2024-01-13T10:20:00",
     respondedAt: "2024-01-13T15:30:00",
@@ -97,12 +89,10 @@ const mockInquiries: Inquiry[] = [
     id: "INQ-004",
     name: "Sarah Wilson",
     email: "sarah.wilson@email.com",
-    phone: "+1-555-0304",
     subject: "Complaint about Course Schedule",
     message:
       "The recent changes to the course schedule are causing conflicts with my work schedule. This is affecting my ability to attend classes regularly.",
     inquiryType: "complaint",
-    priority: "urgent",
     status: "new",
     submittedAt: "2024-01-15T09:15:00",
   },
@@ -114,13 +104,6 @@ const inquiryTypeLabels = {
   technical: "Technical",
   complaint: "Complaint",
   feedback: "Feedback",
-};
-
-const priorityLabels = {
-  low: "Low",
-  medium: "Medium",
-  high: "High",
-  urgent: "Urgent",
 };
 
 const statusLabels = {
@@ -135,7 +118,6 @@ export function InquiryManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
   const [responseText, setResponseText] = useState("");
 
@@ -148,9 +130,7 @@ export function InquiryManagement() {
       typeFilter === "all" || inquiry.inquiryType === typeFilter;
     const matchesStatus =
       statusFilter === "all" || inquiry.status === statusFilter;
-    const matchesPriority =
-      priorityFilter === "all" || inquiry.priority === priorityFilter;
-    return matchesSearch && matchesType && matchesStatus && matchesPriority;
+    return matchesSearch && matchesType && matchesStatus;
   });
 
   const handleStatusChange = (id: string, newStatus: Inquiry["status"]) => {
@@ -160,18 +140,6 @@ export function InquiryManagement() {
       )
     );
     toast.success(`Inquiry status updated to ${statusLabels[newStatus]}`);
-  };
-
-  const handlePriorityChange = (
-    id: string,
-    newPriority: Inquiry["priority"]
-  ) => {
-    setInquiries((prev) =>
-      prev.map((inquiry) =>
-        inquiry.id === id ? { ...inquiry, priority: newPriority } : inquiry
-      )
-    );
-    toast.success(`Priority updated to ${priorityLabels[newPriority]}`);
   };
 
   const handleSendResponse = () => {
@@ -196,21 +164,6 @@ export function InquiryManagement() {
     toast.success("Response sent successfully");
   };
 
-  const getPriorityBadge = (priority: string) => {
-    const colors = {
-      low: "bg-muted/10 text-muted-foreground border-muted/20",
-      medium: "bg-warning/10 text-warning border-warning/20",
-      high: "bg-primary/10 text-primary border-primary/20",
-      urgent: "bg-destructive/10 text-destructive border-destructive/20",
-    };
-
-    return (
-      <Badge className={colors[priority as keyof typeof colors]}>
-        {priorityLabels[priority as keyof typeof priorityLabels]}
-      </Badge>
-    );
-  };
-
   const getStatusBadge = (status: string) => {
     const colors = {
       new: "bg-primary/10 text-primary border-primary/20",
@@ -228,7 +181,7 @@ export function InquiryManagement() {
 
   const getTypeBadge = (type: string) => {
     const colors = {
-      general: "bg-secondary/10 text-secondary border-secondary/20",
+      general: "bg-sky-400/10 text-sky-500 border-sky-600/20",
       admission: "bg-primary/10 text-primary border-primary/20",
       technical: "bg-warning/10 text-warning border-warning/20",
       complaint: "bg-destructive/10 text-destructive border-destructive/20",
@@ -254,7 +207,7 @@ export function InquiryManagement() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -301,18 +254,6 @@ export function InquiryManagement() {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Urgent
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              {inquiries.filter((i) => i.priority === "urgent").length}
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Inquiry List */}
@@ -344,19 +285,6 @@ export function InquiryManagement() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priority</SelectItem>
-                {Object.entries(priorityLabels).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Status" />
@@ -379,7 +307,6 @@ export function InquiryManagement() {
                 <TableHead>Contact Info</TableHead>
                 <TableHead>Subject</TableHead>
                 <TableHead>Type</TableHead>
-                <TableHead>Priority</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Submitted</TableHead>
                 <TableHead>Actions</TableHead>
@@ -396,10 +323,6 @@ export function InquiryManagement() {
                         <Mail className="w-3 h-3" />
                         {inquiry.email}
                       </div>
-                      <div className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Phone className="w-3 h-3" />
-                        {inquiry.phone}
-                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="max-w-xs">
@@ -411,28 +334,6 @@ export function InquiryManagement() {
                     </div>
                   </TableCell>
                   <TableCell>{getTypeBadge(inquiry.inquiryType)}</TableCell>
-                  <TableCell>
-                    <Select
-                      value={inquiry.priority}
-                      onValueChange={(value) =>
-                        handlePriorityChange(
-                          inquiry.id,
-                          value as Inquiry["priority"]
-                        )
-                      }
-                    >
-                      <SelectTrigger className="w-24 h-8">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(priorityLabels).map(([key, label]) => (
-                          <SelectItem key={key} value={key}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
                   <TableCell>
                     <Select
                       value={inquiry.status}
@@ -505,14 +406,6 @@ export function InquiryManagement() {
                                       {selectedInquiry.email}
                                     </p>
                                   </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-muted-foreground">
-                                      Phone
-                                    </label>
-                                    <p className="text-sm">
-                                      {selectedInquiry.phone}
-                                    </p>
-                                  </div>
                                 </div>
 
                                 <div className="space-y-3">
@@ -523,16 +416,6 @@ export function InquiryManagement() {
                                     <div className="mt-1">
                                       {getTypeBadge(
                                         selectedInquiry.inquiryType
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-muted-foreground">
-                                      Priority
-                                    </label>
-                                    <div className="mt-1">
-                                      {getPriorityBadge(
-                                        selectedInquiry.priority
                                       )}
                                     </div>
                                   </div>
@@ -610,10 +493,6 @@ export function InquiryManagement() {
                           </DialogFooter>
                         </DialogContent>
                       </Dialog>
-
-                      {inquiry.priority === "urgent" && (
-                        <Flag className="w-4 h-4 text-destructive" />
-                      )}
                     </div>
                   </TableCell>
                 </TableRow>

@@ -1,225 +1,151 @@
-import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-const contactChannels = [
-  {
-    title: "Admissions & Student Success",
-    description:
-      "Questions about registration, class placement, or student progress reporting? Our admissions mentors are ready to help.",
-    email: "admissions@zigmainstitute.lk",
-    phone: "+94 11 222 3344",
-    response: "Replies within one business day",
-  },
-  {
-    title: "Technical Support",
-    description:
-      "Need help accessing the LMS, resetting a password, or using QR attendance? Reach our IT administrators directly.",
-    email: "support@zigmainstitute.lk",
-    phone: "+94 11 555 6677",
-    response: "Live support 8.00 AM – 6.00 PM (GMT+5:30)",
-  },
-  {
-    title: "Partnerships & Media",
-    description:
-      "Collaborate on events, sponsorships, or academic initiatives that amplify student success across Sri Lanka.",
-    email: "partnerships@zigmainstitute.lk",
-    phone: "+94 77 123 4567",
-    response: "We respond within two business days",
-  },
-];
-
-const visitDetails = [
-  {
-    label: "Head Office",
-    value: "Colombo Innovation Hub, 512 Galle Road, Colombo 03",
-  },
-  {
-    label: "Operating Hours",
-    value: "Monday – Saturday: 8.00 AM to 6.30 PM",
-  },
-  {
-    label: "Hotline",
-    value: "+94 11 777 8899",
-  },
-  {
-    label: "WhatsApp",
-    value: "+94 76 555 8899",
-  },
-];
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Phone, Clock, Send } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function ContactPage() {
   return (
-    <div className="space-y-16 py-12">
-      <section className="grid gap-10 lg:grid-cols-[3fr_2fr] items-start">
-        <div className="space-y-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">
-            Contact
-          </p>
-          <h1 className="text-4xl font-bold leading-tight md:text-5xl">
-            We are here to support your journey from admission to alumni.
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Reach the right team for student enrollment, classroom experience,
-            or enterprise partnerships. We respond quickly and route requests to
-            the experts that can help you move forward.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Button asChild size="lg">
-              <Link href="tel:+94117778899">Call our hotline</Link>
-            </Button>
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <div className="bg-gradient-hero">
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-4xl mx-auto text-center">
+            <Badge className="mb-6">📞 Contact Us</Badge>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              Get in Touch
+            </h1>
+            <p className="text-xl leading-relaxed text-muted-foreground">
+              We are here to support your journey. Reach out to us for any
+              inquiries or assistance.
+            </p>
           </div>
         </div>
-        <Card className="bg-linear-to-br from-secondary/20 via-background to-primary/10">
-          <CardHeader>
-            <CardTitle className="text-2xl">Visit our institute</CardTitle>
-            <CardDescription>
-              Drop by to experience our smart classrooms, meet instructors, and
-              preview the LMS in action.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm text-muted-foreground">
-            {visitDetails.map((item) => (
-              <div key={item.label}>
-                <p className="font-medium text-foreground">{item.label}</p>
-                <p>{item.value}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </section>
+      </div>
 
-      <section className="space-y-8">
-        <div className="space-y-3">
-          <h2 className="text-3xl font-semibold">Talk with the right team</h2>
-          <p className="text-muted-foreground">
-            Every inquiry is tracked in our EIMS so the right staff member can
-            respond with context.
-          </p>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {contactChannels.map((channel) => (
-            <Card key={channel.title}>
-              <CardHeader className="space-y-2">
-                <CardTitle className="text-xl">{channel.title}</CardTitle>
-                <CardDescription>{channel.description}</CardDescription>
+      {/* Contact Info Cards */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {/* Address Card */}
+            <Card className="text-center hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MapPin className="w-8 h-8 text-primary" />
+                </div>
+                <CardTitle>Visit Us</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <div>
-                  <p className="font-medium text-foreground">Email</p>
-                  <Link
-                    href={`mailto:${channel.email}`}
-                    className="text-primary hover:underline"
-                  >
-                    {channel.email}
-                  </Link>
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">Phone</p>
-                  <Link
-                    href={`tel:${channel.phone.replace(/[^0-9+]/g, "")}`}
-                    className="text-primary hover:underline"
-                  >
-                    {channel.phone}
-                  </Link>
-                </div>
-                <p>{channel.response}</p>
+              <CardContent className="text-muted-foreground">
+                <p>Colombo Innovation Hub</p>
+                <p>512 Galle Road, Colombo 03</p>
               </CardContent>
             </Card>
-          ))}
+
+            {/* Contact Card */}
+            <Card className="text-center hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Phone className="w-8 h-8 text-primary" />
+                </div>
+                <CardTitle>Call Us</CardTitle>
+              </CardHeader>
+              <CardContent className="text-muted-foreground">
+                <p>Hotline: +94 11 777 8899</p>
+                <p>WhatsApp: +94 76 555 8899</p>
+              </CardContent>
+            </Card>
+
+            {/* Hours Card */}
+            <Card className="text-center hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Clock className="w-8 h-8 text-primary" />
+                </div>
+                <CardTitle>Opening Hours</CardTitle>
+              </CardHeader>
+              <CardContent className="text-muted-foreground">
+                <p>Monday – Saturday</p>
+                <p>8.00 AM to 6.30 PM</p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </section>
 
-      <section className="grid gap-8 lg:grid-cols-[3fr_2fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Send us a message</CardTitle>
-            <CardDescription>
-              Our team will reply with guidance tailored to your role—student,
-              parent, teacher, or partner.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full name</Label>
-                <Input id="name" name="name" placeholder="Amaya Perera" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="you@example.com"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  placeholder="(+94) 77 555 8899"
-                />
-              </div>
+      {/* Form Section */}
+      <section className="py-16 bg-muted/30 rounded-xl border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">Send us a Message</h2>
+              <p className="text-muted-foreground">
+                Have a question? Fill out the form below and we'll get back to
+                you shortly.
+              </p>
+            </div>
 
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="message">How can we help?</Label>
-                <textarea
-                  id="message"
-                  name="message"
-                  rows={5}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                  placeholder="Share your questions, goals, or the support you need."
-                />
-              </div>
-              <div className="md:col-span-2">
-                <Button type="submit" className="w-full md:w-auto">
-                  Submit inquiry
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-        <Card className="bg-muted/40">
-          <CardHeader>
-            <CardTitle className="text-2xl">Stay connected</CardTitle>
-            <CardDescription>
-              Join our community updates and receive event invites for students
-              and parents.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm text-muted-foreground">
-            <div>
-              <p className="font-medium text-foreground">Email newsletter</p>
-              <p>
-                Get monthly updates on new classes, webinars, and scholarships.
-              </p>
-            </div>
-            <div>
-              <p className="font-medium text-foreground">Social channels</p>
-              <p>
-                Follow us on Instagram, Facebook, and YouTube for behind-the-
-                scenes moments from classes and events.
-              </p>
-            </div>
-            <div>
-              <p className="font-medium text-foreground">Parent meetups</p>
-              <p>Quarterly sessions to review progress dashboards and goals.</p>
-            </div>
-            <Button asChild variant="outline">
-              <Link href="mailto:hello@zigmainstitute.lk">Join the list</Link>
-            </Button>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardContent className="p-6 md:p-8">
+                <form className="grid gap-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Full Name</Label>
+                      <Input id="name" placeholder="Your name" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="your@email.com"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="subject">Subject</Label>
+                    <Input id="subject" placeholder="How can we help?" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="inquiryType">Inquiry Type</Label>
+                    <Select defaultValue="general">
+                      <SelectTrigger id="inquiryType" className="h-11 w-full">
+                        <SelectValue placeholder="Select inquiry type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="general">General</SelectItem>
+                        <SelectItem value="admission">Admission</SelectItem>
+                        <SelectItem value="technical">Technical</SelectItem>
+                        <SelectItem value="complaint">Complaint</SelectItem>
+                        <SelectItem value="feedback">Feedback</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="message">Message</Label>
+                    <Textarea
+                      id="message"
+                      className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Type your message here..."
+                    />
+                  </div>
+                  <Button className="w-full md:w-auto md:self-start">
+                    <Send className="w-4 h-4 mr-2" />
+                    Send Message
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </section>
     </div>
   );
