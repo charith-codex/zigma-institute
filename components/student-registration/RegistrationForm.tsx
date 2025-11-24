@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -69,7 +69,7 @@ export function StudentRegistrationForm({
   instituteAddress,
 }: StudentRegistrationFormProps) {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<StudentRegistrationFormValues>({
     resolver: zodResolver(registrationSchema),
@@ -105,52 +105,53 @@ export function StudentRegistrationForm({
     };
   }, [courses, selectedCourseIds]);
 
-  const onSubmit = (values: StudentRegistrationFormValues) => {
+  const onSubmit = async (values: StudentRegistrationFormValues) => {
     if (!values.studentPhoto) {
       toast.error("Please upload a student passport-style photo (JPEG)");
       return;
     }
 
-    startTransition(() => {
-      const payload = {
-        name: values.name,
-        dateOfBirth: values.dateOfBirth,
-        email: values.email,
-        phone: values.phone,
-        address: values.address?.trim() ? values.address.trim() : null,
-        gender: values.gender ? values.gender : null,
-        guardianEmail: values.guardianEmail,
-        courses: values.courses,
-        studentPhoto: values.studentPhoto,
-      };
+    const payload = {
+      name: values.name,
+      dateOfBirth: values.dateOfBirth,
+      email: values.email,
+      phone: values.phone,
+      address: values.address?.trim() ? values.address.trim() : null,
+      gender: values.gender ? values.gender : null,
+      guardianEmail: values.guardianEmail,
+      courses: values.courses,
+      studentPhoto: values.studentPhoto,
+    };
 
-      fetch("/api/student-registration/checkout", {
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/student-registration/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
-      })
-        .then(async (response) => {
-          if (!response.ok) {
-            const payload = await response.json().catch(() => null);
-            throw new Error(payload?.error ?? "Unable to start checkout");
-          }
+      });
 
-          const payload = (await response.json()) as { url?: string };
-          if (!payload.url) {
-            throw new Error("Stripe did not return a checkout URL");
-          }
+      if (!response.ok) {
+        const errorPayload = await response.json().catch(() => null);
+        throw new Error(errorPayload?.error ?? "Unable to start checkout");
+      }
 
-          window.location.href = payload.url;
-        })
-        .catch((error) => {
-          console.error("Student registration checkout error", error);
-          toast.error(
-            error instanceof Error ? error.message : "Unable to start checkout"
-          );
-        });
-    });
+      const responsePayload = (await response.json()) as { url?: string };
+      if (!responsePayload.url) {
+        throw new Error("Stripe did not return a checkout URL");
+      }
+
+      window.location.href = responsePayload.url;
+    } catch (error) {
+      console.error("Student registration checkout error", error);
+      toast.error(
+        error instanceof Error ? error.message : "Unable to start checkout"
+      );
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -428,8 +429,10 @@ export function StudentRegistrationForm({
                   By submitting you agree to our privacy policy and confirm that
                   the information provided is accurate.
                 </p>
-                <Button type="submit" size="lg" disabled={isPending}>
-                  {isPending ? "Redirecting to Stripe…" : "Proceed to payment"}
+                <Button type="submit" size="lg" disabled={isSubmitting}>
+                  {isSubmitting
+                    ? "Redirecting to Stripe…"
+                    : "Proceed to payment"}
                 </Button>
               </div>
             </form>

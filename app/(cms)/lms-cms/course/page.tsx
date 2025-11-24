@@ -19,6 +19,7 @@ import { CourseContentManager } from "@/components/cms/CourseContentManager";
 import { useParams, useRouter } from "next/navigation";
 
 import { useSession } from "next-auth/react";
+import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleManager";
 
 const LMSCMS = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -69,6 +70,17 @@ const LMSCMS = () => {
 
   // Filter classes for the current teacher
   const teacherClasses = accessibleClasses;
+
+  const scheduleCourseOptions = useMemo(
+    () =>
+      teacherClasses.map((cls) => ({
+        id: cls.id,
+        name: cls.name,
+        teacherId: cls.teacher_id ?? `${cls.id}-teacher`,
+        teacherName: cls.teacher_name ?? "Instructor",
+      })),
+    [teacherClasses]
+  );
 
   const teacherInfo = {
     name: session?.user?.name || "Teacher",
@@ -679,19 +691,12 @@ const LMSCMS = () => {
                     )}
 
                     {activeModule === "schedule" && (
-                      <div className="space-y-6">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                          <div>
-                            <h1 className="text-2xl font-bold">
-                              Course Scheduling
-                            </h1>
-                            <p className="text-muted-foreground">
-                              Request new class sessions and manage your
-                              schedule
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+                      <CourseScheduleManager
+                        courseOptions={scheduleCourseOptions}
+                        heading="Course Scheduling"
+                        description="View course sessions on a large, responsive calendar."
+                        mode="view"
+                      />
                     )}
                   </div>
                 )}

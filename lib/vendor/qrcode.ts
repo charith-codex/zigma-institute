@@ -155,11 +155,7 @@ function getRSBlocks(typeNumber: number) {
   return list;
 }
 
-function createData(
-  typeNumber: number,
-  data: number[],
-  errorCorrectionLength: number
-): number[] {
+function createData(typeNumber: number, data: number[]): number[] {
   const rsBlocks = getRSBlocks(typeNumber);
   const buffer: number[] = [];
 
@@ -350,11 +346,61 @@ function stringToUtf8Bytes(input: string): number[] {
   return Array.from(Buffer.from(input, "utf8"));
 }
 
+export interface QrCodeColorOptions {
+  dark?: string;
+  light?: string;
+}
+
+export interface QrCodeToDataUrlOptions {
+  width?: number;
+  margin?: number;
+  color?: QrCodeColorOptions;
+}
+
+function buildQrSvg(
+  matrix: boolean[][],
+  options: QrCodeToDataUrlOptions = {}
+): string {
+  const margin = Math.max(0, options.margin ?? 2);
+  const dark = options.color?.dark ?? "#0f172a";
+  const light = options.color?.light ?? "#ffffff";
+  const viewSize = matrix.length + margin * 2;
+  const width = options.width ?? 220;
+  let cells = "";
+
+  for (let row = 0; row < matrix.length; row += 1) {
+    for (let col = 0; col < matrix[row]!.length; col += 1) {
+      if (matrix[row]![col]) {
+        cells += `<rect x="${col + margin}" y="${row + margin}" width="1" height="1" />`;
+      }
+    }
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${width}" viewBox="0 0 ${viewSize} ${viewSize}" shape-rendering="crispEdges">
+  <rect width="100%" height="100%" fill="${light}" />
+  <g fill="${dark}">${cells}</g>
+</svg>`;
+}
+
 export function createQrMatrix(input: string): boolean[][] {
   const data = stringToUtf8Bytes(input);
 
   const typeNumber = data.length > 80 ? 6 : data.length > 60 ? 5 : 4;
-  const errorCorrectionLength = 25; // approximate for versions used
-  const encoded = createData(typeNumber, data, errorCorrectionLength);
+  const encoded = createData(typeNumber, data);
   return createMatrix(typeNumber, encoded);
 }
+
+export async function toDataURL(
+  input: string,
+  options?: QrCodeToDataUrlOptions
+): Promise<string> {
+  const matrix = createQrMatrix(input);
+  const svg = buildQrSvg(matrix, options);
+  const data = Buffer.from(svg).toString("base64");
+  return `data:image/svg+xml;base64,${data}`;
+}
+
+const QRCode = { toDataURL };
+
+export default QRCode;

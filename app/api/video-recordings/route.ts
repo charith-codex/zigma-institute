@@ -13,12 +13,22 @@ const createSchema = z.object({
   fileUrl: z.string().url("fileUrl must be a valid URL"),
   uploadedById: z.string().optional().nullable(),
   courseId: z.string().optional().nullable(),
-  lessonId: z.string().optional().nullable(),
+  lessonId: z.string().min(1, "lessonId is required"),
 });
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const recordings = await getVideoRecordings();
+    const url = new URL(request.url);
+    const lessonId = url.searchParams.get("lessonId");
+
+    if (!lessonId) {
+      return NextResponse.json(
+        { error: "lessonId is required" },
+        { status: 400 }
+      );
+    }
+
+    const recordings = await getVideoRecordings(lessonId);
     return NextResponse.json(recordings);
   } catch (error) {
     console.error("Failed to fetch video recordings", error);

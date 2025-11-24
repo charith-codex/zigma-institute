@@ -40,6 +40,7 @@ export const ourFileRouter = {
       z.object({
         title: z.string().min(1, "Title is required"),
         description: z.string().optional(),
+        lessonId: z.string().min(1, "lessonId is required"),
       })
     )
     .middleware(async ({ input }) => {
@@ -52,6 +53,7 @@ export const ourFileRouter = {
         userId: session.user.id,
         title: input.title,
         description: input.description,
+        lessonId: input.lessonId,
       };
     })
     .onUploadComplete(async ({ file, metadata }) => {
@@ -64,10 +66,41 @@ export const ourFileRouter = {
           fileName: file.name,
           fileSize: file.size,
           uploadedById: metadata.userId,
+          lessonId: metadata.lessonId,
         },
       });
 
       return { uploadedBy: metadata.userId, materialId: material.id };
+    }),
+  physicalExamPaper: f({
+    blob: {
+      maxFileSize: "64MB",
+    },
+  })
+    .input(
+      z.object({
+        courseId: z.string().min(1, "courseId is required"),
+        examTitle: z.string().min(1, "examTitle is required"),
+      })
+    )
+    .middleware(async ({ input }) => {
+      const session = await auth();
+
+      if (!session?.user?.id) {
+        throw new UploadThingError("Unauthorized");
+      }
+
+      return {
+        userId: session.user.id,
+        courseId: input.courseId,
+        examTitle: input.examTitle,
+      };
+    })
+    .onUploadComplete(async ({ file, metadata }) => {
+      return {
+        uploadedBy: metadata.userId,
+        fileUrl: file.url,
+      };
     }),
 } satisfies FileRouter;
 

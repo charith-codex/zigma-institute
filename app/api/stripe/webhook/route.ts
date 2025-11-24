@@ -1,24 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { hashSync } from "bcrypt-ts-edge";
-import { UTApi } from "uploadthing/server";
 
 import { prisma } from "@/db/prisma";
 import { stripe } from "@/lib/stripe";
 import { generateRandomPassword } from "@/lib/student-registration/password";
 import { generateStudentPublicId } from "@/lib/student-registration/identifiers";
-import {
-  prepareStudentIdCardAssets,
-  renderStudentIdCardSvg,
-} from "@/lib/student-registration/id-card";
+import { generateAndUploadIdCard } from "@/lib/student-registration/generate-id-card";
 import { sendStudentOnboardingEmail } from "@/email";
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!;
-const INSTITUTE_INFO = {
-  name: "Zigma Institute",
-  tagline: "AI-powered personalised learning for ambitious students.",
-  address: "Colombo Innovation Hub, 512 Galle Road, Colombo 03",
-};
 
 // Webhook handler
 export async function POST(req: NextRequest) {
@@ -159,69 +150,20 @@ async function handleCheckoutSessionCompleted(
     }
   );
 
-  // Prepare card data for ID generation and email
-  const cardData = {
-    studentName: registration.name,
-    studentPublicId,
-    studentEmail: registration.email,
-    guardianEmail: registration.guardianEmail,
-    courses: registration.courses
-      .map((c) => c.course?.name)
-      .filter((n): n is string => Boolean(n)),
-    instituteName: INSTITUTE_INFO.name,
-    instituteTagline: INSTITUTE_INFO.tagline,
-    instituteAddress: INSTITUTE_INFO.address,
-    studentPhotoUrl: registration.studentPhotoUrl,
-  };
-
   // Generate student ID card (non-critical - can be regenerated later if it fails)
   let idCardUrl: string | null = null;
-  try {
-    const assets = await prepareStudentIdCardAssets(cardData);
-    const svg = renderStudentIdCardSvg(cardData, assets);
-    
-    // Create file for upload
-    const file = new File(
-      [svg],
-      `${studentPublicId}-id-card.svg`,
-      {
-        type: "image/svg+xml",
-      }
-    );
-
-    const utapi = new UTApi();
-    const uploadResponse = await utapi.uploadFiles(file);
-    const uploaded = Array.isArray(uploadResponse)
-      ? uploadResponse[0]
-      : uploadResponse;
-
-    if (!uploaded?.data?.url || !uploaded?.data?.key) {
-      console.error("UploadThing response:", uploadResponse);
-      throw new Error("Failed to upload ID card to UploadThing");
-    }
-
-    await prisma.student.update({
-      where: { userId: studentUserId },
-      data: {
-        idCardUrl: uploaded.data.url,
-        idCardKey: uploaded.data.key,
-      },
-    });
-
-    await prisma.studentRegistration.update({
-      where: { id: registration.id },
-      data: {
-        idCardUrl: uploaded.data.url,
-        idCardKey: uploaded.data.key,
-      },
-    });
-
-    idCardUrl = uploaded.data.url;
-    console.log(`ID card generated and uploaded successfully for ${studentPublicId}`);
-  } catch (error) {
-    console.error(`Failed to generate/upload ID card for ${studentPublicId}:`, error);
+  const idCardResult = await generateAndUploadIdCard(registration.id);
+  if (idCardResult.success) {
+    idCardUrl = idCardResult.idCardUrl ?? null;
+  } else {
+    console.error(`Failed to generate ID card: ${idCardResult.error}`);
     // Continue anyway - ID card can be regenerated from dashboard later
   }
+
+  // Get courses for email
+  const courses = registration.courses
+    .map((c) => c.course?.name)
+    .filter((n): n is string => Boolean(n));
 
   // Send onboarding email
   await sendStudentOnboardingEmail({
@@ -230,7 +172,7 @@ async function handleCheckoutSessionCompleted(
     studentName: registration.name,
     temporaryPassword: plainPassword,
     idCardUrl: idCardUrl || "", // Empty string if ID card generation failed
-    courses: cardData.courses,
+    courses,
   });
 
   console.log(`Student ${registration.email} onboarded successfully`);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useDashboardStats, useCourses } from "@/hooks/useData";
@@ -30,6 +31,7 @@ import { CourseManagement } from "./CourseManagement";
 import { StudentRegistrationManagement } from "./StudentRegistrationManagement";
 import { ShowcaseManagement } from "./ShowcaseManagement";
 import { StudentManagement } from "./StudentManagement";
+import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleManager";
 
 interface DashboardContentProps {
   activeModule: string;
@@ -48,6 +50,16 @@ export function DashboardContent({
 }: DashboardContentProps) {
   const { stats, loading: statsLoading } = useDashboardStats();
   const { courses } = useCourses();
+  const scheduleCourseOptions = useMemo(
+    () =>
+      courses.map((course) => ({
+        id: course.id,
+        name: course.name,
+        teacherId: course.teacherId ?? `${course.id}-teacher`,
+        teacherName: course.teacherName ?? "Instructor",
+      })),
+    [courses]
+  );
 
   const statStyles = {
     primary: "bg-primary/10 text-primary",
@@ -247,20 +259,12 @@ export function DashboardContent({
       case "scheduling":
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold">Course Scheduling</h1>
-                <p className="text-muted-foreground">
-                  Manage class schedules and approve teacher requests
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <div className="space-y-6">
-                <p>calendar</p>
-              </div>
-            </div>
+            <CourseScheduleManager
+              courseOptions={scheduleCourseOptions}
+              heading="Scheduling Calendar"
+              description=" Tap a date to add and update course schedule."
+              mode="manage"
+            />
           </div>
         );
       case "material-distribution":

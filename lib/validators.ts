@@ -1,5 +1,31 @@
 import { z } from "zod";
 
+const phoneNumberSchema = z.string().regex(/^[0-9]{10,15}$/, {
+  message: "Phone number must contain only digits (10–15 digits)",
+});
+
+const optionalString = (maxLength: number) =>
+  z
+    .string()
+    .trim()
+    .max(maxLength, { message: `Must be less than ${maxLength} characters` })
+    .optional()
+    .transform((value) => (value === "" ? undefined : value));
+
+const optionalDateString = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (value === "" ? undefined : value))
+  .refine((value) => !value || !Number.isNaN(Date.parse(value)), {
+    message: "Date must be a valid date",
+  });
+
+const optionalGender = z
+  .enum(["MALE", "FEMALE"])
+  .optional()
+  .transform((value) => value ?? undefined);
+
 // schema for inserting courses
 export const courseSchema = z.object({
   name: z
@@ -53,6 +79,26 @@ export const signInFormSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().min(1, { message: "Reset token is required" }),
+    password: z
+      .string()
+      .min(8, { message: "Password must be at least 8 characters" })
+      .regex(/[A-Z]/, { message: "Include at least one uppercase letter" })
+      .regex(/[a-z]/, { message: "Include at least one lowercase letter" })
+      .regex(/[0-9]/, { message: "Include at least one number" }),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
 const UserRoleEnum = z.enum([
   "STUDENT",
   "TEACHER",
@@ -82,9 +128,7 @@ export const createUserSchema = z.object({
     .max(255, { message: "Address must be less than 255 characters" })
     .optional(),
 
-  phone: z.string().regex(/^[0-9]{10,15}$/, {
-    message: "Phone number must contain only digits (10–15 digits)",
-  }),
+  phone: phoneNumberSchema,
 
   dob: z
     .string()
@@ -100,4 +144,51 @@ export const createUserSchema = z.object({
       (val) => !val || !isNaN(Date.parse(val)),
       "Join Date must be a valid date"
     ),
+});
+
+export const profileUpdateSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(3, { message: "Name must be at least 3 characters" })
+    .max(100, { message: "Name must be less than 100 characters" }),
+  phone: phoneNumberSchema,
+  address: optionalString(255),
+  dob: optionalDateString,
+  gender: optionalGender,
+});
+
+const timeString = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:MM (24h) format");
+
+export const scheduleSchema = z
+  .object({
+    courseId: z.string().trim().min(1, "Course is required"),
+    className: z.string().trim().min(1, "Class name is required"),
+    date: z
+      .string()
+      .trim()
+      .refine((value) => !Number.isNaN(Date.parse(value)), {
+        message: "Date must be a valid date",
+      }),
+    startTime: timeString,
+    endTime: timeString,
+    dayOfWeek: z.string().trim().min(2, "Day of week is required"),
+    notes: z.string().trim().optional(),
+    recurring: z.boolean().optional(),
+  })
+  .refine((value) => value.endTime > value.startTime, {
+    message: "End time must be after the start time",
+    path: ["endTime"],
+  });
+
+export const scheduleUpdateSchema = scheduleSchema.partial().superRefine((value, ctx) => {
+  if (value.startTime && value.endTime && value.endTime <= value.startTime) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "End time must be after the start time",
+      path: ["endTime"],
+    });
+  }
 });
