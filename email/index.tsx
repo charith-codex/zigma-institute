@@ -5,6 +5,7 @@ import { SENDER_EMAIL, APP_NAME, SERVER_URL } from "@/lib/constants";
 import PaymentInvoice from "./payment-invoice";
 import { StudentOnboardingEmail } from "./student-onboarding";
 import { PasswordResetEmail } from "./password-reset";
+import { InquiryResponseEmail } from "./inquiry-response";
 
 const resend = new Resend(process.env.RESEND_API_KEY as string);
 
@@ -25,6 +26,27 @@ export const sendPasswordResetEmail = async (email: string, token: string) => {
     to: email,
     subject: `Reset your ${APP_NAME} password`,
     react: <PasswordResetEmail resetUrl={resetUrl} />,
+  });
+};
+
+interface InquiryResponsePayload {
+  to: string;
+  name: string;
+  subject: string;
+  response: string;
+}
+
+export const sendInquiryResponseEmail = async ({
+  to,
+  name,
+  subject,
+  response,
+}: InquiryResponsePayload) => {
+  await resend.emails.send({
+    from: `${APP_NAME} <${SENDER_EMAIL}>`,
+    to,
+    subject: `Response: ${subject}`,
+    react: <InquiryResponseEmail name={name} response={response} subject={subject} />,
   });
 };
 
