@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { auth } from "@/auth";
@@ -35,8 +35,8 @@ const serializeInquiry = (inquiry: {
 });
 
 export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -48,8 +48,10 @@ export async function PATCH(
     const payload = await request.json();
     const data = updateInquiryStatusSchema.parse(payload);
 
+    const { id } = await context.params;
+
     const updated = await prisma.inquiry.update({
-      where: { id: params.id },
+      where: { id },
       data: { status: data.status },
     });
 

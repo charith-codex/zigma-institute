@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { auth } from "@/auth";
@@ -36,8 +36,8 @@ const serializeInquiry = (inquiry: {
 });
 
 export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -49,8 +49,10 @@ export async function POST(
     const payload = await request.json();
     const data = respondToInquirySchema.parse(payload);
 
+    const { id } = await context.params;
+
     const inquiry = await prisma.inquiry.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!inquiry) {
@@ -61,7 +63,7 @@ export async function POST(
       session.user.name || session.user.email || "Zigma Institute Team";
 
     const updated = await prisma.inquiry.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         response: data.response,
         status: "resolved",
