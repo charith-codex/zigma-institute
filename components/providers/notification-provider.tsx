@@ -16,7 +16,7 @@ import {
   listNotifications,
   markChannelRead as markChannelReadAction,
   markNotificationRead as markNotificationReadAction,
-} from "@/app/actions/notifications";
+} from "@/lib/actions/notifications";
 import type {
   CreateNotificationInput,
   NotificationChannel,

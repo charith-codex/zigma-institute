@@ -1,21 +1,31 @@
 "use server";
 
 import { prisma } from "@/db/prisma";
-import type { Prisma } from "@/lib/generated/prisma";
 import type {
   CreateNotificationInput,
   NotificationChannel,
   NotificationRecord,
 } from "@/types/notifications";
 
-const toDbChannel = (channel: NotificationChannel): Prisma.NotificationChannel =>
+type DbChannel = "LMS" | "CMS";
+
+type NotificationEntity = {
+  id: string;
+  title: string;
+  message: string;
+  targets: DbChannel[];
+  readBy: DbChannel[];
+  hiddenFor: DbChannel[];
+  createdAt: Date;
+};
+
+const toDbChannel = (channel: NotificationChannel): DbChannel =>
   channel === "lms" ? "LMS" : "CMS";
 
-const fromDbChannel = (
-  channel: Prisma.NotificationChannel
-): NotificationChannel => (channel === "LMS" ? "lms" : "cms");
+const fromDbChannel = (channel: DbChannel): NotificationChannel =>
+  channel === "LMS" ? "lms" : "cms";
 
-const mapRecord = (record: Prisma.Notification): NotificationRecord => ({
+const mapRecord = (record: NotificationEntity): NotificationRecord => ({
   id: record.id,
   title: record.title,
   message: record.message,
@@ -29,9 +39,7 @@ export async function listNotifications(
   channel?: NotificationChannel
 ): Promise<NotificationRecord[]> {
   const notifications = await prisma.notification.findMany({
-    where: channel
-      ? { targets: { has: toDbChannel(channel) } }
-      : undefined,
+    where: channel ? { targets: { has: toDbChannel(channel) } } : undefined,
     orderBy: { createdAt: "desc" },
   });
 
