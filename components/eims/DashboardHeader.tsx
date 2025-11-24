@@ -44,7 +44,6 @@ const DashboardHeader = async ({ title }: { title: string }) => {
       {/* Right side - Notifications and Profile */}
       <div className="flex items-center gap-4 px-5">
         <ModeToggle />
-        <NotificationDropdown />
         <UserButton />
       </div>
     </header>
