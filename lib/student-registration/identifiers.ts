@@ -3,7 +3,7 @@ import type { PrismaClient } from "@/lib/generated/prisma";
 type StudentClient = Pick<PrismaClient, "student">;
 
 const STUDENT_ID_PREFIX = "STU";
-const ID_PADDING = 5;
+const RANDOM_DIGITS = 5;
 
 export async function generateStudentPublicId(
   prismaClient: StudentClient,
@@ -12,27 +12,19 @@ export async function generateStudentPublicId(
   const year = referenceDate.getFullYear();
   const prefix = `${STUDENT_ID_PREFIX}-${year}`;
 
-  const lastStudent = await prismaClient.student.findFirst({
-    where: {
-      studentPublicId: {
-        startsWith: prefix,
-      },
-    },
-    orderBy: {
-      studentPublicId: "desc",
-    },
-    select: {
-      studentPublicId: true,
-    },
-  });
+  const randomDigits = () =>
+    Math.floor(Math.random() * 10 ** RANDOM_DIGITS)
+      .toString()
+      .padStart(RANDOM_DIGITS, "0");
 
-  const lastNumber = lastStudent?.studentPublicId
-    ?.split("-")
-    .pop()
-    ?.replace(/[^0-9]/g, "");
+  while (true) {
+    const candidate = `${prefix}${randomDigits()}`; // no space
 
-  const nextNumber = lastNumber ? Number.parseInt(lastNumber, 10) + 1 : 1;
-  const paddedNumber = nextNumber.toString().padStart(ID_PADDING, "0");
+    const exists = await prismaClient.student.findUnique({
+      where: { studentPublicId: candidate },
+      select: { studentPublicId: true },
+    });
 
-  return `${prefix}${paddedNumber}`;
+    if (!exists) return candidate;
+  }
 }

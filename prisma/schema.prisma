@@ -30,6 +30,8 @@ model User {
   teacher Teacher?
   staff   Staff?
 
+  paymentTransactions PaymentTransaction[]
+
   studyMaterials  StudyMaterial[]
   videoRecordings VideoRecording[]
   questions       Question[]       @relation("QuestionCreatedBy")
@@ -136,10 +138,31 @@ model Course {
   videoRecordings        VideoRecording[]
   exams                  ExamPaper[]
   lessons                Lesson[]
+  physicalExamMarks      PhysicalExamMark[]
   registrationSelections StudentRegistrationCourse[]
+  paymentTransactions    PaymentTransaction[]
+  schedules              Schedule[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Schedule {
+  id        String   @id @default(uuid())
+  courseId  String
+  className String
+  date      DateTime
+  startTime String
+  endTime   String
+  dayOfWeek String
+  notes     String?
+  recurring Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([date])
 }
 
 model StudyMaterial {
@@ -177,6 +200,24 @@ model VideoRecording {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model PhysicalExamMark {
+  id                    String    @id @default(uuid())
+  courseId              String
+  studentRegistrationId String
+  studentPublicId       String
+  studentName           String
+  examTitle             String
+  paperUrl              String
+  score                 Float
+  recordedAt            DateTime  @default(now())
+
+  course              Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  studentRegistration StudentRegistration @relation(fields: [studentRegistrationId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentRegistrationId, examTitle])
+  @@index([courseId])
 }
 
 model Question {
@@ -339,6 +380,8 @@ model StudentRegistration {
 
   student Student?                    @relation(name: "StudentRegistrationStudent", fields: [studentUserId], references: [userId], onDelete: SetNull)
   courses StudentRegistrationCourse[]
+  physicalExamMarks PhysicalExamMark[]
+  paymentTransactions PaymentTransaction[]
 }
 
 model StudentRegistrationCourse {
@@ -352,6 +395,57 @@ model StudentRegistrationCourse {
   createdAt DateTime @default(now())
 
   @@unique([registrationId, courseId])
+}
+
+enum PaymentType {
+  REGISTRATION
+  INSTALLMENT
+}
+
+model PaymentTransaction {
+  id             String       @id @default(uuid())
+  studentId      String
+  courseId       String?
+  registrationId String?
+  amountInCents  Int
+  currency       String       @default("usd")
+  paymentType    PaymentType
+  monthNumber    Int?
+  discountRate   Float        @default(0)
+  transactionId  String       @unique
+  paidAt         DateTime     @default(now())
+  notes          String?
+
+  student      User                @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course       Course?             @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  registration StudentRegistration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+
+  @@index([studentId])
+  @@index([courseId])
+  @@index([paidAt])
+}
+
+model AttendanceSession {
+  id          String   @id @default(uuid())
+  courseId    String?
+  courseName  String
+  sessionDate DateTime
+  createdAt   DateTime @default(now())
+
+  entries AttendanceEntry[]
+}
+
+model AttendanceEntry {
+  id              String   @id @default(uuid())
+  sessionId       String
+  studentPublicId String
+  studentName     String
+  registrationId  String?
+  markedAt        DateTime @default(now())
+
+  session AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, studentPublicId])
 }
 
 model Lesson {

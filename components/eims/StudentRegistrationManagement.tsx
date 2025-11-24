@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import {
   Card,
   CardContent,
@@ -34,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Download, Eye, Search, Check, X } from "lucide-react";
+import { Eye, Search, Check, X, RefreshCw, Printer } from "lucide-react";
 import { toast } from "sonner";
 
 import { formatCurrency } from "@/lib/utils";
@@ -59,6 +60,7 @@ export function StudentRegistrationManagement() {
     "PAID"
   );
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [regenerating, setRegenerating] = useState<Set<string>>(new Set());
   const statuses: StudentRegistrationStatus[] =
     statusFilter === "all" ? ["PAID", "APPROVED"] : [statusFilter];
   const { registrations, loading, error, refetch } = useStudentRegistrations(statuses);
@@ -167,38 +169,112 @@ export function StudentRegistrationManagement() {
     }
   };
 
-  const handleDownloadSelected = async () => {
-    if (selected.size === 0) {
-      toast.error("Select at least one registration to download");
+  const openPrintWindow = (cards: StudentRegistrationSummary[]) => {
+    const printable = cards.filter((card) => Boolean(card.idCardUrl));
+
+    if (printable.length === 0) {
+      toast.error("No ID cards available to print");
       return;
     }
 
+    const printWindow = window.open("", "_blank", "width=1024,height=768");
+
+    if (!printWindow) {
+      toast.error("Please allow pop-ups to print ID cards");
+      return;
+    }
+
+    const cardMarkup = printable
+      .map(
+        (card) => `
+        <div class="card">
+          <p class="meta">
+            <strong>${card.name}</strong> • ${card.studentPublicId ?? "Pending"}
+          </p>
+          <img src="${card.idCardUrl}" alt="${card.name} ID card" />
+        </div>
+      `
+      )
+      .join("\n");
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print student ID cards</title>
+          <style>
+            body { font-family: 'Inter', system-ui, -apple-system, sans-serif; margin: 0; padding: 24px; background: #0f172a; color: #fff; }
+            .card { margin: 0 auto 32px; background: #fff; padding: 16px; border-radius: 18px; width: 720px; box-shadow: 0 10px 40px rgba(15, 23, 42, 0.3); }
+            img { width: 100%; height: auto; border-radius: 12px; }
+            .meta { margin-bottom: 12px; color: #0f172a; font-size: 14px; }
+          </style>
+        </head>
+        <body>
+          ${cardMarkup}
+          <script>window.onload = () => { window.print(); };</script>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+  };
+
+  const handleBatchPrint = () => {
+    if (selected.size === 0) {
+      toast.error("Select at least one registration to print");
+      return;
+    }
+
+    const toPrint = registrations.filter(
+      (registration) => selected.has(registration.id) && Boolean(registration.idCardUrl)
+    );
+
+    if (toPrint.length === 0) {
+      toast.error("Selected registrations do not have ID cards yet");
+      return;
+    }
+
+    openPrintWindow(toPrint);
+  };
+
+  const handlePrintIdCard = (registration: StudentRegistrationSummary) => {
+    if (!registration.idCardUrl) {
+      toast.error("Generate the ID card before printing");
+      return;
+    }
+
+    openPrintWindow([registration]);
+  };
+
+  const handleRegenerateIdCard = async (registrationId: string) => {
+    setRegenerating((prev) => new Set(prev).add(registrationId));
+    
     try {
-      const response = await fetch("/api/student-registration/id-cards", {
+      const response = await fetch("/api/student-registration/regenerate-id-card", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: Array.from(selected) }),
+        body: JSON.stringify({ registrationId }),
       });
 
       if (!response.ok) {
         const body = await response.json().catch(() => null);
-        throw new Error(body?.error ?? "Unable to download ID cards");
+        throw new Error(body?.error ?? "Unable to generate ID card");
       }
 
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = "zigma-student-id-cards.pdf";
-      anchor.click();
-      URL.revokeObjectURL(url);
-    } catch (downloadError) {
-      console.error("Failed to download ID cards", downloadError);
+      toast.success("ID card generated successfully");
+      void refetch();
+    } catch (regenerateError) {
+      console.error("Failed to regenerate ID card", regenerateError);
       toast.error(
-        downloadError instanceof Error
-          ? downloadError.message
-          : "Unable to download ID cards"
+        regenerateError instanceof Error
+          ? regenerateError.message
+          : "Unable to generate ID card"
       );
+    } finally {
+      setRegenerating((prev) => {
+        const next = new Set(prev);
+        next.delete(registrationId);
+        return next;
+      });
     }
   };
 
@@ -229,17 +305,17 @@ export function StudentRegistrationManagement() {
         <div>
           <h1 className="text-2xl font-bold">Student Registration Management</h1>
           <p className="text-muted-foreground">
-            Review payments, approve enrolments, and download ID cards
+            Review payments, approve enrolments, and print ready-to-use ID cards
           </p>
         </div>
         <div className="flex gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={handleDownloadSelected}
+            onClick={handleBatchPrint}
             disabled={selected.size === 0 || loading}
           >
-            <Download className="mr-2 h-4 w-4" /> Download selected
+            <Printer className="mr-2 h-4 w-4" /> Print selected
           </Button>
         </div>
       </div>
@@ -410,12 +486,22 @@ export function StudentRegistrationManagement() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => window.open(registration.idCardUrl ?? "#", "_blank")}
-                        aria-label="Download ID card"
+                        onClick={() => handlePrintIdCard(registration)}
+                        aria-label="Print ID card"
                       >
-                        <Download className="h-4 w-4" />
+                        <Printer className="h-4 w-4" />
                       </Button>
-                    ) : null}
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRegenerateIdCard(registration.id)}
+                        disabled={regenerating.has(registration.id)}
+                        aria-label="Generate ID card"
+                      >
+                        <RefreshCw className={`h-4 w-4 ${regenerating.has(registration.id) ? "animate-spin" : ""}`} />
+                      </Button>
+                    )}
                     {registration.status === "PAID" ? (
                       <Button
                         variant="ghost"
@@ -449,6 +535,54 @@ export function StudentRegistrationManagement() {
           ) : null}
         </CardContent>
       </Card>
+
+      {filteredRegistrations.some((registration) => Boolean(registration.idCardUrl)) ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Student ID cards</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {filteredRegistrations
+                .filter((registration) => Boolean(registration.idCardUrl))
+                .map((registration) => (
+                  <div
+                    key={`${registration.id}-id-card`}
+                    className="rounded-xl border bg-card p-4 shadow-sm"
+                  >
+                    <div className="mb-3 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">
+                          {registration.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          ID: {registration.studentPublicId}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePrintIdCard(registration)}
+                      >
+                        <Printer className="mr-2 h-4 w-4" /> Print
+                      </Button>
+                    </div>
+                    <div className="overflow-hidden rounded-lg border bg-muted">
+                      <Image
+                        src={registration.idCardUrl ?? ""}
+                        alt={`${registration.name} ID card`}
+                        width={960}
+                        height={560}
+                        className="h-auto w-full"
+                        unoptimized
+                      />
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Dialog open={Boolean(activeRegistration)} onOpenChange={() => setActiveRegistration(null)}>
         <DialogContent>

@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -110,6 +111,7 @@ export default function ExamAttemptPage() {
   const { examId } = useParams<{ examId: string }>();
   const router = useRouter();
   const [exam, setExam] = useState<ExamPayload | null>(null);
+  const { data: session } = useSession();
   const [answers, setAnswers] = useState<Record<string, AnswerDraft>>({});
   const [studentId, setStudentId] = useState("");
   const [studentName, setStudentName] = useState("");
@@ -142,7 +144,7 @@ export default function ExamAttemptPage() {
         toast.error(
           error instanceof Error ? error.message : "Unable to load exam"
         );
-        router.push("/lms/exams");
+        router.push("/lms");
       } finally {
         setLoading(false);
       }
@@ -150,6 +152,16 @@ export default function ExamAttemptPage() {
 
     fetchExam();
   }, [examId, router]);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      setStudentId(session.user.id);
+    }
+
+    if (session?.user?.name) {
+      setStudentName(session.user.name);
+    }
+  }, [session]);
 
   const totalMarks = useMemo(() => {
     if (!exam) return 0;
@@ -178,11 +190,6 @@ export default function ExamAttemptPage() {
 
   const handleSubmit = async () => {
     if (!exam) return;
-
-    if (!studentId.trim()) {
-      toast.error("Enter your student ID before submitting");
-      return;
-    }
 
     const unanswered = exam.questions.filter((entry) => {
       const response = answers[entry.questionId];
@@ -246,11 +253,6 @@ export default function ExamAttemptPage() {
   };
 
   const refreshResults = async () => {
-    if (!studentId.trim()) {
-      toast.error("Enter your student ID to check marks");
-      return;
-    }
-
     try {
       setCheckingMarks(true);
       const response = await fetch(
@@ -304,6 +306,9 @@ export default function ExamAttemptPage() {
       )
     : false;
 
+  const studentIdLocked = Boolean(result) || Boolean(session?.user?.id);
+  const studentNameLocked = Boolean(result) || Boolean(session?.user?.name);
+
   return (
     <div className="space-y-6">
       <Card>
@@ -320,13 +325,17 @@ export default function ExamAttemptPage() {
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="student-id">Student ID</Label>
+              <Label htmlFor="student-id">User ID</Label>
               <Input
                 id="student-id"
                 value={studentId}
-                disabled={Boolean(result)}
+                disabled={studentIdLocked}
                 onChange={(event) => setStudentId(event.target.value)}
-                placeholder="Enter your student number"
+                placeholder={
+                  studentIdLocked
+                    ? "Loaded from your account"
+                    : "Enter your student number"
+                }
               />
             </div>
             <div className="space-y-2">
@@ -334,9 +343,13 @@ export default function ExamAttemptPage() {
               <Input
                 id="student-name"
                 value={studentName}
-                disabled={Boolean(result)}
+                disabled={studentNameLocked}
                 onChange={(event) => setStudentName(event.target.value)}
-                placeholder="Enter your name"
+                placeholder={
+                  studentNameLocked
+                    ? "Loaded from your account"
+                    : "Enter your name"
+                }
               />
             </div>
           </div>
@@ -480,7 +493,7 @@ export default function ExamAttemptPage() {
                   Check latest marks
                 </Button>
                 <Button variant="link" asChild className="px-0">
-                  <Link href="/lms/exams">Return to exam list</Link>
+                  <Link href="/lms">Return to exam list</Link>
                 </Button>
               </div>
             </div>

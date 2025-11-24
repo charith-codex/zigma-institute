@@ -7,6 +7,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { signInWithCredentials } from "@/lib/actions/user";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 const SignInForm = () => {
   const [data, action] = useActionState(signInWithCredentials, {
@@ -55,6 +56,14 @@ const SignInForm = () => {
             defaultValue={signInDefaultValues.password}
             autoComplete="current-password"
           />
+          <div className="mt-2 text-right text-sm">
+            <Link
+              href="/forgot-password"
+              className="font-medium text-primary hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
         </div>
         <div>
           <SignInButton />

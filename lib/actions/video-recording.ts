@@ -2,8 +2,9 @@
 
 import { prisma } from "@/db/prisma";
 
-export async function getVideoRecordings() {
+export async function getVideoRecordings(lessonId: string) {
   const recordings = await prisma.videoRecording.findMany({
+    where: { lessonId },
     select: {
       id: true,
       title: true,
@@ -22,7 +23,7 @@ export async function createVideoRecording(input: {
   fileUrl: string;
   uploadedById?: string | null;
   courseId?: string | null;
-  lessonId?: string | null;
+  lessonId: string;
 }) {
   const { title, description, fileUrl, uploadedById, courseId, lessonId } =
     input;
@@ -34,7 +35,7 @@ export async function createVideoRecording(input: {
       fileUrl,
       uploadedById: uploadedById ?? null,
       courseId: courseId ?? null,
-      lessonId: lessonId ?? null,
+      lessonId,
     },
     select: {
       id: true,
