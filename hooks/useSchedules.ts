@@ -16,11 +16,6 @@ export interface ScheduleEvent {
   createdAt: string;
 }
 
-export interface ConflictCheck {
-  hasConflict: boolean;
-  conflictingEvents: ScheduleEvent[];
-}
-
 interface ScheduleResponse {
   id: string;
   courseId: string;
@@ -209,42 +204,12 @@ export function useSchedules() {
     [toast]
   );
 
-  const checkConflicts = useCallback(
-    (
-      date: string,
-      startTime: string,
-      endTime: string,
-      excludeId?: string
-    ): ConflictCheck => {
-      const conflictingEvents = schedules.filter((schedule) => {
-        if (excludeId && schedule.id === excludeId) return false;
-        if (schedule.date !== date) return false;
-
-        const scheduleStart = schedule.startTime;
-        const scheduleEnd = schedule.endTime;
-
-        return (
-          (startTime >= scheduleStart && startTime < scheduleEnd) ||
-          (endTime > scheduleStart && endTime <= scheduleEnd) ||
-          (startTime <= scheduleStart && endTime >= scheduleEnd)
-        );
-      });
-
-      return {
-        hasConflict: conflictingEvents.length > 0,
-        conflictingEvents,
-      };
-    },
-    [schedules]
-  );
-
   return {
     schedules,
     loading,
     addSchedule,
     updateScheduleDetails,
     deleteSchedule,
-    checkConflicts,
     refresh: loadSchedules,
   };
 }

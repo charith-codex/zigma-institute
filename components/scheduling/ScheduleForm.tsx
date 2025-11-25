@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ScheduleEvent, type ConflictCheck } from "@/hooks/useSchedules";
+import { ScheduleEvent } from "@/hooks/useSchedules";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface CourseOption {
@@ -37,12 +37,6 @@ interface ScheduleFormProps {
   onSubmit: (payload: SchedulePayload) => Promise<void> | void;
   initialValues?: ScheduleEvent;
   defaultDate?: string;
-  checkConflicts?: (
-    date: string,
-    startTime: string,
-    endTime: string,
-    excludeId?: string
-  ) => ConflictCheck;
   submitting?: boolean;
   onDelete?: () => Promise<void> | void;
   deleting?: boolean;
@@ -63,7 +57,6 @@ export function ScheduleForm({
   onSubmit,
   initialValues,
   defaultDate,
-  checkConflicts,
   submitting = false,
   onDelete,
   deleting = false,
@@ -110,20 +103,6 @@ export function ScheduleForm({
 
     if (endTime <= startTime) {
       setValidationError("End time must be after the start time.");
-      return;
-    }
-
-    const conflict = checkConflicts?.(
-      date,
-      startTime,
-      endTime,
-      initialValues?.id
-    );
-
-    if (conflict?.hasConflict) {
-      setValidationError(
-        "The selected time conflicts with another scheduled session."
-      );
       return;
     }
 

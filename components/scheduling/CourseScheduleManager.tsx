@@ -95,7 +95,6 @@ export function CourseScheduleManager({
     addSchedule,
     updateScheduleDetails,
     deleteSchedule,
-    checkConflicts,
     loading,
   } = useSchedules();
 
@@ -250,7 +249,6 @@ export function CourseScheduleManager({
                   ? draftDate.toISOString().split("T")[0]
                   : selectedDateKey
               }
-              checkConflicts={checkConflicts}
               submitting={submitting}
               onDelete={activeEvent ? handleDelete : undefined}
               deleting={deleting}
