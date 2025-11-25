@@ -249,7 +249,7 @@ export function VideoRecordingManager({
                   description={selectedVideo.description ?? undefined}
                 />
               ) : (
-                <div className="flex min-h-[240px] items-center justify-center text-sm text-muted-foreground">
+                <div className="flex min-h-60 items-center justify-center text-sm text-muted-foreground">
                   Select a video to start playing.
                 </div>
               )}

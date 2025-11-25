@@ -4,11 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-  useEnrollments,
-  useAssignments,
-  useCourses,
-} from "@/hooks/useData";
+import { useEnrollments, useAssignments, useCourses } from "@/hooks/useData";
 import {
   BookOpen,
   Clock,
@@ -296,14 +292,7 @@ const LMS = () => {
                 <StudyPlanGenerator />
 
                 <div className="border-t pt-6 mt-6">
-                  <h2 className="text-xl font-semibold mb-4">
-                    Additional Study Resources
-                  </h2>
-                  <div className="space-y-6">
-                    <VideoRecordingManager />
-                    <StudyMaterialManager />
-                    <TutorialManager />
-                  </div>
+                  <TutorialManager />
                 </div>
               </div>
             )}

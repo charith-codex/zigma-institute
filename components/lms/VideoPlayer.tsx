@@ -230,30 +230,6 @@ export const VideoPlayer = ({
                   size="sm"
                   variant="ghost"
                   className="text-white hover:bg-white/20"
-                >
-                  <Bookmark className="w-4 h-4" />
-                </Button>
-
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-white hover:bg-white/20"
-                >
-                  <Download className="w-4 h-4" />
-                </Button>
-
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-white hover:bg-white/20"
-                >
-                  <Settings className="w-4 h-4" />
-                </Button>
-
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-white hover:bg-white/20"
                   onClick={() => {
                     if (videoRef.current) {
                       if (document.fullscreenElement) {
@@ -267,31 +243,6 @@ export const VideoPlayer = ({
                   <Maximize className="w-4 h-4" />
                 </Button>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Video Notes/Comments Section */}
-        <div className="p-4 border-t border-border">
-          <div className="flex items-center gap-2 mb-3">
-            <MessageCircle className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Course Notes & Comments</span>
-            <Badge variant="outline" className="text-xs">
-              3 notes
-            </Badge>
-          </div>
-
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <div className="p-2 bg-muted/50 rounded">
-              <span className="font-medium">05:23</span> - Important concept:
-              Binary search complexity
-            </div>
-            <div className="p-2 bg-muted/50 rounded">
-              <span className="font-medium">12:45</span> - Practice problem
-              starts here
-            </div>
-            <div className="p-2 bg-muted/50 rounded">
-              <span className="font-medium">18:30</span> - Summary of key points
             </div>
           </div>
         </div>

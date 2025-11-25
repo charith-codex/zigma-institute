@@ -47,7 +47,6 @@ interface CourseContentManagerProps {
 
 const navigationItems = [
   { id: "lessons", label: "Lessons", icon: BookOpen },
-  { id: "recordings", label: "Course Recordings", icon: Video },
   { id: "students", label: "Students", icon: Users },
   { id: "quizzes", label: "Question Bank", icon: ClipboardList },
   { id: "exams", label: "Exam Papers", icon: FileText },
@@ -71,9 +70,7 @@ export function CourseContentManager({
     description: "",
   });
   const [creatingLesson, setCreatingLesson] = useState(false);
-  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(
-    null
-  );
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
 
   console.log("CourseContentManager - courseId:", courseId);
   console.log("CourseContentManager - classes:", classes);
@@ -117,7 +114,8 @@ export function CourseContentManager({
   }, [sortedLessons]);
 
   const selectedLesson = useMemo(
-    () => sortedLessons.find((lesson) => lesson.id === selectedLessonId) ?? null,
+    () =>
+      sortedLessons.find((lesson) => lesson.id === selectedLessonId) ?? null,
     [selectedLessonId, sortedLessons]
   );
 
@@ -289,14 +287,14 @@ export function CourseContentManager({
                             type="button"
                             onClick={() => setSelectedLessonId(lesson.id)}
                             className={`flex w-full flex-col items-start gap-2 px-4 py-3 text-left transition-colors ${
-                              isSelected
-                                ? "bg-primary/5"
-                                : "hover:bg-muted/50"
+                              isSelected ? "bg-primary/5" : "hover:bg-muted/50"
                             }`}
                           >
                             <div className="flex w-full items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <Badge variant={isSelected ? "default" : "outline"}>
+                                <Badge
+                                  variant={isSelected ? "default" : "outline"}
+                                >
                                   Lesson
                                 </Badge>
                                 <span className="text-sm font-semibold">
@@ -362,9 +360,6 @@ export function CourseContentManager({
             )}
           </div>
         );
-
-      case "recordings":
-        return <VideoRecordingManager />;
 
       case "quizzes":
         return <QuestionCreation />;
