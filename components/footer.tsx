@@ -6,7 +6,7 @@ import { Facebook, Youtube, Instagram, Twitter } from "lucide-react";
 const Footer = () => {
   return (
     <footer className="bg-slate-950 ">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-6 sm:px-6 md:py-8 max-md:flex-col gap-4">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-6 sm:px-6 md:py-8 max-md:flex-col max-md:items-start gap-4">
         <div className="flex flex-col gap-4 text-slate-300">
           <div className="flex items-center gap-3">
             <Image
@@ -25,8 +25,8 @@ const Footer = () => {
           </p>
         </div>
 
-        <div>
-          <ul className="flex items-center gap-6 text-sm font-medium text-slate-300">
+        <div className="max-md:w-full">
+          <ul className="flex items-center gap-6 text-sm font-medium text-slate-300 max-md:flex-col max-md:items-start max-md:gap-3">
             <li>
               <Link
                 href="/student-registration"
@@ -68,7 +68,7 @@ const Footer = () => {
               </Link>
             </li>
           </ul>
-          <div className="flex items-center justify-end pt-8 gap-6 text-slate-300">
+          <div className="flex items-center justify-end pt-8 gap-6 text-slate-300 max-md:justify-start max-md:pt-4">
             <Link
               href="https://facebook.com"
               target="_blank"
