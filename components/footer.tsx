@@ -19,7 +19,7 @@ const Footer = () => {
             <p className="font-bold">{APP_NAME}</p>
           </div>
           <p className="text-sm max-w-md">
-            A unified Education Institutee Management System connecting EIMS,
+            A unified Education Institute Management System connecting EIMS,
             LMS, and CMS workflows so administrators, teachers, students, and
             guardians stay aligned every step of the way.
           </p>
