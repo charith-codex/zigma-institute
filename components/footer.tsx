@@ -1,111 +1,113 @@
-import Link from "next/link";
-import { Mail, MapPin, Phone } from "lucide-react";
-
 import { APP_NAME } from "@/lib/constants";
-
-const footerLinks = [
-  {
-    title: "Institute",
-    links: [
-      { label: "About", href: "/about" },
-      { label: "Courses", href: "/courses" },
-      { label: "Gallery", href: "/gallery" },
-      { label: "Contact", href: "/contact" },
-    ],
-  },
-  {
-    title: "Get Started",
-    links: [
-      { label: "Student Registration", href: "/student-registration" },
-      { label: "Sign In", href: "/dashboard" },
-      { label: "LMS", href: "/lms" },
-      { label: "LMS-CMS", href: "/lms-cms" },
-    ],
-  },
-];
+import Link from "next/link";
+import Image from "next/image";
+import { Facebook, Youtube, Instagram, Twitter } from "lucide-react";
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
-
   return (
-    <footer className="mt-auto border-t bg-slate-950 text-slate-100">
-      <div className="wrapper grid gap-10 py-12 md:grid-cols-[1.2fr_repeat(2,1fr)]">
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <span className="inline-flex items-center rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
-              {APP_NAME}
-            </span>
-            <p className="text-sm text-slate-300">
-              A unified Education Institute Management System connecting EIMS,
-              LMS, and CMS workflows so administrators, teachers, students, and
-              guardians stay aligned every step of the way.
-            </p>
+    <footer className="bg-slate-950 ">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-6 sm:px-6 md:py-8 max-md:flex-col gap-4">
+        <div className="flex flex-col gap-4 text-slate-300">
+          <div className="flex items-center gap-3">
+            <Image
+              src="/logo.png"
+              alt={`${APP_NAME} logo`}
+              height={30}
+              width={30}
+              priority={true}
+            />
+            <p className="font-bold">{APP_NAME}</p>
           </div>
+          <p className="text-sm max-w-md">
+            A unified Education Institutee Management System connecting EIMS,
+            LMS, and CMS workflows so administrators, teachers, students, and
+            guardians stay aligned every step of the way.
+          </p>
+        </div>
 
-          <div className="space-y-3 text-sm text-slate-300">
-            <div className="flex items-start gap-3">
-              <MapPin className="mt-0.5 h-5 w-5 text-primary" />
-              <span>
-                221 Knowledge Avenue,
-                <br />
-                Colombo, Sri Lanka
-              </span>
-            </div>
+        <div>
+          <ul className="flex items-center gap-6 text-sm font-medium text-slate-300">
+            <li>
+              <Link
+                href="/student-registration"
+                className="hover:text-primary transition-colors"
+              >
+                Student Registration
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/courses"
+                className="hover:text-primary transition-colors"
+              >
+                Courses
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/gallery"
+                className="hover:text-primary transition-colors"
+              >
+                Gallery
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/contact"
+                className="hover:text-primary transition-colors"
+              >
+                Contact
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/about"
+                className="hover:text-primary transition-colors"
+              >
+                About
+              </Link>
+            </li>
+          </ul>
+          <div className="flex items-center justify-end pt-8 gap-6 text-slate-300">
             <Link
-              href="tel:+94112233445"
-              className="flex items-center gap-3 text-slate-300 transition hover:text-primary"
+              href="https://facebook.com"
+              target="_blank"
+              className="hover:text-primary transition-colors"
             >
-              <Phone className="h-5 w-5 text-primary" />
-              +94 11 223 3445
+              <Facebook className="w-5 h-5" />
             </Link>
+
             <Link
-              href="mailto:hello@zigmainstitute.com"
-              className="flex items-center gap-3 text-slate-300 transition hover:text-primary"
+              href="https://youtube.com"
+              target="_blank"
+              className="hover:text-primary transition-colors"
             >
-              <Mail className="h-5 w-5 text-primary" />
-              hello@zigmainstitute.com
+              <Youtube className="w-5 h-5" />
+            </Link>
+
+            <Link
+              href="https://instagram.com"
+              target="_blank"
+              className="hover:text-primary transition-colors"
+            >
+              <Instagram className="w-5 h-5" />
+            </Link>
+
+            <Link
+              href="https://x.com"
+              target="_blank"
+              className="hover:text-primary transition-colors"
+            >
+              <Twitter className="w-5 h-5" />
             </Link>
           </div>
         </div>
-
-        {footerLinks.map((section) => (
-          <div key={section.title} className="space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
-              {section.title}
-            </p>
-            <ul className="space-y-3 text-sm text-slate-300">
-              {section.links.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="transition hover:text-primary"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
       </div>
 
-      <div className="border-t border-slate-800">
-        <div className="wrapper flex flex-col items-center justify-between gap-4 py-6 text-xs text-slate-500 md:flex-row">
-          <p>
-            © {currentYear} {APP_NAME}. All rights reserved.
-          </p>
-          <div className="flex flex-wrap items-center gap-4">
-            <Link href="/privacy" className="transition hover:text-primary">
-              Privacy Policy
-            </Link>
-            <Link href="/terms" className="transition hover:text-primary">
-              Terms of Service
-            </Link>
-            <Link href="/contact" className="transition hover:text-primary">
-              Support
-            </Link>
-          </div>
-        </div>
+      <div className="my-5 pt-6 border-t border-white/10 text-center text-xs text-slate-400">
+        <p className="text-sm text-slate-400">
+          © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
+        </p>
       </div>
     </footer>
   );

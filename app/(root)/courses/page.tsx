@@ -1,12 +1,7 @@
 import Link from "next/link";
-import {
-  BookOpenCheck,
-  CalendarCheck,
-  GraduationCap,
-  Layers3,
-  ShieldCheck,
-} from "lucide-react";
+import { CalendarRange, Layers3, Users } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,94 +13,42 @@ import {
 import { getCourses } from "@/lib/actions/course";
 import AllCoursesCard from "./AllCoursesCard";
 
-const statHighlights = [
+const courseHighlights = [
   {
-    label: "Integrated pillars",
-    value: "3 ecosystems",
-    description:
-      "LMS, CMS, and EIMS modules feed one connected learning journey.",
+    title: "Guided cohorts",
+    copy: "Small-group instruction backed by live dashboards so mentors react fast to progress spikes or dips.",
+    icon: Users,
+  },
+  {
+    title: "Layered content",
+    copy: "Lessons, labs, and past papers stay synced across LMS, CMS, and EIMS just like on the About and Gallery pages.",
     icon: Layers3,
   },
   {
-    label: "Teacher mentors",
-    value: "40+ experts",
-    description:
-      "Subject specialists guide cohorts with live classes and digital assets.",
-    icon: GraduationCap,
-  },
-  {
-    label: "Flexible schedules",
-    value: "Morning & evening",
-    description:
-      "Pick timetables that align with school, sports, and exam prep routines.",
-    icon: CalendarCheck,
-  },
-  {
-    label: "Verified credentials",
-    value: "Staff vetted",
-    description:
-      "All teachers and support staff are onboarded by IT admins for safety.",
-    icon: ShieldCheck,
+    title: "Adaptive schedules",
+    copy: "Weekday, weekend, and evening blocks that flex around sports, exams, and travel plans.",
+    icon: CalendarRange,
   },
 ];
 
-const pathways = [
+const enrollmentSteps = [
   {
-    title: "Foundation & Revision Tracks",
-    focus:
-      "Build core understanding for Grade 6-9 learners with weekly recaps, quizzes, and AI-powered flashcards.",
-    outcomes: [
-      "Continuous assessment insights for parents via dashboards",
-      "Motivational Play Zone challenges to keep curiosity high",
-      "Bridging assignments that transition smoothly into exam streams",
-    ],
-  },
-  {
-    title: "OL Mastery Streams",
-    focus:
-      "Exam-focused programs with past paper marathons, analytics-driven study plans, and targeted remedial lessons.",
-    outcomes: [
-      "Auto-generated study plans tuned by AI performance tracking",
-      "Tute distribution audit trail so no student misses printed packs",
-      "Leaderboards to celebrate improvements and top performers",
-    ],
-  },
-  {
-    title: "AL Excellence Studios",
-    focus:
-      "Hybrid workshops blending live labs, LMS content, and teacher CMS coaching for university-ready readiness.",
-    outcomes: [
-      "Google Calendar synced practicals and exam rehearsals",
-      "Dedicated mentor reviews with digital + paper mark tracking",
-      "Career guidance sessions with management staff advisers",
-    ],
-  },
-];
-
-const journeySteps = [
-  {
-    stage: "Discover",
-    title: "Browse the course catalog",
+    title: "Browse & shortlist",
     detail:
-      "Filter courses by grade, exam stream, or module type. Every listing shows delivery format, duration, and upcoming start windows.",
+      "Filter by grade or exam track, then save the sessions that match your goals.",
+    accent: "Discover",
   },
   {
-    stage: "Apply",
-    title: "Complete the student registration form",
+    title: "Submit details",
     detail:
-      "Share guardian contacts, academic goals, and preferred class slots so our staff can tailor the onboarding call.",
+      "Use the student registration form to share guardian contacts and preferred schedules.",
+    accent: "Apply",
   },
   {
-    stage: "Approve",
-    title: "Payment team verifies and confirms",
+    title: "Secure your seat",
     detail:
-      "Finance staff review fee status, allocate the correct classes, and generate a secure LMS login for the student.",
-  },
-  {
-    stage: "Launch",
-    title: "Start learning across LMS + campus",
-    detail:
-      "Once approved, students unlock digital materials, attendance QR passes, and receive automated reminders for sessions.",
+      "Stripe checkout confirms payment and unlocks LMS access plus campus orientation dates.",
+    accent: "Enroll",
   },
 ];
 
@@ -113,126 +56,68 @@ export default async function CoursesPage() {
   const courses = await getCourses();
 
   return (
-    <div className="space-y-16 py-12">
-      <section className="grid gap-12 lg:grid-cols-[1.3fr_1fr] items-start">
-        <div className="space-y-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">
-            Zigma Institute Courses
-          </p>
-          <h1 className="text-4xl font-bold leading-tight md:text-5xl">
-            Structured learning pathways that blend classroom mastery with
-            always-on digital support.
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Explore courses crafted for every milestone—from foundational
-            concepts to exam excellence. Our LMS, CMS, and EIMS modules work
-            together so students, teachers, and families stay connected and on
-            track.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Button asChild size="lg">
-              <Link href="/contact">Talk with an advisor</Link>
-            </Button>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto space-y-10 px-4 py-12">
+        <section className="px-6 py-12 text-center md:px-10">
+          <div className="mx-auto max-w-3xl space-y-6">
+            <Badge className="bg-primary text-white">📑 Curated Programs</Badge>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              Courses with Modern Educational Experience
+            </h1>
+            <p className="text-lg  text-slate-700">
+              Choose focused study tracks. Every option stays synchronized
+              across LMS, CMS, and campus so families always know what comes
+              next.
+            </p>
           </div>
-        </div>
-        <Card className="h-full">
-          <CardHeader>
-            <CardTitle className="text-2xl">
-              Why families choose Zigma
-            </CardTitle>
-            <CardDescription>
-              Our integrated ecosystem keeps academics, operations, and
-              communication in sync.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-6 sm:grid-cols-2">
-            {statHighlights.map((stat) => {
-              const Icon = stat.icon;
+        </section>
+
+        <section className="space-y-6">
+          <div className="space-y-3">
+            <h2 className="text-3xl font-semibold">All Course</h2>
+            <p className="text-muted-foreground">
+              Tap into the latest cohorts below. Seats are updated in real time
+              so you can reserve a spot without leaving the page.
+            </p>
+          </div>
+          <AllCoursesCard data={courses} />
+        </section>
+
+        <section className="space-y-8">
+          <div className="max-w-2xl space-y-3">
+            <h2 className="text-3xl font-semibold">
+              Why learners stay with Zigma
+            </h2>
+            <p className="text-muted-foreground">
+              Minimal noise, clear milestones, and the same cohesive visual
+              language used on our About and Gallery pages carry through every
+              learning experience.
+            </p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            {courseHighlights.map((highlight) => {
+              const Icon = highlight.icon;
               return (
-                <div key={stat.label} className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                    <Icon className="size-5" />
-                    {stat.label}
-                  </div>
-                  <p className="text-2xl font-bold">{stat.value}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {stat.description}
-                  </p>
-                </div>
+                <Card key={highlight.title} className="h-full">
+                  <CardHeader>
+                    <div className="flex items-center gap-3 text-primary">
+                      <Icon className="size-6" />
+                      <CardTitle className="text-xl">
+                        {highlight.title}
+                      </CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      {highlight.copy}
+                    </p>
+                  </CardContent>
+                </Card>
               );
             })}
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="space-y-8">
-        <div className="space-y-3">
-          <h2 className="text-3xl font-semibold">
-            Course pathways designed for outcomes
-          </h2>
-          <p className="text-muted-foreground">
-            Each pathway combines structured content, mentor feedback, and
-            analytics to ensure continuous improvement.
-          </p>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {pathways.map((pathway) => (
-            <Card key={pathway.title} className="flex h-full flex-col">
-              <CardHeader>
-                <CardTitle className="text-xl">{pathway.title}</CardTitle>
-                <CardDescription>{pathway.focus}</CardDescription>
-              </CardHeader>
-              <CardContent className="mt-auto space-y-3 text-sm text-muted-foreground">
-                <p className="font-semibold text-foreground">
-                  What&apos;s included:
-                </p>
-                <ul className="list-disc space-y-2 pl-5">
-                  {pathway.outcomes.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-6">
-        <div className="space-y-3">
-          <h2 className="text-3xl font-semibold">Latest course additions</h2>
-          <p className="text-muted-foreground">
-            New sessions are added every term. Secure a seat early to access
-            digital materials and class schedules before orientation.
-          </p>
-        </div>
-        <AllCoursesCard data={courses} />
-      </section>
-
-      <section className="space-y-8">
-        <div className="space-y-3">
-          <h2 className="text-3xl font-semibold">Enrollment journey</h2>
-          <p className="text-muted-foreground">
-            A transparent process ensures every student is ready with verified
-            credentials, scheduled classes, and support contacts.
-          </p>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {journeySteps.map((step) => (
-            <Card key={step.stage} className="h-full">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <BookOpenCheck className="size-5 text-primary" />
-                  {step.stage}
-                </CardTitle>
-                <CardDescription>{step.title}</CardDescription>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                {step.detail}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

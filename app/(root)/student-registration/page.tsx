@@ -2,40 +2,38 @@ import Link from "next/link";
 
 import { StudentRegistrationForm } from "@/components/student-registration/RegistrationForm";
 import { prisma } from "@/db/prisma";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { CalendarClock, ShieldCheck, Users, Phone, Mail } from "lucide-react";
 
-const enrollmentSteps = [
+const infoHighlights = [
   {
-    title: "Submit your details",
-    detail:
-      "Complete the secure online form with accurate student and guardian information.",
+    title: "Secure checkout",
+    description: "Stripe-powered payments with instant confirmation.",
+    icon: ShieldCheck,
   },
   {
-    title: "Stripe Checkout",
-    detail:
-      "Select preferred courses, pay online, and receive an instant confirmation receipt.",
+    title: "Guided onboarding",
+    description: "Admissions mentors review every submission within a day.",
+    icon: Users,
   },
   {
-    title: "Automated onboarding",
-    detail:
-      "Our system verifies payment, generates a digital ID card, and creates LMS credentials.",
+    title: "Start quickly",
+    description: "Same-day LMS access once payment clears.",
+    icon: CalendarClock,
   },
-  {
-    title: "Email delivery",
-    detail:
-      "Student and guardian receive login credentials, course access, and the ID card download link.",
-  },
-];
-
-const documentChecklist = [
-  "Latest school report or exam results (PDF)",
-  "Copy of national ID / birth certificate",
-  "Proof of payment (online receipt or bank slip)",
-  "Parent or guardian contact information",
 ];
 
 const INSTITUTE_NAME = "Zigma Institute";
-const INSTITUTE_TAGLINE = "AI-powered personalised learning for ambitious students.";
+const INSTITUTE_TAGLINE =
+  "AI-powered personalised learning for ambitious students.";
 const INSTITUTE_ADDRESS = "Colombo Innovation Hub, 512 Galle Road, Colombo 03";
 
 export default async function StudentRegisterPage() {
@@ -51,116 +49,137 @@ export default async function StudentRegisterPage() {
   }));
 
   return (
-    <div className="space-y-16 py-12">
-      <section className="grid items-start gap-10 lg:grid-cols-[3fr_2fr]">
-        <div className="space-y-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">
-            Student Registration
-          </p>
-          <h1 className="text-4xl font-bold leading-tight md:text-5xl">
-            Join {INSTITUTE_NAME} and unlock a personalised learning pathway.
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Our end-to-end digital enrolment flow combines a modern registration form,
-            automated Stripe payments, real-time LMS account provisioning, and professional
-            ID card generation so students can start learning immediately.
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <Link
-              href="#registration-form"
-              className="inline-flex items-center rounded-md bg-primary px-6 py-3 text-lg font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
-            >
-              Start registration
-            </Link>
-            <Link
-              href="/contact"
-              className="inline-flex items-center rounded-md border border-input px-6 py-3 text-lg font-semibold text-foreground shadow-sm transition hover:bg-muted"
-            >
-              Need assistance?
-            </Link>
+    <div className="min-h-screen bg-background">
+      <div className="bg-gradient-hero">
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-3xl text-center mx-auto space-y-6">
+            <Badge className="w-fit mx-auto">📋 Student Registration</Badge>
+            <h1 className="text-4xl md:text-5xl font-bold">
+              Register online and secure your place at {INSTITUTE_NAME}
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              A streamlined flow inspired by our About and Contact
+              experiences complete the form, pick your courses, and finish
+              payment in minutes.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Button asChild size="lg">
+                <Link href="#registration-form">Start registration</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link href="/contact">Talk to our team</Link>
+              </Button>
+            </div>
           </div>
         </div>
-        <Card className="bg-linear-to-br from-primary/10 via-background to-secondary/10">
-          <CardHeader>
-            <CardTitle className="text-2xl">Registration timeline</CardTitle>
-            <CardDescription>
-              Every milestone is tracked inside the Education Information Management System
-              to keep families informed.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm text-muted-foreground">
-            {enrollmentSteps.map((step) => (
-              <div key={step.title}>
-                <p className="font-semibold text-foreground">{step.title}</p>
-                <p>{step.detail}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </section>
+      </div>
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div
+            className="grid gap-10 lg:grid-cols-[3fr_2fr]"
+            id="registration-form"
+          >
+            <StudentRegistrationForm
+              courses={registrationCourses}
+              instituteName={INSTITUTE_NAME}
+              instituteTagline={INSTITUTE_TAGLINE}
+              instituteAddress={INSTITUTE_ADDRESS}
+            />
 
-      <StudentRegistrationForm
-        courses={registrationCourses}
-        instituteName={INSTITUTE_NAME}
-        instituteTagline={INSTITUTE_TAGLINE}
-        instituteAddress={INSTITUTE_ADDRESS}
-      />
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">How it works</CardTitle>
+                  <CardDescription>
+                    Minimal steps, clear emails, and automatic updates.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm text-muted-foreground">
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      1. Submit form
+                    </p>
+                    <p>Share accurate student + guardian details.</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      2. Pay online
+                    </p>
+                    <p>Secure Stripe Checkout handles every currency.</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      3. Receive access
+                    </p>
+                    <p>We email LMS credentials and onboarding steps.</p>
+                  </div>
+                </CardContent>
+              </Card>
 
-      <section className="grid gap-8 lg:grid-cols-[2fr_1fr]">
-        <Card className="bg-muted/40">
-          <CardHeader>
-            <CardTitle className="text-xl">Documents checklist</CardTitle>
-            <CardDescription>
-              Upload clear scans to help our staff verify your enrolment quickly.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <ul className="space-y-2">
-              {documentChecklist.map((item) => (
-                <li key={item} className="flex gap-2">
-                  <span className="mt-1 inline-block h-2 w-2 rounded-full bg-primary" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Need help?</CardTitle>
-            <CardDescription>
-              Our admissions mentors can walk you through each step and arrange campus visits.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <div>
-              <p className="font-medium text-foreground">Admissions hotline</p>
-              <Link href="tel:+94112223344" className="text-primary hover:underline">
-                +94 11 222 3344
-              </Link>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">Need help?</CardTitle>
+                  <CardDescription>
+                    Reach our admissions desk directly.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-5 h-5 text-primary" />
+                    <div>
+                      <p className="font-medium text-foreground">Hotline</p>
+                      <Link
+                        href="tel:0112223344"
+                        className="text-primary hover:underline"
+                      >
+                        011 222 3344
+                      </Link>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-5 h-5 text-primary" />
+                    <div>
+                      <p className="font-medium text-foreground">Email</p>
+                      <Link
+                        href="mailto:admissions@zigmainstitute.lk"
+                        className="text-primary hover:underline"
+                      >
+                        admissions@zigmainstitute.lk
+                      </Link>
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-dashed p-4 text-xs">
+                    <p className="font-medium text-foreground">Visit us</p>
+                    <p>{INSTITUTE_ADDRESS}</p>
+                  </div>
+                  <div className="space-y-3 pt-2">
+                    {infoHighlights.map((highlight) => {
+                      const Icon = highlight.icon;
+                      return (
+                        <div
+                          key={`${highlight.title}-support`}
+                          className="flex items-start gap-3 rounded-lg border bg-muted/40 p-3"
+                        >
+                          <div className="rounded-full bg-primary/10 p-2">
+                            <Icon className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">
+                              {highlight.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {highlight.description}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-            <div>
-              <p className="font-medium text-foreground">Email</p>
-              <Link
-                href="mailto:admissions@zigmainstitute.lk"
-                className="text-primary hover:underline"
-              >
-                admissions@zigmainstitute.lk
-              </Link>
-            </div>
-            <div>
-              <p className="font-medium text-foreground">Visit us</p>
-              <p>{INSTITUTE_ADDRESS}</p>
-            </div>
-            <Link
-              href="/contact"
-              className="inline-flex w-fit items-center rounded-md border border-input px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
-            >
-              Book a consultation
-            </Link>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </section>
     </div>
   );

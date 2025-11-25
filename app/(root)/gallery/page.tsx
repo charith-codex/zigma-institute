@@ -258,13 +258,13 @@ const Gallery = () => {
       <section className="py-20 bg-gradient-hero">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">
               Gallery of Excellence
             </h1>
             <p className="text-xl md:text-2xl">
               Celebrating Outstanding Achievements and Academic Excellence
             </p>
-            <div className="flex items-center justify-center space-x-8">
+            <div className="flex items-center justify-center space-x-8 pt-3 text-primary">
               <div className="flex items-center space-x-2">
                 <Trophy className="w-5 h-5" />
                 <span>Top Performers</span>
@@ -306,7 +306,7 @@ const Gallery = () => {
       </section>
 
       {/* District Top Ranking Students */}
-      <section className="py-16 bg-muted/50">
+      <section className="py-16 bg-muted/50 rounded-xl">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <div className="flex items-center justify-center space-x-2 mb-4">

@@ -142,7 +142,7 @@ const About = () => {
       </section>
 
       {/* Values Section */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-16 bg-muted/30 rounded-xl">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-12">
@@ -162,57 +162,6 @@ const About = () => {
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground">{value.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Achievements Section */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-12">Our Impact</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {achievements.map((achievement, index) => (
-                <div key={index} className="text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">
-                    {achievement.number}
-                  </div>
-                  <div className="text-muted-foreground">
-                    {achievement.label}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Team Section */}
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-12">
-              Meet Our Team
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {team.map((member, index) => (
-                <Card
-                  key={index}
-                  className="text-center hover:shadow-lg transition-shadow"
-                >
-                  <CardHeader>
-                    <div className="text-5xl mb-4">{member.image}</div>
-                    <CardTitle className="text-lg">{member.name}</CardTitle>
-                    <p className="text-primary font-medium">{member.role}</p>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      {member.description}
-                    </p>
                   </CardContent>
                 </Card>
               ))}
@@ -308,7 +257,7 @@ const About = () => {
       </section>
 
       {/* Technology Section */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-12">
@@ -359,27 +308,6 @@ const About = () => {
                   notifications, and seamless synchronization.
                 </p>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-16 bg-gradient-hero">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-6">
-              Ready to Transform Your Institution?
-            </h2>
-            <p className="text-xl mb-8">
-              Join thousands of educational institutions already benefiting from
-              our comprehensive management system.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg">Schedule a Demo</Button>
-              <Button size="lg" variant="outline">
-                Contact Sales
-              </Button>
             </div>
           </div>
         </div>
