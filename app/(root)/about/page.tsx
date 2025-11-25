@@ -87,7 +87,7 @@ const About = () => {
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
               Transforming Education Through Innovation
             </h1>
-            <p className="text-xl  leading-relaxed">
+            <p className="text-xl text-muted-foreground leading-relaxed">
               We are pioneering the future of education with our comprehensive
               management system that seamlessly integrates traditional learning
               with cutting-edge technology.

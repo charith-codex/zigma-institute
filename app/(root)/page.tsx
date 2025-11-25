@@ -118,9 +118,9 @@ export default function ShowcaseSite() {
             <h1 className="text-4xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
               Next-era educational experience with modern comfort zone
             </h1>
-            <p className="text-lg text-slate-200">
+            <p className="text-lg text-muted-foreground">
               {APP_NAME} unifies enrollment, academics, communication, and
-              analytics so your team can focus on what matters most—student
+              analytics so your team can focus on what matters most student
               success.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">

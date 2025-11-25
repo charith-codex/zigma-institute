@@ -261,7 +261,7 @@ const Gallery = () => {
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
               Gallery of Excellence
             </h1>
-            <p className="text-xl md:text-2xl">
+            <p className="text-xl text-muted-foreground md:text-2xl">
               Celebrating Outstanding Achievements and Academic Excellence
             </p>
             <div className="flex items-center justify-center space-x-8 pt-3 text-primary">

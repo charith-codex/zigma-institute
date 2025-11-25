@@ -64,7 +64,7 @@ export default async function CoursesPage() {
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
               Courses with Modern Educational Experience
             </h1>
-            <p className="text-lg  text-slate-700">
+            <p className="text-lg text-muted-foreground">
               Choose focused study tracks. Every option stays synchronized
               across LMS, CMS, and campus so families always know what comes
               next.
