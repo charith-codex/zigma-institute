@@ -18,7 +18,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
   BookOpen,
@@ -36,7 +43,9 @@ export function CourseManagement() {
   const { courses, loading, error, refetch } = useCourses();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [courseBeingEdited, setCourseBeingEdited] = useState<Course | null>(null);
+  const [courseBeingEdited, setCourseBeingEdited] = useState<Course | null>(
+    null
+  );
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -55,11 +64,11 @@ export function CourseManagement() {
     });
   }, [courses, normalizedQuery]);
 
-  const uniqueInstructors = useMemo(() => {
-    const instructorSet = new Set(
+  const uniqueTeachers = useMemo(() => {
+    const teacherSet = new Set(
       courses.map((course) => course.teacherName.toLowerCase())
     );
-    return instructorSet.size;
+    return teacherSet.size;
   }, [courses]);
 
   const catalogValueInCents = useMemo(
@@ -94,7 +103,7 @@ export function CourseManagement() {
               Create course
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl">
+          <DialogContent size="wide" className="w-full">
             <DialogHeader>
               <DialogTitle>Create a new course</DialogTitle>
             </DialogHeader>
@@ -114,7 +123,7 @@ export function CourseManagement() {
           <Input
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Search by name or instructor"
+            placeholder="Search by name or teacher"
             className="pl-9"
           />
         </div>
@@ -142,19 +151,21 @@ export function CourseManagement() {
           <CardContent>
             <div className="text-2xl font-bold">{courses.length}</div>
             <p className="text-xs text-muted-foreground">
-              {hasCourses ? "Updated automatically from the course catalog" : "No courses available yet"}
+              {hasCourses
+                ? "Updated automatically from the course catalog"
+                : "No courses available yet"}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Unique instructors
+              Unique Teacher
             </CardTitle>
             <Users className="h-4 w-4 text-secondary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{uniqueInstructors}</div>
+            <div className="text-2xl font-bold">{uniqueTeachers}</div>
             <p className="text-xs text-muted-foreground">
               Teachers continue lesson creation in the CMS
             </p>
@@ -204,7 +215,7 @@ export function CourseManagement() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Course</TableHead>
-                    <TableHead>Instructor</TableHead>
+                    <TableHead>Teacher</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead className="w-24 text-center">Edit</TableHead>
                     <TableHead className="w-28 text-center">Delete</TableHead>
@@ -225,7 +236,9 @@ export function CourseManagement() {
                             />
                           </div>
                           <div>
-                            <p className="font-medium leading-none">{course.name}</p>
+                            <p className="font-medium leading-none">
+                              {course.name}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               {course.description.slice(0, 60)}
                               {course.description.length > 60 ? "…" : ""}
@@ -272,12 +285,15 @@ export function CourseManagement() {
         </Card>
       )}
 
-      <Dialog open={Boolean(courseBeingEdited)} onOpenChange={(open) => {
-        if (!open) {
-          setCourseBeingEdited(null);
-        }
-      }}>
-        <DialogContent className="max-w-3xl">
+      <Dialog
+        open={Boolean(courseBeingEdited)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCourseBeingEdited(null);
+          }
+        }}
+      >
+        <DialogContent size="wide" className="w-full">
           <DialogHeader>
             <DialogTitle>Edit course</DialogTitle>
           </DialogHeader>
@@ -326,9 +342,12 @@ export function CourseManagement() {
                 }
                 try {
                   setIsDeleting(true);
-                  const response = await fetch(`/api/courses/${courseToDelete.id}`, {
-                    method: "DELETE",
-                  });
+                  const response = await fetch(
+                    `/api/courses/${courseToDelete.id}`,
+                    {
+                      method: "DELETE",
+                    }
+                  );
 
                   if (!response.ok) {
                     const body = await response

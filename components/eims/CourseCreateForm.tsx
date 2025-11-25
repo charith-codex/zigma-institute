@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Loader2, UploadCloud } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { UploadButton } from "@/lib/uploadthing";
+import { UploadDropzone } from "@/lib/uploadthing";
 import { cn, generateSlug } from "@/lib/utils";
 import { Course } from "@/types";
 import { useTeachers } from "@/hooks/useData";
@@ -54,7 +54,11 @@ export function CourseCreateForm({
 }: CourseCreateFormProps) {
   const router = useRouter();
   const isEditMode = Boolean(course);
-  const { teachers, loading: teachersLoading, error: teachersError } = useTeachers();
+  const {
+    teachers,
+    loading: teachersLoading,
+    error: teachersError,
+  } = useTeachers();
 
   const deriveInitialState = useMemo<FormState>(() => {
     if (!course) {
@@ -106,7 +110,8 @@ export function CourseCreateForm({
       if (course && teacherOptions.length > 0) {
         const normalizedCourseTeacher = course.teacherName.trim().toLowerCase();
         const matchingTeacher = teacherOptions.find(
-          (teacher) => teacher.name.trim().toLowerCase() === normalizedCourseTeacher
+          (teacher) =>
+            teacher.name.trim().toLowerCase() === normalizedCourseTeacher
         );
 
         if (matchingTeacher) {
@@ -169,7 +174,7 @@ export function CourseCreateForm({
     }
 
     if (!formState.teacherId) {
-      toast.error("Select an instructor before saving the course.");
+      toast.error("Select Teacher before saving the course.");
       return;
     }
 
@@ -202,9 +207,7 @@ export function CourseCreateForm({
           .catch(() => ({ error: "Unknown error" }));
         throw new Error(
           error.error ||
-            (isEditMode
-              ? "Failed to update course"
-              : "Failed to create course")
+            (isEditMode ? "Failed to update course" : "Failed to create course")
         );
       }
 
@@ -233,11 +236,8 @@ export function CourseCreateForm({
   };
 
   return (
-    <Card className={cn("max-w-3xl", className)}>
+    <Card className={cn("w-full", className)}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <CardHeader>
-          <CardTitle>{isEditMode ? "Edit course" : "Create a new course"}</CardTitle>
-        </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
@@ -297,7 +297,7 @@ export function CourseCreateForm({
 
           <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="teacherId">Instructor</Label>
+              <Label htmlFor="teacherId">Teacher</Label>
               <Select
                 value={formState.teacherId}
                 onValueChange={(value) => {
@@ -317,14 +317,15 @@ export function CourseCreateForm({
                   teacherOptions.length === 0
                 }
               >
-                <SelectTrigger id="teacherId">
+                <SelectTrigger id="teacherId" className="w-full">
                   <SelectValue
+                    className="truncate"
                     placeholder={
                       teachersLoading
-                        ? "Loading instructors..."
+                        ? "Loading teachers..."
                         : teacherOptions.length === 0
-                          ? "No instructors available"
-                          : "Select instructor"
+                          ? "No teachers available"
+                          : "Select teacher"
                     }
                   />
                 </SelectTrigger>
@@ -340,17 +341,20 @@ export function CourseCreateForm({
               </Select>
               {teachersError ? (
                 <p className="text-xs text-destructive">
-                  Unable to load instructors. {teacherOptions.length > 0
+                  Unable to load teachers.{" "}
+                  {teacherOptions.length > 0
                     ? "The current assignment is still selected."
                     : "Please try again."}
                 </p>
               ) : teacherOptions.length === 0 && !teachersLoading ? (
                 <p className="text-xs text-destructive">
-                  Add teachers in the management module before assigning a course.
+                  Add teachers in the management module before assigning a
+                  course.
                 </p>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  Select the teacher who will build lessons for this course in the CMS.
+                  Select the teacher who will build lessons for this course in
+                  the CMS.
                 </p>
               )}
             </div>
@@ -381,37 +385,6 @@ export function CourseCreateForm({
             <div className="space-y-2">
               <Label>Cover image</Label>
               <div className="flex flex-col gap-3">
-                <UploadButton
-                  endpoint="imageUploader"
-                  appearance={{
-                    button: "w-full justify-center",
-                  }}
-                  content={{
-                    button({ ready }) {
-                      return ready ? "Upload image" : "Connecting...";
-                    },
-                  }}
-                  onUploadBegin={() => {
-                    setIsUploading(true);
-                  }}
-                  onClientUploadComplete={(results) => {
-                    const [file] = results ?? [];
-                    if (file?.url) {
-                      setFormState((prev) => ({
-                        ...prev,
-                        coverImage: file.url,
-                      }));
-                      toast.success("Image uploaded successfully.");
-                    }
-                    setIsUploading(false);
-                  }}
-                  onUploadError={(error) => {
-                    console.error(error);
-                    toast.error(error.message);
-                    setIsUploading(false);
-                  }}
-                />
-
                 {formState.coverImage ? (
                   <div className="relative h-40 w-full overflow-hidden rounded-md border">
                     <Image
@@ -420,7 +393,7 @@ export function CourseCreateForm({
                       fill
                       className="object-cover"
                     />
-                    <div className="absolute inset-x-0 bottom-0 flex justify-end bg-gradient-to-t from-black/50 to-transparent p-2">
+                    <div className="absolute inset-x-0 bottom-0 flex justify-end bg-linear-to-t from-black/50 to-transparent p-2">
                       <Button
                         type="button"
                         variant="secondary"
@@ -437,19 +410,34 @@ export function CourseCreateForm({
                     </div>
                   </div>
                 ) : (
-                  <div className="flex h-40 flex-col items-center justify-center rounded-md border border-dashed text-center text-sm text-muted-foreground">
-                    {isUploading ? (
-                      <span className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />{" "}
-                        Uploading...
-                      </span>
-                    ) : (
-                      <span className="flex flex-col items-center gap-2">
-                        <UploadCloud className="h-6 w-6" />
-                        Image preview will appear here
-                      </span>
-                    )}
-                  </div>
+                  <UploadDropzone
+                    endpoint="imageUploader"
+                    onUploadBegin={() => setIsUploading(true)}
+                    onClientUploadComplete={(results) => {
+                      const [file] = results ?? [];
+                      if (file?.url) {
+                        setFormState((prev) => ({
+                          ...prev,
+                          coverImage: file.url,
+                        }));
+                        toast.success("Image uploaded successfully.");
+                      }
+                      setIsUploading(false);
+                    }}
+                    onUploadError={(error) => {
+                      console.error(error);
+                      toast.error(error.message);
+                      setIsUploading(false);
+                    }}
+                    appearance={{
+                      container:
+                        "border-2 border-dashed border-muted-foreground/30 rounded-lg bg-muted/30",
+                      label: "text-sm text-muted-foreground",
+                      uploadIcon: "text-primary",
+                      button:
+                        "bg-primary text-primary-foreground px-3 hover:bg-primary/90",
+                    }}
+                  />
                 )}
               </div>
             </div>
@@ -484,10 +472,7 @@ export function CourseCreateForm({
           <Button
             type="submit"
             disabled={
-              !isReadyToSubmit ||
-              isSubmitting ||
-              isUploading ||
-              teachersLoading
+              !isReadyToSubmit || isSubmitting || isUploading || teachersLoading
             }
           >
             {isSubmitting ? (
@@ -495,8 +480,10 @@ export function CourseCreateForm({
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 {isEditMode ? "Saving changes..." : "Saving..."}
               </>
+            ) : isEditMode ? (
+              "Update course"
             ) : (
-              isEditMode ? "Update course" : "Save course"
+              "Save course"
             )}
           </Button>
         </CardFooter>

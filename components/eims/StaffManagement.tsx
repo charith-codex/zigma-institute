@@ -301,7 +301,7 @@ export function StaffManagement() {
               Add Staff
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent size="wide" className="w-full">
             <DialogHeader>
               <DialogTitle>Add New Staff Member</DialogTitle>
             </DialogHeader>

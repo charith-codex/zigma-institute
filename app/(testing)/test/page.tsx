@@ -1,6 +1,5 @@
 import { auth } from "@/auth";
 import ClientComponent from "./client-comp";
-import { CourseCreateForm } from "@/components/eims/CourseCreateForm";
 import SendInvoiceButton from "@/email/SendInvoiceButton";
 import Link from "next/link";
 
@@ -19,8 +18,6 @@ export default async function Demo() {
 
       {/* payment */}
       <Link href="/lms/courses">Go to Course Payment</Link>
-
-      <CourseCreateForm />
     </div>
   );
 }

@@ -327,7 +327,7 @@ export function TeacherManagement() {
               Add Teacher
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent size="wide" className="w-full">
             <DialogHeader>
               <DialogTitle>Add New Teacher</DialogTitle>
             </DialogHeader>

@@ -58,18 +58,10 @@ export default async function StudentRegisterPage() {
               Register online and secure your place at {INSTITUTE_NAME}
             </h1>
             <p className="text-lg text-muted-foreground">
-              A streamlined flow inspired by our About and Contact
-              experiences complete the form, pick your courses, and finish
-              payment in minutes.
+              A streamlined flow inspired by our About and Contact experiences
+              complete the form, pick your courses, and finish payment in
+              minutes.
             </p>
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <Button asChild size="lg">
-                <Link href="#registration-form">Start registration</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link href="/contact">Talk to our team</Link>
-              </Button>
-            </div>
           </div>
         </div>
       </div>

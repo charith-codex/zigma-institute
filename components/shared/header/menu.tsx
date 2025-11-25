@@ -4,6 +4,7 @@ import Link from "next/link";
 import { EllipsisVertical } from "lucide-react";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
   SheetTitle,
@@ -58,28 +59,37 @@ const Menu = () => {
             <SheetTitle>Menu</SheetTitle>
             <div className="flex flex-col gap-2">
               {showcaseLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
-                >
-                  {link.label}
-                </Link>
+                <SheetClose key={link.href} asChild>
+                  <Link
+                    href={link.href}
+                    className="rounded-md px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
+                  >
+                    {link.label}
+                  </Link>
+                </SheetClose>
               ))}
             </div>
-            <Button asChild>
-              <Link href="/student-registration">Student Registration</Link>
-            </Button>
+            <SheetClose asChild>
+              <Button asChild>
+                <Link href="/student-registration">Student Registration</Link>
+              </Button>
+            </SheetClose>
 
-            <Button asChild variant="outline">
-              <Link href="/lms">LMS</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/lms-cms">LMS CMS</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/dashboard">Dashboard</Link>
-            </Button>
+            <SheetClose asChild>
+              <Button asChild variant="outline">
+                <Link href="/lms">LMS</Link>
+              </Button>
+            </SheetClose>
+            <SheetClose asChild>
+              <Button asChild variant="outline">
+                <Link href="/lms-cms">LMS CMS</Link>
+              </Button>
+            </SheetClose>
+            <SheetClose asChild>
+              <Button asChild variant="outline">
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+            </SheetClose>
             <ModeToggle />
             <UserButton />
 

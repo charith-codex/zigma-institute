@@ -253,7 +253,7 @@ export function StudyMaterialManager({
                     label: "text-sm text-muted-foreground",
                     uploadIcon: "text-primary",
                     button:
-                      "bg-primary text-primary-foreground hover:bg-primary/90",
+                      "bg-primary text-primary-foreground px-3 hover:bg-primary/90",
                   }}
                 />
               ) : (
