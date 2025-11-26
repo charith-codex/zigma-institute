@@ -119,12 +119,6 @@ export function CreateUserForm() {
           <Label htmlFor="dob">Date of Birth</Label>
           <Input id="dob" name="dob" type="date" />
         </div>
-
-        {/* Join Date */}
-        <div className="space-y-2">
-          <Label htmlFor="joinDate">Join Date</Label>
-          <Input id="joinDate" name="joinDate" type="date" />
-        </div>
       </div>
 
       {/* Submit & Message */}

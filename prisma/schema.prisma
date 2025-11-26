@@ -17,7 +17,6 @@ model User {
   address       String?
   phone         String?
   dob           DateTime?
-  joinDate      DateTime?
   profileImage  String?
   gender        Gender?
   status        UserStatus @default(ACTIVE)

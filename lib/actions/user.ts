@@ -68,7 +68,8 @@ export async function requestPasswordReset(
     if (!user || !user.password) {
       return {
         success: true,
-        message: "If your email is registered, you will receive a reset link shortly.",
+        message:
+          "If your email is registered, you will receive a reset link shortly.",
       };
     }
 
@@ -89,11 +90,15 @@ export async function requestPasswordReset(
 
     return {
       success: true,
-      message: "If your email is registered, you will receive a reset link shortly.",
+      message:
+        "If your email is registered, you will receive a reset link shortly.",
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, message: error.issues[0]?.message ?? "Invalid email" };
+      return {
+        success: false,
+        message: error.issues[0]?.message ?? "Invalid email",
+      };
     }
 
     console.error("Failed to request password reset:", error);
@@ -124,10 +129,14 @@ export async function resetPassword(
       return { success: false, message: "Invalid or expired reset link." };
     }
 
-    const user = await prisma.user.findUnique({ where: { email: resetRecord.email } });
+    const user = await prisma.user.findUnique({
+      where: { email: resetRecord.email },
+    });
 
     if (!user) {
-      await prisma.passwordResetToken.deleteMany({ where: { email: resetRecord.email } });
+      await prisma.passwordResetToken.deleteMany({
+        where: { email: resetRecord.email },
+      });
       return { success: false, message: "Account not found." };
     }
 
@@ -138,12 +147,20 @@ export async function resetPassword(
       data: { password: hashedPassword },
     });
 
-    await prisma.passwordResetToken.deleteMany({ where: { email: user.email } });
+    await prisma.passwordResetToken.deleteMany({
+      where: { email: user.email },
+    });
 
-    return { success: true, message: "Password reset successfully. You can now sign in." };
+    return {
+      success: true,
+      message: "Password reset successfully. You can now sign in.",
+    };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { success: false, message: error.issues[0]?.message ?? "Invalid request" };
+      return {
+        success: false,
+        message: error.issues[0]?.message ?? "Invalid request",
+      };
     }
 
     console.error("Failed to reset password:", error);
@@ -178,7 +195,6 @@ export async function createUser(
       address: formData.get("address") || undefined,
       phone: formData.get("phone"),
       dob: formData.get("dob"),
-      joinDate: formData.get("joinDate") || undefined,
     });
 
     const hashedPassword = hashSync(payload.password, 10);
@@ -193,7 +209,6 @@ export async function createUser(
         address: payload.address,
         phone: payload.phone,
         dob: payload.dob ? new Date(payload.dob) : null,
-        joinDate: payload.joinDate ? new Date(payload.joinDate) : null,
       },
     });
 

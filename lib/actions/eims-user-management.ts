@@ -73,7 +73,6 @@ export type StudentRecord = {
   parentEmail: string | null;
   studentPublicId: string | null;
   dob: string | null;
-  joinDate: string | null;
   gender: "MALE" | "FEMALE" | null;
   profileImage: string | null;
   createdAt: string;
@@ -90,7 +89,6 @@ export type TeacherRecord = {
   qualification: string | null;
   nic: string | null;
   dob: string | null;
-  joinDate: string | null;
   gender: "MALE" | "FEMALE" | null;
   profileImage: string | null;
   createdAt: string;
@@ -107,7 +105,6 @@ export type StaffRecord = {
   role: "ADMIN" | "MANAGER" | "ATTENDANCE";
   nic: string | null;
   dob: string | null;
-  joinDate: string | null;
   gender: "MALE" | "FEMALE" | null;
   profileImage: string | null;
   createdAt: string;
@@ -122,7 +119,6 @@ const serializeStudent = (user: {
   address: string | null;
   status: "ACTIVE" | "INACTIVE";
   dob: Date | null;
-  joinDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
   gender?: "MALE" | "FEMALE" | null;
@@ -141,7 +137,6 @@ const serializeStudent = (user: {
   parentEmail: user.student?.parentEmail ?? null,
   studentPublicId: user.student?.studentPublicId ?? null,
   dob: serializeDate(user.dob),
-  joinDate: serializeDate(user.joinDate),
   gender: user.gender ?? null,
   profileImage: user.profileImage ?? null,
   createdAt: serializeDate(user.createdAt)!,
@@ -156,7 +151,6 @@ const serializeTeacher = (user: {
   address: string | null;
   status: "ACTIVE" | "INACTIVE";
   dob: Date | null;
-  joinDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
   gender?: "MALE" | "FEMALE" | null;
@@ -175,7 +169,6 @@ const serializeTeacher = (user: {
   qualification: user.teacher?.qualification ?? null,
   nic: user.teacher?.nic ?? null,
   dob: serializeDate(user.dob),
-  joinDate: serializeDate(user.joinDate),
   gender: user.gender ?? null,
   profileImage: user.profileImage ?? null,
   createdAt: serializeDate(user.createdAt)!,
@@ -192,7 +185,6 @@ const serializeStaff = (user: {
   // Accept broader role type from Prisma result; we'll narrow on return
   role: string;
   dob: Date | null;
-  joinDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
   gender?: "MALE" | "FEMALE" | null;
@@ -210,7 +202,6 @@ const serializeStaff = (user: {
   role: user.role as StaffRecord["role"],
   nic: user.staff?.nic ?? null,
   dob: serializeDate(user.dob),
-  joinDate: serializeDate(user.joinDate),
   gender: user.gender ?? null,
   profileImage: user.profileImage ?? null,
   createdAt: serializeDate(user.createdAt)!,
@@ -266,7 +257,6 @@ export async function createStudent(
         status: payload.status,
         role: "STUDENT",
         dob: payload.dob ? new Date(payload.dob) : null,
-        joinDate: payload.joinDate ? new Date(payload.joinDate) : null,
         profileImage: normalizeOptionalString(payload.profileImage),
         gender: normalizeOptionalGender(payload.gender),
         password: password ? hashSync(password, 10) : undefined,
@@ -321,7 +311,6 @@ export async function updateStudent(
         profileImage: normalizeOptionalString(payload.profileImage),
         gender: normalizeOptionalGender(payload.gender),
         dob: payload.dob ? new Date(payload.dob) : null,
-        joinDate: payload.joinDate ? new Date(payload.joinDate) : null,
         ...(password
           ? {
               password: hashSync(password, 10),
@@ -435,7 +424,6 @@ export async function createTeacher(
         status: payload.status,
         role: "TEACHER",
         dob: payload.dob ? new Date(payload.dob) : null,
-        joinDate: payload.joinDate ? new Date(payload.joinDate) : null,
         profileImage: normalizeOptionalString(payload.profileImage),
         gender: normalizeOptionalGender(payload.gender),
         password: password ? hashSync(password, 10) : undefined,
@@ -490,7 +478,6 @@ export async function updateTeacher(
         profileImage: normalizeOptionalString(payload.profileImage),
         gender: normalizeOptionalGender(payload.gender),
         dob: payload.dob ? new Date(payload.dob) : null,
-        joinDate: payload.joinDate ? new Date(payload.joinDate) : null,
         ...(password
           ? {
               password: hashSync(password, 10),
@@ -602,7 +589,6 @@ export async function createStaff(
         status: payload.status,
         role: payload.role,
         dob: payload.dob ? new Date(payload.dob) : null,
-        joinDate: payload.joinDate ? new Date(payload.joinDate) : null,
         profileImage: normalizeOptionalString(payload.profileImage),
         gender: normalizeOptionalGender(payload.gender),
         password: password ? hashSync(password, 10) : undefined,
@@ -657,7 +643,6 @@ export async function updateStaff(
         profileImage: normalizeOptionalString(payload.profileImage),
         gender: normalizeOptionalGender(payload.gender),
         dob: payload.dob ? new Date(payload.dob) : null,
-        joinDate: payload.joinDate ? new Date(payload.joinDate) : null,
         ...(password
           ? {
               password: hashSync(password, 10),

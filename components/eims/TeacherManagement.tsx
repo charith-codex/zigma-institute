@@ -75,7 +75,6 @@ const createEmptyTeacher = (): TeacherCreateValues => ({
   status: "ACTIVE",
   password: "",
   dob: "",
-  joinDate: "",
   gender: undefined,
   profileImage: "",
 });
@@ -217,7 +216,6 @@ export function TeacherManagement() {
       nic: editingTeacher.nic ?? "",
       status: editingTeacher.status,
       dob: editingTeacher.dob ?? "",
-      joinDate: editingTeacher.joinDate ?? "",
       password: editTeacherPassword,
       gender: editingTeacher.gender ?? undefined,
       profileImage: editingTeacher.profileImage ?? "",
@@ -461,27 +459,6 @@ export function TeacherManagement() {
                   {newTeacherErrors.dob && (
                     <p className="text-xs text-destructive">
                       {newTeacherErrors.dob}
-                    </p>
-                  )}
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="teacher-join-date">Join date</Label>
-                  <Input
-                    id="teacher-join-date"
-                    type="date"
-                    value={newTeacher.joinDate}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setNewTeacher((prev) => ({
-                        ...prev,
-                        joinDate: value,
-                      }));
-                      clearNewTeacherError("joinDate");
-                    }}
-                  />
-                  {newTeacherErrors.joinDate && (
-                    <p className="text-xs text-destructive">
-                      {newTeacherErrors.joinDate}
                     </p>
                   )}
                 </div>
@@ -825,31 +802,6 @@ export function TeacherManagement() {
                   {editTeacherErrors.dob && (
                     <p className="text-xs text-destructive">
                       {editTeacherErrors.dob}
-                    </p>
-                  )}
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-teacher-join-date">Join date</Label>
-                  <Input
-                    id="edit-teacher-join-date"
-                    type="date"
-                    value={formatDateForInput(editingTeacher.joinDate)}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setEditingTeacher((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              joinDate: value ? value : null,
-                            }
-                          : prev
-                      );
-                      clearEditTeacherError("joinDate");
-                    }}
-                  />
-                  {editTeacherErrors.joinDate && (
-                    <p className="text-xs text-destructive">
-                      {editTeacherErrors.joinDate}
                     </p>
                   )}
                 </div>

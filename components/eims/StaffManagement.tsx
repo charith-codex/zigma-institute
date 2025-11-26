@@ -77,7 +77,6 @@ const createEmptyStaff = (): StaffCreateValues => ({
   status: "ACTIVE",
   password: "",
   dob: "",
-  joinDate: "",
   gender: undefined,
   profileImage: "",
 });
@@ -212,7 +211,6 @@ export function StaffManagement() {
       address: editingStaff.address ?? "",
       nic: editingStaff.nic ?? "",
       dob: editingStaff.dob ?? "",
-      joinDate: editingStaff.joinDate ?? "",
       password: editStaffPassword,
       gender: editingStaff.gender ?? undefined,
       profileImage: editingStaff.profileImage ?? "",
@@ -418,24 +416,6 @@ export function StaffManagement() {
                   {newStaffErrors.dob && (
                     <p className="text-xs text-destructive">
                       {newStaffErrors.dob}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor="staff-join-date">Join date</Label>
-                  <Input
-                    id="staff-join-date"
-                    type="date"
-                    value={newStaff.joinDate}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setNewStaff((prev) => ({ ...prev, joinDate: value }));
-                      clearNewStaffError("joinDate");
-                    }}
-                  />
-                  {newStaffErrors.joinDate && (
-                    <p className="text-xs text-destructive">
-                      {newStaffErrors.joinDate}
                     </p>
                   )}
                 </div>
@@ -836,27 +816,6 @@ export function StaffManagement() {
                   {editStaffErrors.dob && (
                     <p className="text-xs text-destructive">
                       {editStaffErrors.dob}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label>Join date</Label>
-                  <Input
-                    type="date"
-                    value={formatDateForInput(editingStaff.joinDate)}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setEditingStaff((prev) =>
-                        prev
-                          ? { ...prev, joinDate: value ? value : null }
-                          : prev
-                      );
-                      clearEditStaffError("joinDate");
-                    }}
-                  />
-                  {editStaffErrors.joinDate && (
-                    <p className="text-xs text-destructive">
-                      {editStaffErrors.joinDate}
                     </p>
                   )}
                 </div>

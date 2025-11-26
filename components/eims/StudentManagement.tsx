@@ -75,7 +75,6 @@ const createEmptyStudent = (): StudentCreateValues => ({
   status: "ACTIVE",
   password: "",
   dob: "",
-  joinDate: "",
   gender: undefined,
   profileImage: "",
 });
@@ -227,7 +226,6 @@ export function StudentManagement() {
       studentPublicId: editingStudent.studentPublicId ?? "",
       status: editingStudent.status,
       dob: editingStudent.dob ?? "",
-      joinDate: editingStudent.joinDate ?? "",
       password: editStudentPassword,
       gender: editingStudent.gender ?? undefined,
       profileImage: editingStudent.profileImage ?? "",
@@ -447,28 +445,6 @@ export function StudentManagement() {
                   {newStudentErrors.dob && (
                     <p className="text-xs text-destructive">
                       {newStudentErrors.dob}
-                    </p>
-                  )}
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="student-join-date">Join date</Label>
-                  <Input
-                    id="student-join-date"
-                    type="date"
-                    value={newStudent.joinDate}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setNewStudent((prev) => ({
-                        ...prev,
-                        joinDate: value,
-                      }));
-                      clearNewStudentError("joinDate");
-                    }}
-                  />
-                  {newStudentErrors.joinDate && (
-                    <p className="text-xs text-destructive">
-                      {newStudentErrors.joinDate}
                     </p>
                   )}
                 </div>
@@ -878,31 +854,6 @@ export function StudentManagement() {
                   {editStudentErrors.dob && (
                     <p className="text-xs text-destructive">
                       {editStudentErrors.dob}
-                    </p>
-                  )}
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-student-join-date">Join date</Label>
-                  <Input
-                    id="edit-student-join-date"
-                    type="date"
-                    value={formatDateForInput(editingStudent.joinDate)}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setEditingStudent((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              joinDate: value ? value : null,
-                            }
-                          : prev
-                      );
-                      clearEditStudentError("joinDate");
-                    }}
-                  />
-                  {editStudentErrors.joinDate && (
-                    <p className="text-xs text-destructive">
-                      {editStudentErrors.joinDate}
                     </p>
                   )}
                 </div>

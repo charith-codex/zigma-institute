@@ -136,14 +136,6 @@ export const createUserSchema = z.object({
       (val) => !val || !isNaN(Date.parse(val)),
       "Date of Birth must be a valid date"
     ),
-
-  joinDate: z
-    .string()
-    .optional()
-    .refine(
-      (val) => !val || !isNaN(Date.parse(val)),
-      "Join Date must be a valid date"
-    ),
 });
 
 export const profileUpdateSchema = z.object({
@@ -183,12 +175,14 @@ export const scheduleSchema = z
     path: ["endTime"],
   });
 
-export const scheduleUpdateSchema = scheduleSchema.partial().superRefine((value, ctx) => {
-  if (value.startTime && value.endTime && value.endTime <= value.startTime) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "End time must be after the start time",
-      path: ["endTime"],
-    });
-  }
-});
+export const scheduleUpdateSchema = scheduleSchema
+  .partial()
+  .superRefine((value, ctx) => {
+    if (value.startTime && value.endTime && value.endTime <= value.startTime) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "End time must be after the start time",
+        path: ["endTime"],
+      });
+    }
+  });
