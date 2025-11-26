@@ -646,7 +646,7 @@ export function StaffManagement() {
             }
           }}
         >
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent size="wide" className="w-full">
             <DialogHeader>
               <DialogTitle>Edit staff member</DialogTitle>
             </DialogHeader>

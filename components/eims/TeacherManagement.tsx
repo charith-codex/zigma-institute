@@ -691,7 +691,7 @@ export function TeacherManagement() {
             }
           }}
         >
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent size="wide" className="w-full">
             <DialogHeader>
               <DialogTitle>Edit teacher</DialogTitle>
             </DialogHeader>

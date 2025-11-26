@@ -337,10 +337,7 @@ export function StudentManagement() {
               Add Student
             </Button>
           </DialogTrigger>
-          <DialogContent
-            size="wide"
-            className="w-full"
-          >
+          <DialogContent size="wide" className="w-full">
             <DialogHeader>
               <DialogTitle>Add New Student</DialogTitle>
             </DialogHeader>
@@ -727,7 +724,7 @@ export function StudentManagement() {
             }
           }}
         >
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent size="wide" className="w-full">
             <DialogHeader>
               <DialogTitle>Edit student</DialogTitle>
             </DialogHeader>
