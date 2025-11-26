@@ -18,6 +18,7 @@ export const DailyQuotes = () => {
         const data = await res.json();
         console.log(data);
         if (Array.isArray(data) && data.length) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const item: any = data[0];
           const text = item.q ?? item.quote ?? "";
           const author = item.a ?? item.author ?? "Unknown";
