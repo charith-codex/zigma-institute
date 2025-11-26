@@ -84,13 +84,29 @@ const createEmptyStaff = (): StaffCreateValues => ({
   profileImage: "",
 });
 
+const toStaffUpsertValues = (member: StaffRecord): StaffUpsertValues => ({
+  id: member.id,
+  name: member.name,
+  email: member.email,
+  phone: member.phone ?? "",
+  address: member.address ?? "",
+  nic: member.nic ?? "",
+  role: member.role,
+  status: member.status,
+  dob: member.dob ?? "",
+  gender: member.gender ?? "",
+  profileImage: member.profileImage ?? "",
+});
+
 export function StaffManagement() {
   const [staffMembers, setStaffMembers] = useState<StaffRecord[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingStaff, setEditingStaff] = useState<StaffRecord | null>(null);
+  const [editingStaff, setEditingStaff] = useState<StaffUpsertValues | null>(
+    null
+  );
   const [deleteTarget, setDeleteTarget] = useState<StaffRecord | null>(null);
   const [newStaff, setNewStaff] = useState<StaffCreateValues>(createEmptyStaff);
   const [isPending, startTransition] = useTransition();
@@ -165,7 +181,7 @@ export function StaffManagement() {
       const result = await createStaff(validation.data);
 
       if (result.success) {
-        setStaffMembers(result.data);
+        setStaffMembers((prev) => [result.data, ...prev]);
         setNewStaff(createEmptyStaff());
         setIsAddDialogOpen(false);
         toast.success("Staff member added successfully.");
@@ -208,7 +224,11 @@ export function StaffManagement() {
       const result = await updateStaff(validation.data);
 
       if (result.success) {
-        setStaffMembers(result.data);
+        setStaffMembers((prev) =>
+          prev.map((member) =>
+            member.id === result.data.id ? result.data : member
+          )
+        );
         setEditingStaff(null);
         toast.success("Staff member updated successfully.");
       } else {
@@ -232,7 +252,9 @@ export function StaffManagement() {
       const result = await deleteStaff(deleteTarget.id);
 
       if (result.success) {
-        setStaffMembers(result.data);
+        setStaffMembers((prev) =>
+          prev.filter((member) => member.id !== deleteTarget.id)
+        );
         setDeleteTarget(null);
         toast.success("Staff member removed successfully.");
       } else {
@@ -255,7 +277,7 @@ export function StaffManagement() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setEditingStaff(member)}
+          onClick={() => setEditingStaff(toStaffUpsertValues(member))}
           disabled={isPending}
         >
           <Edit className="mr-1 h-4 w-4" /> Edit

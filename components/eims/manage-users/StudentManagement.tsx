@@ -78,15 +78,31 @@ const createEmptyStudent = (): StudentCreateValues => ({
   profileImage: "",
 });
 
+const toStudentUpsertValues = (
+  student: StudentRecord
+): StudentUpsertValues => ({
+  id: student.id,
+  name: student.name,
+  email: student.email,
+  phone: student.phone ?? "",
+  address: student.address ?? "",
+  status: student.status,
+  parentEmail: student.parentEmail ?? "",
+  studentPublicId: student.studentPublicId ?? "",
+  dob: student.dob ?? "",
+  gender: student.gender ?? "",
+  profileImage: student.profileImage ?? "",
+});
+
 export function StudentManagement() {
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingStudent, setEditingStudent] = useState<StudentRecord | null>(
-    null
-  );
+  const [editingStudent, setEditingStudent] = useState<
+    StudentUpsertValues | null
+  >(null);
   const [deleteTarget, setDeleteTarget] = useState<StudentRecord | null>(null);
   const [newStudent, setNewStudent] =
     useState<StudentCreateValues>(createEmptyStudent);
@@ -171,7 +187,7 @@ export function StudentManagement() {
       const result = await createStudent(validation.data);
 
       if (result.success) {
-        setStudents(result.data);
+        setStudents((prev) => [result.data, ...prev]);
         setNewStudent(createEmptyStudent());
         setIsAddDialogOpen(false);
         toast.success("Student added successfully.");
@@ -214,7 +230,11 @@ export function StudentManagement() {
       const result = await updateStudent(validation.data);
 
       if (result.success) {
-        setStudents(result.data);
+        setStudents((prev) =>
+          prev.map((student) =>
+            student.id === result.data.id ? result.data : student
+          )
+        );
         setEditingStudent(null);
         toast.success("Student updated successfully.");
       } else {
@@ -238,7 +258,9 @@ export function StudentManagement() {
       const result = await deleteStudent(deleteTarget.id);
 
       if (result.success) {
-        setStudents(result.data);
+        setStudents((prev) =>
+          prev.filter((student) => student.id !== deleteTarget.id)
+        );
         setDeleteTarget(null);
         toast.success("Student removed successfully.");
       } else {
@@ -261,7 +283,7 @@ export function StudentManagement() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setEditingStudent(student)}
+          onClick={() => setEditingStudent(toStudentUpsertValues(student))}
           disabled={isPending}
         >
           <Edit className="mr-1 h-4 w-4" /> Edit

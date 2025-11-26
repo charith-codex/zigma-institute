@@ -78,15 +78,31 @@ const createEmptyTeacher = (): TeacherCreateValues => ({
   profileImage: "",
 });
 
+const toTeacherUpsertValues = (
+  teacher: TeacherRecord
+): TeacherUpsertValues => ({
+  id: teacher.id,
+  name: teacher.name,
+  email: teacher.email,
+  phone: teacher.phone ?? "",
+  address: teacher.address ?? "",
+  qualification: teacher.qualification ?? "",
+  nic: teacher.nic ?? "",
+  status: teacher.status,
+  dob: teacher.dob ?? "",
+  gender: teacher.gender ?? "",
+  profileImage: teacher.profileImage ?? "",
+});
+
 export function TeacherManagement() {
   const [teachers, setTeachers] = useState<TeacherRecord[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingTeacher, setEditingTeacher] = useState<TeacherRecord | null>(
-    null
-  );
+  const [editingTeacher, setEditingTeacher] = useState<
+    TeacherUpsertValues | null
+  >(null);
   const [deleteTarget, setDeleteTarget] = useState<TeacherRecord | null>(null);
   const [newTeacher, setNewTeacher] =
     useState<TeacherCreateValues>(createEmptyTeacher);
@@ -137,7 +153,7 @@ export function TeacherManagement() {
 
     return teachers.filter((teacher) => {
       const haystacks = [teacher.name, teacher.email, teacher.qualification]
-        .filter(Boolean)
+        .filter((value): value is string => Boolean(value))
         .map((value) => value.toLowerCase());
 
       return haystacks.some((value) => value.includes(term));
@@ -164,7 +180,7 @@ export function TeacherManagement() {
       const result = await createTeacher(validation.data);
 
       if (result.success) {
-        setTeachers(result.data);
+        setTeachers((prev) => [result.data, ...prev]);
         setNewTeacher(createEmptyTeacher());
         setIsAddDialogOpen(false);
         toast.success("Teacher added successfully.");
@@ -207,7 +223,11 @@ export function TeacherManagement() {
       const result = await updateTeacher(validation.data);
 
       if (result.success) {
-        setTeachers(result.data);
+        setTeachers((prev) =>
+          prev.map((teacher) =>
+            teacher.id === result.data.id ? result.data : teacher
+          )
+        );
         setEditingTeacher(null);
         toast.success("Teacher updated successfully.");
       } else {
@@ -231,7 +251,9 @@ export function TeacherManagement() {
       const result = await deleteTeacher(deleteTarget.id);
 
       if (result.success) {
-        setTeachers(result.data);
+        setTeachers((prev) =>
+          prev.filter((teacher) => teacher.id !== deleteTarget.id)
+        );
         setDeleteTarget(null);
         toast.success("Teacher removed successfully.");
       } else {
@@ -254,7 +276,7 @@ export function TeacherManagement() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setEditingTeacher(teacher)}
+          onClick={() => setEditingTeacher(toTeacherUpsertValues(teacher))}
           disabled={isPending}
         >
           <Edit className="mr-1 h-4 w-4" /> Edit
