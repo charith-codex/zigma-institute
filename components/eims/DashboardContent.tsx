@@ -24,13 +24,13 @@ import { Notifications } from "./Notifications";
 import { Settings } from "./Settings";
 import FeeManagement from "./FeeManagement";
 import AttendanceQR from "./AttendanceQR";
-import { StaffManagement } from "./manage-users/StaffManagement";
+import { StaffManagement } from "./StaffManagement";
 import { InquiryManagement } from "./InquiryManagement";
-import { TeacherManagement } from "./manage-users/TeacherManagement";
+import { TeacherManagement } from "./TeacherManagement";
 import { CourseManagement } from "./CourseManagement";
 import { StudentRegistrationManagement } from "./StudentRegistrationManagement";
 import { ShowcaseManagement } from "./ShowcaseManagement";
-import { StudentManagement } from "./manage-users/StudentManagement";
+import { StudentManagement } from "./StudentManagement";
 import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleManager";
 
 interface DashboardContentProps {
