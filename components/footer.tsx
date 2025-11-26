@@ -4,6 +4,8 @@ import Image from "next/image";
 import { Facebook, Youtube, Instagram, Twitter } from "lucide-react";
 
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="bg-slate-950 ">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-6 sm:px-6 md:py-8 max-md:flex-col max-md:items-start gap-4">
@@ -104,10 +106,17 @@ const Footer = () => {
         </div>
       </div>
 
-      <div className="my-5 pt-6 border-t border-white/10 text-center text-xs text-slate-400">
-        <p className="text-sm text-slate-400">
-          © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
-        </p>
+      <div className="border-t border-slate-800">
+        <div className="wrapper flex flex-col items-center justify-between gap-4 py-6 text-xs text-slate-500 md:flex-row">
+          <p>
+            © {currentYear} {APP_NAME}. All rights reserved.
+          </p>
+          <div className="flex flex-wrap items-center gap-4">
+            <p>Privacy Policy</p>
+            <p>Terms of Service</p>
+            <p>Support</p>
+          </div>
+        </div>
       </div>
     </footer>
   );

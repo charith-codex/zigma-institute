@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js" // -js added after prisma 6.0 only came with client
+  provider = "prisma-client"
   output   = "../lib/generated/prisma"
 }
 
@@ -123,10 +123,10 @@ model Staff {
 }
 
 model Notification {
-  id        String                 @id @default(uuid())
-  title     String
-  message   String
-  targets   NotificationChannel[]
+  id      String                @id @default(uuid())
+  title   String
+  message String
+  targets NotificationChannel[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -215,7 +215,7 @@ model VideoRecording {
 }
 
 model PhysicalExamMark {
-  id                    String    @id @default(uuid())
+  id                    String   @id @default(uuid())
   courseId              String
   studentRegistrationId String
   studentPublicId       String
@@ -223,7 +223,7 @@ model PhysicalExamMark {
   examTitle             String
   paperUrl              String
   score                 Float
-  recordedAt            DateTime  @default(now())
+  recordedAt            DateTime @default(now())
 
   course              Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
   studentRegistration StudentRegistration @relation(fields: [studentRegistrationId], references: [id], onDelete: Cascade)
@@ -390,9 +390,9 @@ model StudentRegistration {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  student Student?                    @relation(name: "StudentRegistrationStudent", fields: [studentUserId], references: [userId], onDelete: SetNull)
-  courses StudentRegistrationCourse[]
-  physicalExamMarks PhysicalExamMark[]
+  student             Student?                    @relation(name: "StudentRegistrationStudent", fields: [studentUserId], references: [userId], onDelete: SetNull)
+  courses             StudentRegistrationCourse[]
+  physicalExamMarks   PhysicalExamMark[]
   paymentTransactions PaymentTransaction[]
 }
 
@@ -415,21 +415,21 @@ enum PaymentType {
 }
 
 model PaymentTransaction {
-  id             String       @id @default(uuid())
+  id             String      @id @default(uuid())
   studentId      String
   courseId       String?
   registrationId String?
   amountInCents  Int
-  currency       String       @default("usd")
+  currency       String      @default("usd")
   paymentType    PaymentType
   monthNumber    Int?
-  discountRate   Float        @default(0)
-  transactionId  String       @unique
-  paidAt         DateTime     @default(now())
+  discountRate   Float       @default(0)
+  transactionId  String      @unique
+  paidAt         DateTime    @default(now())
   notes          String?
 
-  student      User                @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  course       Course?             @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  student      User                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course       Course?              @relation(fields: [courseId], references: [id], onDelete: SetNull)
   registration StudentRegistration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
 
   @@index([studentId])
@@ -461,13 +461,13 @@ model AttendanceEntry {
 }
 
 model Inquiry {
-  id          String         @id @default(uuid())
+  id          String        @id @default(uuid())
   name        String
   email       String
   subject     String
   message     String
   inquiryType InquiryType
-  status      InquiryStatus  @default(new)
+  status      InquiryStatus @default(new)
   response    String?
   respondedAt DateTime?
   assignedTo  String?
