@@ -7,6 +7,7 @@ import { stripe } from "@/lib/stripe";
 import { generateRandomPassword } from "@/lib/student-registration/password";
 import { generateStudentPublicId } from "@/lib/student-registration/identifiers";
 import { generateAndUploadIdCard } from "@/lib/student-registration/generate-id-card";
+import { generateAndStoreStudentQrCode } from "@/lib/student-registration/qr-code";
 import { sendStudentOnboardingEmail } from "@/email";
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -149,6 +150,13 @@ async function handleCheckoutSessionCompleted(
       return { studentUserId: user.id, studentPublicId: newPublicId };
     }
   );
+
+  const qrResult = await generateAndStoreStudentQrCode(registration.id);
+  const qrCodeUrl = qrResult.success ? qrResult.qrCodeUrl ?? null : null;
+
+  if (!qrResult.success) {
+    console.error(`Failed to generate QR code: ${qrResult.error}`);
+  }
 
   // Generate student ID card (non-critical - can be regenerated later if it fails)
   let idCardUrl: string | null = null;
