@@ -33,6 +33,7 @@ export interface StudentRegistrationSummary {
   currency: string;
   createdAt: Date;
   idCardUrl: string | null;
+  qrCodeUrl: string | null;
   studentPublicId: string | null;
   studentUserId: string | null;
   courses: string[];

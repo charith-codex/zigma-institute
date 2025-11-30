@@ -4,6 +4,9 @@ import { notFound } from "next/navigation";
 import { CoursePurchaseButton } from "@/components/courses/course-purchase-button";
 import { formatCurrency } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function CourseDetailsPage(props: {
   params: Promise<{ slug: string }>;
   searchParams?: Promise<{ success?: string; canceled?: string }>;

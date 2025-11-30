@@ -47,6 +47,7 @@ export async function GET(request: Request) {
     currency: registration.currency,
     createdAt: registration.createdAt,
     idCardUrl: registration.idCardUrl,
+    qrCodeUrl: registration.qrCodeUrl,
     studentPublicId: registration.studentPublicId,
     studentUserId: registration.studentUserId,
     courses: registration.courses
