@@ -47,6 +47,7 @@ export async function GET(request: Request) {
     email: registration.email,
     studentPublicId: registration.studentPublicId,
     idCardUrl: registration.idCardUrl,
+    qrCodeUrl: registration.qrCodeUrl,
     status: registration.status,
     courses: registration.courses
       .map((item) => item.course?.name)

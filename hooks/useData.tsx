@@ -178,6 +178,8 @@ export function useStudentRegistrations(
             )
             .map((item) => ({
               ...item,
+              qrCodeUrl:
+                typeof item.qrCodeUrl === "string" ? item.qrCodeUrl : null,
               createdAt: new Date(item.createdAt),
             }))
         : [];
