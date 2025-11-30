@@ -127,27 +127,23 @@ function buildSimpleIdCardSvg(data: SimpleIdCardData): string {
           <g transform="translate(0, 64)">
             <circle cx="12" cy="-4" r="10" fill="#1fb2f1" />
             <text x="32" y="0" font-weight="600" fill="#f8fafc">${safeStudentEmail}</text>
-            <text x="32" y="24" fill="#9fbadf">Email</text>
+            <text x="32" y="24" fill="#9fbadf">Student Email</text>
           </g>
           <g transform="translate(0, 128)">
             <circle cx="12" cy="-4" r="10" fill="#22d3ee" />
             <text x="32" y="0" font-weight="600" fill="#f8fafc">${safeGuardianEmail}</text>
-            <text x="32" y="24" fill="#9fbadf">Guardian</text>
+            <text x="32" y="24" fill="#9fbadf">Guardian Email</text>
           </g>
         </g>
         <g transform="translate(320, 24)">
           <rect width="120" height="120" rx="16" fill="#0f1f3d" stroke="#1d9bf0" opacity="0.9" />
           ${
             safeQr
-              ? `<image x="10" y="10" width="100" height="100" href="${safeQr}" />`
+              ? `<image x="10" y="10" width="150" height="150" href="${safeQr}" />`
               : `<text x="60" y="70" text-anchor="middle" font-size="12" fill="#9fbadf">QR Pending</text>`
           }
           <text x="60" y="148" text-anchor="middle" font-size="12" fill="#8fb5ff">Scan for attendance</text>
         </g>
-      </g>
-      <g transform="translate(0, 364)">
-        <rect width="460" height="56" rx="14" fill="url(#accentGradient)" opacity="0.9" />
-        <text x="24" y="36" font-size="16" font-weight="700" fill="#0b1020">Secure identity for smart classrooms</text>
       </g>
     </g>
   </svg>`;
