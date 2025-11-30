@@ -1,5 +1,5 @@
 import { prisma } from "@/db/prisma";
-import QRCode from "@/lib/vendor/qrcode";
+import QRCode from "qrcode";
 
 export interface StudentQrPayload {
   type: "ZIGMA_STUDENT_ID";
@@ -54,6 +54,7 @@ export async function generateAndStoreStudentQrCode(
       width: 320,
       margin: 1,
       color: { dark: "#0f172a", light: "#ffffff" },
+      type: "image/png",
     });
 
     await prisma.studentRegistration.update({
