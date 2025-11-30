@@ -66,51 +66,90 @@ function buildSimpleIdCardSvg(data: SimpleIdCardData): string {
   <svg width="960" height="560" viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#0f172a" />
-        <stop offset="100%" stop-color="#1d4ed8" />
+        <stop offset="0%" stop-color="#0b1a3a" />
+        <stop offset="50%" stop-color="#0c2f66" />
+        <stop offset="100%" stop-color="#0b72ff" />
       </linearGradient>
-    </defs>
-    <rect width="960" height="560" rx="32" fill="url(#cardGradient)" />
-    <rect x="24" y="24" width="912" height="512" rx="24" fill="#0b1220" opacity="0.35" />
-    <text x="60" y="100" font-size="42" font-weight="600" fill="#f8fafc">${INSTITUTE_INFO.name}</text>
-    <text x="60" y="140" font-size="22" fill="#cbd5f5">${INSTITUTE_INFO.tagline}</text>
-    <text x="60" y="220" font-size="32" font-weight="600" fill="#f1f5f9">${safeName}</text>
-    <text x="60" y="260" font-size="18" fill="#cbd5f5">Student ID • ${safePublicId}</text>
-    <text x="60" y="300" font-size="18" fill="#94a3b8">Email • ${safeStudentEmail}</text>
-    <text x="60" y="340" font-size="18" fill="#94a3b8">Guardian • ${safeGuardianEmail}</text>
-    <text x="60" y="400" font-size="16" fill="#cbd5f5">Issued ${issuedOn}</text>
-    <g transform="translate(640, 120)">
-      <rect width="240" height="420" rx="32" fill="#0f172a" opacity="0.9" />
-      <rect x="20" y="20" width="200" height="200" rx="24" fill="#fff" opacity="0.1" />
+      <linearGradient id="panelGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#10213f" stop-opacity="0.9" />
+        <stop offset="100%" stop-color="#0e1b38" stop-opacity="0.75" />
+      </linearGradient>
+      <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#3bc8f6" />
+        <stop offset="100%" stop-color="#1d9bf0" />
+      </linearGradient>
+      <filter id="cardGlow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="0" stdDeviation="24" flood-color="#0ea5e9" flood-opacity="0.25" />
+      </filter>
       <clipPath id="${clipId}">
-        <rect x="20" y="20" width="200" height="200" rx="24" />
+        <rect x="0" y="0" width="180" height="180" rx="28" />
       </clipPath>
-      ${
-        safePhoto
-          ? `<image x="20" y="20" width="200" height="200" preserveAspectRatio="xMidYMid slice" href="${safePhoto}" clip-path="url(#${clipId})" />`
-          : `<text x="120" y="140" text-anchor="middle" font-size="72" font-weight="700" fill="#1d4ed8" opacity="0.6">${initials}</text>`
-      }
-      <foreignObject x="10" y="230" width="220" height="60">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;flex-direction:column;align-items:center;gap:4px;color:#e2e8f0;font-family:'Inter',sans-serif;">
-          <strong style="font-size:16px">${safeName}</strong>
-        </div>
-      </foreignObject>
-      ${
-        safeQr
-          ? `<rect x="40" y="250" width="160" height="160" rx="18" fill="#0b1220" opacity="0.7" />
-        <image x="52" y="262" width="136" height="136" href="${safeQr}" />
-        <text x="120" y="410" font-size="12" text-anchor="middle" fill="#cbd5f5" opacity="0.8">Scan for attendance</text>`
-          : ""
-      }
+    </defs>
+    <rect width="960" height="560" rx="36" fill="url(#cardGradient)" filter="url(#cardGlow)" />
+    <rect x="24" y="24" width="912" height="512" rx="28" fill="#0b1530" opacity="0.38" />
+    <rect x="40" y="40" width="880" height="480" rx="26" fill="url(#panelGradient)" stroke="#1f3b68" stroke-width="2" opacity="0.95" />
+    <g opacity="0.25" stroke="#38bdf8" stroke-width="2" stroke-linecap="round">
+      <path d="M120 120 H320 M180 160 H340 M120 420 H360" />
+      <path d="M820 140 H640 M800 180 H620" />
+      <circle cx="340" cy="120" r="6" fill="#38bdf8" />
+      <circle cx="620" cy="180" r="6" fill="#38bdf8" />
     </g>
-    ${
-      safeQr
-        ? ""
-        : `<g transform="translate(60, 420)">
-      <rect width="180" height="90" rx="18" fill="#1e293b" opacity="0.7" />
-      <text x="20" y="52" font-size="16" fill="#cbd5f5">QR code pending</text>
-    </g>`
-    }
+    <g transform="translate(80, 90)">
+      <rect width="240" height="380" rx="30" fill="#0f1d3d" opacity="0.9" stroke="#1f3b68" />
+      <rect x="30" y="26" width="180" height="180" rx="28" fill="#0b142c" stroke="#1d9bf0" opacity="0.6" />
+      <g transform="translate(30, 26)">
+        ${
+          safePhoto
+            ? `<image width="180" height="180" preserveAspectRatio="xMidYMid slice" href="${safePhoto}" clip-path="url(#${clipId})" />`
+            : `<rect width="180" height="180" rx="28" fill="#102a54" /><text x="90" y="115" text-anchor="middle" font-size="68" font-weight="700" fill="#4ea6ff">${initials}</text>`
+        }
+      </g>
+      <text x="120" y="250" text-anchor="middle" font-size="22" font-weight="700" fill="#e2e8f0">${safeName}</text>
+      <text x="120" y="280" text-anchor="middle" font-size="14" fill="#8fb5ff">Student ID • ${safePublicId}</text>
+      <g transform="translate(24, 310)">
+        <rect width="192" height="56" rx="16" fill="#0b1226" opacity="0.8" stroke="#1d9bf0" />
+        <text x="16" y="34" font-size="14" fill="#9fbadf">Issued</text>
+        <text x="120" y="34" font-size="16" font-weight="600" fill="#e2e8f0" text-anchor="middle">${issuedOn}</text>
+      </g>
+    </g>
+    <g transform="translate(360, 90)">
+      <text x="0" y="24" font-size="14" letter-spacing="6" fill="#38bdf8">DIGITAL ID</text>
+      <text x="0" y="70" font-size="38" font-weight="700" fill="#f8fafc">${INSTITUTE_INFO.name}</text>
+      <text x="0" y="104" font-size="20" fill="#b8d5ff">${INSTITUTE_INFO.tagline}</text>
+      <g transform="translate(0, 140)">
+        <rect width="460" height="200" rx="22" fill="#0c182f" stroke="#1f3b68" />
+        <g transform="translate(20, 28)" font-size="15" fill="#cdd8ef">
+          <g transform="translate(0, 0)">
+            <circle cx="12" cy="-4" r="10" fill="#0f4bd8" />
+            <text x="32" y="0" font-weight="600" fill="#f8fafc">${safeName}</text>
+            <text x="32" y="24" fill="#9fbadf">Student</text>
+          </g>
+          <g transform="translate(0, 64)">
+            <circle cx="12" cy="-4" r="10" fill="#1fb2f1" />
+            <text x="32" y="0" font-weight="600" fill="#f8fafc">${safeStudentEmail}</text>
+            <text x="32" y="24" fill="#9fbadf">Email</text>
+          </g>
+          <g transform="translate(0, 128)">
+            <circle cx="12" cy="-4" r="10" fill="#22d3ee" />
+            <text x="32" y="0" font-weight="600" fill="#f8fafc">${safeGuardianEmail}</text>
+            <text x="32" y="24" fill="#9fbadf">Guardian</text>
+          </g>
+        </g>
+        <g transform="translate(320, 24)">
+          <rect width="120" height="120" rx="16" fill="#0f1f3d" stroke="#1d9bf0" opacity="0.9" />
+          ${
+            safeQr
+              ? `<image x="10" y="10" width="100" height="100" href="${safeQr}" />`
+              : `<text x="60" y="70" text-anchor="middle" font-size="12" fill="#9fbadf">QR Pending</text>`
+          }
+          <text x="60" y="148" text-anchor="middle" font-size="12" fill="#8fb5ff">Scan for attendance</text>
+        </g>
+      </g>
+      <g transform="translate(0, 364)">
+        <rect width="460" height="56" rx="14" fill="url(#accentGradient)" opacity="0.9" />
+        <text x="24" y="36" font-size="16" font-weight="700" fill="#0b1020">Secure identity for smart classrooms</text>
+      </g>
+    </g>
   </svg>`;
 }
 
