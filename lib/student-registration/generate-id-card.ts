@@ -23,6 +23,26 @@ interface SimpleIdCardData {
   qrCodeUrl: string | null;
 }
 
+async function toInlineImageData(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      console.error(`Failed to fetch student photo: ${response.statusText}`);
+      return null;
+    }
+
+    const contentType =
+      response.headers.get("content-type")?.split(";")[0] ?? "image/jpeg";
+    const buffer = Buffer.from(await response.arrayBuffer());
+
+    return `data:${contentType};base64,${buffer.toString("base64")}`;
+  } catch (error) {
+    console.error("Failed to inline student photo:", error);
+    return null;
+  }
+}
+
 function escapeXml(value: string): string {
   return value
     .replace(/&/g, "&amp;")
@@ -162,12 +182,22 @@ export async function generateAndUploadIdCard(
       }
     }
 
+    let studentPhotoUrl = registration.studentPhotoUrl ?? null;
+
+    if (studentPhotoUrl) {
+      const inlinePhoto = await toInlineImageData(studentPhotoUrl);
+
+      if (inlinePhoto) {
+        studentPhotoUrl = inlinePhoto;
+      }
+    }
+
     const cardData: SimpleIdCardData = {
       studentName: registration.name,
       studentPublicId: registration.studentPublicId,
       studentEmail: registration.email,
       guardianEmail: registration.guardianEmail,
-      studentPhotoUrl: registration.studentPhotoUrl ?? null,
+      studentPhotoUrl,
       qrCodeUrl,
     };
 
