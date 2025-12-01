@@ -45,7 +45,7 @@ const roleHighlights = [
   },
   {
     title: "Staff & Admins",
-    copy: "Centralize attendance, payments, and communications while approving enrollments and managing multi-campus operations securely.",
+    copy: "Centralize attendance, payments, and communications while approving enrollments and managing multi operations securely.",
   },
 ];
 
@@ -119,7 +119,7 @@ export default function ShowcaseSite() {
               Next-era educational experience with modern comfort zone
             </h1>
             <p className="text-lg text-muted-foreground">
-              {APP_NAME} unifies enrollment, academics, communication, and
+              {APP_NAME} unifies enrollment, communication, and
               analytics so your team can focus on what matters most student
               success.
             </p>
@@ -129,13 +129,6 @@ export default function ShowcaseSite() {
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:scale-[1.02]"
               >
                 Start Student Registration
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/dashboard"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/40 px-8 py-3 text-sm font-semibold text-slate-50 transition hover:border-primary hover:text-primary"
-              >
-                Sign In to your Portal
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -295,7 +288,7 @@ export default function ShowcaseSite() {
             </h2>
             <p className="text-base text-muted-foreground">
               From QR attendance to AI-powered study help, {APP_NAME} delivers
-              delightful experiences across academic and administrative teams.
+              delightful experiences across administrative teams.
             </p>
           </div>
         </div>
@@ -359,7 +352,7 @@ export default function ShowcaseSite() {
             </h2>
             <p className="text-base text-muted-foreground">
               Book a walkthrough with our team to see how {APP_NAME} unifies
-              academic, financial, and operational excellence.
+              financial and operational excellence.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
@@ -373,7 +366,7 @@ export default function ShowcaseSite() {
                 href="/gallery"
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-primary/40 px-8 py-3 text-sm font-semibold text-primary transition hover:border-primary"
               >
-                Explore campus life
+                Explore Institute
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
