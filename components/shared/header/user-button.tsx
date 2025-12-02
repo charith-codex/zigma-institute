@@ -1,72 +1,43 @@
-import Link from "next/link";
 import { auth } from "@/auth";
-import { signOutUser } from "@/lib/actions/user";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { UserIcon } from "lucide-react";
+import { prisma } from "@/db/prisma";
+import type { ProfileFormValues } from "@/app/(root)/user/profile/profile-form";
+import UserButtonClient from "./user-button-client";
 
 const UserButton = async () => {
   const session = await auth();
 
-  if (!session)
-    return (
-      <Button asChild>
-        <Link href="/sign-in">
-          <UserIcon /> Sign In
-        </Link>
-      </Button>
-    );
+  if (!session) {
+    return <UserButtonClient session={null} />;
+  }
+
+  const user = session.user?.id
+    ? await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          name: true,
+          email: true,
+          phone: true,
+          address: true,
+          dob: true,
+          gender: true,
+        },
+      })
+    : null;
+
+  const profileInitialValues: ProfileFormValues = {
+    name: user?.name ?? session.user?.name ?? "",
+    email: user?.email ?? session.user?.email ?? "",
+    phone: user?.phone ?? "",
+    address: user?.address ?? "",
+    dob: user?.dob ? new Date(user.dob).toISOString().split("T")[0] : "",
+    gender: user?.gender ?? undefined,
+  };
 
   return (
-    <div className="flex gap-2 items-center">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              className="relative w-8 h-8 rounded-full ml-2 flex items-center justify-center bg-primary"
-            >
-              <UserIcon className="w-5 h-5 text-white" />
-            </Button>
-          </div>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56" align="end" forceMount>
-          <DropdownMenuLabel className="font-normal">
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">
-                {session.user?.name}
-              </p>
-              <p className="text-xs leading-none text-muted-foreground">
-                {session.user?.email}
-              </p>
-            </div>
-          </DropdownMenuLabel>
-
-          <DropdownMenuItem>
-            <Link className="w-full" href="/user/profile">
-              User Profile
-            </Link>
-          </DropdownMenuItem>
-
-          <DropdownMenuItem className="p-0 mb-1">
-            <form action={signOutUser} className="w-full">
-              <Button
-                className="w-full py-4 px-2 h-4 justify-start"
-                variant="ghost"
-              >
-                Sign Out
-              </Button>
-            </form>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    <UserButtonClient
+      session={session}
+      profileInitialValues={profileInitialValues}
+    />
   );
 };
 

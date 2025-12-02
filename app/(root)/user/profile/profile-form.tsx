@@ -3,10 +3,22 @@
 import { useActionState } from "react";
 import { UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import type { ActionState } from "@/lib/actions/user";
 import { updateUserProfile } from "@/lib/actions/user";
@@ -16,7 +28,7 @@ const initialState: ActionState = {
   message: "",
 };
 
-type ProfileFormValues = {
+export type ProfileFormValues = {
   name: string;
   email: string;
   phone: string;
@@ -40,7 +52,8 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
           Personal details
         </CardTitle>
         <CardDescription>
-          Keep your contact information current. Email changes are disabled for account security.
+          Keep your contact information current. Email changes are disabled for
+          account security.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -66,7 +79,9 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
                 disabled
                 className="bg-muted/40"
               />
-              <p className="text-xs text-muted-foreground">Email cannot be edited.</p>
+              <p className="text-xs text-muted-foreground">
+                Email cannot be edited.
+              </p>
             </div>
           </div>
 
