@@ -1,0 +1,61 @@
+npx create-next-app@15.5.6 .
+
+npx shadcn@latest init
+npx shadcn@latest add button
+
+npm i lucide-react
+npm install next-themes
+npx shadcn@latest add dropdown-menu
+
+npx shadcn@latest add card
+
+npm i -D prisma @prisma/client
+npx prisma init
+
+npm i dotenv 
+## add to prisma.config.ts(import "dotenv/config)
+
+npx prisma generate
+## add -  "postinstall": "prisma generate" to package.json
+npx prisma migrate dev --name init
+
+# fix prisma 6+ error in prisma.schema
+provider = "prisma-client" <change to> provider = "prisma-client-js"
+
+# seed data to db
+npx tsx ./db/seed
+
+npm i zod
+
+npm i bcrypt-ts-edge
+
+npm i next-auth@beta
+npm i @auth/prisma-adapter
+openssl rand -hex 32
+
+npx shadcn@latest add label input
+
+npx shadcn@latest add sidebar-07
+
+npx shadcn@latest add select
+npx shadcn@latest add calendar
+npx shadcn@latest add badge progress popover dialog tabs sonner scroll-area textarea
+
+npx shadcn@latest add checkbox table
+
+npm install uploadthing @uploadthing/react
+
+npm i ai @ai-sdk/react @ai-sdk/google zod
+
+npm i resend react-email @react-email/components @react-email/render
+
+npm i stripe @stripe/stripe-js @stripe/react-stripe-js
+
+npx shadcn@latest add form switch
+npx shadcn@latest add radio-group
+
+npm install @yudiel/react-qr-scanner@^2.3.1 jsqr@^1.4.0
+
+npm i react-markdown remark-gfm
+
+npm i qrcode

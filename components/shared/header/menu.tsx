@@ -1,7 +1,13 @@
+import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
 import ModeToggle from "./mode-toggle";
 import Link from "next/link";
-import { EllipsisVertical } from "lucide-react";
+import {
+  EllipsisVertical,
+  GraduationCap,
+  PanelsTopLeft,
+  LayoutDashboard,
+} from "lucide-react";
 import {
   Sheet,
   SheetClose,
@@ -19,7 +25,41 @@ const showcaseLinks = [
   { href: "/about", label: "About" },
 ];
 
-const Menu = () => {
+const Menu = async () => {
+  const session = await auth();
+  const role = session?.user?.role;
+
+  const showLms = role === "STUDENT" || role === "ADMIN" || role === "MANAGER";
+  const showCms = role === "TEACHER" || role === "ADMIN" || role === "MANAGER";
+  const showDashboard =
+    role === "ATTENDANCE" || role === "ADMIN" || role === "MANAGER";
+  const showStudentRegistration =
+    !role || role === "ADMIN" || role === "MANAGER";
+
+  const roleLinks = [
+    {
+      key: "lms",
+      href: "/lms",
+      label: "LMS",
+      visible: showLms,
+      Icon: GraduationCap,
+    },
+    {
+      key: "lms-cms",
+      href: "/lms-cms",
+      label: "LMS CMS",
+      visible: showCms,
+      Icon: PanelsTopLeft,
+    },
+    {
+      key: "dashboard",
+      href: "/dashboard",
+      label: "Dashboard",
+      visible: showDashboard,
+      Icon: LayoutDashboard,
+    },
+  ];
+
   return (
     <div className="flex justify-end gap-3">
       <nav className="hidden md:flex w-full items-center gap-4">
@@ -34,19 +74,28 @@ const Menu = () => {
             </Link>
           ))}
         </div>
-        <Button asChild size="sm" variant="outline">
-          <Link href="/lms">LMS</Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
-          <Link href="/lms-cms">LMS CMS</Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
-          <Link href="/dashboard">Dashboard</Link>
-        </Button>
+        {roleLinks
+          .filter((link) => link.visible)
+          .map(({ key, href, label, Icon }) => (
+            <Button
+              key={key}
+              asChild
+              size="sm"
+              variant="outline"
+              className="gap-2 px-4 text-primary outline-primary"
+            >
+              <Link href={href}>
+                <Icon className="h-4 w-4" />
+                {label}
+              </Link>
+            </Button>
+          ))}
 
-        <Button asChild size="sm">
-          <Link href="/student-registration">Student Registration</Link>
-        </Button>
+        {showStudentRegistration && (
+          <Button asChild size="sm">
+            <Link href="/student-registration">Student Registration</Link>
+          </Button>
+        )}
         <ModeToggle />
         <UserButton />
       </nav>
@@ -69,27 +118,26 @@ const Menu = () => {
                 </SheetClose>
               ))}
             </div>
-            <SheetClose asChild>
-              <Button asChild>
-                <Link href="/student-registration">Student Registration</Link>
-              </Button>
-            </SheetClose>
+            {showStudentRegistration && (
+              <SheetClose asChild>
+                <Button asChild>
+                  <Link href="/student-registration">Student Registration</Link>
+                </Button>
+              </SheetClose>
+            )}
 
-            <SheetClose asChild>
-              <Button asChild variant="outline">
-                <Link href="/lms">LMS</Link>
-              </Button>
-            </SheetClose>
-            <SheetClose asChild>
-              <Button asChild variant="outline">
-                <Link href="/lms-cms">LMS CMS</Link>
-              </Button>
-            </SheetClose>
-            <SheetClose asChild>
-              <Button asChild variant="outline">
-                <Link href="/dashboard">Dashboard</Link>
-              </Button>
-            </SheetClose>
+            {roleLinks
+              .filter((link) => link.visible)
+              .map(({ key, href, label, Icon }) => (
+                <SheetClose key={key} asChild>
+                  <Button asChild variant="secondary" className="gap-2">
+                    <Link href={href}>
+                      <Icon className="h-4 w-4" />
+                      {label}
+                    </Link>
+                  </Button>
+                </SheetClose>
+              ))}
             <ModeToggle />
             <UserButton />
 
