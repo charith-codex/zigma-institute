@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { prisma } from "@/db/prisma";
 import type { ShowcaseContent, ShowcaseMedia, ShowcasePage } from "@/lib/generated/prisma";
+import type { InputJsonValue } from "@prisma/client/runtime/library";
 import { fetchShowcaseData } from "@/lib/showcase-data";
 import { convertToPlainObject } from "@/lib/utils";
 
@@ -62,6 +63,10 @@ export async function saveShowcaseContent(
 ): Promise<ActionResult<ShowcaseContent>> {
   try {
     const payload = contentSchema.parse(input);
+    const metadata: InputJsonValue | undefined =
+      payload.metadata === undefined
+        ? undefined
+        : (payload.metadata as InputJsonValue);
     const data = {
       page: payload.page,
       section: payload.section,
@@ -71,7 +76,7 @@ export async function saveShowcaseContent(
       ctaLabel: payload.ctaLabel ?? null,
       ctaHref: payload.ctaHref ?? null,
       order: payload.order,
-      ...(payload.metadata !== undefined ? { metadata: payload.metadata } : {}),
+      ...(metadata !== undefined ? { metadata } : {}),
     };
 
     const record = payload.id
