@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { Prisma } from "@prisma/client";
+
 import { prisma } from "@/db/prisma";
 import type { ShowcaseContent, ShowcaseMedia, ShowcasePage } from "@/lib/generated/prisma";
 import { fetchShowcaseData } from "@/lib/showcase-data";
@@ -62,6 +64,8 @@ export async function saveShowcaseContent(
 ): Promise<ActionResult<ShowcaseContent>> {
   try {
     const payload = contentSchema.parse(input);
+    const metadataValue: Prisma.InputJsonValue | undefined =
+      payload.metadata === undefined ? undefined : payload.metadata;
     const data = {
       page: payload.page,
       section: payload.section,
@@ -71,7 +75,7 @@ export async function saveShowcaseContent(
       ctaLabel: payload.ctaLabel ?? null,
       ctaHref: payload.ctaHref ?? null,
       order: payload.order,
-      metadata: payload.metadata ?? null,
+      ...(metadataValue !== undefined ? { metadata: metadataValue } : {}),
     };
 
     const record = payload.id
