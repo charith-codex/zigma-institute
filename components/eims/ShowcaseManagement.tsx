@@ -7,7 +7,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type {
   ShowcaseContent,
   ShowcaseMedia,
@@ -109,7 +109,7 @@ export function ShowcaseManagement() {
     startTransition(async () => {
       const result = await saveShowcaseContent(contentForm);
       if (!result.success) {
-        toast({ title: result.error, variant: "destructive" });
+        toast.error(result.error);
         return;
       }
 
@@ -117,8 +117,7 @@ export function ShowcaseManagement() {
         const filtered = prev.filter((item) => item.id !== result.data.id);
         return sortByOrder([...filtered, result.data]);
       });
-      toast({
-        title: contentForm.id ? "Content updated" : "Content added",
+      toast(contentForm.id ? "Content updated" : "Content added", {
         description: "Showcase page copy saved.",
       });
       setContentForm(createDefaultContentForm(activePage));
@@ -129,7 +128,7 @@ export function ShowcaseManagement() {
     startTransition(async () => {
       const result = await saveShowcaseMedia(mediaForm);
       if (!result.success) {
-        toast({ title: result.error, variant: "destructive" });
+        toast.error(result.error);
         return;
       }
 
@@ -137,8 +136,7 @@ export function ShowcaseManagement() {
         const filtered = prev.filter((item) => item.id !== result.data.id);
         return sortByOrder([...filtered, result.data]);
       });
-      toast({
-        title: mediaForm.id ? "Media updated" : "Media added",
+      toast(mediaForm.id ? "Media updated" : "Media added", {
         description: "Images ready for the public pages.",
       });
       setMediaForm(createDefaultMediaForm(activePage));
@@ -149,11 +147,11 @@ export function ShowcaseManagement() {
     startTransition(async () => {
       const result = await deleteShowcaseContent(id);
       if (!result.success) {
-        toast({ title: result.error, variant: "destructive" });
+        toast.error(result.error);
         return;
       }
       setContents((prev) => prev.filter((item) => item.id !== id));
-      toast({ title: "Content removed" });
+      toast.success("Content removed");
     });
   };
 
@@ -161,11 +159,11 @@ export function ShowcaseManagement() {
     startTransition(async () => {
       const result = await deleteShowcaseMedia(id);
       if (!result.success) {
-        toast({ title: result.error, variant: "destructive" });
+        toast.error(result.error);
         return;
       }
       setMedia((prev) => prev.filter((item) => item.id !== id));
-      toast({ title: "Media removed" });
+      toast.success("Media removed");
     });
   };
 
