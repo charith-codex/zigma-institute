@@ -11,9 +11,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getCourses } from "@/lib/actions/course";
+import { fetchShowcasePage } from "@/lib/showcase-data";
+import type { ShowcaseContent } from "@/lib/generated/prisma";
 import AllCoursesCard from "./AllCoursesCard";
 
-const courseHighlights = [
+const defaultCourseHighlights = [
   {
     title: "Guided cohorts",
     copy: "Small-group instruction backed by live dashboards so mentors react fast to progress spikes or dips.",
@@ -31,7 +33,7 @@ const courseHighlights = [
   },
 ];
 
-const enrollmentSteps = [
+const defaultEnrollmentSteps = [
   {
     title: "Browse & shortlist",
     detail:
@@ -52,22 +54,48 @@ const enrollmentSteps = [
   },
 ];
 
+const sortContent = (items: ShowcaseContent[]) =>
+  [...items].sort(
+    (a, b) =>
+      a.order - b.order ||
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+
 export default async function CoursesPage() {
   const courses = await getCourses();
+  const { contents } = await fetchShowcasePage("COURSES");
+
+  const selectBlocks = (section: string) =>
+    sortContent(contents.filter((item) => item.section === section));
+
+  const heroBlock = contents.find((item) => item.section === "hero");
+
+  const courseHighlights = selectBlocks("highlight").map((item) => ({
+    title: item.title ?? "",
+    copy: item.body ?? "",
+    icon: Users,
+  }));
+
+  const enrollmentSteps = selectBlocks("step").map((item) => ({
+    title: item.title ?? "",
+    detail: item.body ?? "",
+    accent: item.subtitle ?? item.ctaLabel ?? "Step",
+  }));
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto space-y-10 px-4 py-12">
         <section className="px-6 py-12 text-center md:px-10">
           <div className="mx-auto max-w-3xl space-y-6">
-            <Badge className="bg-primary text-white">📑 Curated Programs</Badge>
+            <Badge className="bg-primary text-white">
+              {heroBlock?.subtitle ?? "📑 Curated Programs"}
+            </Badge>
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              Courses with Modern Educational Experience
+              {heroBlock?.title ?? "Courses with Modern Educational Experience"}
             </h1>
             <p className="text-lg text-muted-foreground">
-              Choose focused study tracks. Every option stays synchronized
-              across LMS, CMS, and campus so families always know what comes
-              next.
+              {heroBlock?.body ??
+                "Choose focused study tracks. Every option stays synchronized across LMS, CMS, and campus so families always know what comes next."}
             </p>
           </div>
         </section>
@@ -95,7 +123,7 @@ export default async function CoursesPage() {
             </p>
           </div>
           <div className="grid gap-6 md:grid-cols-3">
-            {courseHighlights.map((highlight) => {
+            {(courseHighlights.length ? courseHighlights : defaultCourseHighlights).map((highlight) => {
               const Icon = highlight.icon;
               return (
                 <Card key={highlight.title} className="h-full">
@@ -115,6 +143,35 @@ export default async function CoursesPage() {
                 </Card>
               );
             })}
+          </div>
+        </section>
+
+        <section className="space-y-8">
+          <div className="max-w-2xl space-y-3">
+            <h2 className="text-3xl font-semibold">Enrollment steps</h2>
+            <p className="text-muted-foreground">
+              Keep families in the loop by updating this journey from the Website Management tab.
+            </p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            {(enrollmentSteps.length ? enrollmentSteps : defaultEnrollmentSteps).map((step, index) => (
+              <Card key={step.title} className="h-full">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="secondary" className="text-xs uppercase">
+                      {step.accent ?? `Step ${index + 1}`}
+                    </Badge>
+                    <CardTitle className="text-xl">{step.title}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>{step.detail}</CardDescription>
+                  <Button variant="link" className="px-0 text-primary">
+                    Continue
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </section>
       </div>
