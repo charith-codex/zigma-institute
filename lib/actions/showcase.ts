@@ -64,7 +64,7 @@ export async function saveShowcaseContent(
 ): Promise<ActionResult<ShowcaseContent>> {
   try {
     const payload = contentSchema.parse(input);
-    const metadataValue: Prisma.InputJsonValue | undefined =
+    const metadataValue: Prisma.JsonValue | undefined =
       payload.metadata === undefined ? undefined : payload.metadata;
     const data = {
       page: payload.page,
