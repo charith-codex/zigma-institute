@@ -125,8 +125,18 @@ export function ShowcaseManagement() {
   };
 
   const handleMediaSubmit = () => {
+    if (!mediaForm.imageUrl) {
+      toast.error("Please upload an image before saving media.");
+      return;
+    }
+
+    const payload: MediaFormState & { imageUrl: string } = {
+      ...mediaForm,
+      imageUrl: mediaForm.imageUrl,
+    };
+
     startTransition(async () => {
-      const result = await saveShowcaseMedia(mediaForm);
+      const result = await saveShowcaseMedia(payload);
       if (!result.success) {
         toast.error(result.error);
         return;
