@@ -20,7 +20,7 @@ const contentSchema = z.object({
   ctaLabel: z.string().optional(),
   ctaHref: z.string().optional(),
   order: z.number().int().min(0).default(0),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 const mediaSchema = z.object({
