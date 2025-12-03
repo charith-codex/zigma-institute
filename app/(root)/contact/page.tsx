@@ -2,37 +2,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Phone, Clock } from "lucide-react";
 import { ContactForm } from "@/components/contact/contact-form";
-import { fetchShowcasePage } from "@/lib/showcase-data";
-import type { ShowcaseContent } from "@/lib/generated/prisma";
 
-const sortContent = (items: ShowcaseContent[]) =>
-  [...items].sort(
-    (a, b) =>
-      a.order - b.order ||
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  );
-
-export default async function ContactPage() {
-  const { contents } = await fetchShowcasePage("CONTACT");
-  const selectBlocks = (section: string) =>
-    sortContent(contents.filter((item) => item.section === section));
-
-  const heroBlock = contents.find((item) => item.section === "hero");
-  const infoCards = selectBlocks("contact-info");
-
+export default function ContactPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <div className="bg-gradient-hero">
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-4xl mx-auto text-center">
-            <Badge className="mb-6">{heroBlock?.subtitle ?? "📞 Contact Us"}</Badge>
+            <Badge className="mb-6">📞 Contact Us</Badge>
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              {heroBlock?.title ?? "Get in Touch"}
+              Get in Touch
             </h1>
             <p className="text-xl leading-relaxed text-muted-foreground">
-              {heroBlock?.body ??
-                "We are here to support your journey. Reach out to us for any inquiries or assistance."}
+              We are here to support your journey. Reach out to us for any
+              inquiries or assistance.
             </p>
           </div>
         </div>
@@ -42,30 +26,47 @@ export default async function ContactPage() {
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {(infoCards.length ? infoCards : [
-              { id: "location", title: "Visit Us", body: "Colombo Innovation Hub", subtitle: "512 Galle Road, Colombo 03" },
-              { id: "phone", title: "Call Us", body: "Hotline: +94 11 777 8899", subtitle: "WhatsApp: +94 76 555 8899" },
-              { id: "hours", title: "Opening Hours", body: "Monday – Saturday", subtitle: "8.00 AM to 6.30 PM" },
-            ]).map((card) => (
-              <Card key={card.id} className="text-center hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    {card.title?.toLowerCase().includes("visit") ? (
-                      <MapPin className="w-8 h-8 text-primary" />
-                    ) : card.title?.toLowerCase().includes("call") ? (
-                      <Phone className="w-8 h-8 text-primary" />
-                    ) : (
-                      <Clock className="w-8 h-8 text-primary" />
-                    )}
-                  </div>
-                  <CardTitle>{card.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="text-muted-foreground space-y-1">
-                  <p>{card.body}</p>
-                  {card.subtitle ? <p>{card.subtitle}</p> : null}
-                </CardContent>
-              </Card>
-            ))}
+            {/* Address Card */}
+            <Card className="text-center hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MapPin className="w-8 h-8 text-primary" />
+                </div>
+                <CardTitle>Visit Us</CardTitle>
+              </CardHeader>
+              <CardContent className="text-muted-foreground">
+                <p>Colombo Innovation Hub</p>
+                <p>512 Galle Road, Colombo 03</p>
+              </CardContent>
+            </Card>
+
+            {/* Contact Card */}
+            <Card className="text-center hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Phone className="w-8 h-8 text-primary" />
+                </div>
+                <CardTitle>Call Us</CardTitle>
+              </CardHeader>
+              <CardContent className="text-muted-foreground">
+                <p>Hotline: +94 11 777 8899</p>
+                <p>WhatsApp: +94 76 555 8899</p>
+              </CardContent>
+            </Card>
+
+            {/* Hours Card */}
+            <Card className="text-center hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Clock className="w-8 h-8 text-primary" />
+                </div>
+                <CardTitle>Opening Hours</CardTitle>
+              </CardHeader>
+              <CardContent className="text-muted-foreground">
+                <p>Monday – Saturday</p>
+                <p>8.00 AM to 6.30 PM</p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>

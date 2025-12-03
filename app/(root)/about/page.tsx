@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,101 +10,72 @@ import {
   Brain,
   CheckCircle,
 } from "lucide-react";
-import { fetchShowcasePage } from "@/lib/showcase-data";
-import type { ShowcaseContent } from "@/lib/generated/prisma";
+import Image from "next/image";
 
-const defaultValues = [
-  {
-    icon: Heart,
-    title: "Student-Centered",
-    description:
-      "Every decision we make prioritizes student success and learning outcomes.",
-  },
-  {
-    icon: Target,
-    title: "Excellence",
-    description:
-      "We strive for the highest standards in education and institutional management.",
-  },
-  {
-    icon: Globe,
-    title: "Innovation",
-    description:
-      "Embracing cutting-edge technology to enhance the educational experience.",
-  },
-  {
-    icon: Shield,
-    title: "Integrity",
-    description:
-      "Building trust through transparency, security, and ethical practices.",
-  },
-];
+const About = () => {
+  const values = [
+    {
+      icon: Heart,
+      title: "Student-Centered",
+      description:
+        "Every decision we make prioritizes student success and learning outcomes.",
+    },
+    {
+      icon: Target,
+      title: "Excellence",
+      description:
+        "We strive for the highest standards in education and institutional management.",
+    },
+    {
+      icon: Globe,
+      title: "Innovation",
+      description:
+        "Embracing cutting-edge technology to enhance the educational experience.",
+    },
+    {
+      icon: Shield,
+      title: "Integrity",
+      description:
+        "Building trust through transparency, security, and ethical practices.",
+    },
+  ];
 
-const defaultAchievements = [
-  { number: "50,000+", label: "Students Educated" },
-  { number: "1,200+", label: "Expert Faculty" },
-  { number: "98%", label: "Graduate Success Rate" },
-  { number: "25+", label: "Years of Excellence" },
-];
+  const achievements = [
+    { number: "50,000+", label: "Students Educated" },
+    { number: "1,200+", label: "Expert Faculty" },
+    { number: "98%", label: "Graduate Success Rate" },
+    { number: "25+", label: "Years of Excellence" },
+  ];
 
-const defaultTeam = [
-  {
-    name: "Dr. Sarah Wilson",
-    role: "Chief Technology Officer",
-    image: "👩‍💼",
-    description: "Leading our AI integration and educational technology initiatives.",
-  },
-  {
-    name: "Prof. Michael Chen",
-    role: "Director of Academic Excellence",
-    image: "👨‍🏫",
-    description: "Overseeing curriculum development and faculty training programs.",
-  },
-  {
-    name: "Dr. Emily Davis",
-    role: "Head of Student Success",
-    image: "👩‍🎓",
-    description: "Ensuring comprehensive student support and career development.",
-  },
-  {
-    name: "Alex Johnson",
-    role: "Innovation Manager",
-    image: "👨‍💻",
-    description: "Driving digital transformation and platform development.",
-  },
-];
-
-const sortContent = (items: ShowcaseContent[]) =>
-  [...items].sort(
-    (a, b) =>
-      a.order - b.order ||
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  );
-
-const About = async () => {
-  const { contents } = await fetchShowcasePage("ABOUT");
-  const selectBlocks = (section: string) =>
-    sortContent(contents.filter((item) => item.section === section));
-
-  const heroBlock = contents.find((item) => item.section === "hero");
-  const values = selectBlocks("value").map((item) => ({
-    icon: Heart,
-    title: item.title ?? "",
-    description: item.body ?? "",
-  }));
-  const achievements = selectBlocks("achievement").map((item) => ({
-    number: item.title ?? "",
-    label: item.body ?? item.subtitle ?? "",
-  }));
-  const team = selectBlocks("team").map((item) => ({
-    name: item.title ?? "",
-    role: item.subtitle ?? "",
-    image: item.ctaLabel ?? "👤",
-    description: item.body ?? "",
-  }));
-  const valuesToUse = values.length ? values : defaultValues;
-  const achievementsToUse = achievements.length ? achievements : defaultAchievements;
-  const teamToUse = team.length ? team : defaultTeam;
+  const team = [
+    {
+      name: "Dr. Sarah Wilson",
+      role: "Chief Technology Officer",
+      image: "👩‍💼",
+      description:
+        "Leading our AI integration and educational technology initiatives.",
+    },
+    {
+      name: "Prof. Michael Chen",
+      role: "Director of Academic Excellence",
+      image: "👨‍🏫",
+      description:
+        "Overseeing curriculum development and faculty training programs.",
+    },
+    {
+      name: "Dr. Emily Davis",
+      role: "Head of Student Success",
+      image: "👩‍🎓",
+      description:
+        "Ensuring comprehensive student support and career development.",
+    },
+    {
+      name: "Alex Johnson",
+      role: "Innovation Manager",
+      image: "👨‍💻",
+      description: "Driving digital transformation and platform development.",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -114,30 +83,18 @@ const About = async () => {
       <div className="bg-gradient-hero">
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-4xl mx-auto text-center">
-            <Badge className="mb-6">{heroBlock?.subtitle ?? "🏛️ About Modern EIMS"}</Badge>
+            <Badge className="mb-6">🏛️ About Modern EIMS</Badge>
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              {heroBlock?.title ?? "Transforming Education Through Innovation"}
+              Transforming Education Through Innovation
             </h1>
             <p className="text-xl text-muted-foreground leading-relaxed">
-              {heroBlock?.body ??
-                "We are pioneering the future of education with our comprehensive management system that seamlessly integrates traditional learning with cutting-edge technology."}
+              We are pioneering the future of education with our comprehensive
+              management system that seamlessly integrates traditional learning
+              with cutting-edge technology.
             </p>
           </div>
         </div>
       </div>
-
-      <section className="py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 rounded-2xl border bg-card p-6 shadow-sm">
-            {achievementsToUse.map((item) => (
-              <div key={item.label} className="text-center">
-                <p className="text-3xl font-bold text-primary">{item.number}</p>
-                <p className="text-sm text-muted-foreground">{item.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Mission Section */}
       <section className="py-16">
@@ -192,7 +149,7 @@ const About = async () => {
               Our Core Values
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {valuesToUse.map((value, index) => (
+              {values.map((value, index) => (
                 <Card
                   key={index}
                   className="text-center hover:shadow-lg transition-shadow"
@@ -294,30 +251,6 @@ const About = async () => {
                   </p>
                 </CardContent>
               </Card>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 bg-muted/40">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-12">Leadership team</h2>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {teamToUse.map((member) => (
-                <Card key={member.name} className="h-full text-center">
-                  <CardHeader>
-                    <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-2xl">
-                      {member.image}
-                    </div>
-                    <CardTitle>{member.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{member.role}</p>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">{member.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
             </div>
           </div>
         </div>
