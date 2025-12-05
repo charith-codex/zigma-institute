@@ -90,9 +90,9 @@ export function CourseManagement() {
             <h1 className="text-2xl font-bold">Course Management</h1>
           </div>
           <p className="text-sm text-muted-foreground">
-            Staff manage the course catalog from the EIMS dashboard. Lesson
-            planning and delivery are handled by teachers inside the CMS once a
-            course is published.
+            Staff manage the courses from the EIMS dashboard. Lesson planning
+            and delivery are handled by teachers inside the CMS once a course is
+            published.
           </p>
         </div>
 
@@ -103,7 +103,10 @@ export function CourseManagement() {
               Create course
             </Button>
           </DialogTrigger>
-          <DialogContent size="wide" className="w-full">
+          <DialogContent
+            size="wide"
+            className="w-full max-w-none h-full md:h-auto overflow-y-auto"
+          >
             <DialogHeader>
               <DialogTitle>Create a new course</DialogTitle>
             </DialogHeader>
@@ -144,7 +147,7 @@ export function CourseManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active courses
+              Available courses
             </CardTitle>
             <BookOpen className="h-4 w-4 text-primary" />
           </CardHeader>
@@ -160,9 +163,9 @@ export function CourseManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Unique Teacher
+              Assign Teachers
             </CardTitle>
-            <Users className="h-4 w-4 text-secondary" />
+            <Users className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{uniqueTeachers}</div>
@@ -174,16 +177,16 @@ export function CourseManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Catalog value
+              All courses monthly value
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-accent" />
+            <DollarSign className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {formatCurrency(catalogValueInCents, catalogCurrency)}
             </div>
             <p className="text-xs text-muted-foreground">
-              Sum of published course prices
+              Sum of published courses monthly prices
             </p>
           </CardContent>
         </Card>
@@ -198,9 +201,9 @@ export function CourseManagement() {
       ) : hasCourses ? (
         <div className="space-y-6">
           <div>
-            <h2 className="mb-4 text-lg font-semibold">Catalog preview</h2>
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {filteredCourses.slice(0, 3).map((course) => (
+            <h2 className="mb-4 text-lg font-semibold">Latest Courses</h2>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {filteredCourses.slice(0, 4).map((course) => (
                 <CourseCard key={course.id} course={course} />
               ))}
             </div>
@@ -208,7 +211,7 @@ export function CourseManagement() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Course catalog</CardTitle>
+              <CardTitle>All Courses</CardTitle>
             </CardHeader>
             <CardContent className="overflow-x-auto">
               <Table>
@@ -216,7 +219,7 @@ export function CourseManagement() {
                   <TableRow>
                     <TableHead>Course</TableHead>
                     <TableHead>Teacher</TableHead>
-                    <TableHead>Price</TableHead>
+                    <TableHead>Monthly Price</TableHead>
                     <TableHead className="w-24 text-center">Edit</TableHead>
                     <TableHead className="w-28 text-center">Delete</TableHead>
                   </TableRow>
@@ -293,7 +296,10 @@ export function CourseManagement() {
           }
         }}
       >
-        <DialogContent size="wide" className="w-full">
+        <DialogContent
+          size="wide"
+          className="w-full max-w-none h-full overflow-y-auto"
+        >
           <DialogHeader>
             <DialogTitle>Edit course</DialogTitle>
           </DialogHeader>

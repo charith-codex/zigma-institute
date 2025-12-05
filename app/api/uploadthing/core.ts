@@ -20,17 +20,53 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ metadata }) => {
       return { uploadedBy: metadata.userId };
     }),
+  documentUploader: f({
+    blob: {
+      maxFileSize: "16MB",
+    },
+  })
+    .middleware(async () => {
+      const session = await auth();
+      if (!session?.user?.id) {
+        throw new UploadThingError("Unauthorized");
+      }
+
+      return { userId: session.user.id };
+    })
+    .onUploadComplete(async ({ file, metadata }) => {
+      const allowedTypes = new Set([
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      ]);
+
+      if (!file.type || !allowedTypes.has(file.type)) {
+        throw new UploadThingError("Unsupported document format");
+      }
+
+      return {
+        uploadedBy: metadata.userId,
+        url: file.url,
+        key: file.key,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+      };
+    }),
   studentRegistrationPhoto: f({
     image: {
       maxFileSize: "4MB",
     },
-  })
-    .onUploadComplete(async ({ file }) => {
-      if (!file.type?.includes("jpeg")) {
-        throw new UploadThingError("Student photo must be a JPEG image");
-      }
-      return { url: file.url, key: file.key };
-    }),
+  }).onUploadComplete(async ({ file }) => {
+    if (!file.type?.includes("jpeg")) {
+      throw new UploadThingError("Student photo must be a JPEG image");
+    }
+    return { url: file.url, key: file.key };
+  }),
   studyMaterialUploader: f({
     blob: {
       maxFileSize: "64MB",

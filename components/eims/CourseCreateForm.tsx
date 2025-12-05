@@ -24,10 +24,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { UploadDropzone } from "@/lib/uploadthing";
 import { cn, generateSlug } from "@/lib/utils";
 import { Course } from "@/types";
 import { useTeachers } from "@/hooks/useData";
+import ImageDropzone from "../ImageDropzone";
+import DocumentDropzone from "../DocumentDropzone";
 
 const INITIAL_VALUES = {
   name: "",
@@ -293,9 +294,6 @@ export function CourseCreateForm({
                 </button>
               )}
             </div>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="teacherId">Teacher</Label>
               <Select
@@ -358,9 +356,8 @@ export function CourseCreateForm({
                 </p>
               )}
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="price">Price</Label>
+              <Label htmlFor="price">Monthly Price</Label>
               <Input
                 id="price"
                 type="number"
@@ -410,54 +407,34 @@ export function CourseCreateForm({
                     </div>
                   </div>
                 ) : (
-                  <UploadDropzone
-                    endpoint="imageUploader"
-                    onUploadBegin={() => setIsUploading(true)}
-                    onClientUploadComplete={(results) => {
-                      const [file] = results ?? [];
-                      if (file?.url) {
-                        setFormState((prev) => ({
-                          ...prev,
-                          coverImage: file.url,
-                        }));
-                        toast.success("Image uploaded successfully.");
-                      }
-                      setIsUploading(false);
-                    }}
-                    onUploadError={(error) => {
-                      console.error(error);
-                      toast.error(error.message);
-                      setIsUploading(false);
-                    }}
-                    appearance={{
-                      container:
-                        "border-2 border-dashed border-muted-foreground/30 rounded-lg bg-muted/30",
-                      label: "text-sm text-muted-foreground",
-                      uploadIcon: "text-primary",
-                      button:
-                        "bg-primary text-primary-foreground px-3 hover:bg-primary/90",
+                  <ImageDropzone
+                    onUploadComplete={(url) => {
+                      setFormState((prev) => ({
+                        ...prev,
+                        coverImage: url,
+                      }));
                     }}
                   />
                 )}
               </div>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Describe the course content, prerequisites, and goals."
-              rows={6}
-              value={formState.description}
-              onChange={(event) =>
-                setFormState((prev) => ({
-                  ...prev,
-                  description: event.target.value,
-                }))
-              }
-              required
-            />
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Describe the course content, prerequisites, and goals."
+                rows={6}
+                value={formState.description}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    description: event.target.value,
+                  }))
+                }
+                required
+              />
+            </div>
           </div>
         </CardContent>
         <CardFooter className="justify-end space-x-3">
