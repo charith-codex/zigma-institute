@@ -1,3 +1,4 @@
+import { MouseEvent } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Course } from "@/types";
 import Image from "next/image";
@@ -7,30 +8,49 @@ import { formatCurrency } from "@/lib/utils";
 const CourseCard = ({
   course,
   showPrice = true,
+  showDescription = false,
+  href,
+  onClick,
 }: {
   course: Course;
   showPrice?: boolean;
+  showDescription?: boolean;
+  href?: string;
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }) => {
-  return (
-    <Card className="w-full max-w-sm">
-      <CardHeader className="p-0 items-center">
-        <Link href={`/lms/courses/${course.slug}`}>
+  const courseLink = href ?? `/lms/courses/${course.slug}`;
+
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    onClick?.(event);
+  };
+
+  const cardContent = (
+    <Card className="h-full overflow-hidden transition hover:shadow-lg">
+      <CardHeader className="p-0">
+        <div className="relative aspect-video w-full">
           <Image
             src={course.coverImage}
             alt={course.name}
-            height={300}
-            width={300}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             priority={true}
-            className="px-3"
+            className="object-cover"
           />
-        </Link>
+        </div>
       </CardHeader>
-      <CardContent className="p-4 grid gap-4">
-        <Link href={`/lms/courses/${course.slug}`}>
-          <h2 className="font-bold">{course.name}</h2>
-        </Link>
+      <CardContent className="p-4 grid gap-3">
+        <h2 className="font-semibold leading-tight line-clamp-2">
+          {course.name}
+        </h2>
+        {showDescription ? (
+          <p className="text-sm text-muted-foreground line-clamp-3">
+            {course.description}
+          </p>
+        ) : null}
         <div className="flex-between gap-4">
-          <p className="text-sm font-medium">{course.teacherName}</p>
+          <p className="text-sm font-medium text-muted-foreground">
+            {course.teacherName}
+          </p>
           {showPrice ? (
             <p className="text-sm font-semibold text-primary">
               {formatCurrency(course.priceInCents, course.currency)}
@@ -39,6 +59,18 @@ const CourseCard = ({
         </div>
       </CardContent>
     </Card>
+  );
+
+  return (
+    <Link
+      href={courseLink}
+      prefetch={false}
+      className="block h-full"
+      onClick={handleClick}
+      aria-label={`Open ${course.name}`}
+    >
+      {cardContent}
+    </Link>
   );
 };
 
