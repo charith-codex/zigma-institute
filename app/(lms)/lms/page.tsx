@@ -30,11 +30,11 @@ import SummaryGenerator from "@/components/lms/SummaryGenerator";
 import StudyPlanGenerator from "@/components/lms/StudyPlanGenerator";
 import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleManager";
 import { PublishedExams } from "@/components/lms/PublishedExams";
+import CourseCard from "@/components/courses/course-card";
+import { Course } from "@/types";
 
-type EnrolledClass = {
-  id: string;
+type EnrolledClass = Course & {
   code: string;
-  name: string;
   instructor: string;
   progress: number;
   status: string;
@@ -54,9 +54,8 @@ const LMS = () => {
   const enrolledClasses = useMemo<EnrolledClass[]>(
     () =>
       courses.map((course) => ({
-        id: course.id,
+        ...course,
         code: course.slug?.toUpperCase() ?? course.id.slice(0, 8).toUpperCase(),
-        name: course.name,
         instructor: course.teacherName ?? "Instructor",
         progress: 0,
         status: "active",
@@ -199,61 +198,19 @@ const LMS = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
                     {enrolledClasses.map((classItem) => (
-                      <Card
+                      <CourseCard
                         key={classItem.id}
-                        className="hover:shadow-lg transition-shadow cursor-pointer"
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                            <div>
-                              <CardTitle className="text-lg">
-                                {classItem.name}
-                              </CardTitle>
-                              <p className="text-sm text-muted-foreground">
-                                {classItem.code}
-                              </p>
-                            </div>
-                            <Badge variant="outline" className="text-xs">
-                              {classItem.status}
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <User className="w-4 h-4" />
-                            <span>{classItem.instructor}</span>
-                          </div>
-
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span>Progress</span>
-                              <span>{classItem.progress}%</span>
-                            </div>
-                            <Progress
-                              value={classItem.progress}
-                              className="h-2"
-                            />
-                          </div>
-
-                          <div className="flex justify-between text-sm text-muted-foreground">
-                            <span>
-                              {classItem.completedWeeks} of {classItem.weeks}{" "}
-                              weeks completed
-                            </span>
-                          </div>
-
-                          <Button
-                            className="w-full mt-4"
-                            variant="outline"
-                            onClick={() => setSelectedClass(classItem)}
-                          >
-                            <BookOpen className="w-4 h-4 mr-2" />
-                            View Course Content
-                          </Button>
-                        </CardContent>
-                      </Card>
+                        course={classItem}
+                        showPrice={false}
+                        showDescription
+                        href={`/lms/courses/${classItem.slug}`}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          setSelectedClass(classItem);
+                        }}
+                      />
                     ))}
                   </div>
                 </div>
