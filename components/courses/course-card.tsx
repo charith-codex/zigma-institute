@@ -26,7 +26,7 @@ const CourseCard = ({
 
   const cardContent = (
     <Card className="h-full overflow-hidden transition hover:shadow-lg">
-      <CardHeader className="p-0">
+      <CardHeader className="px-4">
         <div className="relative aspect-video w-full">
           <Image
             src={course.coverImage}
@@ -38,25 +38,27 @@ const CourseCard = ({
           />
         </div>
       </CardHeader>
-      <CardContent className="p-4 grid gap-3">
-        <h2 className="font-semibold leading-tight line-clamp-2">
+      <CardContent className="px-4 grid gap-3">
+        <h2 className="text-xl font-semibold leading-tight line-clamp-2">
           {course.name}
         </h2>
+
+        <div className="flex-between gap-4">
+          <p className="text-sm font-medium text-primary/80">
+            {course.teacherName}
+          </p>
+          {showPrice ? (
+            <p className="text-sm font-semibold text-red-400">
+              {formatCurrency(course.priceInCents, course.currency)}
+            </p>
+          ) : null}
+        </div>
+
         {showDescription ? (
           <p className="text-sm text-muted-foreground line-clamp-3">
             {course.description}
           </p>
         ) : null}
-        <div className="flex-between gap-4">
-          <p className="text-sm font-medium text-muted-foreground">
-            {course.teacherName}
-          </p>
-          {showPrice ? (
-            <p className="text-sm font-semibold text-primary">
-              {formatCurrency(course.priceInCents, course.currency)}
-            </p>
-          ) : null}
-        </div>
       </CardContent>
     </Card>
   );

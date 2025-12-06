@@ -200,15 +200,6 @@ export function CourseManagement() {
         </Card>
       ) : hasCourses ? (
         <div className="space-y-6">
-          <div>
-            <h2 className="mb-4 text-lg font-semibold">Latest Courses</h2>
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {filteredCourses.slice(0, 4).map((course) => (
-                <CourseCard key={course.id} course={course} />
-              ))}
-            </div>
-          </div>
-
           <Card>
             <CardHeader>
               <CardTitle>All Courses</CardTitle>

@@ -25,11 +25,12 @@ const AllCoursesCard = ({ data }: { data: Course[] }) => {
               <CardContent className="p-4 grid gap-4">
                 <h2 className="font-bold">{course.name}</h2>
                 <div className="flex-between gap-4">
-                  <p className="text-sm font-medium">{course.teacherName}</p>
-                  <p className="text-sm font-semibold text-primary">
+                  <p className="text-sm font-medium text-primary">{course.teacherName}</p>
+                  <p className="text-sm font-semibold text-red-400">
                     {formatCurrency(course.priceInCents, course.currency)}
                   </p>
                 </div>
+                <p className="text-sm text-muted-foreground line-clamp-3">{course.description}</p>
               </CardContent>
             </Card>
           ))}
