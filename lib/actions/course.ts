@@ -1,6 +1,6 @@
 "use server";
 
-import type { Course } from "@/lib/generated/prisma";
+import type { Course } from "@/lib/generated/prisma/client";
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "../utils";
 
