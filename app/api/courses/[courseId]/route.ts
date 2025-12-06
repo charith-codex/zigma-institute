@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ZodError } from "zod";
-
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "@/lib/utils";
 import { courseSchema } from "@/lib/validators";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 
 interface RouteContext {
   params: Promise<{ courseId: string }>;
@@ -29,10 +28,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     });
 
     if (!existingCourse) {
-      return NextResponse.json(
-        { error: "Course not found." },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Course not found." }, { status: 404 });
     }
 
     const conflictingSlug = await prisma.course.findFirst({
@@ -84,11 +80,11 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    if (error instanceof PrismaClientKnownRequestError && error.code === "P2025") {
-      return NextResponse.json(
-        { error: "Course not found." },
-        { status: 404 }
-      );
+    if (
+      error instanceof PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return NextResponse.json({ error: "Course not found." }, { status: 404 });
     }
 
     console.error("Failed to update course", error);
@@ -99,10 +95,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: RouteContext
-) {
+export async function DELETE(request: NextRequest, { params }: RouteContext) {
   const { courseId } = await params;
 
   if (!courseId) {
@@ -119,11 +112,11 @@ export async function DELETE(
 
     return NextResponse.json(convertToPlainObject(deletedCourse));
   } catch (error) {
-    if (error instanceof PrismaClientKnownRequestError && error.code === "P2025") {
-      return NextResponse.json(
-        { error: "Course not found." },
-        { status: 404 }
-      );
+    if (
+      error instanceof PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return NextResponse.json({ error: "Course not found." }, { status: 404 });
     }
 
     console.error("Failed to delete course", error);

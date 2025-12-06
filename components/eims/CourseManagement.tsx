@@ -298,7 +298,7 @@ export function CourseManagement() {
       >
         <DialogContent
           size="wide"
-          className="w-full max-w-none h-full overflow-y-auto"
+          className="w-full max-w-none h-full md:h-auto overflow-y-auto"
         >
           <DialogHeader>
             <DialogTitle>Edit course</DialogTitle>

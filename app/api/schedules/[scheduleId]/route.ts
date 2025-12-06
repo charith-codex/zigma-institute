@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ZodError } from "zod";
-
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "@/lib/utils";
 import { scheduleUpdateSchema } from "@/lib/validators";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 
 interface RouteContext {
   params: Promise<{ scheduleId: string }>;
@@ -19,7 +18,10 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   const { scheduleId } = await params;
 
   if (!scheduleId) {
-    return NextResponse.json({ error: "Schedule ID is required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Schedule ID is required." },
+      { status: 400 }
+    );
   }
 
   try {
@@ -45,8 +47,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    if (error instanceof PrismaClientKnownRequestError && error.code === "P2025") {
-      return NextResponse.json({ error: "Schedule not found." }, { status: 404 });
+    if (
+      error instanceof PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return NextResponse.json(
+        { error: "Schedule not found." },
+        { status: 404 }
+      );
     }
 
     console.error("Failed to update schedule", error);
@@ -61,7 +69,10 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
   const { scheduleId } = await params;
 
   if (!scheduleId) {
-    return NextResponse.json({ error: "Schedule ID is required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Schedule ID is required." },
+      { status: 400 }
+    );
   }
 
   try {
@@ -71,8 +82,14 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 
     return NextResponse.json(convertToPlainObject(deletedSchedule));
   } catch (error) {
-    if (error instanceof PrismaClientKnownRequestError && error.code === "P2025") {
-      return NextResponse.json({ error: "Schedule not found." }, { status: 404 });
+    if (
+      error instanceof PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return NextResponse.json(
+        { error: "Schedule not found." },
+        { status: 404 }
+      );
     }
 
     console.error("Failed to delete schedule", error);
