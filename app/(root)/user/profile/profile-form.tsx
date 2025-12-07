@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +46,10 @@ type ProfileFormProps = {
 export function ProfileForm({ initialValues }: ProfileFormProps) {
   const [state, formAction] = useActionState(updateUserProfile, initialState);
   const [profileImageUrl, setProfileImageUrl] = useState(initialValues.profileImage ?? "");
+
+  useEffect(() => {
+    setProfileImageUrl(initialValues.profileImage ?? "");
+  }, [initialValues.profileImage]);
 
   return (
     <Card className="border-border/70 shadow-sm">
