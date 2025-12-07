@@ -13,6 +13,7 @@ interface ProfileImageUploaderProps {
   onChange: (url: string) => void;
   disabled?: boolean;
   label?: string;
+  onUploadingChange?: (uploading: boolean) => void;
 }
 
 export function ProfileImageUploader({
@@ -20,8 +21,14 @@ export function ProfileImageUploader({
   onChange,
   disabled,
   label = "Profile image",
+  onUploadingChange,
 }: ProfileImageUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
+
+  const setUploading = (uploading: boolean) => {
+    setIsUploading(uploading);
+    onUploadingChange?.(uploading);
+  };
 
   return (
     <div className="space-y-2">
@@ -61,16 +68,16 @@ export function ProfileImageUploader({
                   : "Connecting...";
               },
             }}
-            onUploadBegin={() => setIsUploading(true)}
+            onUploadBegin={() => setUploading(true)}
             onClientUploadComplete={(res) => {
-              setIsUploading(false);
+              setUploading(false);
               const fileUrl = res?.[0]?.url;
               if (fileUrl) {
                 onChange(fileUrl);
               }
             }}
             onUploadError={(err) => {
-              setIsUploading(false);
+              setUploading(false);
               console.error("Profile image upload failed", err);
             }}
             disabled={disabled || isUploading}
