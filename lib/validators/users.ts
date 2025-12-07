@@ -1,12 +1,6 @@
 import { z } from "zod";
 
-import {
-  optionalDateString,
-  optionalGender,
-  optionalString,
-  optionalUrl,
-  phoneNumberSchema,
-} from "./common";
+import { phoneNumberSchema } from "./common";
 
 export const UserRoleEnum = z.enum([
   "STUDENT",
@@ -44,8 +38,28 @@ export const profileUpdateSchema = z.object({
     .min(3, { message: "Name must be at least 3 characters" })
     .max(100, { message: "Name must be less than 100 characters" }),
   phone: phoneNumberSchema,
-  address: optionalString(255),
-  dob: optionalDateString,
-  gender: optionalGender,
-  profileImage: optionalUrl,
+  address: z
+    .string()
+    .trim()
+    .max(255, { message: "Address must be less than 255 characters" })
+    .or(z.literal(""))
+    .transform((value) => (value === "" ? undefined : value)),
+  dob: z
+    .string()
+    .trim()
+    .or(z.literal(""))
+    .transform((value) => (value === "" ? undefined : value))
+    .refine((value) => !value || !Number.isNaN(Date.parse(value)), {
+      message: "Date must be a valid date",
+    }),
+  gender: z
+    .enum(["MALE", "FEMALE"])
+    .or(z.literal(""))
+    .transform((value) => (value === "" ? undefined : value)),
+  profileImage: z
+    .string()
+    .trim()
+    .url({ message: "Please provide a valid URL" })
+    .or(z.literal(""))
+    .transform((value) => (value === "" ? undefined : value)),
 });
