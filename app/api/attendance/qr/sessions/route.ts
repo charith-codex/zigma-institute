@@ -1,14 +1,7 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "@/lib/utils";
-
-const createSessionSchema = z.object({
-  courseId: z.string().min(1).optional().nullable(),
-  courseName: z.string().min(1),
-  sessionDate: z.string().min(1),
-});
+import { createSessionSchema } from "@/lib/validators";
 
 function normalizeDateOnly(value: string): Date | null {
   const parsed = new Date(`${value}T00:00:00.000Z`);

@@ -1,15 +1,7 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "@/lib/utils";
-
-const markSchema = z.object({
-  sessionId: z.string().min(1),
-  studentPublicId: z.string().min(1),
-  studentName: z.string().min(1),
-  registrationId: z.string().optional().nullable(),
-});
+import { markSchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   let payload: unknown;
