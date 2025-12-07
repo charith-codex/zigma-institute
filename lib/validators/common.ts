@@ -30,6 +30,7 @@ export const optionalUrl = z
   .string()
   .trim()
   .url({ message: "Please provide a valid URL" })
+  .or(z.literal(""))
   .optional()
   .transform((value) => (value === "" || value === undefined ? undefined : value));
 
