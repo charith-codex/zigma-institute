@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
-import { UserRound } from "lucide-react";
+import { useActionState, useState } from "react";
+import { ImageIcon, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -35,6 +36,7 @@ export type ProfileFormValues = {
   address?: string;
   dob?: string;
   gender?: "MALE" | "FEMALE";
+  profileImage?: string;
 };
 
 type ProfileFormProps = {
@@ -43,6 +45,9 @@ type ProfileFormProps = {
 
 export function ProfileForm({ initialValues }: ProfileFormProps) {
   const [state, formAction] = useActionState(updateUserProfile, initialState);
+  const [profileImageUrl, setProfileImageUrl] = useState(initialValues.profileImage ?? "");
+
+  const fallbackInitial = initialValues.name ? initialValues.name.charAt(0).toUpperCase() : "U";
 
   return (
     <Card className="border-border/70 shadow-sm">
@@ -58,6 +63,36 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-[auto,1fr] md:items-center">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={profileImageUrl} alt="Profile preview" />
+                <AvatarFallback className="text-lg font-semibold">
+                  {fallbackInitial}
+                </AvatarFallback>
+              </Avatar>
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <p className="flex items-center gap-1 font-medium text-foreground">
+                  <ImageIcon className="h-4 w-4" /> Profile image
+                </p>
+                <p>Use a square image URL for best results.</p>
+                <p>Leave blank to remove your current image.</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="profileImage">Image URL</Label>
+              <Input
+                id="profileImage"
+                name="profileImage"
+                type="url"
+                value={profileImageUrl}
+                onChange={(event) => setProfileImageUrl(event.target.value)}
+                placeholder="https://example.com/avatar.jpg"
+                autoComplete="url"
+              />
+            </div>
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="name">Full name</Label>

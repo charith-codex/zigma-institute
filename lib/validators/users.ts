@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-import { optionalDateString, optionalGender, optionalString, phoneNumberSchema } from "./common";
+import {
+  optionalDateString,
+  optionalGender,
+  optionalString,
+  optionalUrl,
+  phoneNumberSchema,
+} from "./common";
 
 export const UserRoleEnum = z.enum([
   "STUDENT",
@@ -41,4 +47,5 @@ export const profileUpdateSchema = z.object({
   address: optionalString(255),
   dob: optionalDateString,
   gender: optionalGender,
+  profileImage: optionalUrl,
 });

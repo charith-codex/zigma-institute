@@ -26,6 +26,13 @@ export const optionalGender = z
   .optional()
   .transform((value) => value ?? undefined);
 
+export const optionalUrl = z
+  .string()
+  .trim()
+  .url({ message: "Please provide a valid URL" })
+  .optional()
+  .transform((value) => (value === "" || value === undefined ? undefined : value));
+
 export const timeStringSchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:MM (24h) format");

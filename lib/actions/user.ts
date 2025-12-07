@@ -283,6 +283,7 @@ export async function updateUserProfile(
       address: formData.get("address"),
       dob: formData.get("dob"),
       gender: formData.get("gender"),
+      profileImage: formData.get("profileImage"),
     });
 
     await prisma.user.update({
@@ -293,6 +294,7 @@ export async function updateUserProfile(
         address: parsed.address,
         dob: parsed.dob ? new Date(parsed.dob) : null,
         gender: parsed.gender ?? null,
+        profileImage: parsed.profileImage ?? null,
       },
     });
 

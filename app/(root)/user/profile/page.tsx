@@ -20,6 +20,7 @@ export default async function UserProfilePage() {
       address: true,
       dob: true,
       gender: true,
+      profileImage: true,
     },
   });
 
@@ -49,6 +50,7 @@ export default async function UserProfilePage() {
           address: user.address ?? "",
           dob: formattedDob,
           gender: user.gender ?? undefined,
+          profileImage: user.profileImage ?? "",
         }}
       />
     </div>
