@@ -51,6 +51,34 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
     setProfileImageUrl(initialValues.profileImage ?? "");
   }, [initialValues.profileImage]);
 
+  useEffect(() => {
+    let isActive = true;
+
+    const fetchProfileImage = async () => {
+      try {
+        const response = await fetch("/api/user/profile", { cache: "no-store" });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data: { profileImage?: string | null } = await response.json();
+
+        if (isActive && data.profileImage) {
+          setProfileImageUrl(data.profileImage);
+        }
+      } catch (error) {
+        console.error("Failed to load profile image", error);
+      }
+    };
+
+    void fetchProfileImage();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
   return (
     <Card className="border-border/70 shadow-sm">
       <CardHeader className="space-y-2">
