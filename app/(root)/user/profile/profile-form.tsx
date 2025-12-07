@@ -15,7 +15,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Field,
+  FieldControl,
+  FieldItem,
+  FieldLabel,
+  FieldMessage,
+  Fieldset,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -139,41 +146,41 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
+        <Fieldset form={form}>
           <form onSubmit={onSubmit} className="space-y-6" noValidate>
-            <FormField
+            <Field
               control={form.control}
               name="profileImage"
               render={({ field }) => (
-                <FormItem className="space-y-2">
+                <FieldItem className="space-y-2">
                   <ProfileImageUploader
                     value={field.value ?? ""}
                     onChange={(value) => field.onChange(value)}
                     onUploadingChange={setIsImageUploading}
                     disabled={isSubmitting}
                   />
-                  <FormMessage />
-                </FormItem>
+                  <FieldMessage />
+                </FieldItem>
               )}
             />
 
             <div className="grid gap-4 md:grid-cols-2">
-              <FormField
+              <Field
                 control={form.control}
                 name="name"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel htmlFor="name">Full name</FormLabel>
-                    <FormControl>
+                  <FieldItem className="space-y-2">
+                    <FieldLabel htmlFor="name">Full name</FieldLabel>
+                    <FieldControl>
                       <Input
                         {...field}
                         id="name"
                         autoComplete="name"
                         value={field.value ?? ""}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                    </FieldControl>
+                    <FieldMessage />
+                  </FieldItem>
                 )}
               />
               <div className="space-y-2">
@@ -191,13 +198,13 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <FormField
+              <Field
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel htmlFor="phone">Phone</FormLabel>
-                    <FormControl>
+                  <FieldItem className="space-y-2">
+                    <FieldLabel htmlFor="phone">Phone</FieldLabel>
+                    <FieldControl>
                       <Input
                         {...field}
                         id="phone"
@@ -206,45 +213,45 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
                         autoComplete="tel"
                         value={field.value ?? ""}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                    </FieldControl>
+                    <FieldMessage />
+                  </FieldItem>
                 )}
               />
-              <FormField
+              <Field
                 control={form.control}
                 name="gender"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel htmlFor="gender">Gender</FormLabel>
+                  <FieldItem className="space-y-2">
+                    <FieldLabel htmlFor="gender">Gender</FieldLabel>
                     <Select
                       value={field.value ?? ""}
                       onValueChange={(value) => field.onChange(value)}
                     >
-                      <FormControl>
+                      <FieldControl>
                         <SelectTrigger className="w-full" id="gender">
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
-                      </FormControl>
+                      </FieldControl>
                       <SelectContent>
                         <SelectItem value="MALE">Male</SelectItem>
                         <SelectItem value="FEMALE">Female</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormMessage />
-                  </FormItem>
+                    <FieldMessage />
+                  </FieldItem>
                 )}
               />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <FormField
+              <Field
                 control={form.control}
                 name="dob"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel htmlFor="dob">Date of birth</FormLabel>
-                    <FormControl>
+                  <FieldItem className="space-y-2">
+                    <FieldLabel htmlFor="dob">Date of birth</FieldLabel>
+                    <FieldControl>
                       <Input
                         {...field}
                         id="dob"
@@ -252,18 +259,18 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
                         max={new Date().toISOString().split("T")[0]}
                         value={field.value ?? ""}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                    </FieldControl>
+                    <FieldMessage />
+                  </FieldItem>
                 )}
               />
-              <FormField
+              <Field
                 control={form.control}
                 name="address"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel htmlFor="address">Address</FormLabel>
-                    <FormControl>
+                  <FieldItem className="space-y-2">
+                    <FieldLabel htmlFor="address">Address</FieldLabel>
+                    <FieldControl>
                       <Textarea
                         {...field}
                         id="address"
@@ -271,9 +278,9 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
                         rows={3}
                         value={field.value ?? ""}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                    </FieldControl>
+                    <FieldMessage />
+                  </FieldItem>
                 )}
               />
             </div>
@@ -293,7 +300,7 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
               </Button>
             </div>
           </form>
-        </Form>
+        </Fieldset>
       </CardContent>
     </Card>
   );
