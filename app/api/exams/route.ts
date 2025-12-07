@@ -1,22 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-
 import { prisma } from "@/db/prisma";
-
-const examQuestionSchema = z.object({
-  questionId: z.string().uuid(),
-  order: z.number().int().nonnegative(),
-  marks: z.number().int().min(1),
-});
-
-const createExamSchema = z.object({
-  title: z.string().min(1, "Exam title is required"),
-  lessonTitle: z.string().min(1, "Lesson title is required"),
-  description: z.string().optional(),
-  createdById: z.string().uuid().optional(),
-  publish: z.boolean().optional(),
-  questions: z.array(examQuestionSchema).min(1, "Add at least one question"),
-});
+import { createExamSchema } from "@/lib/validators";
 
 export async function GET(request: Request) {
   try {

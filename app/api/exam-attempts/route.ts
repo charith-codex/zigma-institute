@@ -1,21 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-
 import { prisma } from "@/db/prisma";
-
-const answerSchema = z.object({
-  questionId: z.string().uuid(),
-  type: z.enum(["MCQ", "ESSAY"]),
-  selectedOption: z.string().optional(),
-  answerText: z.string().optional(),
-});
-
-const submissionSchema = z.object({
-  examId: z.string().uuid(),
-  studentId: z.string().min(1, "Student identifier is required"),
-  studentName: z.string().optional(),
-  answers: z.array(answerSchema).min(1, "Provide at least one answer"),
-});
+import { answerSchema, submissionSchema } from "@/lib/validators";
 
 export async function GET(request: Request) {
   try {

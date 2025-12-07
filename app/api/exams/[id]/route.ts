@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-
 import { prisma } from "@/db/prisma";
-
-const updateSchema = z.object({
-  title: z.string().optional(),
-  description: z.string().nullable().optional(),
-  status: z.enum(["DRAFT", "PUBLISHED", "CLOSED"]).optional(),
-  publish: z.boolean().optional(),
-});
+import { updateExamSchema } from "@/lib/validators";
 
 export async function GET(
   _request: NextRequest,
@@ -47,7 +40,7 @@ export async function PATCH(
 ) {
   try {
     const payload = await request.json();
-    const data = updateSchema.parse(payload);
+    const data = updateExamSchema.parse(payload);
 
     const { id } = await context.params;
 

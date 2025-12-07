@@ -1,19 +1,8 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "@/lib/utils";
 import { generateAndUploadIdCard } from "@/lib/student-registration/generate-id-card";
-
-const statusFilterSchema = z
-  .array(z.enum(["PENDING", "PAID", "APPROVED", "FAILED"]))
-  .nonempty()
-  .catch(["PAID", "APPROVED"]);
-
-const updateStatusSchema = z.object({
-  id: z.string().min(1),
-  status: z.enum(["PAID", "APPROVED", "FAILED"]),
-});
+import { statusFilterSchema, updateStatusSchema } from "@/lib/validators";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

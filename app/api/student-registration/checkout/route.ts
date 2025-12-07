@@ -1,20 +1,7 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
 import { prisma } from "@/db/prisma";
 import { stripe } from "@/lib/stripe";
-
-const registrationRequestSchema = z.object({
-  name: z.string().min(2),
-  dateOfBirth: z.string().refine((value) => !Number.isNaN(Date.parse(value))),
-  email: z.string().email(),
-  phone: z.string().min(6),
-  address: z.string().max(200).optional().nullable(),
-  gender: z.enum(["MALE", "FEMALE"]).optional().nullable(),
-  guardianEmail: z.string().email(),
-  courses: z.array(z.string().min(1)).min(1),
-  studentPhoto: z.object({ url: z.string().url(), key: z.string().min(1) }),
-});
+import { registrationRequestSchema } from "@/lib/validators";
 
 const SUCCESS_PATH = "/student-registration/success";
 const CANCEL_PATH = "/student-registration";
