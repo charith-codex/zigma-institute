@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/db/prisma";
-import type { ProfileFormValues } from "@/app/(root)/user/profile/profile-form";
+import type { ProfileFormValues } from "@/lib/validators/profile";
 import UserButtonClient from "./user-button-client";
 
 const UserButton = async () => {
