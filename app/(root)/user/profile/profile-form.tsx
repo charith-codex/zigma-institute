@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { startTransition, useActionState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +13,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -20,21 +21,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import type { ActionState } from "@/lib/actions/user";
 import { updateUserProfile } from "@/lib/actions/user";
+import { ProfileFormValues, profileSchema } from "@/lib/validators/profile";
 
 const initialState: ActionState = {
   success: false,
   message: "",
-};
-
-export type ProfileFormValues = {
-  name: string;
-  email: string;
-  phone: string;
-  address?: string;
-  dob?: string;
-  gender?: "MALE" | "FEMALE";
 };
 
 type ProfileFormProps = {
@@ -42,7 +41,26 @@ type ProfileFormProps = {
 };
 
 export function ProfileForm({ initialValues }: ProfileFormProps) {
-  const [state, formAction] = useActionState(updateUserProfile, initialState);
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: initialValues,
+  });
+
+  const [state, formAction, pending] = useActionState(
+    updateUserProfile,
+    initialState
+  );
+
+  const onSubmit = (data: ProfileFormValues) => {
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      formData.append(key, value ?? "");
+    });
+
+    startTransition(() => {
+      formAction(formData);
+    });
+  };
 
   return (
     <Card className="border-border/70 shadow-sm">
@@ -57,96 +75,176 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={formAction} className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full name</Label>
-              <Input
-                id="name"
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FieldGroup>
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Full name field */}
+              <Controller
                 name="name"
-                defaultValue={initialValues.name}
-                required
-                autoComplete="name"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="user-profile-name">
+                      Full name
+                    </FieldLabel>
+                    <Input
+                      {...field}
+                      id="user-profile-name"
+                      aria-invalid={fieldState.invalid}
+                      autoComplete="name"
+                    />
+                    {fieldState.error && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
+
+              {/* Email field (read-only) */}
+              <Controller
                 name="email"
-                value={initialValues.email}
-                readOnly
-                disabled
-                className="bg-muted/40"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="user-profile-email">Email</FieldLabel>
+                    <Input
+                      {...field}
+                      id="user-profile-email"
+                      aria-invalid={fieldState.invalid}
+                      readOnly
+                      disabled
+                      className="bg-muted/40"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Email cannot be edited.
+                    </p>
+                  </Field>
+                )}
               />
-              <p className="text-xs text-muted-foreground">
-                Email cannot be edited.
-              </p>
             </div>
-          </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Phone field */}
+              <Controller
                 name="phone"
-                defaultValue={initialValues.phone}
-                inputMode="numeric"
-                pattern="[0-9]{10,15}"
-                autoComplete="tel"
-                required
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="user-profile-phone">Phone</FieldLabel>
+                    <Input
+                      {...field}
+                      id="user-profile-phone"
+                      aria-invalid={fieldState.invalid}
+                      inputMode="numeric"
+                      autoComplete="tel"
+                    />
+                    {fieldState.error && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+
+              {/* Gender field */}
+              <Controller
+                name="gender"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="user-profile-gender">
+                      Gender
+                    </FieldLabel>
+                    <Select
+                      name={field.name}
+                      value={field.value || ""}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger
+                        id="user-profile-gender"
+                        aria-invalid={fieldState.invalid}
+                      >
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MALE">Male</SelectItem>
+                        <SelectItem value="FEMALE">Female</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {fieldState.error && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="gender">Gender</Label>
-              <Select name="gender" defaultValue={initialValues.gender}>
-                <SelectTrigger className="w-full" id="gender">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MALE">Male</SelectItem>
-                  <SelectItem value="FEMALE">Female</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="dob">Date of birth</Label>
-              <Input
-                id="dob"
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Date of birth field */}
+              <Controller
                 name="dob"
-                type="date"
-                defaultValue={initialValues.dob}
-                max={new Date().toISOString().split("T")[0]}
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="user-profile-dob">
+                      Date of birth
+                    </FieldLabel>
+                    <Input
+                      {...field}
+                      id="user-profile-dob"
+                      type="date"
+                      aria-invalid={fieldState.invalid}
+                      max={new Date().toISOString().split("T")[0]}
+                    />
+                    {fieldState.error && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Textarea
-                id="address"
+
+              {/* Address field */}
+              <Controller
                 name="address"
-                defaultValue={initialValues.address}
-                placeholder="Apartment, street, city"
-                rows={3}
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="user-profile-address">
+                      Address
+                    </FieldLabel>
+                    <Textarea
+                      {...field}
+                      id="user-profile-address"
+                      aria-invalid={fieldState.invalid}
+                      placeholder="Apartment, street, city"
+                      rows={3}
+                    />
+                    {fieldState.error && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
               />
             </div>
+          </FieldGroup>
+
+          {/* Display form submission status messages */}
+          <div aria-live="polite">
+            {state.message && (
+              <p
+                className={`text-sm ${
+                  state.success ? "text-green-600" : "text-destructive"
+                }`}
+                role={state.success ? "status" : "alert"}
+              >
+                {state.message}
+              </p>
+            )}
           </div>
 
-          {state.message && (
-            <div
-              className={`text-sm ${state.success ? "text-success" : "text-destructive"}`}
-              role={state.success ? "status" : "alert"}
-            >
-              {state.message}
-            </div>
-          )}
-
+          {/* Submit button */}
           <div className="flex justify-end">
-            <Button type="submit" className="min-w-32">
-              Save changes
+            <Button type="submit" disabled={pending} className="min-w-32">
+              {pending ? "Submitting..." : "Save changes"}
             </Button>
           </div>
         </form>

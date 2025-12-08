@@ -13,7 +13,7 @@ import {
   createNotification as createNotificationAction,
   deleteNotification as deleteNotificationAction,
   listNotifications,
-} from "@/app/actions/notifications";
+} from "@/lib/actions/notifications";
 import type {
   CreateNotificationInput,
   NotificationChannel,
@@ -36,13 +36,11 @@ interface NotificationContextValue {
   deleteNotification: (id: string) => Promise<void>;
 }
 
-const NotificationContext = createContext<NotificationContextValue | null>(null);
+const NotificationContext = createContext<NotificationContextValue | null>(
+  null
+);
 
-export function NotificationProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
