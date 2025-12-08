@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Loader2, Trophy } from "lucide-react";
+import { Loader2, Quote, Trophy } from "lucide-react";
 
 interface ExamQuestion {
   id: string;
@@ -113,6 +113,21 @@ const buildEvaluation = (attempt: AttemptRecord): EvaluationResult[] =>
     sampleAnswer: answer.question.sampleAnswer,
     studentAnswer: answer.answerText ?? answer.selectedOption ?? "",
   }));
+
+const examQuotes: { text: string; author: string }[] = [
+  {
+    text: "Discipline is the silent architect of success.",
+    author: "LMS Guidance",
+  },
+  {
+    text: "Every answer begins with a calm and focused mind.",
+    author: "Exam Mentor",
+  },
+  {
+    text: "Accuracy beats speed—steady progress wins the exam.",
+    author: "Faculty Advice",
+  },
+];
 
 export default function ExamAttemptPage() {
   const { examId } = useParams<{ examId: string }>();
@@ -343,34 +358,49 @@ export default function ExamAttemptPage() {
   const studentNameLocked = Boolean(result) || Boolean(session?.user?.name);
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="space-y-1">
-              <CardTitle className="text-2xl font-semibold">
-                {exam.title}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Course: {exam.course?.name ?? "Not assigned"} • Lesson: {" "}
-                {exam.lessonTitle}
-              </p>
-            </div>
-            <Badge variant="secondary">Time spent: {formattedElapsed}</Badge>
+    <div className="space-y-6 bg-muted/10 p-4 sm:p-6 lg:p-10">
+      <Card className="overflow-hidden border-none bg-gradient-to-r from-primary/10 via-background to-secondary/10 shadow-lg">
+        <CardContent className="flex flex-col items-center gap-4 p-6 text-center md:gap-6">
+          <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs uppercase tracking-wide">
+            Premium exam experience
+          </Badge>
+          <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
+            {exam.title}
+          </h1>
+          <div className="flex flex-wrap justify-center gap-2 text-sm text-muted-foreground">
+            <Badge variant="outline">Course: {exam.course?.name ?? "Not assigned"}</Badge>
+            <Badge variant="outline">Teacher: {exam.course?.teacherName ?? exam.createdBy?.name ?? "TBD"}</Badge>
+            <Badge variant="outline">Lesson: {exam.lessonTitle}</Badge>
           </div>
-          <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
-            <Badge variant="outline">
-              Teacher: {exam.course?.teacherName ?? exam.createdBy?.name ?? "TBD"}
-            </Badge>
-            <Badge variant="outline">Questions: {exam.questions.length}</Badge>
-            <Badge variant="secondary">Total marks: {totalMarks}</Badge>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border bg-background/80 px-4 py-3 text-left shadow-sm">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Questions</p>
+              <p className="text-2xl font-semibold">{exam.questions.length}</p>
+            </div>
+            <div className="rounded-2xl border bg-background/80 px-4 py-3 text-left shadow-sm">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Total marks</p>
+              <p className="text-2xl font-semibold">{totalMarks}</p>
+            </div>
+            <div className="rounded-2xl border bg-background/80 px-4 py-3 text-left shadow-sm">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Time spent</p>
+              <p className="text-2xl font-semibold text-primary">{formattedElapsed}</p>
+            </div>
+            <div className="rounded-2xl border bg-background/80 px-4 py-3 text-left shadow-sm">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Status</p>
+              <p className="text-2xl font-semibold">{exam.status}</p>
+            </div>
           </div>
           {exam.description ? (
-            <p className="text-sm text-muted-foreground">{exam.description}</p>
+            <p className="max-w-3xl text-sm text-muted-foreground md:text-base">
+              {exam.description}
+            </p>
           ) : null}
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-4 lg:grid-cols-2">
+        </CardContent>
+      </Card>
+
+      <Card className="border-none bg-background/70 shadow-lg backdrop-blur">
+        <CardHeader className="border-b bg-muted/20">
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="student-id">Student ID</Label>
               <Input
@@ -400,169 +430,195 @@ export default function ExamAttemptPage() {
               />
             </div>
           </div>
-
-          <div className="grid gap-6 xl:grid-cols-[2fr,1fr]">
-            <Card className="shadow-sm">
-              <CardHeader className="space-y-1">
-                <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                  <Badge variant="secondary">
-                    Question {currentQuestionIndex + 1} of {exam.questions.length}
-                  </Badge>
-                  <Badge variant="outline">{currentEntry.marks} marks</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {currentQuestion.type === "MCQ"
-                    ? "Select one option"
-                    : "Write your answer"}
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="font-medium text-base leading-relaxed">
-                  {currentQuestion.questionText}
-                </p>
-
-                {currentQuestion.type === "MCQ" ? (
-                  <div className="space-y-2">
-                    {currentOptions.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        Options unavailable for this question.
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        {currentOptions.map((option) => {
-                          const studentResponse = answers[currentEntry.questionId];
-                          return (
-                            <label
-                              key={`${currentEntry.questionId}-${option}`}
-                              className={`flex cursor-pointer items-center gap-2 rounded-md border p-3 text-sm transition ${
-                                studentResponse?.selectedOption === option
-                                  ? "border-primary bg-primary/5"
-                                  : "border-border"
-                              }`}
-                            >
-                              <input
-                                type="radio"
-                                className="h-4 w-4"
-                                checked={
-                                  studentResponse?.selectedOption === option
-                                }
-                                onChange={() =>
-                                  handleSelectOption(currentEntry.questionId, option)
-                                }
-                                disabled={Boolean(result)}
-                              />
-                              <span>{option}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    )}
-                    {result && currentEvaluation && (
-                      <div className="rounded-md bg-muted/50 p-3 text-sm">
-                        <p>
-                          {currentEvaluation.isCorrect ? (
-                            <span className="font-semibold text-emerald-600">
-                              Correct!
-                            </span>
-                          ) : (
-                            <span className="font-semibold text-destructive">
-                              Incorrect.
-                            </span>
-                          )}
-                        </p>
-                        <p className="mt-1 text-muted-foreground">
-                          Correct answer: {currentEvaluation.correctAnswer || "Not provided"}
-                        </p>
-                        {currentEvaluation.explanation && (
-                          <p className="mt-2 text-muted-foreground">
-                            Explanation: {currentEvaluation.explanation}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Textarea
-                      placeholder="Type your answer"
-                      value={answers[currentEntry.questionId]?.answerText || ""}
-                      onChange={(event) =>
-                        handleEssayChange(currentEntry.questionId, event.target.value)
-                      }
-                      rows={6}
-                      disabled={Boolean(result)}
-                    />
-                    {result && (
-                      <p className="text-sm text-muted-foreground">
-                        Essay questions will be graded by your teacher. Check back for final marks.
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => goToQuestion(currentQuestionIndex - 1)}
-                      disabled={currentQuestionIndex === 0}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => goToQuestion(currentQuestionIndex + 1)}
-                      disabled={currentQuestionIndex === exam.questions.length - 1}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                  {!result ? (
-                    <Button onClick={handleSubmit} disabled={submitting}>
-                      {submitting ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        "Submit exam"
-                      )}
-                    </Button>
-                  ) : null}
-                </div>
-
-                {result ? (
-                  <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4">
-                    <div className="flex items-center gap-2 text-emerald-700">
-                      <Trophy className="h-5 w-5" />
-                      <p className="font-semibold">Exam submitted successfully</p>
-                    </div>
-                    <p className="mt-2 text-sm text-emerald-700">
-                      {essaysPending
-                        ? `Auto-graded score: ${result.attempt.score ?? 0}. Essay questions will be added once graded.`
-                        : `Final score: ${finalMarks}`}
+        </CardHeader>
+        <CardContent className="space-y-6 p-6">
+          <div className="grid gap-6 xl:grid-cols-[2.2fr,1fr]">
+            <div className="space-y-6">
+              <Card className="border-dashed border-primary/20 bg-primary/5">
+                <CardHeader className="flex flex-row items-center justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-lg">Exam quotations</CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Stay centered and move through questions with confidence.
                     </p>
-                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                  </div>
+                  <Quote className="h-5 w-5 text-primary" />
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm text-muted-foreground">
+                  {examQuotes.map((entry) => (
+                    <div
+                      key={entry.text}
+                      className="rounded-xl bg-background/80 p-3 shadow-sm"
+                    >
+                      <p className="font-medium text-foreground">“{entry.text}”</p>
+                      <p className="mt-1 text-xs uppercase tracking-wide">{entry.author}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-sm">
+                <CardHeader className="space-y-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                    <Badge variant="secondary">
+                      Question {currentQuestionIndex + 1} of {exam.questions.length}
+                    </Badge>
+                    <Badge variant="outline">{currentEntry.marks} marks</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {currentQuestion.type === "MCQ"
+                      ? "Select one option"
+                      : "Write your answer"}
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-base font-medium leading-relaxed">
+                    {currentQuestion.questionText}
+                  </p>
+
+                  {currentQuestion.type === "MCQ" ? (
+                    <div className="space-y-2">
+                      {currentOptions.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          Options unavailable for this question.
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {currentOptions.map((option) => {
+                            const studentResponse = answers[currentEntry.questionId];
+                            return (
+                              <label
+                                key={`${currentEntry.questionId}-${option}`}
+                                className={`flex cursor-pointer items-center gap-2 rounded-md border p-3 text-sm transition ${
+                                  studentResponse?.selectedOption === option
+                                    ? "border-primary bg-primary/5"
+                                    : "border-border"
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  className="h-4 w-4"
+                                  checked={
+                                    studentResponse?.selectedOption === option
+                                  }
+                                  onChange={() =>
+                                    handleSelectOption(currentEntry.questionId, option)
+                                  }
+                                  disabled={Boolean(result)}
+                                />
+                                <span>{option}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {result && currentEvaluation && (
+                        <div className="rounded-md bg-muted/50 p-3 text-sm">
+                          <p>
+                            {currentEvaluation.isCorrect ? (
+                              <span className="font-semibold text-emerald-600">
+                                Correct!
+                              </span>
+                            ) : (
+                              <span className="font-semibold text-destructive">
+                                Incorrect.
+                              </span>
+                            )}
+                          </p>
+                          <p className="mt-1 text-muted-foreground">
+                            Correct answer: {currentEvaluation.correctAnswer || "Not provided"}
+                          </p>
+                          {currentEvaluation.explanation && (
+                            <p className="mt-2 text-muted-foreground">
+                              Explanation: {currentEvaluation.explanation}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Textarea
+                        placeholder="Type your answer"
+                        value={answers[currentEntry.questionId]?.answerText || ""}
+                        onChange={(event) =>
+                          handleEssayChange(currentEntry.questionId, event.target.value)
+                        }
+                        rows={6}
+                        disabled={Boolean(result)}
+                      />
+                      {result && (
+                        <p className="text-sm text-muted-foreground">
+                          Essay questions will be graded by your teacher. Check back for final marks.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={refreshResults}
-                        disabled={checkingMarks}
+                        onClick={() => goToQuestion(currentQuestionIndex - 1)}
+                        disabled={currentQuestionIndex === 0}
                       >
-                        {checkingMarks ? (
-                          <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                        ) : null}
-                        Check latest marks
+                        Previous
                       </Button>
-                      <Button variant="link" asChild className="px-0">
-                        <Link href="/lms">Return to exam list</Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => goToQuestion(currentQuestionIndex + 1)}
+                        disabled={currentQuestionIndex === exam.questions.length - 1}
+                      >
+                        Next
                       </Button>
                     </div>
+                    {!result ? (
+                      <Button onClick={handleSubmit} disabled={submitting}>
+                        {submitting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Submit exam"
+                        )}
+                      </Button>
+                    ) : null}
                   </div>
-                ) : null}
-              </CardContent>
-            </Card>
 
-            <div className="space-y-4">
+                  {result ? (
+                    <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4">
+                      <div className="flex items-center gap-2 text-emerald-700">
+                        <Trophy className="h-5 w-5" />
+                        <p className="font-semibold">Exam submitted successfully</p>
+                      </div>
+                      <p className="mt-2 text-sm text-emerald-700">
+                        {essaysPending
+                          ? `Auto-graded score: ${result.attempt.score ?? 0}. Essay questions will be added once graded.`
+                          : `Final score: ${finalMarks}`}
+                      </p>
+                      <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={refreshResults}
+                          disabled={checkingMarks}
+                        >
+                          {checkingMarks ? (
+                            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                          ) : null}
+                          Check latest marks
+                        </Button>
+                        <Button variant="link" asChild className="px-0">
+                          <Link href="/lms">Return to exam list</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="space-y-4 xl:border-l xl:border-dashed xl:border-muted/60 xl:pl-6">
               <Card className="shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-lg">Exam overview</CardTitle>
@@ -576,9 +632,9 @@ export default function ExamAttemptPage() {
                     <Badge variant="secondary">Total marks: {totalMarks}</Badge>
                     <Badge variant="secondary">Questions: {exam.questions.length}</Badge>
                   </div>
-                  <div className="rounded-md border p-3">
+                  <div className="rounded-2xl border bg-gradient-to-r from-primary/10 via-background to-secondary/10 p-4 shadow-sm">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Time counter</p>
-                    <p className="text-xl font-semibold text-primary">{formattedElapsed}</p>
+                    <p className="text-2xl font-semibold text-primary">{formattedElapsed}</p>
                   </div>
                   <div className="space-y-2">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">Instructions</p>
@@ -596,7 +652,7 @@ export default function ExamAttemptPage() {
                   <CardTitle className="text-lg">Question navigation</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="grid grid-cols-5 gap-2 sm:grid-cols-6">
+                  <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
                     {exam.questions.map((entry, index) => {
                       const answered = Boolean(
                         answers[entry.questionId]?.selectedOption ||
