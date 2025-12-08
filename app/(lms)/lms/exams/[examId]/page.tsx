@@ -417,7 +417,7 @@ export default function ExamAttemptPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6 p-6">
-          <div className="grid gap-6 xl:grid-cols-[2.2fr,1fr]">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.8fr),minmax(0,1fr)] lg:items-start">
             <div className="space-y-6">
               <Card className="shadow-sm">
                 <CardHeader className="space-y-1">
@@ -580,7 +580,7 @@ export default function ExamAttemptPage() {
               </Card>
             </div>
 
-            <div className="space-y-4 xl:border-l xl:border-dashed xl:border-muted/60 xl:pl-6">
+            <div className="space-y-4 lg:border-l lg:border-dashed lg:border-muted/60 lg:pl-6">
               <Card className="shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-lg">Exam overview</CardTitle>
