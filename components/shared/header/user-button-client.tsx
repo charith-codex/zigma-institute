@@ -18,10 +18,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  ProfileForm,
-  type ProfileFormValues,
-} from "@/app/(root)/user/profile/profile-form";
+import { ProfileForm } from "@/app/(root)/user/profile/profile-form";
+import type { ProfileFormValues } from "@/lib/validators/profile";
 import { signOutUser } from "@/lib/actions/user";
 
 type UserButtonClientProps = {
