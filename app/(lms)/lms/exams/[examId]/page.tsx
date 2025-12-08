@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Loader2, Quote, Trophy } from "lucide-react";
+import { Loader2, Trophy } from "lucide-react";
 
 interface ExamQuestion {
   id: string;
@@ -113,21 +113,6 @@ const buildEvaluation = (attempt: AttemptRecord): EvaluationResult[] =>
     sampleAnswer: answer.question.sampleAnswer,
     studentAnswer: answer.answerText ?? answer.selectedOption ?? "",
   }));
-
-const examQuotes: { text: string; author: string }[] = [
-  {
-    text: "Discipline is the silent architect of success.",
-    author: "LMS Guidance",
-  },
-  {
-    text: "Every answer begins with a calm and focused mind.",
-    author: "Exam Mentor",
-  },
-  {
-    text: "Accuracy beats speed—steady progress wins the exam.",
-    author: "Faculty Advice",
-  },
-];
 
 export default function ExamAttemptPage() {
   const { examId } = useParams<{ examId: string }>();
@@ -434,29 +419,6 @@ export default function ExamAttemptPage() {
         <CardContent className="space-y-6 p-6">
           <div className="grid gap-6 xl:grid-cols-[2.2fr,1fr]">
             <div className="space-y-6">
-              <Card className="border-dashed border-primary/20 bg-primary/5">
-                <CardHeader className="flex flex-row items-center justify-between gap-3">
-                  <div>
-                    <CardTitle className="text-lg">Exam quotations</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Stay centered and move through questions with confidence.
-                    </p>
-                  </div>
-                  <Quote className="h-5 w-5 text-primary" />
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm text-muted-foreground">
-                  {examQuotes.map((entry) => (
-                    <div
-                      key={entry.text}
-                      className="rounded-xl bg-background/80 p-3 shadow-sm"
-                    >
-                      <p className="font-medium text-foreground">“{entry.text}”</p>
-                      <p className="mt-1 text-xs uppercase tracking-wide">{entry.author}</p>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
               <Card className="shadow-sm">
                 <CardHeader className="space-y-1">
                   <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
