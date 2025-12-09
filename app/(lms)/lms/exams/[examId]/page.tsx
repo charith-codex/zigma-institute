@@ -343,13 +343,14 @@ export default function ExamAttemptPage() {
   const studentNameLocked = Boolean(result) || Boolean(session?.user?.name);
 
   return (
-    <div className="space-y-6 bg-muted/10 p-4 sm:p-6 lg:p-10">
-      <Card className="overflow-hidden border-none bg-gradient-to-r from-primary/10 via-background to-secondary/10 shadow-lg">
-        <CardContent className="flex flex-col items-center gap-4 p-6 text-center md:gap-6">
-          <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs uppercase tracking-wide">
-            Premium exam experience
-          </Badge>
-          <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
+    <div className="min-h-screen space-y-8 bg-muted/10 px-4 py-6 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <Card className="overflow-hidden rounded-3xl border border-muted/50 bg-gradient-to-r from-primary/10 via-background to-secondary/10 shadow-lg">
+          <CardContent className="flex flex-col items-center gap-4 p-6 text-center md:gap-6">
+            <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs uppercase tracking-wide">
+              Premium exam experience
+            </Badge>
+            <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
             {exam.title}
           </h1>
           <div className="flex flex-wrap justify-center gap-2 text-sm text-muted-foreground">
@@ -383,7 +384,7 @@ export default function ExamAttemptPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-none bg-background/70 shadow-lg backdrop-blur">
+      <Card className="rounded-3xl border border-muted/40 bg-background/80 shadow-lg backdrop-blur">
         <CardHeader className="border-b bg-muted/20">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
@@ -417,9 +418,9 @@ export default function ExamAttemptPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6 p-6">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.8fr),minmax(0,1fr)] lg:items-start">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.8fr),minmax(300px,0.9fr)] lg:items-start">
             <div className="space-y-6">
-              <Card className="shadow-sm">
+              <Card className="rounded-3xl border border-muted/60 shadow-sm">
                 <CardHeader className="space-y-1">
                   <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                     <Badge variant="secondary">
@@ -581,40 +582,12 @@ export default function ExamAttemptPage() {
             </div>
 
             <div className="space-y-4 lg:border-l lg:border-dashed lg:border-muted/60 lg:pl-6">
-              <Card className="shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg">Exam overview</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 text-sm text-muted-foreground">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline">Course: {exam.course?.name ?? "N/A"}</Badge>
-                    <Badge variant="outline">Teacher: {exam.course?.teacherName ?? exam.createdBy?.name ?? "TBD"}</Badge>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">Total marks: {totalMarks}</Badge>
-                    <Badge variant="secondary">Questions: {exam.questions.length}</Badge>
-                  </div>
-                  <div className="rounded-2xl border bg-gradient-to-r from-primary/10 via-background to-secondary/10 p-4 shadow-sm">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Time counter</p>
-                    <p className="text-2xl font-semibold text-primary">{formattedElapsed}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Instructions</p>
-                    <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-                      <li>Answer all multiple-choice questions before submission.</li>
-                      <li>Use the navigation grid to move between questions.</li>
-                      <li>Ensure your student ID and name are correct.</li>
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="shadow-sm">
+              <Card className="rounded-2xl border border-muted/60 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-lg">Question navigation</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                     {exam.questions.map((entry, index) => {
                       const answered = Boolean(
                         answers[entry.questionId]?.selectedOption ||
@@ -653,10 +626,39 @@ export default function ExamAttemptPage() {
                   </div>
                 </CardContent>
               </Card>
+
+              <Card className="rounded-2xl border border-muted/60 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">Exam overview</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline">Course: {exam.course?.name ?? "N/A"}</Badge>
+                    <Badge variant="outline">Teacher: {exam.course?.teacherName ?? exam.createdBy?.name ?? "TBD"}</Badge>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary">Total marks: {totalMarks}</Badge>
+                    <Badge variant="secondary">Questions: {exam.questions.length}</Badge>
+                  </div>
+                  <div className="rounded-2xl border bg-gradient-to-r from-primary/10 via-background to-secondary/10 p-4 shadow-sm">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Time counter</p>
+                    <p className="text-2xl font-semibold text-primary">{formattedElapsed}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Instructions</p>
+                    <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+                      <li>Answer all multiple-choice questions before submission.</li>
+                      <li>Use the navigation grid to move between questions.</li>
+                      <li>Ensure your student ID and name are correct.</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
