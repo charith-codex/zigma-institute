@@ -17,6 +17,17 @@ export async function GET(
           orderBy: { order: "asc" },
           include: { question: true },
         },
+        course: {
+          select: {
+            name: true,
+            teacherName: true,
+          },
+        },
+        createdBy: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 
