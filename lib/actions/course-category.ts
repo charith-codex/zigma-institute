@@ -1,6 +1,6 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/db/prisma";
 import {
@@ -52,7 +52,7 @@ export async function createCourseCategory(
 
     return successState("Course category created.");
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error instanceof PrismaClientKnownRequestError) {
       return failureState("Unable to create category. Please try again.");
     }
 
@@ -94,7 +94,7 @@ export async function updateCourseCategory(
 
     return successState("Course category updated.");
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error instanceof PrismaClientKnownRequestError) {
       return failureState("Unable to update category. Please try again.");
     }
 
@@ -124,7 +124,7 @@ export async function deleteCourseCategory(
     return successState("Course category deleted.");
   } catch (error) {
     if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error instanceof PrismaClientKnownRequestError &&
       error.code === "P2003"
     ) {
       return failureState(
@@ -132,7 +132,7 @@ export async function deleteCourseCategory(
       );
     }
 
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error instanceof PrismaClientKnownRequestError) {
       return failureState("Unable to delete category. Please try again.");
     }
 
