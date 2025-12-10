@@ -61,7 +61,7 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
     }
 
     toast.error(state.message);
-  }, [state.message, state.success]);
+  }, [state]);
 
   const onSubmit = (data: ProfileFormValues) => {
     const formData = new FormData();
