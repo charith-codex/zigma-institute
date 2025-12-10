@@ -11,6 +11,7 @@ export async function GET() {
   try {
     const courses = await prisma.course.findMany({
       orderBy: { createdAt: "desc" },
+      include: { courseCategory: true },
     });
 
     return NextResponse.json(convertToPlainObject(courses));
@@ -53,7 +54,24 @@ export async function POST(request: Request) {
       );
     }
 
-    const { price, teacherId, teacherName: _teacherName, ...courseData } = data;
+    const {
+      price,
+      teacherId,
+      teacherName: _teacherName,
+      courseCategoryId,
+      ...courseData
+    } = data;
+
+    const category = await prisma.courseCategory.findUnique({
+      where: { id: courseCategoryId },
+    });
+
+    if (!category) {
+      return NextResponse.json(
+        { error: "Selected course category could not be found." },
+        { status: 404 }
+      );
+    }
 
     const course = await prisma.course.create({
       data: {
@@ -62,6 +80,7 @@ export async function POST(request: Request) {
         teacherName: teacher.user.name ?? _teacherName,
         priceInCents: Math.round(price * 100),
         currency: DEFAULT_CURRENCY,
+        courseCategoryId,
       },
     });
 

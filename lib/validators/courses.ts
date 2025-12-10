@@ -23,6 +23,7 @@ export const courseSchema = z.object({
     .string()
     .min(3, "Teacher name must be at least 3 characters")
     .max(100, "Teacher name must be less than 100 characters"),
+  courseCategoryId: z.string().min(1, "Course category is required"),
   price: z.coerce
     .number("Price is required")
     .finite("Price must be a valid number")
