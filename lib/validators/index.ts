@@ -5,6 +5,7 @@ export * from "./courses";
 export * from "./eims-user-management";
 export * from "./exams";
 export * from "./inquiries";
+export * from "./course-category";
 export * from "./schedules";
 export * from "./settings";
 export * from "./student-registration";

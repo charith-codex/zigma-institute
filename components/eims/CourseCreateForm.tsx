@@ -26,7 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn, generateSlug } from "@/lib/utils";
 import { Course } from "@/types";
-import { useTeachers } from "@/hooks/useData";
+import { useCourseCategories, useTeachers } from "@/hooks/useData";
 import ImageDropzone from "../ImageDropzone";
 import DocumentDropzone from "../DocumentDropzone";
 
@@ -38,6 +38,7 @@ const INITIAL_VALUES = {
   description: "",
   coverImage: "",
   price: "",
+  courseCategoryId: "",
 };
 
 type FormState = typeof INITIAL_VALUES;
@@ -60,6 +61,11 @@ export function CourseCreateForm({
     loading: teachersLoading,
     error: teachersError,
   } = useTeachers();
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+  } = useCourseCategories();
 
   const deriveInitialState = useMemo<FormState>(() => {
     if (!course) {
@@ -74,6 +80,7 @@ export function CourseCreateForm({
       description: course.description,
       coverImage: course.coverImage,
       price: (course.priceInCents / 100).toString(),
+      courseCategoryId: course.courseCategoryId,
     };
   }, [course]);
 
@@ -101,10 +108,39 @@ export function CourseCreateForm({
     return teachers;
   }, [course, teachers]);
 
+  const categoryOptions = useMemo(() => {
+    if (
+      course &&
+      course.courseCategoryId &&
+      !categories.some((category) => category.id === course.courseCategoryId)
+    ) {
+      return [
+        ...categories,
+        {
+          id: course.courseCategoryId,
+          name: course.courseCategory?.name ?? "Current category",
+          createdAt: course.createdAt,
+          updatedAt: course.updatedAt,
+        },
+      ];
+    }
+
+    return categories;
+  }, [categories, course]);
+
   useEffect(() => {
     setFormState(deriveInitialState);
     setIsAutoSlug(!isEditMode);
   }, [deriveInitialState, isEditMode]);
+
+  useEffect(() => {
+    if (!isEditMode && !formState.courseCategoryId && categoryOptions.length) {
+      setFormState((prev) => ({
+        ...prev,
+        courseCategoryId: categoryOptions[0]?.id ?? "",
+      }));
+    }
+  }, [categoryOptions, formState.courseCategoryId, isEditMode]);
 
   useEffect(() => {
     if (!formState.teacherId) {
@@ -149,6 +185,7 @@ export function CourseCreateForm({
       Boolean(formState.teacherName.trim()) &&
       Boolean(formState.description.trim()) &&
       Boolean(formState.coverImage) &&
+      Boolean(formState.courseCategoryId) &&
       Number.isFinite(priceValue) &&
       priceValue > 0
     );
@@ -176,6 +213,11 @@ export function CourseCreateForm({
 
     if (!formState.teacherId) {
       toast.error("Select Teacher before saving the course.");
+      return;
+    }
+
+    if (!formState.courseCategoryId) {
+      toast.error("Select a course category before saving the course.");
       return;
     }
 
@@ -240,7 +282,7 @@ export function CourseCreateForm({
     <Card className={cn("w-full", className)}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <CardContent className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="name">Course name</Label>
               <Input
@@ -293,6 +335,47 @@ export function CourseCreateForm({
                   Revert to automatic slugging
                 </button>
               )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="courseCategoryId">Course Category</Label>
+              <Select
+                value={formState.courseCategoryId}
+                onValueChange={(value) =>
+                  setFormState((prev) => ({ ...prev, courseCategoryId: value }))
+                }
+                disabled={
+                  categoriesLoading ||
+                  isSubmitting ||
+                  isUploading ||
+                  categoryOptions.length === 0
+                }
+              >
+                <SelectTrigger id="courseCategoryId" className="w-full">
+                  <SelectValue
+                    className="truncate"
+                    placeholder={
+                      categoriesLoading
+                        ? "Loading categories..."
+                        : categoryOptions.length === 0
+                          ? "No categories available"
+                          : "Select category"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoryOptions.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {categoriesError ? (
+                <p className="text-xs text-destructive">
+                  Unable to load categories.{" "}
+                  {categoryOptions.length > 0 ? "Using cached results." : ""}
+                </p>
+              ) : null}
             </div>
             <div className="space-y-2">
               <Label htmlFor="teacherId">Teacher</Label>
@@ -419,7 +502,7 @@ export function CourseCreateForm({
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"

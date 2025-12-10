@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Course, TeacherSummary, StudentRegistrationStatus, StudentRegistrationSummary } from '@/types';
+import { Course, CourseCategory, TeacherSummary, StudentRegistrationStatus, StudentRegistrationSummary } from '@/types';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -73,6 +73,8 @@ export function useCourses() {
         ? payload.map((course) => ({
             ...course,
             teacherId: course.teacherId ?? null,
+            courseCategoryId: course.courseCategoryId,
+            courseCategory: course.courseCategory ?? null,
             createdAt: new Date(course.createdAt),
             updatedAt: new Date(course.updatedAt),
           }))
@@ -98,6 +100,52 @@ export function useCourses() {
   }, [refetch]);
 
   return { courses, loading, error, refetch };
+}
+
+export function useCourseCategories() {
+  const [categories, setCategories] = useState<CourseCategory[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refetch = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/course-categories');
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error ?? 'Failed to load categories');
+      }
+
+      const payload = await response.json();
+      const normalizedCategories: CourseCategory[] = Array.isArray(payload)
+        ? payload.map((category) => ({
+            ...category,
+            createdAt: new Date(category.createdAt),
+            updatedAt: new Date(category.updatedAt),
+          }))
+        : [];
+
+      setCategories(normalizedCategories);
+      setError(null);
+    } catch (fetchError) {
+      console.error('Failed to fetch course categories', fetchError);
+      setCategories([]);
+      setError(
+        fetchError instanceof Error
+          ? fetchError.message
+          : 'Failed to load course categories'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
+
+  return { categories, loading, error, refetch };
 }
 
 export function useTeachers() {
