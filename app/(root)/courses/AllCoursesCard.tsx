@@ -15,25 +15,18 @@ const normalize = (value: string | null | undefined) => value?.trim().toLowerCas
 
 const AllCoursesCard = ({ data }: { data: Course[] }) => {
   const [nameQuery, setNameQuery] = useState<string>("");
-  const [teacherQuery, setTeacherQuery] = useState<string>("");
 
   const filteredCourses = useMemo(() => {
     const normalizedName = normalize(nameQuery);
-    const normalizedTeacher = normalize(teacherQuery);
 
     return data.filter((course) => {
-      const matchesName =
+      return (
         normalizedName.length === 0 ||
         normalize(course.name).includes(normalizedName) ||
-        normalize(course.slug).includes(normalizedName);
-
-      const matchesTeacher =
-        normalizedTeacher.length === 0 ||
-        normalize(course.teacherName).includes(normalizedTeacher);
-
-      return matchesName && matchesTeacher;
+        normalize(course.slug).includes(normalizedName)
+      );
     });
-  }, [data, nameQuery, teacherQuery]);
+  }, [data, nameQuery]);
 
   const categorizedCourses = useMemo(
     () =>
@@ -50,29 +43,16 @@ const AllCoursesCard = ({ data }: { data: Course[] }) => {
 
   return (
     <div className="my-10 space-y-8">
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="course-name">
-            Search by course name
-          </label>
-          <Input
-            id="course-name"
-            placeholder="Type a course name"
-            value={nameQuery}
-            onChange={(event) => setNameQuery(event.target.value)}
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium" htmlFor="teacher-name">
-            Search by teacher
-          </label>
-          <Input
-            id="teacher-name"
-            placeholder="Type a teacher name"
-            value={teacherQuery}
-            onChange={(event) => setTeacherQuery(event.target.value)}
-          />
-        </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium" htmlFor="course-name">
+          Search by course name
+        </label>
+        <Input
+          id="course-name"
+          placeholder="Type a course name"
+          value={nameQuery}
+          onChange={(event) => setNameQuery(event.target.value)}
+        />
       </div>
 
       {hasResults ? (
