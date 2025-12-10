@@ -32,6 +32,7 @@ import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleMan
 import { PublishedExams } from "@/components/lms/PublishedExams";
 import CourseCard from "@/components/courses/course-card";
 import { Course } from "@/types";
+import { Input } from "@/components/ui/input";
 
 type EnrolledClass = Course & {
   code: string;
@@ -47,6 +48,7 @@ const LMS = () => {
   const [selectedClass, setSelectedClass] = useState<EnrolledClass | null>(
     null
   );
+  const [nameQuery, setNameQuery] = useState("");
   const { enrollments, loading: enrollmentsLoading } = useEnrollments();
   const { assignments, loading: assignmentsLoading } = useAssignments();
   const { courses } = useCourses();
@@ -63,6 +65,21 @@ const LMS = () => {
         completedWeeks: 0,
       })),
     [courses]
+  );
+
+  const filteredClasses = useMemo<EnrolledClass[]>(
+    () => {
+      const normalizedQuery = nameQuery.trim().toLowerCase();
+
+      if (!normalizedQuery) {
+        return enrolledClasses;
+      }
+
+      return enrolledClasses.filter((classItem) =>
+        classItem.name.toLowerCase().includes(normalizedQuery)
+      );
+    },
+    [enrolledClasses, nameQuery]
   );
 
   const scheduleCourseOptions = useMemo(
@@ -196,23 +213,45 @@ const LMS = () => {
                         Track your progress across all enrolled courses
                       </p>
                     </div>
+                    <div className="space-y-2 max-w-sm w-full sm:w-auto">
+                      <Input
+                        id="course-name"
+                        placeholder="Search course by name"
+                        value={nameQuery}
+                        onChange={(event) => setNameQuery(event.target.value)}
+                      />
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                    {enrolledClasses.map((classItem) => (
-                      <CourseCard
-                        key={classItem.id}
-                        course={classItem}
-                        showPrice={false}
-                        showDescription
-                        href={`/lms/courses/${classItem.slug}`}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          setSelectedClass(classItem);
-                        }}
-                      />
-                    ))}
-                  </div>
+                  {filteredClasses.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                      {filteredClasses.map((classItem) => (
+                        <CourseCard
+                          key={classItem.id}
+                          course={classItem}
+                          showPrice={false}
+                          showDescription
+                          href={`/lms/courses/${classItem.slug}`}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            setSelectedClass(classItem);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
+                      <BookOpen className="h-10 w-10 text-primary" />
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-foreground">
+                          No courses found
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Try a different course name.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
 

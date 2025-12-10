@@ -44,7 +44,6 @@ const AllCoursesCard = ({ data }: { data: Course[] }) => {
   return (
     <div className="my-10 space-y-8">
       <div className="space-y-2 w-sm">
-
         <Input
           id="course-name"
           placeholder="Search course by name"
