@@ -43,13 +43,10 @@ const AllCoursesCard = ({ data }: { data: Course[] }) => {
 
   return (
     <div className="my-10 space-y-8">
-      <div className="space-y-2">
-        <label className="text-sm font-medium" htmlFor="course-name">
-          Search by course name
-        </label>
+      <div className="space-y-2 w-sm">
         <Input
           id="course-name"
-          placeholder="Type a course name"
+          placeholder="Search course by name"
           value={nameQuery}
           onChange={(event) => setNameQuery(event.target.value)}
         />
