@@ -23,6 +23,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Field,
   FieldError,
   FieldGroup,
@@ -45,24 +53,34 @@ export function CourseCategoryManagement() {
   const [editingCategory, setEditingCategory] = useState<CourseCategory | null>(
     null
   );
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] =
+    useState<CourseCategory | null>(null);
   const [deleteState, deleteAction, deleting] = useActionState(
     deleteCourseCategory,
     initialState
   );
 
-  useEffect(() => {
-    if (deleteState.success) {
-      void refetch();
-    }
-  }, [deleteState.success, refetch]);
+  const handleDeleteClick = (category: CourseCategory) => {
+    setCategoryToDelete(category);
+    setDeleteDialogOpen(true);
+  };
 
-  const handleDelete = (id: string) => {
+  const handleDeleteConfirm = async () => {
+    if (!categoryToDelete) return;
+
     const formData = new FormData();
-    formData.append("id", id);
+    formData.append("id", categoryToDelete.id);
 
     startTransition(() => {
       deleteAction(formData);
     });
+
+    setDeleteDialogOpen(false);
+    setCategoryToDelete(null);
+
+    // Refetch after a short delay to ensure backend is updated
+    setTimeout(() => void refetch(), 500);
   };
 
   const sortedCategories = useMemo(
@@ -108,19 +126,20 @@ export function CourseCategoryManagement() {
           <CardContent className="space-y-4">
             {loading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading categories...
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading
+                categories...
               </div>
             ) : null}
-            {error ? (
-              <p className="text-sm text-destructive">{error}</p>
-            ) : null}
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
             <div className="overflow-hidden rounded-lg border border-border/70">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead className="hidden sm:table-cell">Updated</TableHead>
+                    <TableHead className="hidden sm:table-cell">
+                      Updated
+                    </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -134,7 +153,9 @@ export function CourseCategoryManagement() {
                   ) : (
                     sortedCategories.map((category) => (
                       <TableRow key={category.id}>
-                        <TableCell className="font-medium">{category.name}</TableCell>
+                        <TableCell className="font-medium">
+                          {category.name}
+                        </TableCell>
                         <TableCell className="hidden text-sm text-muted-foreground sm:table-cell">
                           {category.updatedAt.toLocaleDateString()}
                         </TableCell>
@@ -149,7 +170,7 @@ export function CourseCategoryManagement() {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => handleDelete(category.id)}
+                            onClick={() => handleDeleteClick(category)}
                             disabled={deleting}
                           >
                             {deleting ? (
@@ -179,6 +200,39 @@ export function CourseCategoryManagement() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Category</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{categoryToDelete?.name}
+              &quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setCategoryToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+            >
+              {deleting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -193,7 +247,11 @@ type CourseCategoryFormProps = {
   onCancelEdit: () => void;
 };
 
-function CourseCategoryForm({ category, onSuccess, onCancelEdit }: CourseCategoryFormProps) {
+function CourseCategoryForm({
+  category,
+  onSuccess,
+  onCancelEdit,
+}: CourseCategoryFormProps) {
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(courseCategorySchema),
     defaultValues: { name: category?.name ?? "" },
@@ -204,16 +262,19 @@ function CourseCategoryForm({ category, onSuccess, onCancelEdit }: CourseCategor
     initialState
   );
 
+  // Reset form when editing different category
   useEffect(() => {
     form.reset({ name: category?.name ?? "" });
-  }, [category, form]);
+  }, [category?.id]);
 
+  // Handle successful submission
   useEffect(() => {
     if (state.success) {
       form.reset({ name: "" });
-      onSuccess();
+      // Small delay to ensure backend update completes
+      setTimeout(() => onSuccess(), 300);
     }
-  }, [form, onSuccess, state.success]);
+  }, [state.success, state.message]);
 
   const onSubmit = (data: CategoryFormValues) => {
     const formData = new FormData();
@@ -247,9 +308,7 @@ function CourseCategoryForm({ category, onSuccess, onCancelEdit }: CourseCategor
 
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={pending}>
-          {pending ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : null}
+          {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           {category ? "Update category" : "Add category"}
         </Button>
         {category ? (

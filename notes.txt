@@ -62,21 +62,4 @@ npm i qrcode
 
 npm install react-dropzone
 
-## document dropzone
-function setDocumentUrl(url: string): void {
-    if (!url) return;
-
-    setFormState((prev) => ({
-      ...prev,
-      description: prev.description
-        ? `${prev.description}\n\nAttached document: ${url}`
-        : `Attached document: ${url}`,
-    }));
-
-    toast.success("Document uploaded and linked in the description.");
-  }
-
-  ---
-  <DocumentDropzone
-  onUploadComplete={({ url }) => setDocumentUrl(url)}
-/>
+npx tsx ./db/seed/seed.ts

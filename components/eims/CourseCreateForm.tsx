@@ -282,7 +282,7 @@ export function CourseCreateForm({
     <Card className={cn("w-full", className)}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <CardContent className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="name">Course name</Label>
               <Input
@@ -502,7 +502,7 @@ export function CourseCreateForm({
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
