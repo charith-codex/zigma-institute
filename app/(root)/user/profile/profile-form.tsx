@@ -1,6 +1,7 @@
 "use client";
 
-import { startTransition, useActionState } from "react";
+import { startTransition, useActionState, useEffect } from "react";
+import { toast } from "sonner";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UserRound } from "lucide-react";
@@ -50,6 +51,17 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
     updateUserProfile,
     initialState
   );
+
+  useEffect(() => {
+    if (!state.message) return;
+
+    if (state.success) {
+      toast.success(state.message);
+      return;
+    }
+
+    toast.error(state.message);
+  }, [state.message, state.success]);
 
   const onSubmit = (data: ProfileFormValues) => {
     const formData = new FormData();
@@ -226,20 +238,6 @@ export function ProfileForm({ initialValues }: ProfileFormProps) {
               />
             </div>
           </FieldGroup>
-
-          {/* Display form submission status messages */}
-          <div aria-live="polite">
-            {state.message && (
-              <p
-                className={`text-sm ${
-                  state.success ? "text-green-600" : "text-destructive"
-                }`}
-                role={state.success ? "status" : "alert"}
-              >
-                {state.message}
-              </p>
-            )}
-          </div>
 
           {/* Submit button */}
           <div className="flex justify-end">
