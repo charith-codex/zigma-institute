@@ -30,7 +30,7 @@ export default function Chatbot() {
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       role: "user",
       content: input.trim(),
     };
@@ -59,7 +59,7 @@ export default function Chatbot() {
       const decoder = new TextDecoder();
       let assistantContent = "";
 
-      const assistantId = (Date.now() + 1).toString();
+      const assistantId = crypto.randomUUID();
       setMessages((prev) => [
         ...prev,
         { id: assistantId, role: "assistant", content: "" },
@@ -86,7 +86,7 @@ export default function Chatbot() {
       setMessages((prev) => [
         ...prev,
         {
-          id: (Date.now() + 1).toString(),
+          id: crypto.randomUUID(),
           role: "assistant",
           content: "Sorry, I encountered an error. Please try again.",
         },
