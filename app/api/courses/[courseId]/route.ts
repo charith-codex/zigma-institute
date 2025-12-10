@@ -59,7 +59,24 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    const { price, teacherId, teacherName: _teacherName, ...courseData } = data;
+    const {
+      price,
+      teacherId,
+      teacherName: _teacherName,
+      courseCategoryId,
+      ...courseData
+    } = data;
+
+    const category = await prisma.courseCategory.findUnique({
+      where: { id: courseCategoryId },
+    });
+
+    if (!category) {
+      return NextResponse.json(
+        { error: "Selected course category could not be found." },
+        { status: 404 }
+      );
+    }
 
     const updatedCourse = await prisma.course.update({
       where: { id: courseId },
@@ -68,6 +85,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         teacherId,
         teacherName: teacher.user.name ?? _teacherName,
         priceInCents: Math.round(price * 100),
+        courseCategoryId,
       },
     });
 

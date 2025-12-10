@@ -32,6 +32,7 @@ import { StudentRegistrationManagement } from "./StudentRegistrationManagement";
 import { ShowcaseManagement } from "./ShowcaseManagement";
 import { StudentManagement } from "./manage-users/StudentManagement";
 import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleManager";
+import { CourseCategoryManagement } from "./CourseCategoryManagement";
 
 interface DashboardContentProps {
   activeModule: string;
@@ -256,6 +257,8 @@ export function DashboardContent({
         return <TeacherManagement />;
       case "classes":
         return <CourseManagement />;
+      case "course-categories":
+        return <CourseCategoryManagement />;
       case "scheduling":
         return (
           <div className="space-y-6">

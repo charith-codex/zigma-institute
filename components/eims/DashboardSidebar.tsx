@@ -34,6 +34,7 @@ import {
   Bell,
   Globe,
   ChevronRight,
+  Tag,
 } from "lucide-react";
 import {
   Collapsible,
@@ -71,6 +72,7 @@ const menuEntries: MenuEntry[] = [
     icon: BookOpen,
     items: [
       { id: "classes", label: "Courses", icon: BookOpen },
+      { id: "course-categories", label: "Categories", icon: Tag },
       { id: "scheduling", label: "Scheduling", icon: Calendar },
       {
         id: "material-distribution",
