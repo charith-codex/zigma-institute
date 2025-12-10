@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "@/lib/utils";
@@ -44,7 +44,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    if (error instanceof PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       return NextResponse.json(
         { error: "Unable to update course category." },
         { status: 500 }
@@ -66,7 +66,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteContext) {
     return NextResponse.json(convertToPlainObject(deleted));
   } catch (error) {
     if (
-      error instanceof PrismaClientKnownRequestError &&
+      error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2003"
     ) {
       return NextResponse.json(
