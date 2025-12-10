@@ -53,6 +53,7 @@ export function CourseCategoryManagement() {
   const [editingCategory, setEditingCategory] = useState<CourseCategory | null>(
     null
   );
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] =
     useState<CourseCategory | null>(null);
@@ -60,6 +61,19 @@ export function CourseCategoryManagement() {
     deleteCourseCategory,
     initialState
   );
+
+  const handleEditClick = (category: CourseCategory) => {
+    setEditingCategory(category);
+    setEditDialogOpen(true);
+  };
+
+  const handleEditDialogChange = (open: boolean) => {
+    setEditDialogOpen(open);
+
+    if (!open) {
+      setEditingCategory(null);
+    }
+  };
 
   const handleDeleteClick = (category: CourseCategory) => {
     setCategoryToDelete(category);
@@ -104,18 +118,11 @@ export function CourseCategoryManagement() {
         <Card className="h-fit border-border/70 shadow-sm">
           <CardHeader>
             <CardTitle>
-              {editingCategory ? "Edit course category" : "Add course category"}
+              Add course category
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <CourseCategoryForm
-              category={editingCategory}
-              onSuccess={() => {
-                setEditingCategory(null);
-                void refetch();
-              }}
-              onCancelEdit={() => setEditingCategory(null)}
-            />
+            <CourseCategoryCreateForm onSuccess={() => void refetch()} />
           </CardContent>
         </Card>
 
@@ -163,7 +170,7 @@ export function CourseCategoryManagement() {
                           <Button
                             variant="secondary"
                             size="sm"
-                            onClick={() => setEditingCategory(category)}
+                            onClick={() => handleEditClick(category)}
                           >
                             <PencilLine className="mr-2 h-4 w-4" /> Edit
                           </Button>
@@ -233,6 +240,27 @@ export function CourseCategoryManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={editDialogOpen} onOpenChange={handleEditDialogChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit course category</DialogTitle>
+            <DialogDescription>
+              Update the category name used to organize courses.
+            </DialogDescription>
+          </DialogHeader>
+          {editingCategory ? (
+            <CourseCategoryEditForm
+              category={editingCategory}
+              onSuccess={() => {
+                handleEditDialogChange(false);
+                void refetch();
+              }}
+              onCancel={() => handleEditDialogChange(false)}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -241,31 +269,22 @@ type CategoryFormValues = {
   name: string;
 };
 
-type CourseCategoryFormProps = {
-  category: CourseCategory | null;
+type CourseCategoryCreateFormProps = {
   onSuccess: () => void;
-  onCancelEdit: () => void;
 };
 
-function CourseCategoryForm({
-  category,
+function CourseCategoryCreateForm({
   onSuccess,
-  onCancelEdit,
-}: CourseCategoryFormProps) {
+}: CourseCategoryCreateFormProps) {
   const form = useForm<CategoryFormValues>({
     resolver: zodResolver(courseCategorySchema),
-    defaultValues: { name: category?.name ?? "" },
+    defaultValues: { name: "" },
   });
 
   const [state, formAction, pending] = useActionState(
-    category ? updateCourseCategory : createCourseCategory,
+    createCourseCategory,
     initialState
   );
-
-  // Reset form when editing different category
-  useEffect(() => {
-    form.reset({ name: category?.name ?? "" });
-  }, [category?.id]);
 
   // Handle successful submission
   useEffect(() => {
@@ -274,15 +293,11 @@ function CourseCategoryForm({
       // Small delay to ensure backend update completes
       setTimeout(() => onSuccess(), 300);
     }
-  }, [state.success, state.message]);
+  }, [form, onSuccess, state.success]);
 
   const onSubmit = (data: CategoryFormValues) => {
     const formData = new FormData();
     formData.append("name", data.name.trim());
-
-    if (category) {
-      formData.append("id", category.id);
-    }
 
     startTransition(() => {
       formAction(formData);
@@ -309,20 +324,97 @@ function CourseCategoryForm({
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={pending}>
           {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {category ? "Update category" : "Add category"}
+          Add category
         </Button>
-        {category ? (
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => {
-              form.reset({ name: "" });
-              onCancelEdit();
-            }}
+        {state.message ? (
+          <p
+            className={`text-sm ${
+              state.success ? "text-emerald-600" : "text-destructive"
+            }`}
           >
-            Cancel
-          </Button>
+            {state.message}
+          </p>
         ) : null}
+      </div>
+    </form>
+  );
+}
+
+type CourseCategoryEditFormProps = {
+  category: CourseCategory;
+  onSuccess: () => void;
+  onCancel: () => void;
+};
+
+function CourseCategoryEditForm({
+  category,
+  onSuccess,
+  onCancel,
+}: CourseCategoryEditFormProps) {
+  const form = useForm<CategoryFormValues>({
+    resolver: zodResolver(courseCategorySchema),
+    defaultValues: { name: category.name },
+  });
+
+  const [state, formAction, pending] = useActionState(
+    updateCourseCategory,
+    initialState
+  );
+
+  useEffect(() => {
+    form.reset({ name: category.name });
+  }, [category.id, category.name, form]);
+
+  useEffect(() => {
+    if (state.success) {
+      setTimeout(() => onSuccess(), 300);
+    }
+  }, [state.success, onSuccess]);
+
+  const onSubmit = (data: CategoryFormValues) => {
+    const formData = new FormData();
+    formData.append("name", data.name.trim());
+    formData.append("id", category.id);
+
+    startTransition(() => {
+      formAction(formData);
+    });
+  };
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="edit-course-category-name">
+            Category name
+          </FieldLabel>
+          <Input
+            id="edit-course-category-name"
+            {...form.register("name")}
+            autoComplete="off"
+            aria-invalid={Boolean(form.formState.errors.name)}
+          />
+          {form.formState.errors.name ? (
+            <FieldError errors={[form.formState.errors.name]} />
+          ) : null}
+        </Field>
+      </FieldGroup>
+
+      <div className="flex items-center gap-3">
+        <Button type="submit" disabled={pending}>
+          {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          Update category
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => {
+            form.reset({ name: category.name });
+            onCancel();
+          }}
+        >
+          Cancel
+        </Button>
         {state.message ? (
           <p
             className={`text-sm ${
