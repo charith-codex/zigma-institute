@@ -120,10 +120,17 @@ export function DashboardSidebar({
   activeModule,
   onModuleChange,
 }: DashboardSidebarProps) {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
 
   const isActive = (moduleId: string) => activeModule === moduleId;
+
+  const handleModuleChange = (moduleId: string) => {
+    onModuleChange(moduleId);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   return (
     <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
@@ -150,7 +157,7 @@ export function DashboardSidebar({
                       >
                         <button
                           type="button"
-                          onClick={() => onModuleChange(entry.id)}
+                          onClick={() => handleModuleChange(entry.id)}
                           className="flex w-full items-center gap-3"
                         >
                           <entry.icon className="h-4 w-4" />
@@ -197,7 +204,7 @@ export function DashboardSidebar({
                               >
                                 <button
                                   type="button"
-                                  onClick={() => onModuleChange(item.id)}
+                                  onClick={() => handleModuleChange(item.id)}
                                   className="flex w-full items-center gap-2"
                                 >
                                   <item.icon className="h-4 w-4" />
