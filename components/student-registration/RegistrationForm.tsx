@@ -7,6 +7,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -15,6 +16,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Form,
   FormControl,
@@ -25,7 +27,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { UploadDropzone } from "@/lib/uploadthing";
+import ImageDropzone from "@/components/ImageDropzone";
 import { formatCurrency } from "@/lib/utils";
 import { registrationSchema } from "@/lib/validators";
 
@@ -53,6 +55,7 @@ export function StudentRegistrationForm({
 }: StudentRegistrationFormProps) {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [courseQuery, setCourseQuery] = useState("");
 
   const form = useForm<StudentRegistrationFormValues>({
     resolver: zodResolver(registrationSchema),
@@ -87,6 +90,14 @@ export function StudentRegistrationForm({
       selected,
     };
   }, [courses, selectedCourseIds]);
+
+  const filteredCourses = useMemo(() => {
+    const query = courseQuery.trim().toLowerCase();
+    if (!query) return courses;
+    return courses.filter((course) =>
+      course.name.toLowerCase().includes(query)
+    );
+  }, [courseQuery, courses]);
 
   const onSubmit = async (values: StudentRegistrationFormValues) => {
     if (!values.studentPhoto) {
@@ -141,7 +152,9 @@ export function StudentRegistrationForm({
     <Card className="shadow-sm">
       <CardHeader className="space-y-4">
         <div>
-          <CardTitle className="text-2xl font-bold">Student registration</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            Student registration
+          </CardTitle>
         </div>
       </CardHeader>
       <CardContent>
@@ -278,7 +291,9 @@ export function StudentRegistrationForm({
               name="studentPhoto"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Student photo (JPEG, max 4MB) *</FormLabel>
+                  <FormLabel>
+                    Student photo (JPEG, PNG, WebP, or AVIF, max 4MB) *
+                  </FormLabel>
                   <div className="space-y-3">
                     {photoPreview ? (
                       <div className="flex items-center gap-4">
@@ -299,29 +314,33 @@ export function StudentRegistrationForm({
                         </Button>
                       </div>
                     ) : (
-                      <UploadDropzone
-                        endpoint="studentRegistrationPhoto"
-                        className="ut-upload-dropzone border-dashed"
-                        appearance={{
-                          button: "bg-primary text-primary-foreground p-3",
-                        }}
-                        onClientUploadComplete={(res) => {
-                          const file = res?.[0];
-                          if (!file) {
+                      <ImageDropzone
+                        onUploadComplete={(url) => {
+                          if (!url) {
                             toast.error("Upload failed. Please try again.");
                             return;
                           }
-                          setPhotoPreview(file.url);
-                          field.onChange({ url: file.url, key: file.key });
+
+                          // Extract key from UploadThing URL pattern
+                          // Expected format: https://utfs.io/f/{key}
+                          const key = url.split("/").pop() || "";
+
+                          if (!key) {
+                            toast.error(
+                              "Invalid upload response. Please try again."
+                            );
+                            return;
+                          }
+
+                          setPhotoPreview(url);
+                          field.onChange({ url, key });
                         }}
-                        onUploadError={(error) => {
-                          console.error("Photo upload error", error);
-                          toast.error(error.message);
-                        }}
+                        disabled={isSubmitting}
                       />
                     )}
                     <p className="text-xs text-muted-foreground">
-                      Use a recent portrait photo with a plain background.
+                      Use a recent portrait photo with a plain background (JPEG,
+                      PNG, WebP, or AVIF).
                     </p>
                   </div>
                   <FormMessage />
@@ -337,46 +356,73 @@ export function StudentRegistrationForm({
                   <FormLabel className="text-base font-medium">
                     Select courses to enrol in *
                   </FormLabel>
-                  <div className="grid gap-3">
-                    {courses.map((course) => {
-                      const checked = field.value?.includes(course.id) ?? false;
-                      return (
-                        <div
-                          key={course.id}
-                          className="flex items-start justify-between rounded-lg border bg-muted/40 p-4"
-                        >
-                          <div className="space-y-1">
-                            <span className="font-semibold text-base">
-                              {course.name}
-                            </span>
-                            <p className="text-sm text-muted-foreground">
-                              {formatCurrency(
-                                course.priceInCents,
-                                course.currency
-                              )}
-                            </p>
-                          </div>
-                          <Checkbox
-                            checked={checked}
-                            onCheckedChange={(value) => {
-                              if (value) {
-                                field.onChange([
-                                  ...(field.value ?? []),
-                                  course.id,
-                                ]);
-                              } else {
-                                field.onChange(
-                                  (field.value ?? []).filter(
-                                    (id) => id !== course.id
-                                  )
-                                );
-                              }
-                            }}
-                          />
-                        </div>
-                      );
-                    })}
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      {totals.selected.length > 0 ? (
+                        totals.selected.map((course) => (
+                          <Badge key={course.id} variant="secondary">
+                            {course.name}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span>No courses selected yet</span>
+                      )}
+                    </div>
+                    <Input
+                      placeholder="Search courses by name"
+                      value={courseQuery}
+                      onChange={(event) => setCourseQuery(event.target.value)}
+                    />
                   </div>
+                    <ScrollArea className="max-h-[80vh] rounded-lg border">
+                      <div className="space-y-3 p-3">
+                        {filteredCourses.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">
+                            No courses match &ldquo;{courseQuery}&rdquo;.
+                          </p>
+                        ) : (
+                          filteredCourses.map((course) => {
+                            const checked =
+                              field.value?.includes(course.id) ?? false;
+                            return (
+                              <div
+                                key={course.id}
+                                className="flex items-start justify-between rounded-lg bg-muted/40 p-4"
+                              >
+                                <div className="space-y-1 pr-4">
+                                  <span className="font-semibold text-base">
+                                    {course.name}
+                                  </span>
+                                  <p className="text-sm text-muted-foreground">
+                                    {formatCurrency(
+                                      course.priceInCents,
+                                      course.currency
+                                    )}
+                                  </p>
+                                </div>
+                                <Checkbox
+                                  checked={checked}
+                                  onCheckedChange={(value) => {
+                                    if (value) {
+                                      field.onChange([
+                                        ...(field.value ?? []),
+                                        course.id,
+                                      ]);
+                                    } else {
+                                      field.onChange(
+                                        (field.value ?? []).filter(
+                                          (id) => id !== course.id
+                                        )
+                                      );
+                                    }
+                                  }}
+                                />
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </ScrollArea>
                   <FormMessage />
                 </FormItem>
               )}
