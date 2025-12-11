@@ -22,7 +22,7 @@ Contact Information:
 - Hours: Monday – Saturday, 8:00 AM to 6:30 PM
 
 Student Registration Process:
-1. Browse courses and shortlist programs
+1. Click Student Registration Button on top of website
 2. Submit student registration form with guardian contacts and preferences
 3. Complete Stripe payment to confirm enrollment and unlock LMS access
 

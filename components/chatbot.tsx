@@ -5,6 +5,8 @@ import { MessageCircle, X, Send, Bot, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import Markdown from "react-markdown";
+
 
 type Message = {
   id: string;
@@ -74,9 +76,7 @@ export default function Chatbot() {
           assistantContent += chunk;
           setMessages((prev) =>
             prev.map((m) =>
-              m.id === assistantId
-                ? { ...m, content: assistantContent }
-                : m
+              m.id === assistantId ? { ...m, content: assistantContent } : m
             )
           );
         }
@@ -162,7 +162,7 @@ export default function Chatbot() {
                         : "bg-muted"
                     )}
                   >
-                    {message.content}
+                    <Markdown>{message.content}</Markdown>
                   </div>
                   {message.role === "user" && (
                     <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted">
@@ -171,20 +171,21 @@ export default function Chatbot() {
                   )}
                 </div>
               ))}
-              {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
-                <div className="flex gap-2">
-                  <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                    <Bot className="size-4" />
-                  </div>
-                  <div className="rounded-2xl bg-muted px-3 py-2">
-                    <div className="flex gap-1">
-                      <span className="size-2 animate-bounce rounded-full bg-foreground/50 [animation-delay:0ms]" />
-                      <span className="size-2 animate-bounce rounded-full bg-foreground/50 [animation-delay:150ms]" />
-                      <span className="size-2 animate-bounce rounded-full bg-foreground/50 [animation-delay:300ms]" />
+              {isLoading &&
+                messages[messages.length - 1]?.role !== "assistant" && (
+                  <div className="flex gap-2">
+                    <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <Bot className="size-4" />
+                    </div>
+                    <div className="rounded-2xl bg-muted px-3 py-2">
+                      <div className="flex gap-1">
+                        <span className="size-2 animate-bounce rounded-full bg-foreground/50 [animation-delay:0ms]" />
+                        <span className="size-2 animate-bounce rounded-full bg-foreground/50 [animation-delay:150ms]" />
+                        <span className="size-2 animate-bounce rounded-full bg-foreground/50 [animation-delay:300ms]" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           </ScrollArea>
 
