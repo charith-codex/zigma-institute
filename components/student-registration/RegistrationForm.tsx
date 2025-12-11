@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { UploadDropzone } from "@/lib/uploadthing";
+import ImageDropzone from "@/components/ImageDropzone";
 import { formatCurrency } from "@/lib/utils";
 import { registrationSchema } from "@/lib/validators";
 
@@ -152,7 +152,9 @@ export function StudentRegistrationForm({
     <Card className="shadow-sm">
       <CardHeader className="space-y-4">
         <div>
-          <CardTitle className="text-2xl font-bold">Student registration</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            Student registration
+          </CardTitle>
         </div>
       </CardHeader>
       <CardContent>
@@ -289,7 +291,9 @@ export function StudentRegistrationForm({
               name="studentPhoto"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Student photo (JPEG, max 4MB) *</FormLabel>
+                  <FormLabel>
+                    Student photo (JPEG, PNG, WebP, or AVIF, max 4MB) *
+                  </FormLabel>
                   <div className="space-y-3">
                     {photoPreview ? (
                       <div className="flex items-center gap-4">
@@ -310,29 +314,33 @@ export function StudentRegistrationForm({
                         </Button>
                       </div>
                     ) : (
-                      <UploadDropzone
-                        endpoint="studentRegistrationPhoto"
-                        className="ut-upload-dropzone border-dashed"
-                        appearance={{
-                          button: "bg-primary text-primary-foreground p-3",
-                        }}
-                        onClientUploadComplete={(res) => {
-                          const file = res?.[0];
-                          if (!file) {
+                      <ImageDropzone
+                        onUploadComplete={(url) => {
+                          if (!url) {
                             toast.error("Upload failed. Please try again.");
                             return;
                           }
-                          setPhotoPreview(file.url);
-                          field.onChange({ url: file.url, key: file.key });
+
+                          // Extract key from UploadThing URL pattern
+                          // Expected format: https://utfs.io/f/{key}
+                          const key = url.split("/").pop() || "";
+
+                          if (!key) {
+                            toast.error(
+                              "Invalid upload response. Please try again."
+                            );
+                            return;
+                          }
+
+                          setPhotoPreview(url);
+                          field.onChange({ url, key });
                         }}
-                        onUploadError={(error) => {
-                          console.error("Photo upload error", error);
-                          toast.error(error.message);
-                        }}
+                        disabled={isSubmitting}
                       />
                     )}
                     <p className="text-xs text-muted-foreground">
-                      Use a recent portrait photo with a plain background.
+                      Use a recent portrait photo with a plain background (JPEG,
+                      PNG, WebP, or AVIF).
                     </p>
                   </div>
                   <FormMessage />
