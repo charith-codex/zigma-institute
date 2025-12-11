@@ -7,6 +7,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -15,6 +16,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Form,
   FormControl,
@@ -53,6 +55,7 @@ export function StudentRegistrationForm({
 }: StudentRegistrationFormProps) {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [courseQuery, setCourseQuery] = useState("");
 
   const form = useForm<StudentRegistrationFormValues>({
     resolver: zodResolver(registrationSchema),
@@ -87,6 +90,14 @@ export function StudentRegistrationForm({
       selected,
     };
   }, [courses, selectedCourseIds]);
+
+  const filteredCourses = useMemo(() => {
+    const query = courseQuery.trim().toLowerCase();
+    if (!query) return courses;
+    return courses.filter((course) =>
+      course.name.toLowerCase().includes(query)
+    );
+  }, [courseQuery, courses]);
 
   const onSubmit = async (values: StudentRegistrationFormValues) => {
     if (!values.studentPhoto) {
@@ -337,46 +348,73 @@ export function StudentRegistrationForm({
                   <FormLabel className="text-base font-medium">
                     Select courses to enrol in *
                   </FormLabel>
-                  <div className="grid gap-3">
-                    {courses.map((course) => {
-                      const checked = field.value?.includes(course.id) ?? false;
-                      return (
-                        <div
-                          key={course.id}
-                          className="flex items-start justify-between rounded-lg border bg-muted/40 p-4"
-                        >
-                          <div className="space-y-1">
-                            <span className="font-semibold text-base">
-                              {course.name}
-                            </span>
-                            <p className="text-sm text-muted-foreground">
-                              {formatCurrency(
-                                course.priceInCents,
-                                course.currency
-                              )}
-                            </p>
-                          </div>
-                          <Checkbox
-                            checked={checked}
-                            onCheckedChange={(value) => {
-                              if (value) {
-                                field.onChange([
-                                  ...(field.value ?? []),
-                                  course.id,
-                                ]);
-                              } else {
-                                field.onChange(
-                                  (field.value ?? []).filter(
-                                    (id) => id !== course.id
-                                  )
-                                );
-                              }
-                            }}
-                          />
-                        </div>
-                      );
-                    })}
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      {totals.selected.length > 0 ? (
+                        totals.selected.map((course) => (
+                          <Badge key={course.id} variant="secondary">
+                            {course.name}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span>No courses selected yet</span>
+                      )}
+                    </div>
+                    <Input
+                      placeholder="Search courses by name"
+                      value={courseQuery}
+                      onChange={(event) => setCourseQuery(event.target.value)}
+                    />
                   </div>
+                  <ScrollArea className="max-h-72 rounded-lg border">
+                    <div className="space-y-3 p-3">
+                      {filteredCourses.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          No courses match &ldquo;{courseQuery}&rdquo;.
+                        </p>
+                      ) : (
+                        filteredCourses.map((course) => {
+                          const checked =
+                            field.value?.includes(course.id) ?? false;
+                          return (
+                            <div
+                              key={course.id}
+                              className="flex items-start justify-between rounded-lg bg-muted/40 p-4"
+                            >
+                              <div className="space-y-1 pr-4">
+                                <span className="font-semibold text-base">
+                                  {course.name}
+                                </span>
+                                <p className="text-sm text-muted-foreground">
+                                  {formatCurrency(
+                                    course.priceInCents,
+                                    course.currency
+                                  )}
+                                </p>
+                              </div>
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={(value) => {
+                                  if (value) {
+                                    field.onChange([
+                                      ...(field.value ?? []),
+                                      course.id,
+                                    ]);
+                                  } else {
+                                    field.onChange(
+                                      (field.value ?? []).filter(
+                                        (id) => id !== course.id
+                                      )
+                                    );
+                                  }
+                                }}
+                              />
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </ScrollArea>
                   <FormMessage />
                 </FormItem>
               )}
