@@ -1,15 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Download, Loader2 } from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 interface SuccessPageProps {
-  searchParams: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 interface RegistrationData {
@@ -25,11 +31,14 @@ interface RegistrationData {
 export default function StudentRegistrationSuccessPage({
   searchParams,
 }: SuccessPageProps) {
-  const sessionId = Array.isArray(searchParams.session_id)
-    ? searchParams.session_id[0]
-    : searchParams.session_id;
+  const params = use(searchParams);
+  const sessionId = Array.isArray(params.session_id)
+    ? params.session_id[0]
+    : params.session_id;
 
-  const [registration, setRegistration] = useState<RegistrationData | null>(null);
+  const [registration, setRegistration] = useState<RegistrationData | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,8 +97,8 @@ export default function StudentRegistrationSuccessPage({
             Payment received successfully
           </CardTitle>
           <CardDescription className="text-base">
-            Thank you for completing your online registration. Our admissions team is
-            generating your student ID card and LMS credentials now.
+            Thank you for completing your online registration. Our admissions
+            team is generating your student ID card and LMS credentials now.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 text-sm text-muted-foreground">
@@ -126,7 +135,8 @@ export default function StudentRegistrationSuccessPage({
           {!loading && !error && !registration?.idCardUrl && sessionId && (
             <div className="rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4">
               <p className="text-yellow-800 dark:text-yellow-200 font-medium">
-                Your ID card is being generated. Please check your email or refresh this page in a few moments.
+                Your ID card is being generated. Please check your email or
+                refresh this page in a few moments.
               </p>
             </div>
           )}
@@ -135,21 +145,24 @@ export default function StudentRegistrationSuccessPage({
             <p className="text-foreground font-semibold">What happens next?</p>
             <ul className="mt-2 list-disc space-y-2 pl-5">
               <li>
-                You will receive an email confirmation with your digital ID card and LMS
-                login credentials once processing completes.
+                You will receive an email confirmation with your digital ID card
+                and LMS login credentials once processing completes.
               </li>
               <li>
-                Selected courses are activated automatically after approval—expect a welcome
-                notification within the next few minutes.
+                Selected courses are activated automatically after
+                approval—expect a welcome notification within the next few
+                minutes.
               </li>
               <li>
-                Guardians receive a copy of the credentials and the ID card link for easy access.
+                Guardians receive a copy of the credentials and the ID card link
+                for easy access.
               </li>
             </ul>
           </div>
           {sessionId ? (
             <p className="text-xs">
-              Stripe reference: <span className="font-medium text-foreground">{sessionId}</span>
+              Stripe reference:{" "}
+              <span className="font-medium text-foreground">{sessionId}</span>
             </p>
           ) : null}
           <div className="flex flex-wrap gap-3">
