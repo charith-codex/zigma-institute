@@ -37,8 +37,6 @@ type EnrolledClass = Course & {
   instructor: string;
   progress: number;
   status: string;
-  weeks: number;
-  completedWeeks: number;
 };
 
 const LMS = () => {
@@ -59,26 +57,21 @@ const LMS = () => {
         instructor: course.teacherName ?? "Instructor",
         progress: 0,
         status: "active",
-        weeks: 0,
-        completedWeeks: 0,
       })),
     [courses]
   );
 
-  const filteredClasses = useMemo<EnrolledClass[]>(
-    () => {
-      const normalizedQuery = nameQuery.trim().toLowerCase();
+  const filteredClasses = useMemo<EnrolledClass[]>(() => {
+    const normalizedQuery = nameQuery.trim().toLowerCase();
 
-      if (!normalizedQuery) {
-        return enrolledClasses;
-      }
+    if (!normalizedQuery) {
+      return enrolledClasses;
+    }
 
-      return enrolledClasses.filter((classItem) =>
-        classItem.name.toLowerCase().includes(normalizedQuery)
-      );
-    },
-    [enrolledClasses, nameQuery]
-  );
+    return enrolledClasses.filter((classItem) =>
+      classItem.name.toLowerCase().includes(normalizedQuery)
+    );
+  }, [enrolledClasses, nameQuery]);
 
   const scheduleCourseOptions = useMemo(
     () =>
