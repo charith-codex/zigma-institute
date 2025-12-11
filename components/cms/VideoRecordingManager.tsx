@@ -35,11 +35,13 @@ interface VideoRecording {
 interface VideoRecordingManagerProps {
   lessonId?: string;
   lessonTitle?: string;
+  readOnly?: boolean;
 }
 
 export function VideoRecordingManager({
   lessonId,
   lessonTitle,
+  readOnly = false,
 }: VideoRecordingManagerProps) {
   const [videos, setVideos] = useState<VideoRecording[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,7 +69,7 @@ export function VideoRecordingManager({
 
       try {
         const endpoint = `/api/video-recordings?lessonId=${encodeURIComponent(
-          lessonId,
+          lessonId
         )}`;
         const response = await fetch(endpoint, {
           cache: "no-store",
@@ -87,13 +89,13 @@ export function VideoRecordingManager({
         toast.error(
           error instanceof Error
             ? error.message
-            : "Failed to fetch video recordings",
+            : "Failed to fetch video recordings"
         );
       } finally {
         setIsLoading(false);
       }
     },
-    [lessonId],
+    [lessonId]
   );
 
   useEffect(() => {
@@ -120,7 +122,7 @@ export function VideoRecordingManager({
       }
 
       const endpoint = `/api/video-recordings?lessonId=${encodeURIComponent(
-        lessonId,
+        lessonId
       )}`;
       const response = await fetch(endpoint, {
         method: "POST",
@@ -137,7 +139,7 @@ export function VideoRecordingManager({
     } catch (error) {
       console.error(error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to add video",
+        error instanceof Error ? error.message : "Failed to add video"
       );
     }
   };
@@ -155,72 +157,77 @@ export function VideoRecordingManager({
           </CardDescription>
         </div>
 
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(open) => {
-            if (open && !lessonId) {
-              toast.error("Select a lesson before adding a video.");
-              return;
-            }
-            setIsDialogOpen(open);
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button disabled={!lessonId}>
-              <PlayCircle className="mr-2 h-4 w-4" />
-              Add Video
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Add a Video Recording</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="video-title">Title</Label>
-                <Input
-                  id="video-title"
-                  placeholder="e.g. React Hooks Tutorial"
-                  value={formState.title}
-                  onChange={(e) =>
-                    setFormState((prev) => ({ ...prev, title: e.target.value }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="video-description">Description</Label>
-                <Textarea
-                  id="video-description"
-                  placeholder="Add a short note (optional)"
-                  value={formState.description}
-                  onChange={(e) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="video-url">Video URL</Label>
-                <Input
-                  id="video-url"
-                  placeholder="https://example.com/video.mp4"
-                  value={formState.fileUrl}
-                  onChange={(e) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      fileUrl: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <Button onClick={handleSubmit} className="w-full">
-                Save Video
+        {!readOnly && (
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              if (open && !lessonId) {
+                toast.error("Select a lesson before adding a video.");
+                return;
+              }
+              setIsDialogOpen(open);
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button disabled={!lessonId}>
+                <PlayCircle className="mr-2 h-4 w-4" />
+                Add Video
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Add a Video Recording</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="video-title">Title</Label>
+                  <Input
+                    id="video-title"
+                    placeholder="e.g. React Hooks Tutorial"
+                    value={formState.title}
+                    onChange={(e) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        title: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="video-description">Description</Label>
+                  <Textarea
+                    id="video-description"
+                    placeholder="Add a short note (optional)"
+                    value={formState.description}
+                    onChange={(e) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        description: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="video-url">Video URL</Label>
+                  <Input
+                    id="video-url"
+                    placeholder="https://example.com/video.mp4"
+                    value={formState.fileUrl}
+                    onChange={(e) =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        fileUrl: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <Button onClick={handleSubmit} className="w-full">
+                  Save Video
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </CardHeader>
 
       <CardContent>
@@ -268,7 +275,9 @@ export function VideoRecordingManager({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-1">
-                        <p className="font-medium text-foreground">{video.title}</p>
+                        <p className="font-medium text-foreground">
+                          {video.title}
+                        </p>
                         {video.description && (
                           <p className="text-sm text-muted-foreground">
                             {video.description}

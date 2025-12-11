@@ -23,8 +23,6 @@ import TutorialManager from "@/components/lms/TutorialManager";
 import { CourseDetailView } from "@/components/lms/CourseDetailView";
 import { DailyQuotes } from "@/components/lms/DailyQuotes";
 import { PaymentSection } from "@/components/lms/PaymentSection";
-import StudyMaterialManager from "@/components/cms/StudyMaterialManager";
-import VideoRecordingManager from "@/components/cms/VideoRecordingManager";
 import FlashcardGenerator from "@/components/lms/FlashcardGenerator";
 import SummaryGenerator from "@/components/lms/SummaryGenerator";
 import StudyPlanGenerator from "@/components/lms/StudyPlanGenerator";

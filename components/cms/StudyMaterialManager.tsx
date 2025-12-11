@@ -41,6 +41,7 @@ interface StudyMaterial {
 interface StudyMaterialManagerProps {
   lessonId?: string;
   lessonTitle?: string;
+  readOnly?: boolean;
 }
 
 function formatFileSize(size: number | null | undefined) {
@@ -84,6 +85,7 @@ function getFileExtension(name: string) {
 export function StudyMaterialManager({
   lessonId,
   lessonTitle,
+  readOnly = false,
 }: StudyMaterialManagerProps) {
   const [materials, setMaterials] = useState<StudyMaterial[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -196,80 +198,82 @@ export function StudyMaterialManager({
             {lessonTitle ? ` in ${lessonTitle}` : ""}.
           </CardDescription>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
-          <DialogTrigger asChild>
-            <Button disabled={!lessonId}>
-              <Upload className="mr-2 h-4 w-4" />
-              Upload material
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Upload study material</DialogTitle>
-              <DialogDescription>
-                Provide a title and optional description, then drop your file to
-                start the upload.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="material-title">Title</Label>
-                <Input
-                  id="material-title"
-                  placeholder="e.g. Week 3 tutorial notes"
-                  value={formState.title}
-                  onChange={(event) =>
-                    setFormState((previous) => ({
-                      ...previous,
-                      title: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="material-description">Description</Label>
-                <Textarea
-                  id="material-description"
-                  placeholder="Add a short note about this file (optional)"
-                  value={formState.description}
-                  onChange={(event) =>
-                    setFormState((previous) => ({
-                      ...previous,
-                      description: event.target.value,
-                    }))
-                  }
-                />
-              </div>
-              {dropzoneInput ? (
-                <UploadDropzone
-                  endpoint="studyMaterialUploader"
-                  input={dropzoneInput}
-                  onUploadBegin={() => setIsUploading(true)}
-                  onClientUploadComplete={handleUploadComplete}
-                  onUploadError={handleUploadError}
-                  appearance={{
-                    container:
-                      "border-2 border-dashed border-muted-foreground/30 rounded-lg bg-muted/30",
-                    label: "text-sm text-muted-foreground",
-                    uploadIcon: "text-primary",
-                    button:
-                      "bg-primary text-primary-foreground px-3 hover:bg-primary/90",
-                  }}
-                />
-              ) : (
-                <div className="flex h-40 flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/30 text-center text-sm text-muted-foreground">
-                  Enter a title to enable the uploader.
+        {!readOnly && (
+          <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
+            <DialogTrigger asChild>
+              <Button disabled={!lessonId}>
+                <Upload className="mr-2 h-4 w-4" />
+                Upload material
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Upload study material</DialogTitle>
+                <DialogDescription>
+                  Provide a title and optional description, then drop your file
+                  to start the upload.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="material-title">Title</Label>
+                  <Input
+                    id="material-title"
+                    placeholder="e.g. Week 3 tutorial notes"
+                    value={formState.title}
+                    onChange={(event) =>
+                      setFormState((previous) => ({
+                        ...previous,
+                        title: event.target.value,
+                      }))
+                    }
+                  />
                 </div>
-              )}
-              {isUploading && (
-                <p className="text-sm text-muted-foreground">
-                  Upload in progress. This dialog will close once the upload
-                  completes.
-                </p>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
+                <div className="space-y-2">
+                  <Label htmlFor="material-description">Description</Label>
+                  <Textarea
+                    id="material-description"
+                    placeholder="Add a short note about this file (optional)"
+                    value={formState.description}
+                    onChange={(event) =>
+                      setFormState((previous) => ({
+                        ...previous,
+                        description: event.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                {dropzoneInput ? (
+                  <UploadDropzone
+                    endpoint="studyMaterialUploader"
+                    input={dropzoneInput}
+                    onUploadBegin={() => setIsUploading(true)}
+                    onClientUploadComplete={handleUploadComplete}
+                    onUploadError={handleUploadError}
+                    appearance={{
+                      container:
+                        "border-2 border-dashed border-muted-foreground/30 rounded-lg bg-muted/30",
+                      label: "text-sm text-muted-foreground",
+                      uploadIcon: "text-primary",
+                      button:
+                        "bg-primary text-primary-foreground px-3 hover:bg-primary/90",
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-40 flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/30 text-center text-sm text-muted-foreground">
+                    Enter a title to enable the uploader.
+                  </div>
+                )}
+                {isUploading && (
+                  <p className="text-sm text-muted-foreground">
+                    Upload in progress. This dialog will close once the upload
+                    completes.
+                  </p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </CardHeader>
       <CardContent>
         {!lessonId ? (

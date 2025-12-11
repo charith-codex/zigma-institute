@@ -16,7 +16,10 @@ interface CourseDetailViewProps {
   onBack: () => void;
 }
 
-export const CourseDetailView = ({ classData, onBack }: CourseDetailViewProps) => {
+export const CourseDetailView = ({
+  classData,
+  onBack,
+}: CourseDetailViewProps) => {
   const { lessons, loading: lessonsLoading } = useLessons(classData?.id);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
 
@@ -94,7 +97,9 @@ export const CourseDetailView = ({ classData, onBack }: CourseDetailViewProps) =
             <Card>
               <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div className="space-y-1">
-                  <CardTitle className="text-xl">{selectedLesson.title}</CardTitle>
+                  <CardTitle className="text-xl">
+                    {selectedLesson.title}
+                  </CardTitle>
                   {selectedLesson.description && (
                     <p className="text-sm text-muted-foreground">
                       {selectedLesson.description}
@@ -103,7 +108,8 @@ export const CourseDetailView = ({ classData, onBack }: CourseDetailViewProps) =
                   <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <CalendarClock className="h-3.5 w-3.5" />
-                      Created {new Date(selectedLesson.createdAt).toLocaleDateString()}
+                      Created{" "}
+                      {new Date(selectedLesson.createdAt).toLocaleDateString()}
                     </span>
                     <Badge variant="outline">Lesson</Badge>
                   </div>
@@ -115,16 +121,16 @@ export const CourseDetailView = ({ classData, onBack }: CourseDetailViewProps) =
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
-                  Manage and view recordings for this lesson. Videos stay tied to
-                  {" "}
+                  Manage and view recordings for this lesson. Videos stay tied
+                  to{" "}
                   <span className="font-medium text-foreground">
                     {selectedLesson.title}
                   </span>
                   .
                 </div>
                 <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
-                  Upload study materials like notes, tutorials, and references for
-                  this lesson.
+                  Upload study materials like notes, tutorials, and references
+                  for this lesson.
                 </div>
               </CardContent>
             </Card>
@@ -132,11 +138,13 @@ export const CourseDetailView = ({ classData, onBack }: CourseDetailViewProps) =
             <VideoRecordingManager
               lessonId={selectedLesson.id}
               lessonTitle={selectedLesson.title}
+              readOnly
             />
 
             <StudyMaterialManager
               lessonId={selectedLesson.id}
               lessonTitle={selectedLesson.title}
+              readOnly
             />
           </div>
         )}
