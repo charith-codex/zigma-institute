@@ -7,13 +7,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -28,7 +22,6 @@ import { cn, generateSlug } from "@/lib/utils";
 import { Course } from "@/types";
 import { useCourseCategories, useTeachers } from "@/hooks/useData";
 import ImageDropzone from "../ImageDropzone";
-import DocumentDropzone from "../DocumentDropzone";
 
 const INITIAL_VALUES = {
   name: "",

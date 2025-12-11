@@ -1,7 +1,10 @@
 "use client";
 
+import Image from "next/image";
+import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -10,10 +13,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { ProfileImageUploader } from "../ProfileImageUploader";
+import ImageDropzone from "@/components/ImageDropzone";
 import { formatDateForInput, type FieldErrorState } from "./form-utils";
 
-export type UserFieldType = "text" | "email" | "password" | "date" | "select" | "image";
+export type UserFieldType =
+  | "text"
+  | "email"
+  | "password"
+  | "date"
+  | "select"
+  | "image";
 
 export interface UserFieldOption<Value> {
   label: string;
@@ -32,13 +41,18 @@ interface BaseFormProps<FormValues extends Record<string, unknown>> {
   values: FormValues;
   errors: FieldErrorState<FormValues>;
   fields: UserFieldConfig<FormValues>[];
-  onChange: <Key extends keyof FormValues>(key: Key, value: FormValues[Key]) => void;
+  onChange: <Key extends keyof FormValues>(
+    key: Key,
+    value: FormValues[Key]
+  ) => void;
   onClearError: (key: keyof FormValues) => void;
 }
 
-type UserAddFormProps<FormValues extends Record<string, unknown>> = BaseFormProps<FormValues>;
+type UserAddFormProps<FormValues extends Record<string, unknown>> =
+  BaseFormProps<FormValues>;
 
-interface UserEditFormProps<FormValues extends Record<string, unknown>> extends BaseFormProps<FormValues> {
+interface UserEditFormProps<FormValues extends Record<string, unknown>>
+  extends BaseFormProps<FormValues> {
   passwordValue?: string;
   passwordLabel?: string;
   passwordDescription?: string;
@@ -130,7 +144,9 @@ function FormFields<FormValues extends Record<string, unknown>>({
             })}
             {renderError(errors[field.key])}
             {field.description ? (
-              <p className="text-xs text-muted-foreground">{field.description}</p>
+              <p className="text-xs text-muted-foreground">
+                {field.description}
+              </p>
             ) : null}
           </div>
         ))}
@@ -146,7 +162,9 @@ function FormFields<FormValues extends Record<string, unknown>>({
             onChange={(event) => onPasswordChange(event.target.value)}
           />
           {passwordDescription ? (
-            <p className="text-xs text-muted-foreground">{passwordDescription}</p>
+            <p className="text-xs text-muted-foreground">
+              {passwordDescription}
+            </p>
           ) : null}
           {renderError(passwordError)}
         </div>
@@ -155,14 +173,48 @@ function FormFields<FormValues extends Record<string, unknown>>({
       {imageField ? (
         <div className="space-y-2 pt-2">
           <Label>{imageField.label}</Label>
-          <ProfileImageUploader
-            value={(values[imageField.key] as string | null | undefined) ?? ""}
-            onChange={(url) => {
-              onChange(imageField.key, (url ?? "") as FormValues[keyof FormValues]);
-              onClearError(imageField.key);
-            }}
-          />
+          {values[imageField.key] &&
+          typeof values[imageField.key] === "string" ? (
+            // Show only the image preview when uploaded
+            <div className="relative inline-block">
+              <div className="relative h-32 w-32 overflow-hidden rounded-lg border bg-muted">
+                <Image
+                  src={values[imageField.key] as string}
+                  alt="Profile preview"
+                  fill
+                  sizes="128px"
+                  className="object-cover"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute -right-2 -top-2 h-6 w-6 rounded-full"
+                onClick={() => {
+                  onChange(imageField.key, "" as FormValues[keyof FormValues]);
+                  onClearError(imageField.key);
+                }}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            // Show dropzone only when no image exists
+            <ImageDropzone
+              onUploadComplete={(url) => {
+                onChange(imageField.key, url as FormValues[keyof FormValues]);
+                onClearError(imageField.key);
+              }}
+              className="h-40"
+            />
+          )}
           {renderError(errors[imageField.key])}
+          {imageField.description ? (
+            <p className="text-xs text-muted-foreground">
+              {imageField.description}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </>
@@ -190,7 +242,9 @@ function renderField<FormValues extends Record<string, unknown>>({
 
       return (
         <Select
-          value={value !== undefined && value !== null ? String(value) : undefined}
+          value={
+            value !== undefined && value !== null ? String(value) : undefined
+          }
           onValueChange={(selected) => {
             onChange(field.key, selected as FormValues[keyof FormValues]);
             onClearError(field.key);
@@ -201,7 +255,10 @@ function renderField<FormValues extends Record<string, unknown>>({
           </SelectTrigger>
           <SelectContent>
             {options.map((option) => (
-              <SelectItem key={String(option.value)} value={String(option.value)}>
+              <SelectItem
+                key={String(option.value)}
+                value={String(option.value)}
+              >
                 {option.label}
               </SelectItem>
             ))}
@@ -216,7 +273,10 @@ function renderField<FormValues extends Record<string, unknown>>({
           type="date"
           value={typeof value === "string" ? formatDateForInput(value) : ""}
           onChange={(event) => {
-            onChange(field.key, event.target.value as FormValues[keyof FormValues]);
+            onChange(
+              field.key,
+              event.target.value as FormValues[keyof FormValues]
+            );
             onClearError(field.key);
           }}
         />
@@ -228,7 +288,10 @@ function renderField<FormValues extends Record<string, unknown>>({
           type="password"
           value={typeof value === "string" ? value : ""}
           onChange={(event) => {
-            onChange(field.key, event.target.value as FormValues[keyof FormValues]);
+            onChange(
+              field.key,
+              event.target.value as FormValues[keyof FormValues]
+            );
             onClearError(field.key);
           }}
         />
@@ -240,7 +303,10 @@ function renderField<FormValues extends Record<string, unknown>>({
           type={field.type === "email" ? "email" : "text"}
           value={typeof value === "string" ? value : ""}
           onChange={(event) => {
-            onChange(field.key, event.target.value as FormValues[keyof FormValues]);
+            onChange(
+              field.key,
+              event.target.value as FormValues[keyof FormValues]
+            );
             onClearError(field.key);
           }}
         />
