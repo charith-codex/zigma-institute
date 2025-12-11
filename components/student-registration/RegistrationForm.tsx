@@ -374,55 +374,55 @@ export function StudentRegistrationForm({
                       onChange={(event) => setCourseQuery(event.target.value)}
                     />
                   </div>
-                  <ScrollArea className="max-h-72 rounded-lg border">
-                    <div className="space-y-3 p-3">
-                      {filteredCourses.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                          No courses match &ldquo;{courseQuery}&rdquo;.
-                        </p>
-                      ) : (
-                        filteredCourses.map((course) => {
-                          const checked =
-                            field.value?.includes(course.id) ?? false;
-                          return (
-                            <div
-                              key={course.id}
-                              className="flex items-start justify-between rounded-lg bg-muted/40 p-4"
-                            >
-                              <div className="space-y-1 pr-4">
-                                <span className="font-semibold text-base">
-                                  {course.name}
-                                </span>
-                                <p className="text-sm text-muted-foreground">
-                                  {formatCurrency(
-                                    course.priceInCents,
-                                    course.currency
-                                  )}
-                                </p>
+                    <ScrollArea className="max-h-[80vh] rounded-lg border">
+                      <div className="space-y-3 p-3">
+                        {filteredCourses.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">
+                            No courses match &ldquo;{courseQuery}&rdquo;.
+                          </p>
+                        ) : (
+                          filteredCourses.map((course) => {
+                            const checked =
+                              field.value?.includes(course.id) ?? false;
+                            return (
+                              <div
+                                key={course.id}
+                                className="flex items-start justify-between rounded-lg bg-muted/40 p-4"
+                              >
+                                <div className="space-y-1 pr-4">
+                                  <span className="font-semibold text-base">
+                                    {course.name}
+                                  </span>
+                                  <p className="text-sm text-muted-foreground">
+                                    {formatCurrency(
+                                      course.priceInCents,
+                                      course.currency
+                                    )}
+                                  </p>
+                                </div>
+                                <Checkbox
+                                  checked={checked}
+                                  onCheckedChange={(value) => {
+                                    if (value) {
+                                      field.onChange([
+                                        ...(field.value ?? []),
+                                        course.id,
+                                      ]);
+                                    } else {
+                                      field.onChange(
+                                        (field.value ?? []).filter(
+                                          (id) => id !== course.id
+                                        )
+                                      );
+                                    }
+                                  }}
+                                />
                               </div>
-                              <Checkbox
-                                checked={checked}
-                                onCheckedChange={(value) => {
-                                  if (value) {
-                                    field.onChange([
-                                      ...(field.value ?? []),
-                                      course.id,
-                                    ]);
-                                  } else {
-                                    field.onChange(
-                                      (field.value ?? []).filter(
-                                        (id) => id !== course.id
-                                      )
-                                    );
-                                  }
-                                }}
-                              />
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </ScrollArea>
+                            );
+                          })
+                        )}
+                      </div>
+                    </ScrollArea>
                   <FormMessage />
                 </FormItem>
               )}
