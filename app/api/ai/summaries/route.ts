@@ -6,10 +6,7 @@ export async function POST(req: Request) {
     const { content, type = "brief" } = await req.json();
 
     if (!content) {
-      return Response.json(
-        { error: "Content is required" },
-        { status: 400 }
-      );
+      return Response.json({ error: "Content is required" }, { status: 400 });
     }
 
     let prompt = "";
@@ -22,7 +19,7 @@ export async function POST(req: Request) {
     }
 
     const { text } = await generateText({
-      model: google("gemini-2.0-flash"),
+      model: google("gemini-2.5-flash"),
       prompt,
     });
 

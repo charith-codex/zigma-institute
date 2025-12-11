@@ -20,7 +20,7 @@ IMPORTANT: Return ONLY a valid JSON array, nothing else. No explanations, no mar
 Return format: [{"question": "...", "answer": "..."}, ...]`;
 
     const { text } = await generateText({
-      model: google("gemini-2.0-flash"),
+      model: google("gemini-2.5-flash"),
       prompt,
     });
 

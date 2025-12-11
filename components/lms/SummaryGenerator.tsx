@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { FileText, RefreshCw, Sparkles } from "lucide-react";
 
-export default function SummaryGenerator() {
+export const SummaryGenerator = () => {
   const [content, setContent] = useState("");
   const [type, setType] = useState("brief");
   const [summary, setSummary] = useState("");
@@ -54,7 +54,7 @@ export default function SummaryGenerator() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <FileText className="w-5 h-5 text-secondary" />
+          <FileText className="w-5 h-5 text-primary" />
           AI Summary Generator
         </CardTitle>
       </CardHeader>
@@ -107,7 +107,7 @@ export default function SummaryGenerator() {
 
         {summary && (
           <div className="mt-6 p-6 bg-secondary/5 border border-secondary/20 rounded-lg">
-            <h4 className="text-sm font-medium mb-3 flex items-center gap-2 text-secondary">
+            <h4 className="text-sm font-medium mb-3 flex items-center gap-2 text-primary">
               <FileText className="w-4 h-4" />
               Generated Summary
             </h4>
@@ -119,4 +119,6 @@ export default function SummaryGenerator() {
       </CardContent>
     </Card>
   );
-}
+};
+
+export default SummaryGenerator;

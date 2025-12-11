@@ -23,7 +23,7 @@ Format as a clear, organized plan with:
 Keep it concise and well-formatted with clear sections. give response as table`;
 
     const { text } = await generateText({
-      model: google("gemini-2.0-flash"),
+      model: google("gemini-2.5-flash"),
       prompt,
     });
 

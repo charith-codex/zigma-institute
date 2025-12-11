@@ -14,7 +14,7 @@ import {
 import { Target, RefreshCw, Sparkles } from "lucide-react";
 import { MarkdownView } from "../MarkdownView";
 
-export default function StudyPlanGenerator() {
+export const StudyPlanGenerator = () => {
   const [topic, setTopic] = useState("");
   const [duration, setDuration] = useState("2 weeks");
   const [difficulty, setDifficulty] = useState("intermediate");
@@ -56,7 +56,7 @@ export default function StudyPlanGenerator() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Target className="w-5 h-5 text-accent" />
+          <Target className="w-5 h-5 text-primary" />
           AI Study Plan Generator
         </CardTitle>
       </CardHeader>
@@ -136,4 +136,6 @@ export default function StudyPlanGenerator() {
       </CardContent>
     </Card>
   );
-}
+};
+
+export default StudyPlanGenerator;

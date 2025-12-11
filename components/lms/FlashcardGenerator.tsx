@@ -12,7 +12,7 @@ type Flashcard = {
   answer: string;
 };
 
-export default function FlashcardGenerator() {
+export const FlashcardGenerator = () => {
   const [content, setContent] = useState("");
   const [count, setCount] = useState(5);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
@@ -146,9 +146,7 @@ export default function FlashcardGenerator() {
                     <p className="text-xs text-muted-foreground uppercase">
                       Answer
                     </p>
-                    <p className="text-lg">
-                      {flashcards[currentIndex].answer}
-                    </p>
+                    <p className="text-lg">{flashcards[currentIndex].answer}</p>
                   </div>
                 </div>
               )}
@@ -183,4 +181,6 @@ export default function FlashcardGenerator() {
       </CardContent>
     </Card>
   );
-}
+};
+
+export default FlashcardGenerator;
