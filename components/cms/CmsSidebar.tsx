@@ -17,7 +17,14 @@ const CmsSidebar = ({
   setActiveModule,
 }: // eslint-disable-next-line @typescript-eslint/no-explicit-any
 any) => {
-  const { state, isMobile } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
+
+  const handleModuleChange = (moduleId: string) => {
+    setActiveModule(moduleId);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   return (
     <Sidebar
@@ -42,7 +49,7 @@ any) => {
               {sidebarItems.map((item: any) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
-                    onClick={() => setActiveModule(item.id)}
+                    onClick={() => handleModuleChange(item.id)}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                       activeModule === item.id

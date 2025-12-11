@@ -35,10 +35,17 @@ const menuItems = [
 ];
 
 export function LmsSidebar({ activeModule, onModuleChange }: LmsSidebarProps) {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
 
   const isActive = (moduleId: string) => activeModule === moduleId;
+
+  const handleModuleChange = (moduleId: string) => {
+    onModuleChange(moduleId);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   return (
     <Sidebar
@@ -61,7 +68,7 @@ export function LmsSidebar({ activeModule, onModuleChange }: LmsSidebarProps) {
                     }
                   >
                     <button
-                      onClick={() => onModuleChange(item.id)}
+                      onClick={() => handleModuleChange(item.id)}
                       className="w-full flex items-center gap-3 p-2 rounded-md"
                     >
                       <item.icon className="h-4 w-4" />
