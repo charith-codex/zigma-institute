@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { FlowerLoader } from "@/components/ui/flower-loader";
 import {
   ArrowLeft,
   FileText,
@@ -129,7 +130,11 @@ export function CourseContentManager({
     [selectedLessonId, sortedLessons]
   );
 
-  const handleEditLesson = (lesson: { id: string; title: string; description: string | null }) => {
+  const handleEditLesson = (lesson: {
+    id: string;
+    title: string;
+    description: string | null;
+  }) => {
     setLessonToEdit(lesson);
     setEditLessonDialogOpen(true);
   };
@@ -148,12 +153,12 @@ export function CourseContentManager({
       toast.success("Lesson deleted successfully!");
       setDeleteLessonDialogOpen(false);
       setLessonToDelete(null);
-      
+
       // Clear selected lesson if it was deleted
       if (selectedLessonId === lessonToDelete.id) {
         setSelectedLessonId(null);
       }
-      
+
       await refetch();
     } catch (error) {
       console.error("Failed to delete lesson:", error);
@@ -429,7 +434,7 @@ export function CourseContentManager({
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <FlowerLoader size="md" className="text-[#A41FC5] mx-auto mb-4" />
           <h3 className="text-lg font-semibold">Loading Course...</h3>
           <p className="text-muted-foreground">
             Please wait while we load the class content
@@ -520,7 +525,10 @@ export function CourseContentManager({
       </div>
 
       {/* Edit Lesson Dialog */}
-      <Dialog open={editLessonDialogOpen} onOpenChange={setEditLessonDialogOpen}>
+      <Dialog
+        open={editLessonDialogOpen}
+        onOpenChange={setEditLessonDialogOpen}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Lesson</DialogTitle>
@@ -552,9 +560,9 @@ export function CourseContentManager({
           <DialogHeader>
             <DialogTitle>Delete Lesson</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{lessonToDelete?.title}&quot;?
-              This will also delete all associated study materials, videos, and
-              questions. This action cannot be undone.
+              Are you sure you want to delete &quot;{lessonToDelete?.title}
+              &quot;? This will also delete all associated study materials,
+              videos, and questions. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

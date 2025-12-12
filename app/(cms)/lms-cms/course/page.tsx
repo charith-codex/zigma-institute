@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useClasses } from "@/hooks/useData";
+import { FlowerLoader } from "@/components/ui/flower-loader";
 import {
   Settings,
   Home,
@@ -131,7 +132,10 @@ const LMSCMS = () => {
                 {combinedLoading ? (
                   <div className="flex h-full items-center justify-center p-8">
                     <div className="text-center">
-                      <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+                      <FlowerLoader
+                        size="md"
+                        className="text-[#A41FC5] mx-auto"
+                      />
                       <p className="mt-2 text-sm text-muted-foreground">
                         Loading...
                       </p>

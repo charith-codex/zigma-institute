@@ -7,6 +7,7 @@ import { BookOpen, FileText, Users } from "lucide-react";
 import { TeacherCourseList } from "@/components/cms/TeacherCourseList";
 import { TeacherNotificationComposer } from "@/components/cms/TeacherNotificationComposer";
 import { useTeacherDashboardData } from "@/hooks/useTeacherDashboardData";
+import { FlowerLoader } from "@/components/ui/flower-loader";
 
 const metricIcons = {
   courses: BookOpen,
@@ -27,10 +28,7 @@ export default function LmsCmsOverviewPage() {
     return (
       <div className="flex h-full items-center justify-center px-4 py-16">
         <div className="text-center">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-b-2 border-primary"></div>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Loading your dashboard…
-          </p>
+          <FlowerLoader size="lg" className="text-[#A41FC5] mx-auto" />
         </div>
       </div>
     );

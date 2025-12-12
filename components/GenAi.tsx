@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { FlowerLoader } from "@/components/ui/flower-loader";
 
 const GenAi = () => {
   const [prompt, setPrompt] = useState(""); // user input
@@ -44,7 +45,9 @@ const GenAi = () => {
     <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
       {error && <div className="text-red-500 mb-4">{error}</div>}
       {isLoading ? (
-        <div>Loading...</div>
+        <div className="flex justify-center">
+          <FlowerLoader size="md" className="text-[#A41FC5]" />
+        </div>
       ) : completion ? (
         <div className="whitespace-pre-wrap">{completion}</div>
       ) : null}

@@ -1,18 +1,9 @@
-import Image from "next/image";
-import loader from "@/assets/loader.gif";
+import { FlowerLoader } from "@/components/ui/flower-loader";
 
 export default function LoadingPage() {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-        width: "100vw",
-      }}
-    >
-      <Image src={loader} height={150} width={150} alt="loading" />
+    <div className="flex justify-center items-center h-screen w-screen">
+      <FlowerLoader size="lg" className="text-[#A41FC5]" />
     </div>
   );
 }
