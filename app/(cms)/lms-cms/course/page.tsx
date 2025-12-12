@@ -136,9 +136,7 @@ const LMSCMS = () => {
                         size="md"
                         className="text-[#A41FC5] mx-auto"
                       />
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        Loading...
-                      </p>
+                      
                     </div>
                   </div>
                 ) : !isAuthenticated ? (

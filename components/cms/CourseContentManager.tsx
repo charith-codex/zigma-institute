@@ -226,9 +226,8 @@ export function CourseContentManager({
 
             {lessonsLoading ? (
               <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-border">
-                <div className="flex items-center gap-3 text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Loading lessons...</span>
+                <div className="flex justify-center">
+                  <FlowerLoader size="md" className="text-[#A41FC5]" />
                 </div>
               </div>
             ) : lessons.length === 0 ? (
@@ -409,7 +408,6 @@ export function CourseContentManager({
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <div className="text-center">
           <FlowerLoader size="md" className="text-[#A41FC5] mx-auto mb-4" />
-          <h3 className="text-lg font-semibold">Loading Course...</h3>
           <p className="text-muted-foreground">
             Please wait while we load the class content
           </p>

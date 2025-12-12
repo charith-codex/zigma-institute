@@ -36,7 +36,7 @@ export function TeacherNotificationComposer() {
   };
 
   return (
-    <Card className="h-full border-dashed">
+    <Card className="border-dashed">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Send className="h-5 w-5 text-primary" />

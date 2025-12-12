@@ -39,11 +39,11 @@ export function NotificationDropdown({
         <Button
           size="sm"
           variant="outline"
-          className="relative h-10 w-10 rounded-xl border-warning/20 hover:bg-warning/5 hover:border-warning/40 transition-all duration-300"
+          className="relative h-10 w-10 rounded-xl border-amber/80 hover:bg-amber/10 hover:border-amber/80 transition-all duration-300"
         >
-          <Bell className="w-4 h-4 text-warning" />
+          <Bell className="w-4 h-4 text-amber-500" />
           {unreadCount > 0 && (
-            <Badge className="absolute -top-2 -right-2 w-5 h-5 rounded-full text-xs bg-gradient-accent text-white shadow-soft border-0 p-0 flex items-center justify-center">
+            <Badge className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-400 text-xs shadow-soft border-0 p-0 flex items-center justify-center">
               {unreadCount}
             </Badge>
           )}
@@ -84,7 +84,7 @@ export function NotificationDropdown({
                         className="p-4 hover:bg-muted/30 transition-colors"
                       >
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 mt-1">
+                          <div className="shrink-0 mt-1">
                             <Bell className="w-4 h-4 text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">

@@ -8,6 +8,8 @@ import { TeacherCourseList } from "@/components/cms/TeacherCourseList";
 import { TeacherNotificationComposer } from "@/components/cms/TeacherNotificationComposer";
 import { useTeacherDashboardData } from "@/hooks/useTeacherDashboardData";
 import { FlowerLoader } from "@/components/ui/flower-loader";
+import { CompactScheduleCalendar } from "@/components/cms/CompactScheduleCalendar";
+import { useSchedules } from "@/hooks/useSchedules";
 
 const metricIcons = {
   courses: BookOpen,
@@ -24,6 +26,9 @@ export default function LmsCmsOverviewPage() {
     () => Math.max(accessibleClasses.length * 6, 0),
     [accessibleClasses.length]
   );
+
+  const { schedules } = useSchedules();
+
   if (combinedLoading) {
     return (
       <div className="flex h-full items-center justify-center px-4 py-16">
@@ -91,7 +96,10 @@ export default function LmsCmsOverviewPage() {
             />
           </div>
         </div>
-        <TeacherNotificationComposer />
+        <div className="flex flex-col gap-4">
+          <TeacherNotificationComposer />
+          <CompactScheduleCalendar events={schedules} />
+        </div>
       </section>
     </div>
   );
@@ -111,17 +119,17 @@ function DashboardMetricCard({
   icon: Icon,
 }: DashboardMetricCardProps) {
   return (
-    <Card className="h-full rounded-2xl border-border/60 bg-card/60 shadow-sm transition-all duration-300 hover:border-primary/40 hover:shadow-md">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+    <Card className="h-full rounded-2xl text-center border-border/60 bg-card/60 shadow-sm transition-all duration-300 hover:border-primary/40 hover:shadow-md">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base font-semibold text-muted-foreground">
           {title}
         </CardTitle>
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/10">
           <Icon className="h-5 w-5 text-primary" />
         </div>
       </CardHeader>
-      <CardContent className="space-y-1">
-        <p className="text-3xl font-semibold tracking-tight">{value}</p>
+      <CardContent className="space-y-2">
+        <p className="text-2xl font-semibold tracking-tight">{value}</p>
         <p className="text-sm text-muted-foreground">{description}</p>
       </CardContent>
     </Card>

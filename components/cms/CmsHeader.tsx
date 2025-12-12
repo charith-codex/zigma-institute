@@ -1,11 +1,3 @@
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { LogOutIcon, User } from "lucide-react";
-import { Button } from "../ui/button";
-import { signOutUser } from "@/lib/actions/user";
 import Link from "next/link";
 import Image from "next/image";
 import { APP_NAME } from "@/lib/constants";

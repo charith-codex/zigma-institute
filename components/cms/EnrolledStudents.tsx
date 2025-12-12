@@ -77,9 +77,6 @@ export function EnrolledStudents({
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <FlowerLoader size="md" className="text-primary" />
-        <p className="text-sm text-muted-foreground">
-          Loading enrolled students...
-        </p>
       </div>
     );
   }
