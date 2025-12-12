@@ -123,7 +123,7 @@ export function LessonForm({
                   placeholder="Describe the goals, activities, or resources for this lesson"
                   rows={4}
                   {...field}
-                  value={field.value || ""}
+                  value={field.value ?? ""}
                   disabled={isSubmitting}
                 />
               </FormControl>

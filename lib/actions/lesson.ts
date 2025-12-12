@@ -22,7 +22,7 @@ export async function getLessons(courseId: string) {
       filters.push({ course: { teacherId: session.user.id } });
     }
 
-    const where = filters.length > 0 ? { AND: filters } : undefined;
+    const where = filters.length > 1 ? { AND: filters } : filters[0];
 
     const lessons = await prisma.lesson.findMany({
       where,
