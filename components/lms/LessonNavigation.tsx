@@ -66,12 +66,6 @@ export function LessonNavigation({
                 >
                   Lesson {index + 1}
                 </span>
-                <Badge
-                  variant={selectedLessonId === lesson.id ? "secondary" : "outline"}
-                  className="text-xs"
-                >
-                  {new Date(lesson.createdAt).toLocaleDateString()}
-                </Badge>
               </div>
               <span
                 className={`w-full truncate text-left text-xs ${

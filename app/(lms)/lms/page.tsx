@@ -184,7 +184,7 @@ const LMS = () => {
                     <div>
                       <h1 className="text-2xl font-bold">My Courses</h1>
                       <p className="text-muted-foreground">
-                        Track your progress across all enrolled courses
+                        Click on a course to start learning.
                       </p>
                     </div>
                     <div className="space-y-2 max-w-sm w-full sm:w-auto">

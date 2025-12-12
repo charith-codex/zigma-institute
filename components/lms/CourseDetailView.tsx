@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookOpen, CalendarClock, Play, Video } from "lucide-react";
 import { LessonNavigation } from "./LessonNavigation";
@@ -57,15 +55,9 @@ export const CourseDetailView = ({
           <div className="space-y-2">
             <h2 className="text-lg font-semibold">{classData.name}</h2>
             <p className="text-sm text-muted-foreground">
-              {classData.code} • {classData.instructor}
+              {classData.instructor}
             </p>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Progress</span>
-                <span>{classData.progress}%</span>
-              </div>
-              <Progress value={classData.progress} className="h-2" />
-            </div>
+
           </div>
         </div>
 
@@ -111,7 +103,6 @@ export const CourseDetailView = ({
                       Created{" "}
                       {new Date(selectedLesson.createdAt).toLocaleDateString()}
                     </span>
-                    <Badge variant="outline">Lesson</Badge>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -119,20 +110,7 @@ export const CourseDetailView = ({
                   <span>Uploads are scoped to this lesson</span>
                 </div>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
-                  Manage and view recordings for this lesson. Videos stay tied
-                  to{" "}
-                  <span className="font-medium text-foreground">
-                    {selectedLesson.title}
-                  </span>
-                  .
-                </div>
-                <div className="rounded-lg border bg-muted/40 p-4 text-sm text-muted-foreground">
-                  Upload study materials like notes, tutorials, and references
-                  for this lesson.
-                </div>
-              </CardContent>
+              
             </Card>
 
             <VideoRecordingManager
