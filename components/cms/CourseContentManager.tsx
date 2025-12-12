@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
   FileText,
-  Video,
   Brain,
   Plus,
   BookOpen,
@@ -584,3 +583,4 @@ export function CourseContentManager({
       </Dialog>
     </>
   );
+}
