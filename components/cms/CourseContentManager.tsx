@@ -1,5 +1,6 @@
+"use client";
+
 import { useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,8 @@ import {
   ClipboardList,
   Target,
   HeartPulse,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { QuestionCreation } from "./QuestionCreation";
@@ -29,15 +32,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import type { ClassSummary } from "@/hooks/useData";
 import { useLessons } from "@/hooks/useData";
 import { StudyMaterialManager } from "./StudyMaterialManager";
 import { VideoRecordingManager } from "./VideoRecordingManager";
 import { PhysicalExamUploader } from "./PhysicalExamUploader";
+import { LessonForm } from "./LessonForm";
+import { deleteLesson } from "@/lib/actions/lesson";
 
 interface CourseContentManagerProps {
   courseId: string;
@@ -65,12 +69,19 @@ export function CourseContentManager({
   const router = useRouter();
   const [activeSection, setActiveSection] = useState("lessons");
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
-  const [lessonForm, setLessonForm] = useState({
-    title: "",
-    description: "",
-  });
-  const [creatingLesson, setCreatingLesson] = useState(false);
+  const [editLessonDialogOpen, setEditLessonDialogOpen] = useState(false);
+  const [deleteLessonDialogOpen, setDeleteLessonDialogOpen] = useState(false);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
+  const [lessonToEdit, setLessonToEdit] = useState<{
+    id: string;
+    title: string;
+    description: string | null;
+  } | null>(null);
+  const [lessonToDelete, setLessonToDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [deletingLesson, setDeletingLesson] = useState(false);
 
   console.log("CourseContentManager - courseId:", courseId);
   console.log("CourseContentManager - classes:", classes);
@@ -85,7 +96,7 @@ export function CourseContentManager({
     lessons,
     loading: lessonsLoading,
     error: lessonsError,
-    createLesson,
+    refetch,
   } = useLessons(classItem?.id);
 
   const sortedLessons = useMemo(
@@ -119,35 +130,47 @@ export function CourseContentManager({
     [selectedLessonId, sortedLessons]
   );
 
-  const resetLessonForm = () => {
-    setLessonForm({ title: "", description: "" });
+  const handleEditLesson = (lesson: { id: string; title: string; description: string | null }) => {
+    setLessonToEdit(lesson);
+    setEditLessonDialogOpen(true);
   };
 
-  const handleCreateLesson = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleDeleteLesson = (lesson: { id: string; title: string }) => {
+    setLessonToDelete(lesson);
+    setDeleteLessonDialogOpen(true);
+  };
 
-    if (!lessonForm.title.trim()) {
-      toast.error("Lesson title is required");
-      return;
-    }
+  const handleConfirmDelete = async () => {
+    if (!lessonToDelete) return;
 
     try {
-      setCreatingLesson(true);
-      await createLesson({
-        title: lessonForm.title,
-        description: lessonForm.description.trim() || null,
-      });
-      toast.success("Lesson created successfully!");
-      resetLessonForm();
-      setLessonDialogOpen(false);
+      setDeletingLesson(true);
+      await deleteLesson(lessonToDelete.id);
+      toast.success("Lesson deleted successfully!");
+      setDeleteLessonDialogOpen(false);
+      setLessonToDelete(null);
+      
+      // Clear selected lesson if it was deleted
+      if (selectedLessonId === lessonToDelete.id) {
+        setSelectedLessonId(null);
+      }
+      
+      await refetch();
     } catch (error) {
-      console.error(error);
+      console.error("Failed to delete lesson:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to create lesson"
+        error instanceof Error ? error.message : "Failed to delete lesson"
       );
     } finally {
-      setCreatingLesson(false);
+      setDeletingLesson(false);
     }
+  };
+
+  const handleLessonSuccess = async () => {
+    setLessonDialogOpen(false);
+    setEditLessonDialogOpen(false);
+    setLessonToEdit(null);
+    await refetch();
   };
 
   const renderContent = () => {
@@ -182,67 +205,11 @@ export function CourseContentManager({
                       to this course.
                     </DialogDescription>
                   </DialogHeader>
-                  <form onSubmit={handleCreateLesson} className="space-y-4">
-                    <div className="space-y-2">
-                      <label
-                        htmlFor="lesson-title"
-                        className="text-sm font-medium text-foreground"
-                      >
-                        Lesson title
-                      </label>
-                      <Input
-                        id="lesson-title"
-                        placeholder="e.g. Introduction to React Hooks"
-                        value={lessonForm.title}
-                        onChange={(event) =>
-                          setLessonForm((previous) => ({
-                            ...previous,
-                            title: event.target.value,
-                          }))
-                        }
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label
-                        htmlFor="lesson-description"
-                        className="text-sm font-medium text-foreground"
-                      >
-                        Description
-                      </label>
-                      <Textarea
-                        id="lesson-description"
-                        placeholder="Describe the goals, activities, or resources for this lesson"
-                        value={lessonForm.description}
-                        onChange={(event) =>
-                          setLessonForm((previous) => ({
-                            ...previous,
-                            description: event.target.value,
-                          }))
-                        }
-                        rows={4}
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setLessonDialogOpen(false);
-                          resetLessonForm();
-                        }}
-                        disabled={creatingLesson}
-                      >
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={creatingLesson}>
-                        {creatingLesson && (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        )}
-                        Save lesson
-                      </Button>
-                    </div>
-                  </form>
+                  <LessonForm
+                    courseId={courseId}
+                    onSuccess={handleLessonSuccess}
+                    onCancel={() => setLessonDialogOpen(false)}
+                  />
                 </DialogContent>
               </Dialog>
             </div>
@@ -321,20 +288,49 @@ export function CourseContentManager({
                   {selectedLesson ? (
                     <Card className="border-border/60 bg-card">
                       <CardContent className="space-y-3 p-5">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="flex-1">
                             <h4 className="text-xl font-semibold">
                               {selectedLesson.title}
                             </h4>
                             {selectedLesson.description && (
-                              <p className="text-sm text-muted-foreground">
+                              <p className="mt-1 text-sm text-muted-foreground">
                                 {selectedLesson.description}
                               </p>
                             )}
                           </div>
-                          <Badge variant="outline">
-                            ID: {selectedLesson.id.slice(0, 8).toUpperCase()}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">
+                              ID: {selectedLesson.id.slice(0, 8).toUpperCase()}
+                            </Badge>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleEditLesson({
+                                  id: selectedLesson.id,
+                                  title: selectedLesson.title,
+                                  description: selectedLesson.description,
+                                })
+                              }
+                            >
+                              <Pencil className="h-4 w-4 mr-1.5" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() =>
+                                handleDeleteLesson({
+                                  id: selectedLesson.id,
+                                  title: selectedLesson.title,
+                                })
+                              }
+                            >
+                              <Trash2 className="h-4 w-4 mr-1.5" />
+                              Delete
+                            </Button>
+                          </div>
                         </div>
                         <div className="grid gap-4">
                           <StudyMaterialManager
@@ -465,62 +461,126 @@ export function CourseContentManager({
   }
 
   return (
-    <div className="flex min-h-screen bg-linear-to-br from-background via-background to-muted/20">
-      {/* Left Sidebar */}
-      <div className="w-64 bg-card/50 backdrop-blur-sm border-r border-border/50 p-4">
-        {/* Header */}
-        <div className="mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push("/lms-cms")}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Courses
-          </Button>
-          <div>
-            <h2 className="text-lg font-bold">{classItem.name}</h2>
-            <p className="text-sm text-muted-foreground">
-              {classItem.code || classItem.slug || classItem.id}
-            </p>
+    <>
+      <div className="flex min-h-screen bg-linear-to-br from-background via-background to-muted/20">
+        {/* Left Sidebar */}
+        <div className="w-64 bg-card/50 backdrop-blur-sm border-r border-border/50 p-4">
+          {/* Header */}
+          <div className="mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push("/lms-cms")}
+              className="mb-4"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Courses
+            </Button>
+            <div>
+              <h2 className="text-lg font-bold">{classItem.name}</h2>
+              <p className="text-sm text-muted-foreground">
+                {classItem.code || classItem.slug || classItem.id}
+              </p>
+            </div>
           </div>
+
+          {/* Navigation Menu */}
+          <nav className="space-y-1">
+            {navigationItems.map((item) => (
+              <Button
+                key={item.id}
+                variant={activeSection === item.id ? "default" : "ghost"}
+                className={`w-full justify-start h-12 rounded-xl transition-all duration-300 ${
+                  activeSection === item.id
+                    ? "bg-gradient-primary text-white shadow-medium"
+                    : "hover:bg-primary/5 hover:shadow-soft"
+                }`}
+                onClick={() => setActiveSection(item.id)}
+              >
+                <item.icon
+                  className={`w-4 h-4 mr-3 ${
+                    activeSection === item.id ? "text-white" : "text-primary"
+                  }`}
+                />
+                <span
+                  className={`font-medium ${
+                    activeSection === item.id ? "text-white" : ""
+                  }`}
+                >
+                  {item.label}
+                </span>
+              </Button>
+            ))}
+          </nav>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="space-y-1">
-          {navigationItems.map((item) => (
-            <Button
-              key={item.id}
-              variant={activeSection === item.id ? "default" : "ghost"}
-              className={`w-full justify-start h-12 rounded-xl transition-all duration-300 ${
-                activeSection === item.id
-                  ? "bg-gradient-primary text-white shadow-medium"
-                  : "hover:bg-primary/5 hover:shadow-soft"
-              }`}
-              onClick={() => setActiveSection(item.id)}
-            >
-              <item.icon
-                className={`w-4 h-4 mr-3 ${
-                  activeSection === item.id ? "text-white" : "text-primary"
-                }`}
-              />
-              <span
-                className={`font-medium ${
-                  activeSection === item.id ? "text-white" : ""
-                }`}
-              >
-                {item.label}
-              </span>
-            </Button>
-          ))}
-        </nav>
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-hidden">
+          <div className="p-8">{renderContent()}</div>
+        </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-hidden">
-        <div className="p-8">{renderContent()}</div>
-      </div>
-    </div>
+      {/* Edit Lesson Dialog */}
+      <Dialog open={editLessonDialogOpen} onOpenChange={setEditLessonDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Lesson</DialogTitle>
+            <DialogDescription>
+              Update the lesson title and description.
+            </DialogDescription>
+          </DialogHeader>
+          {lessonToEdit && (
+            <LessonForm
+              courseId={courseId}
+              lessonId={lessonToEdit.id}
+              initialData={{
+                title: lessonToEdit.title,
+                description: lessonToEdit.description,
+              }}
+              onSuccess={handleLessonSuccess}
+              onCancel={() => setEditLessonDialogOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Lesson Confirmation Dialog */}
+      <Dialog
+        open={deleteLessonDialogOpen}
+        onOpenChange={setDeleteLessonDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Lesson</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{lessonToDelete?.title}&quot;?
+              This will also delete all associated study materials, videos, and
+              questions. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteLessonDialogOpen(false);
+                setLessonToDelete(null);
+              }}
+              disabled={deletingLesson}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={deletingLesson}
+            >
+              {deletingLesson && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Delete Lesson
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
-}
