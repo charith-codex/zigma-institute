@@ -78,6 +78,7 @@ export const SummaryGenerator = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="brief">Brief (3-5 sentences)</SelectItem>
+              <SelectItem value="normal">Normal (10-15 sentences)</SelectItem>
               <SelectItem value="detailed">
                 Detailed (Key points & concepts)
               </SelectItem>

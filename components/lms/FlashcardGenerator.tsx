@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -88,15 +89,20 @@ export const FlashcardGenerator = () => {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Number of Flashcards</label>
+          <label className="text-sm font-medium pr-3">
+            Number of Flashcards
+          </label>
           <Input
             type="number"
             min="1"
-            max="20"
+            max="10"
             value={count}
             onChange={(e) => setCount(parseInt(e.target.value) || 5)}
             className="w-32"
           />
+          <p className="text-xs text-muted-foreground">
+            Maximum 10 flashcards per generation
+          </p>
         </div>
 
         {error && <p className="text-sm text-destructive">{error}</p>}
@@ -121,16 +127,33 @@ export const FlashcardGenerator = () => {
 
         {flashcards.length > 0 && (
           <div className="space-y-4 mt-6">
-            <div className="text-sm text-muted-foreground text-center">
+            <motion.div
+              className="text-sm text-muted-foreground text-center"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
               Card {currentIndex + 1} of {flashcards.length}
-            </div>
+            </motion.div>
 
             <div
-              className="h-64 cursor-pointer"
+              className="h-64 cursor-pointer perspective-1000"
               onClick={() => setIsFlipped(!isFlipped)}
             >
-              {!isFlipped ? (
-                <div className="w-full h-full bg-primary/5 border-2 border-primary rounded-lg p-6 flex items-center justify-center transition-opacity duration-300">
+              <motion.div
+                className="relative w-full h-full"
+                initial={false}
+                animate={{ rotateY: isFlipped ? 180 : 0 }}
+                transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
+                style={{ transformStyle: "preserve-3d" }}
+              >
+                <motion.div
+                  className="absolute w-full h-full bg-pink-100 dark:bg-pink-950/50 border-2 border-pink-500 dark:border-pink-400 rounded-lg p-6 flex items-center justify-center shadow-lg"
+                  style={{
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                  }}
+                >
                   <div className="text-center space-y-2">
                     <p className="text-xs text-muted-foreground uppercase">
                       Question
@@ -139,20 +162,32 @@ export const FlashcardGenerator = () => {
                       {flashcards[currentIndex].question}
                     </p>
                   </div>
-                </div>
-              ) : (
-                <div className="w-full h-full bg-secondary/5 border-2 border-secondary rounded-lg p-6 flex items-center justify-center transition-opacity duration-300">
+                </motion.div>
+
+                <motion.div
+                  className="absolute w-full h-full bg-green-100 dark:bg-green-950/50 border-2 border-green-500 dark:border-green-400 rounded-lg p-6 flex items-center justify-center shadow-lg"
+                  style={{
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                    rotateY: 180,
+                  }}
+                >
                   <div className="text-center space-y-2">
                     <p className="text-xs text-muted-foreground uppercase">
                       Answer
                     </p>
                     <p className="text-lg">{flashcards[currentIndex].answer}</p>
                   </div>
-                </div>
-              )}
+                </motion.div>
+              </motion.div>
             </div>
 
-            <div className="flex justify-between items-center">
+            <motion.div
+              className="flex justify-between items-center"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
               <Button
                 variant="outline"
                 onClick={prevCard}
@@ -175,7 +210,7 @@ export const FlashcardGenerator = () => {
                 Next
                 <ChevronRight className="w-4 h-4" />
               </Button>
-            </div>
+            </motion.div>
           </div>
         )}
       </CardContent>
