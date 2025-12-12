@@ -11,12 +11,14 @@ const CourseCard = ({
   showDescription = false,
   href,
   onClick,
+  clickable = true,
 }: {
   course: Course;
   showPrice?: boolean;
   showDescription?: boolean;
   href?: string;
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
+  clickable?: boolean;
 }) => {
   const courseLink = href ?? `/lms/courses/${course.slug}`;
 
@@ -62,6 +64,10 @@ const CourseCard = ({
       </CardContent>
     </Card>
   );
+
+  if (!clickable) {
+    return <div className="h-full">{cardContent}</div>;
+  }
 
   return (
     <Link

@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
-import CourseCard from "@/components/courses/course-card";
 import { CourseCreateForm } from "@/components/eims/CourseCreateForm";
 import { useCourses } from "@/hooks/useData";
 import { formatCurrency } from "@/lib/utils";

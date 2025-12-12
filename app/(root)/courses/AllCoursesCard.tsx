@@ -11,7 +11,8 @@ const categories = [
   { key: "ordinary level", title: "Ordinary Level" },
 ];
 
-const normalize = (value: string | null | undefined) => value?.trim().toLowerCase() ?? "";
+const normalize = (value: string | null | undefined) =>
+  value?.trim().toLowerCase() ?? "";
 
 const AllCoursesCard = ({ data }: { data: Course[] }) => {
   const [nameQuery, setNameQuery] = useState<string>("");
@@ -33,10 +34,10 @@ const AllCoursesCard = ({ data }: { data: Course[] }) => {
       categories.map((category) => ({
         ...category,
         courses: filteredCourses.filter(
-          (course) => normalize(course.courseCategory?.name) === category.key,
+          (course) => normalize(course.courseCategory?.name) === category.key
         ),
       })),
-    [filteredCourses],
+    [filteredCourses]
   );
 
   const hasResults = filteredCourses.length > 0;
@@ -60,18 +61,25 @@ const AllCoursesCard = ({ data }: { data: Course[] }) => {
                 <div>
                   <h3 className="text-2xl font-semibold">{category.title}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Courses curated for the {category.title.toLowerCase()} track.
+                    Courses curated for the {category.title.toLowerCase()}{" "}
+                    track.
                   </p>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {category.courses.length} course{category.courses.length === 1 ? "" : "s"}
+                  {category.courses.length} course
+                  {category.courses.length === 1 ? "" : "s"}
                 </p>
               </div>
 
               {category.courses.length ? (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {category.courses.map((course) => (
-                    <CourseCard key={course.slug} course={course} showDescription />
+                    <CourseCard
+                      key={course.slug}
+                      course={course}
+                      showDescription
+                      clickable={false}
+                    />
                   ))}
                 </div>
               ) : (
@@ -84,7 +92,10 @@ const AllCoursesCard = ({ data }: { data: Course[] }) => {
         </div>
       ) : (
         <div className="rounded-md border border-dashed p-6 text-center text-muted-foreground">
-          <p>No courses found. Adjust your search terms to see available programs.</p>
+          <p>
+            No courses found. Adjust your search terms to see available
+            programs.
+          </p>
         </div>
       )}
     </div>
