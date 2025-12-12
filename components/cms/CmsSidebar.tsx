@@ -30,7 +30,7 @@ any) => {
     <Sidebar
       variant="sidebar"
       collapsible="icon"
-      className="border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/90"
+      className="border-border/60 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/90"
     >
       <SidebarContent
         className={cn(

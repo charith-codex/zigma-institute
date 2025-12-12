@@ -274,7 +274,7 @@ function ExamPaperUpload({
           endpoint="physicalExamPaper"
           input={{ courseId, examTitle: examTitle.trim() }}
           appearance={{
-            button: "w-full justify-center",
+            button: "px-6 justify-center bg-primary",
           }}
           disabled={!examTitle.trim() || uploading}
           content={{

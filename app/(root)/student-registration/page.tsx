@@ -33,7 +33,7 @@ const infoHighlights = [
 
 const INSTITUTE_NAME = "Zigma Institute";
 const INSTITUTE_TAGLINE =
-  "AI-powered personalised learning for ambitious students.";
+  "AI-powered personalized learning for ambitious students.";
 const INSTITUTE_ADDRESS = "Colombo Innovation Hub, 512 Galle Road, Colombo 03";
 
 export default async function StudentRegisterPage() {
@@ -46,6 +46,7 @@ export default async function StudentRegisterPage() {
     name: course.name,
     priceInCents: course.priceInCents,
     currency: course.currency,
+    teacherName: course.teacherName ?? "",
   }));
 
   return (

@@ -42,6 +42,7 @@ import { VideoRecordingManager } from "./VideoRecordingManager";
 import { PhysicalExamUploader } from "./PhysicalExamUploader";
 import { LessonForm } from "./LessonForm";
 import { deleteLesson } from "@/lib/actions/lesson";
+import { EnrolledStudents } from "./EnrolledStudents";
 
 interface CourseContentManagerProps {
   courseId: string;
@@ -58,7 +59,6 @@ const navigationItems = [
   { id: "exam-results", label: "Exam Results", icon: BarChart3 },
   { id: "physical-exams", label: "Physical Exam Marks", icon: HeartPulse },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
-  { id: "ai-tools", label: "AI Tools", icon: Brain },
 ];
 
 export function CourseContentManager({
@@ -361,6 +361,11 @@ export function CourseContentManager({
           </div>
         );
 
+      case "students":
+        return classItem ? (
+          <EnrolledStudents courseId={courseId} courseName={classItem.name} />
+        ) : null;
+
       case "quizzes":
         return <QuestionCreation />;
 
@@ -389,37 +394,6 @@ export function CourseContentManager({
                 View detailed analytics and insights about your class
                 performance.
               </p>
-            </div>
-          </div>
-        );
-
-      case "ai-tools":
-        return (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">AI Tools</h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="p-6 text-center">
-                  <Brain className="w-12 h-12 mx-auto mb-4 text-primary" />
-                  <h4 className="font-semibold mb-2">Content Generator</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Generate study materials and lesson plans using AI
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="p-6 text-center">
-                  <ClipboardList className="w-12 h-12 mx-auto mb-4 text-secondary" />
-                  <h4 className="font-semibold mb-2">Quiz Builder</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Automatically generate quizzes from your content
-                  </p>
-                </CardContent>
-              </Card>
             </div>
           </div>
         );

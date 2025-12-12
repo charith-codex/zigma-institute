@@ -57,7 +57,6 @@ export const CourseDetailView = ({
             <p className="text-sm text-muted-foreground">
               {classData.instructor}
             </p>
-
           </div>
         </div>
 
@@ -97,20 +96,15 @@ export const CourseDetailView = ({
                       {selectedLesson.description}
                     </p>
                   )}
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <CalendarClock className="h-3.5 w-3.5" />
-                      Created{" "}
-                      {new Date(selectedLesson.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Video className="h-4 w-4" />
-                  <span>Uploads are scoped to this lesson</span>
+                  <span className="flex items-center gap-1">
+                    <CalendarClock className="h-3.5 w-3.5" />
+                    Updated{" "}
+                    {new Date(selectedLesson.updatedAt).toLocaleDateString()}
+                  </span>
                 </div>
               </CardHeader>
-              
             </Card>
 
             <VideoRecordingManager
