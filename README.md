@@ -28,6 +28,8 @@ npm install
 npx prisma migrate deploy
 ```
 
+> **Note:** If you're updating from an older version, see [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) for breaking changes.
+
 4. Start development server:
 ```bash
 npm run dev
