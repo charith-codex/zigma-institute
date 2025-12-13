@@ -74,6 +74,8 @@ export async function POST(request: Request) {
       data: {
         title: data.title,
         description: data.description ?? null,
+        instructions: data.instructions ?? null,
+        timeLimitMinutes: data.timeLimitMinutes ?? null,
         status: data.publish ? "PUBLISHED" : "DRAFT",
         publishedAt: data.publish ? new Date() : null,
         createdById: data.createdById ?? null,

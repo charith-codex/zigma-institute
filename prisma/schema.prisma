@@ -283,6 +283,8 @@ model ExamPaper {
   id          String         @id @default(uuid())
   title       String
   description String?
+  instructions String?
+  timeLimitMinutes Int?
   courseId    String?
   lessonId    String?
   status      ExamStatus     @default(DRAFT)

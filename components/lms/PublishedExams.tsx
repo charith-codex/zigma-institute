@@ -13,6 +13,8 @@ export type ExamSummary = {
   title: string;
   lessonTitle: string;
   description?: string | null;
+  instructions?: string | null;
+  timeLimitMinutes?: number | null;
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
   questions: Array<{ id: string; marks: number }>;
   createdAt: string;
@@ -96,9 +98,9 @@ export function PublishedExams({ heading, description }: PublishedExamsProps) {
                   </Badge>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {exam.description ? (
+                  {exam.instructions ? (
                     <p className="text-sm text-muted-foreground">
-                      {exam.description}
+                      {exam.instructions}
                     </p>
                   ) : null}
                   <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -112,6 +114,11 @@ export function PublishedExams({ heading, description }: PublishedExamsProps) {
                         0
                       )}
                     </Badge>
+                    {exam.timeLimitMinutes ? (
+                      <Badge variant="outline">
+                        Time limit: {exam.timeLimitMinutes} mins
+                      </Badge>
+                    ) : null}
                     {exam.publishedAt ? (
                       <span>
                         Published: {new Date(exam.publishedAt).toLocaleString()}
