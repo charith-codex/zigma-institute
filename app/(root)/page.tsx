@@ -99,10 +99,10 @@ const timeline = [
 
 export default function ShowcaseSite() {
   return (
-    <div className="space-y-24 py-10 lg:space-y-32 lg:py-16">
+    <div className="space-y-24 py-10 lg:space-y-32 lg:py-16 ">
       <section className="relative overflow-hidden rounded-3xl border bg-slate-950/95 text-slate-50 py-6 px-10">
         <Image
-          src="https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1600&q=80"
+          src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1600&q=80"
           alt="Students collaborating with laptops"
           fill
           priority
@@ -310,34 +310,54 @@ export default function ShowcaseSite() {
         </div>
       </section>
 
-      <section className="wrapper space-y-10">
+     {/* Enrollment Journey Section */}
+      <section className="wrapper space-y-12">
         <div className="max-w-2xl space-y-4">
-          <p className="text-sm uppercase tracking-[0.3em] text-primary">
-            Enrollment journey
-          </p>
-          <h2 className="text-3xl font-semibold sm:text-4xl">
+          <div className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 px-5 py-2 text-xs font-bold uppercase tracking-[0.3em] text-green-600 dark:text-green-400">
+            <CalendarDays className="h-4 w-4" />
+            Enrollment Journey
+          </div>
+          <h2 className="text-4xl font-bold sm:text-5xl leading-tight">
             Seamless onboarding from inquiry to classroom
           </h2>
-          <p className="text-base text-muted-foreground">
+          <p className="text-lg text-muted-foreground leading-relaxed">
             Our blended approval workflow keeps staff in control while giving
             families a transparent path into your institute.
           </p>
         </div>
-        <div className="grid gap-6 md:grid-cols-3">
-          {timeline.map((stage) => (
-            <div
-              key={stage.step}
-              className="rounded-2xl border bg-card p-6 shadow-sm"
-            >
-              <span className="text-4xl font-semibold text-primary/70">
-                {stage.step}
-              </span>
-              <h3 className="mt-4 text-lg font-semibold">{stage.title}</h3>
-              <p className="mt-3 text-sm text-muted-foreground">
-                {stage.description}
-              </p>
-            </div>
-          ))}
+        <div className="relative">
+          {/* Connection Line */}
+          <div
+            className="absolute top-16 left-0 right-0 h-1 bg-linear-to-r from-primary via-purple-500 to-pink-500 hidden md:block"
+            style={{ width: "calc(100% - 8rem)", left: "4rem" }}
+          />
+
+          <div className="grid gap-8 md:grid-cols-3">
+            {timeline.map((stage, index) => (
+              <div
+                key={stage.step}
+                className="group relative"
+                style={{
+                  animation: `fadeInUp 0.6s ease-out ${index * 0.2}s both`,
+                }}
+              >
+                <div className="relative rounded-3xl border border-border/50 bg-card p-8 shadow-xl transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:border-primary/50">
+                  <div className="absolute -top-8 left-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-primary to-purple-500 text-white shadow-2xl shadow-primary/50 transition-all duration-500 group-hover:scale-110 group-hover:rotate-12">
+                    <span className="text-2xl font-bold">{stage.step}</span>
+                  </div>
+                  <div className="mt-12">
+                    <h3 className="text-xl font-bold group-hover:text-primary transition-colors">
+                      {stage.title}
+                    </h3>
+                    <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
+                      {stage.description}
+                    </p>
+                  </div>
+                  <div className="mt-6 h-1 w-0 bg-linear-to-r from-primary to-purple-500 transition-all duration-500 group-hover:w-full rounded-full" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

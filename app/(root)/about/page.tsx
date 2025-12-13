@@ -78,7 +78,7 @@ const About = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       {/* Hero Section */}
       <div className="bg-gradient-hero">
         <div className="container mx-auto px-4 py-16">

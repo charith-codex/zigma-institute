@@ -68,7 +68,7 @@ const Menu = async () => {
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-md px-3 py-2 font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
+              className="rounded-md px-3 py-2 font-medium text-gray-700 dark:text-white/90 transition hover:bg-primary/60 dark:hover:bg-white/20 hover:text-gray-900 dark:hover:text-white"
             >
               {link.label}
             </Link>
@@ -82,7 +82,7 @@ const Menu = async () => {
               asChild
               size="sm"
               variant="outline"
-              className="gap-2 px-4 text-primary outline-primary"
+              className="gap-2 px-4 text-gray-900 dark:text-white border-gray-300/60 dark:border-white/30 hover:bg-primary/60 dark:hover:bg-white/20"
             >
               <Link href={href}>
                 <Icon className="h-4 w-4" />
@@ -92,7 +92,11 @@ const Menu = async () => {
           ))}
 
         {showStudentRegistration && (
-          <Button asChild size="sm">
+          <Button
+            asChild
+            size="sm"
+            className="bg-primary hover:bg-primary-dark"
+          >
             <Link href="/student-registration">Student Registration</Link>
           </Button>
         )}
@@ -101,7 +105,7 @@ const Menu = async () => {
       </nav>
       <nav className="md:hidden">
         <Sheet>
-          <SheetTrigger className="align-middle">
+          <SheetTrigger className="align-middle text-gray-900 dark:text-white">
             <EllipsisVertical />
           </SheetTrigger>
           <SheetContent className="flex flex-col gap-4 p-5">
@@ -140,7 +144,6 @@ const Menu = async () => {
               ))}
             <ModeToggle />
             <UserButton />
-
             <SheetDescription></SheetDescription>
           </SheetContent>
         </Sheet>

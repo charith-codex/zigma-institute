@@ -56,7 +56,7 @@ export default async function CoursesPage() {
   const courses = await getCourses();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <div className="container mx-auto space-y-10 px-4 py-12">
         <section className="px-6 py-12 text-center md:px-10">
           <div className="mx-auto max-w-3xl space-y-6">

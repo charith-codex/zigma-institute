@@ -262,3 +262,119 @@
   font-weight: 700;
   font-size: 1.25rem;
 }
+
+/* Neon Toast Borders */
+:where([data-sonner-toaster]) [data-sonner-toast] {
+  border-radius: var(--border-radius);
+  border-width: 2px;
+  border-style: solid;
+}
+
+/* Success Toast - Dark Green Neon */
+:where([data-sonner-toaster]) [data-sonner-toast][data-type="success"] {
+  background: var(--success-light);
+  border-color: rgb(34, 197, 94);
+  box-shadow:
+    0 0 10px rgba(34, 197, 94, 0.3),
+    0 0 20px rgba(34, 197, 94, 0.2),
+    0 0 30px rgba(34, 197, 94, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+:where([data-sonner-toaster])
+  [data-sonner-toast][data-type="success"]
+  [data-icon] {
+  color: rgb(34, 197, 94);
+}
+
+/* Error Toast - Red Neon */
+:where([data-sonner-toaster]) [data-sonner-toast][data-type="error"] {
+  background: oklch(0.96 0.05 25);
+  border-color: rgb(239, 68, 68);
+  box-shadow:
+    0 0 10px rgba(239, 68, 68, 0.3),
+    0 0 20px rgba(239, 68, 68, 0.2),
+    0 0 30px rgba(239, 68, 68, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+:where([data-sonner-toaster])
+  [data-sonner-toast][data-type="error"]
+  [data-icon] {
+  color: rgb(239, 68, 68);
+}
+
+/* Warning Toast - Orange/Yellow Neon */
+:where([data-sonner-toaster]) [data-sonner-toast][data-type="warning"] {
+  background: var(--warning-light);
+  border-color: rgb(251, 146, 60);
+  box-shadow:
+    0 0 10px rgba(251, 146, 60, 0.3),
+    0 0 20px rgba(251, 146, 60, 0.2),
+    0 0 30px rgba(251, 146, 60, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+:where([data-sonner-toaster])
+  [data-sonner-toast][data-type="warning"]
+  [data-icon] {
+  color: rgb(251, 146, 60);
+}
+
+/* Info Toast - Blue Neon */
+:where([data-sonner-toaster]) [data-sonner-toast][data-type="info"] {
+  background: var(--popover);
+  border-color: rgb(59, 130, 246);
+  box-shadow:
+    0 0 10px rgba(59, 130, 246, 0.3),
+    0 0 20px rgba(59, 130, 246, 0.2),
+    0 0 30px rgba(59, 130, 246, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+:where([data-sonner-toaster])
+  [data-sonner-toast][data-type="info"]
+  [data-icon] {
+  color: rgb(59, 130, 246);
+}
+
+/* Dark Mode Adjustments - Enhanced Neon Glow */
+.dark :where([data-sonner-toaster]) [data-sonner-toast][data-type="success"] {
+  background: oklch(0.25 0.06 150);
+  border-color: rgb(34, 197, 94);
+  box-shadow:
+    0 0 15px rgba(34, 197, 94, 0.5),
+    0 0 30px rgba(34, 197, 94, 0.3),
+    0 0 45px rgba(34, 197, 94, 0.15),
+    0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.dark :where([data-sonner-toaster]) [data-sonner-toast][data-type="error"] {
+  background: oklch(0.3 0.08 25);
+  border-color: rgb(239, 68, 68);
+  box-shadow:
+    0 0 15px rgba(239, 68, 68, 0.5),
+    0 0 30px rgba(239, 68, 68, 0.3),
+    0 0 45px rgba(239, 68, 68, 0.15),
+    0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.dark :where([data-sonner-toaster]) [data-sonner-toast][data-type="warning"] {
+  background: oklch(0.35 0.08 80);
+  border-color: rgb(251, 146, 60);
+  box-shadow:
+    0 0 15px rgba(251, 146, 60, 0.5),
+    0 0 30px rgba(251, 146, 60, 0.3),
+    0 0 45px rgba(251, 146, 60, 0.15),
+    0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.dark :where([data-sonner-toaster]) [data-sonner-toast][data-type="info"] {
+  background: var(--popover);
+  border-color: rgb(59, 130, 246);
+  box-shadow:
+    0 0 15px rgba(59, 130, 246, 0.5),
+    0 0 30px rgba(59, 130, 246, 0.3),
+    0 0 45px rgba(59, 130, 246, 0.15),
+    0 4px 20px rgba(0, 0, 0, 0.5);
+}

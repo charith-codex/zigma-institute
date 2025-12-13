@@ -50,7 +50,7 @@ export default async function StudentRegisterPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <div className="bg-gradient-hero">
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-3xl text-center mx-auto space-y-6">
