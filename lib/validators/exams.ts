@@ -9,7 +9,13 @@ export const examQuestionSchema = z.object({
 export const createExamSchema = z.object({
   title: z.string().min(1, "Exam title is required"),
   lessonTitle: z.string().min(1, "Lesson title is required"),
-  description: z.string().optional(),
+  instructions: z.string().optional(),
+  timeLimit: z
+    .number()
+    .int()
+    .min(1, "Time limit must be at least 1 minute")
+    .max(300, "Time limit cannot exceed 300 minutes")
+    .optional(),
   createdById: z.string().uuid().optional(),
   publish: z.boolean().optional(),
   questions: z.array(examQuestionSchema).min(1, "Add at least one question"),
@@ -17,7 +23,14 @@ export const createExamSchema = z.object({
 
 export const updateExamSchema = z.object({
   title: z.string().optional(),
-  description: z.string().nullable().optional(),
+  instructions: z.string().nullable().optional(),
+  timeLimit: z
+    .number()
+    .int()
+    .min(1, "Time limit must be at least 1 minute")
+    .max(300, "Time limit cannot exceed 300 minutes")
+    .nullable()
+    .optional(),
   status: z.enum(["DRAFT", "PUBLISHED", "CLOSED"]).optional(),
   publish: z.boolean().optional(),
 });

@@ -71,7 +71,8 @@ export async function PATCH(
       where: { id },
       data: {
         title: data.title ?? exam.title,
-        description: data.description ?? exam.description,
+        instructions: data.instructions !== undefined ? data.instructions : exam.instructions,
+        timeLimit: data.timeLimit !== undefined ? data.timeLimit : exam.timeLimit,
         status: nextStatus,
         publishedAt: nextStatus === "PUBLISHED" ? new Date() : exam.publishedAt,
       },

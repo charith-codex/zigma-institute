@@ -34,7 +34,8 @@ interface ExamPayload {
   id: string;
   title: string;
   lessonTitle: string;
-  description?: string | null;
+  instructions?: string | null;
+  timeLimit?: number | null;
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
   course?: {
     name: string;
@@ -128,6 +129,7 @@ export default function ExamAttemptPage() {
   const [checkingMarks, setCheckingMarks] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [result, setResult] = useState<{
     attempt: AttemptRecord;
     evaluation: EvaluationResult[];
@@ -144,6 +146,12 @@ export default function ExamAttemptPage() {
         const data = await response.json();
         const examData: ExamPayload = data.exam;
         setExam(examData);
+        
+        // Initialize remaining time if time limit is set
+        if (examData.timeLimit) {
+          setRemainingSeconds(examData.timeLimit * 60);
+        }
+        
         const initialAnswers: Record<string, AnswerDraft> = {};
         examData.questions.forEach((entry) => {
           initialAnswers[entry.questionId] = {};
@@ -178,10 +186,40 @@ export default function ExamAttemptPage() {
 
     const interval = setInterval(() => {
       setElapsedSeconds((prev) => prev + 1);
+      
+      // Countdown timer if time limit is set
+      if (remainingSeconds !== null) {
+        setRemainingSeconds((prev) => {
+          if (prev === null || prev <= 0) return 0;
+          return prev - 1;
+        });
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [exam, result]);
+  }, [exam, result, remainingSeconds]);
+
+  // Auto-submit when time expires
+  useEffect(() => {
+    if (remainingSeconds === 0 && !result && !submitting && exam) {
+      toast.error("Time's up! Exam is being auto-submitted.");
+      handleSubmit();
+    }
+  }, [remainingSeconds]);
+
+  // Warning when 5 minutes remaining
+  useEffect(() => {
+    if (remainingSeconds === 300 && !result) {
+      toast.warning("5 minutes remaining!");
+    }
+  }, [remainingSeconds, result]);
+
+  // Warning when 1 minute remaining
+  useEffect(() => {
+    if (remainingSeconds === 60 && !result) {
+      toast.warning("1 minute remaining!");
+    }
+  }, [remainingSeconds, result]);
 
   const totalMarks = useMemo(() => {
     if (!exam) return 0;
@@ -219,7 +257,7 @@ export default function ExamAttemptPage() {
       return false;
     });
 
-    if (unanswered.length > 0) {
+    if (unanswered.length > 0 && remainingSeconds !== 0) {
       toast.error("Answer all multiple-choice questions before submitting");
       return;
     }
@@ -335,6 +373,15 @@ export default function ExamAttemptPage() {
     .toISOString()
     .substring(11, 19);
 
+  const formattedRemaining = remainingSeconds !== null
+    ? new Date(Math.max(0, remainingSeconds) * 1000)
+        .toISOString()
+        .substring(11, 19)
+    : null;
+
+  const isTimeLow = remainingSeconds !== null && remainingSeconds > 0 && remainingSeconds <= 300;
+  const isTimeCritical = remainingSeconds !== null && remainingSeconds > 0 && remainingSeconds <= 60;
+
   const goToQuestion = (index: number) => {
     if (index < 0 || index >= exam.questions.length) return;
     setCurrentQuestionIndex(index);
@@ -360,7 +407,7 @@ export default function ExamAttemptPage() {
                 {exam.course?.teacherName ?? exam.createdBy?.name ?? "TBD"}
               </Badge>
             </div>
-            <div className="grid gap-3 sm:grid-cols-1 lg:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-1 lg:grid-cols-4">
               <div className="rounded-2xl border bg-background/80 px-4 py-3 text-left shadow-sm">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Questions
@@ -375,6 +422,28 @@ export default function ExamAttemptPage() {
                 </p>
                 <p className="text-2xl font-semibold">{totalMarks}</p>
               </div>
+              {exam.timeLimit && (
+                <div className={`rounded-2xl border px-4 py-3 text-left shadow-sm ${
+                  isTimeCritical 
+                    ? "bg-destructive/10 border-destructive/50" 
+                    : isTimeLow 
+                    ? "bg-warning/10 border-warning/50" 
+                    : "bg-background/80"
+                }`}>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Time remaining
+                  </p>
+                  <p className={`text-2xl font-semibold ${
+                    isTimeCritical 
+                      ? "text-destructive" 
+                      : isTimeLow 
+                      ? "text-warning" 
+                      : "text-accent"
+                  }`}>
+                    {formattedRemaining ?? "00:00:00"}
+                  </p>
+                </div>
+              )}
               <div className="rounded-2xl border bg-background/80 px-4 py-3 text-left shadow-sm">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Time spent
@@ -384,10 +453,13 @@ export default function ExamAttemptPage() {
                 </p>
               </div>
             </div>
-            {exam.description ? (
-              <p className="max-w-3xl text-sm text-muted-foreground md:text-base">
-                {exam.description}
-              </p>
+            {exam.instructions ? (
+              <div className="max-w-3xl rounded-lg border border-muted/40 bg-muted/20 p-4">
+                <p className="text-sm font-medium mb-2">Instructions:</p>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {exam.instructions}
+                </p>
+              </div>
             ) : null}
           </CardContent>
         </Card>

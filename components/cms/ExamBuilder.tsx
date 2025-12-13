@@ -61,7 +61,8 @@ type ExamRecord = {
   id: string;
   title: string;
   lessonTitle: string;
-  description?: string | null;
+  instructions?: string | null;
+  timeLimit?: number | null;
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
   createdAt: string;
   publishedAt?: string | null;
@@ -76,14 +77,16 @@ type SelectedQuestion = {
 type ExamFormState = {
   title: string;
   lessonTitle: string;
-  description: string;
+  instructions: string;
+  timeLimit: string;
   publish: boolean;
 };
 
 const DEFAULT_FORM: ExamFormState = {
   title: "",
   lessonTitle: "",
-  description: "",
+  instructions: "",
+  timeLimit: "",
   publish: false,
 };
 
@@ -212,13 +215,30 @@ export function ExamBuilder() {
       return;
     }
 
+    // Validate time limit
+    const timeLimit = examForm.timeLimit.trim()
+      ? Number.parseInt(examForm.timeLimit.trim(), 10)
+      : undefined;
+
+    if (timeLimit !== undefined) {
+      if (Number.isNaN(timeLimit) || timeLimit < 1) {
+        toast.error("Time limit must be at least 1 minute");
+        return;
+      }
+      if (timeLimit > 300) {
+        toast.error("Time limit cannot exceed 300 minutes (5 hours)");
+        return;
+      }
+    }
+
     setIsSavingExam(true);
 
     try {
       const payload = {
         title: examForm.title.trim(),
         lessonTitle: examForm.lessonTitle.trim(),
-        description: examForm.description.trim() || undefined,
+        instructions: examForm.instructions.trim() || undefined,
+        timeLimit,
         publish: examForm.publish,
         questions: questionEntries.map(([questionId, entry], index) => ({
           questionId,
@@ -454,19 +474,41 @@ export function ExamBuilder() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="exam-description">Instructions</Label>
+                <Label htmlFor="exam-instructions">Instructions</Label>
                 <Textarea
-                  id="exam-description"
-                  value={examForm.description}
+                  id="exam-instructions"
+                  value={examForm.instructions}
                   onChange={(event) =>
                     setExamForm((prev) => ({
                       ...prev,
-                      description: event.target.value,
+                      instructions: event.target.value,
                     }))
                   }
-                  placeholder="Optional instructions for students"
+                  placeholder="Enter exam instructions for students (optional)"
                   rows={4}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="exam-time-limit">
+                  Time limit (minutes)
+                </Label>
+                <Input
+                  id="exam-time-limit"
+                  type="number"
+                  min={1}
+                  max={300}
+                  value={examForm.timeLimit}
+                  onChange={(event) =>
+                    setExamForm((prev) => ({
+                      ...prev,
+                      timeLimit: event.target.value,
+                    }))
+                  }
+                  placeholder="e.g. 60 (optional, leave empty for no time limit)"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Optional. Maximum 300 minutes (5 hours). Leave empty for unlimited time.
+                </p>
               </div>
               <div className="flex items-center justify-between rounded-md border p-3">
                 <div>
@@ -548,9 +590,14 @@ export function ExamBuilder() {
                         </Button>
                       )}
                     </div>
-                    {exam.description && (
+                    {exam.instructions && (
                       <p className="text-sm text-muted-foreground">
-                        {exam.description}
+                        Instructions: {exam.instructions}
+                      </p>
+                    )}
+                    {exam.timeLimit && (
+                      <p className="text-sm text-muted-foreground">
+                        Time limit: {exam.timeLimit} minutes
                       </p>
                     )}
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -575,6 +622,11 @@ export function ExamBuilder() {
                           0
                         )}
                       </Badge>
+                      {exam.timeLimit && (
+                        <Badge variant="outline">
+                          Time: {exam.timeLimit} min
+                        </Badge>
+                      )}
                     </div>
                     <div className="space-y-2 text-sm">
                       {exam.questions.map((entry, index) => (

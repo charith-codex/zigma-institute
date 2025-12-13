@@ -73,7 +73,8 @@ export async function POST(request: Request) {
     const exam = await prisma.examPaper.create({
       data: {
         title: data.title,
-        description: data.description ?? null,
+        instructions: data.instructions ?? null,
+        timeLimit: data.timeLimit ?? null,
         status: data.publish ? "PUBLISHED" : "DRAFT",
         publishedAt: data.publish ? new Date() : null,
         createdById: data.createdById ?? null,
