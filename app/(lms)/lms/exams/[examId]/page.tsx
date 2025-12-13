@@ -203,8 +203,61 @@ export default function ExamAttemptPage() {
   useEffect(() => {
     if (remainingSeconds === 0 && !result && !submitting && exam) {
       toast.error("Time's up! Exam is being auto-submitted.");
-      handleSubmit();
+      // Create a minimal submission that bypasses validation
+      const submitExam = async () => {
+        if (!exam) return;
+        
+        setSubmitting(true);
+        try {
+          const payload = {
+            examId,
+            studentId: studentId.trim(),
+            studentName: studentName.trim() || undefined,
+            answers: exam.questions.map((entry) => ({
+              questionId: entry.questionId,
+              type: entry.question.type,
+              selectedOption:
+                entry.question.type === "MCQ"
+                  ? (answers[entry.questionId]?.selectedOption ?? "")
+                  : undefined,
+              answerText:
+                entry.question.type === "ESSAY"
+                  ? (answers[entry.questionId]?.answerText ?? "")
+                  : undefined,
+            })),
+          };
+
+          const response = await fetch("/api/exam-attempts", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error ?? "Failed to submit exam");
+          }
+
+          const attempt: AttemptRecord = data.attempt;
+          const evaluation: EvaluationResult[] =
+            data.evaluation ?? buildEvaluation(attempt);
+          setResult({ attempt, evaluation });
+          toast.success("Exam auto-submitted due to time limit");
+        } catch (error) {
+          console.error(error);
+          toast.error(
+            error instanceof Error ? error.message : "Unable to submit exam"
+          );
+        } finally {
+          setSubmitting(false);
+        }
+      };
+      
+      submitExam();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remainingSeconds]);
 
   // Warning when 5 minutes remaining
