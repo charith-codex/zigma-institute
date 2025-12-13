@@ -60,7 +60,9 @@ export default async function CoursesPage() {
       <div className="container mx-auto space-y-10 px-4 py-12">
         <section className="px-6 py-12 text-center md:px-10">
           <div className="mx-auto max-w-3xl space-y-6">
-            <Badge className="bg-primary text-white">📑 Curated Programs</Badge>
+            <Badge className="bg-primary text-white px-3 py-2">
+              📑 Curated Programs
+            </Badge>
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
               Courses with Modern Educational Experience
             </h1>

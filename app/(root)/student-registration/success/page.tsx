@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Download, Loader2 } from "lucide-react";
+import { Download } from "lucide-react";
 
 import {
   Card,
@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { FlowerLoader } from "@/components/ui/flower-loader";
 
 interface SuccessPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -103,8 +104,8 @@ export default function StudentRegistrationSuccessPage({
         </CardHeader>
         <CardContent className="space-y-6 text-sm text-muted-foreground">
           {loading && (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="text-center">
+              <FlowerLoader size="lg" className="text-[#A41FC5] mx-auto" />
             </div>
           )}
 

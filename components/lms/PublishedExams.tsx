@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
+import { FlowerLoader } from "../ui/flower-loader";
 
 export type ExamSummary = {
   id: string;
@@ -63,8 +64,8 @@ export function PublishedExams({ heading, description }: PublishedExamsProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {loading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading exams...
+          <div className="text-center">
+            <FlowerLoader size="lg" className="text-[#A41FC5] mx-auto" />
           </div>
         ) : error ? (
           <div className="rounded-md border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">

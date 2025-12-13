@@ -8,7 +8,6 @@ import { FlowerLoader } from "@/components/ui/flower-loader";
 import {
   ArrowLeft,
   FileText,
-  Brain,
   Plus,
   BookOpen,
   Users,
@@ -34,7 +33,6 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
 import type { ClassSummary } from "@/hooks/useData";
 import { useLessons } from "@/hooks/useData";
 import { StudyMaterialManager } from "./StudyMaterialManager";
@@ -554,7 +552,9 @@ export function CourseContentManager({
               disabled={deletingLesson}
             >
               {deletingLesson && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <div className="text-center">
+                  <FlowerLoader size="lg" className="text-[#A41FC5] mx-auto" />
+                </div>
               )}
               Delete Lesson
             </Button>

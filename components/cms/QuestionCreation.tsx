@@ -16,7 +16,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Loader2, RefreshCw, Save, Upload, Wand2 } from "lucide-react";
+import { RefreshCw, Save, Upload, Wand2 } from "lucide-react";
+import { FlowerLoader } from "../ui/flower-loader";
 
 const difficultyOptions = [
   { value: "EASY", label: "Easy" },
@@ -700,7 +701,12 @@ export function QuestionCreation() {
                   disabled={savingManual}
                 >
                   {savingManual ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <div className="text-center">
+                      <FlowerLoader
+                        size="md"
+                        className="text-[#A41FC5] mx-auto"
+                      />
+                    </div>
                   ) : (
                     <Save className="h-4 w-4" />
                   )}
@@ -807,7 +813,12 @@ export function QuestionCreation() {
                   disabled={isGenerating}
                 >
                   {isGenerating ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <div className="text-center">
+                      <FlowerLoader
+                        size="md"
+                        className="text-[#A41FC5] mx-auto"
+                      />
+                    </div>
                   ) : (
                     <Wand2 className="h-4 w-4" />
                   )}
@@ -985,7 +996,9 @@ export function QuestionCreation() {
               disabled={questionLoading}
             >
               {questionLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="text-center">
+                  <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
+                </div>
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}

@@ -22,7 +22,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { CalendarDays, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { CalendarDays, CheckCircle2, ShieldCheck } from "lucide-react";
+import { FlowerLoader } from "../ui/flower-loader";
 
 const normalizeOptions = (value: unknown): string[] => {
   if (!value || !Array.isArray(value)) return [];
@@ -315,7 +316,12 @@ export function ExamBuilder() {
                 disabled={isLoading.questions}
               >
                 {isLoading.questions ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <div className="text-center">
+                    <FlowerLoader
+                      size="md"
+                      className="text-[#A41FC5] mx-auto"
+                    />
+                  </div>
                 ) : (
                   "Refresh"
                 )}
@@ -488,7 +494,12 @@ export function ExamBuilder() {
                 disabled={isSavingExam}
               >
                 {isSavingExam ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <div className="text-center">
+                    <FlowerLoader
+                      size="md"
+                      className="text-[#A41FC5] mx-auto"
+                    />
+                  </div>
                 ) : examForm.publish ? (
                   <ShieldCheck className="h-4 w-4" />
                 ) : (
@@ -506,8 +517,8 @@ export function ExamBuilder() {
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoading.exams ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading exams...
+              <div className="text-center">
+                <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
               </div>
             ) : exams.length === 0 ? (
               <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">

@@ -54,7 +54,9 @@ export default async function StudentRegisterPage() {
       <div className="bg-gradient-hero">
         <div className="container mx-auto px-4 py-16">
           <div className="max-w-3xl text-center mx-auto space-y-6">
-            <Badge className="w-fit mx-auto">📋 Student Registration</Badge>
+            <Badge className="w-fit mx-auto px-3 py-2">
+              📋 Student Registration
+            </Badge>
             <h1 className="text-4xl md:text-5xl font-bold">
               Register online and secure your place at {INSTITUTE_NAME}
             </h1>

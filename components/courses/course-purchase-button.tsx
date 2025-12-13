@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { FlowerLoader } from "../ui/flower-loader";
 
 type CoursePurchaseButtonProps = {
   courseId: string;
@@ -55,9 +55,9 @@ export function CoursePurchaseButton({
       disabled={isLoading}
     >
       {isLoading ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Redirecting...
-        </>
+        <div className="text-center">
+          <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
+        </div>
       ) : (
         "Purchase course"
       )}

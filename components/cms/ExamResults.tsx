@@ -28,8 +28,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, Loader2, Pencil, RefreshCw } from "lucide-react";
+import { Check, Pencil, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { FlowerLoader } from "../ui/flower-loader";
 
 type AttemptAnswer = {
   id: string;
@@ -237,7 +238,9 @@ export function ExamResults({ courseId }: ExamResultsProps) {
               disabled={loading}
             >
               {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="text-center">
+                  <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
+                </div>
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
@@ -423,7 +426,12 @@ export function ExamResults({ courseId }: ExamResultsProps) {
                 </Button>
                 <Button onClick={submitGrades} disabled={isSavingGrade}>
                   {isSavingGrade ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <div className="text-center">
+                      <FlowerLoader
+                        size="md"
+                        className="text-[#A41FC5] mx-auto"
+                      />
+                    </div>
                   ) : (
                     <Check className="h-4 w-4" />
                   )}

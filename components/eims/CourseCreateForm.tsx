@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,7 @@ import { cn, generateSlug } from "@/lib/utils";
 import { Course } from "@/types";
 import { useCourseCategories, useTeachers } from "@/hooks/useData";
 import ImageDropzone from "../ImageDropzone";
+import { FlowerLoader } from "../ui/flower-loader";
 
 const INITIAL_VALUES = {
   name: "",
@@ -530,7 +530,9 @@ export function CourseCreateForm({
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <div className="text-center">
+                  <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
+                </div>
                 {isEditMode ? "Saving changes..." : "Saving..."}
               </>
             ) : isEditMode ? (

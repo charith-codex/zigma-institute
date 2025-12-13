@@ -34,20 +34,22 @@ const createInitialState = (): ContactFormState => ({
 });
 
 export function ContactForm() {
-  const [formState, setFormState] = useState<ContactFormState>(createInitialState);
+  const [formState, setFormState] =
+    useState<ContactFormState>(createInitialState);
   const [isPending, startTransition] = useTransition();
 
-  const handleChange = (
-    field: keyof ContactFormState,
-    value: string
-  ) => {
+  const handleChange = (field: keyof ContactFormState, value: string) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!formState.name.trim() || !formState.email.trim() || !formState.subject.trim()) {
+    if (
+      !formState.name.trim() ||
+      !formState.email.trim() ||
+      !formState.subject.trim()
+    ) {
       toast.error("Please fill in your name, email, and subject.");
       return;
     }
@@ -72,7 +74,9 @@ export function ContactForm() {
         }
 
         setFormState(createInitialState());
-        toast.success("Thanks for reaching out! We will respond via email soon.");
+        toast.success(
+          "Thanks for reaching out! We will respond via email soon."
+        );
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Something went wrong.";
@@ -145,10 +149,19 @@ export function ContactForm() {
           required
         />
       </div>
-      <Button className="w-full md:w-auto md:self-start" type="submit" disabled={isPending}>
+      <Button
+        className="w-full md:w-auto md:self-start"
+        type="submit"
+        disabled={isPending}
+      >
         <Send className="w-4 h-4 mr-2" />
         {isPending ? "Sending..." : "Send Message"}
       </Button>
+
+      <p className="text-sm text-muted-foreground">
+        Our team will respond to your inquiry via the email address provided
+        above. We typically reply within 24 hours.
+      </p>
     </form>
   );
 }

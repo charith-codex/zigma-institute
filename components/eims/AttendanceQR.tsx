@@ -5,7 +5,6 @@ import { Scanner } from "@yudiel/react-qr-scanner";
 import {
   CalendarDays,
   CheckCircle,
-  Loader2,
   QrCode,
   RefreshCw,
   Users,
@@ -24,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCourses } from "@/hooks/useData";
+import { FlowerLoader } from "../ui/flower-loader";
 
 interface AttendanceSessionSummary {
   id: string;
@@ -48,7 +48,9 @@ interface StudentQrPayload {
   registrationId?: string;
 }
 
-const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
+const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "medium",
+});
 const TIME_FORMATTER = new Intl.DateTimeFormat("en-US", { timeStyle: "short" });
 
 const todayInputValue = new Date().toISOString().split("T")[0]!;
@@ -65,19 +67,29 @@ function parseQrPayload(rawValue: string): StudentQrPayload | null {
     if (parsed?.type !== "ZIGMA_STUDENT_ID") {
       return null;
     }
-    if (typeof parsed.studentPublicId !== "string" || parsed.studentPublicId.length === 0) {
+    if (
+      typeof parsed.studentPublicId !== "string" ||
+      parsed.studentPublicId.length === 0
+    ) {
       return null;
     }
-    if (typeof parsed.studentName !== "string" || parsed.studentName.length === 0) {
+    if (
+      typeof parsed.studentName !== "string" ||
+      parsed.studentName.length === 0
+    ) {
       return null;
     }
     return {
       type: "ZIGMA_STUDENT_ID",
       studentPublicId: parsed.studentPublicId,
       studentName: parsed.studentName,
-      studentEmail: typeof parsed.studentEmail === "string" ? parsed.studentEmail : undefined,
+      studentEmail:
+        typeof parsed.studentEmail === "string"
+          ? parsed.studentEmail
+          : undefined,
       registrationId:
-        typeof parsed.registrationId === "string" && parsed.registrationId.length > 0
+        typeof parsed.registrationId === "string" &&
+        parsed.registrationId.length > 0
           ? parsed.registrationId
           : undefined,
     };
@@ -91,7 +103,9 @@ const AttendanceQR = () => {
   const [sessions, setSessions] = useState<AttendanceSessionSummary[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [sessionsError, setSessionsError] = useState<string | null>(null);
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
+    null
+  );
   const [entries, setEntries] = useState<AttendanceEntry[]>([]);
   const [entriesLoading, setEntriesLoading] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -129,7 +143,9 @@ const AttendanceQR = () => {
       console.error("Failed to load attendance sessions", error);
       setSessions([]);
       setSessionsError(
-        error instanceof Error ? error.message : "Unable to load attendance sessions"
+        error instanceof Error
+          ? error.message
+          : "Unable to load attendance sessions"
       );
     } finally {
       setSessionsLoading(false);
@@ -170,7 +186,9 @@ const AttendanceQR = () => {
     void fetchEntries(selectedSessionId);
   }, [fetchEntries, selectedSessionId]);
 
-  const handleCreateSession = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateSession = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
     if (!courseId || !sessionDate) {
       toast.error("Select a course and date");
@@ -207,7 +225,9 @@ const AttendanceQR = () => {
       setSelectedSessionId(payload.id);
     } catch (error) {
       console.error("Failed to create attendance session", error);
-      toast.error(error instanceof Error ? error.message : "Unable to create session");
+      toast.error(
+        error instanceof Error ? error.message : "Unable to create session"
+      );
     } finally {
       setCreatingSession(false);
     }
@@ -316,10 +336,13 @@ const AttendanceQR = () => {
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-muted-foreground/40 p-4">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active session</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Active session
+                </p>
                 {activeSession ? (
                   <p className="text-lg font-semibold text-foreground">
-                    {activeSession.courseName} • {formatDate(activeSession.sessionDate)}
+                    {activeSession.courseName} •{" "}
+                    {formatDate(activeSession.sessionDate)}
                   </p>
                 ) : (
                   <p className="text-sm text-muted-foreground">
@@ -377,18 +400,23 @@ const AttendanceQR = () => {
               </div>
             ) : (
               <div className="rounded-xl border border-dashed border-muted-foreground/30 p-6 text-center text-sm text-muted-foreground">
-                Activate the scanner to capture student ID cards. QR codes now include attendance metadata, so each scan updates the selected session instantly.
+                Activate the scanner to capture student ID cards. QR codes now
+                include attendance metadata, so each scan updates the selected
+                session instantly.
               </div>
             )}
 
             {marking && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Marking attendance...
+                <div className="text-center">
+                  <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
+                </div>
               </div>
             )}
             {scannedStudent && !marking && (
               <div className="flex items-center gap-2 text-success text-sm">
-                <CheckCircle className="h-4 w-4" /> Attendance recorded for {scannedStudent}
+                <CheckCircle className="h-4 w-4" /> Attendance recorded for{" "}
+                {scannedStudent}
               </div>
             )}
             {scanError && (
@@ -403,8 +431,8 @@ const AttendanceQR = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {entriesLoading ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading attendance data...
+              <div className="text-center">
+                <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
               </div>
             ) : null}
             {entries.length === 0 && !entriesLoading ? (
@@ -419,12 +447,16 @@ const AttendanceQR = () => {
                   className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
-                    <p className="font-semibold text-foreground">{entry.studentName}</p>
+                    <p className="font-semibold text-foreground">
+                      {entry.studentName}
+                    </p>
                     <p className="text-sm font-mono text-muted-foreground">
                       {entry.studentPublicId}
                     </p>
                   </div>
-                  <Badge variant="secondary">{formatDateTime(entry.markedAt)}</Badge>
+                  <Badge variant="secondary">
+                    {formatDateTime(entry.markedAt)}
+                  </Badge>
                 </div>
               ))}
             </div>
@@ -473,11 +505,18 @@ const AttendanceQR = () => {
                   onChange={(event) => setSessionDate(event.target.value)}
                 />
               </div>
-              <Button type="submit" disabled={creatingSession || !courseId || !sessionDate}>
+              <Button
+                type="submit"
+                disabled={creatingSession || !courseId || !sessionDate}
+              >
                 {creatingSession ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
-                  </>
+                  <div className="text-center">
+                    <FlowerLoader
+                      size="md"
+                      className="text-[#A41FC5] mx-auto"
+                    />
+                    Saving...
+                  </div>
                 ) : (
                   <>
                     <CalendarDays className="mr-2 h-4 w-4" /> Schedule session
@@ -488,7 +527,9 @@ const AttendanceQR = () => {
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-muted-foreground">Upcoming sessions</p>
+                <p className="text-sm font-semibold text-muted-foreground">
+                  Upcoming sessions
+                </p>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -504,14 +545,16 @@ const AttendanceQR = () => {
               )}
 
               {sessionsLoading ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Loading sessions...
+                <div className="text-center">
+                  <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
+                  Loading sessions...
                 </div>
               ) : null}
 
               {sessions.length === 0 && !sessionsLoading ? (
                 <p className="text-sm text-muted-foreground">
-                  No sessions yet. Create one to start tracking attendance by date.
+                  No sessions yet. Create one to start tracking attendance by
+                  date.
                 </p>
               ) : null}
 
@@ -529,12 +572,16 @@ const AttendanceQR = () => {
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-semibold text-foreground">{session.courseName}</p>
+                        <p className="font-semibold text-foreground">
+                          {session.courseName}
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {formatDate(session.sessionDate)}
                         </p>
                       </div>
-                      <Badge variant="outline">{session.totalMarked} present</Badge>
+                      <Badge variant="outline">
+                        {session.totalMarked} present
+                      </Badge>
                     </div>
                   </button>
                 ))}

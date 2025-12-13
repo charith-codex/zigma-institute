@@ -47,6 +47,7 @@ import { courseCategorySchema } from "@/lib/validators";
 import { useCourseCategories } from "@/hooks/useData";
 import type { CourseCategory } from "@/types";
 import type { ActionState } from "@/lib/actions/user";
+import { FlowerLoader } from "../ui/flower-loader";
 
 const initialState: ActionState = { success: false, message: "" };
 
@@ -173,7 +174,9 @@ export function CourseCategoryManagement() {
           <CardContent className="space-y-4">
             {(loading || isRefetching) && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <div className="text-center">
+                  <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
+                </div>
                 {isRefetching ? "Refreshing..." : "Loading categories..."}
               </div>
             )}
@@ -230,7 +233,12 @@ export function CourseCategoryManagement() {
                               disabled={isDeleting || isRefetching}
                             >
                               {isDeleting ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                <div className="text-center">
+                                  <FlowerLoader
+                                    size="md"
+                                    className="text-[#A41FC5] mx-auto"
+                                  />
+                                </div>
                               ) : (
                                 <Trash2 className="mr-2 h-4 w-4" />
                               )}
@@ -271,7 +279,9 @@ export function CourseCategoryManagement() {
               disabled={deletingId !== null}
             >
               {deletingId !== null && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <div className="text-center">
+                  <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
+                </div>
               )}
               Delete
             </Button>
@@ -411,7 +421,9 @@ function CourseCategoryCreateForm({
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={pending || isProcessing}>
           {(pending || isProcessing) && (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <div className="text-center">
+              <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
+            </div>
           )}
           Add category
         </Button>

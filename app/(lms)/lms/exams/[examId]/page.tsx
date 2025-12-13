@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Loader2, Trophy } from "lucide-react";
+import { Trophy } from "lucide-react";
+import { FlowerLoader } from "@/components/ui/flower-loader";
 
 interface ExamQuestion {
   id: string;
@@ -303,8 +304,8 @@ export default function ExamAttemptPage() {
 
   if (loading || !exam) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      <div className="text-center">
+        <FlowerLoader size="lg" className="text-[#A41FC5] mx-auto" />
       </div>
     );
   }
@@ -581,7 +582,12 @@ export default function ExamAttemptPage() {
                         {!result ? (
                           <Button onClick={handleSubmit} disabled={submitting}>
                             {submitting ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <div className="text-center">
+                                <FlowerLoader
+                                  size="lg"
+                                  className="text-[#A41FC5] mx-auto"
+                                />
+                              </div>
                             ) : (
                               "Submit exam"
                             )}
