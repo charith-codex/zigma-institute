@@ -241,9 +241,7 @@ export function ExamResults({ courseId }: ExamResultsProps) {
               disabled={loading}
             >
               {loading ? (
-                <div className="text-center">
-                  <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
-                </div>
+                <FlowerLoader size="sm" className="h-4 w-4 text-[#A41FC5]" />
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
@@ -265,7 +263,19 @@ export function ExamResults({ courseId }: ExamResultsProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAttempts.length === 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-12 text-center">
+                      <FlowerLoader
+                        size="lg"
+                        className="mx-auto text-[#A41FC5]"
+                      />
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        Loading exam attempts...
+                      </p>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredAttempts.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={6}
@@ -431,12 +441,10 @@ export function ExamResults({ courseId }: ExamResultsProps) {
                 </Button>
                 <Button onClick={submitGrades} disabled={isSavingGrade}>
                   {isSavingGrade ? (
-                    <div className="text-center">
-                      <FlowerLoader
-                        size="md"
-                        className="text-[#A41FC5] mx-auto"
-                      />
-                    </div>
+                    <FlowerLoader
+                      size="md"
+                      className="h-4 w-4 text-[#A41FC5] mr-2"
+                    />
                   ) : (
                     <Check className="h-4 w-4" />
                   )}

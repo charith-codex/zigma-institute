@@ -125,8 +125,8 @@ const LMS = () => {
                   <Card>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                          <Star className="w-5 h-5 text-accent" />
+                        <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                          <Star className="w-5 h-5 text-orange-600" />
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground">
@@ -143,14 +143,13 @@ const LMS = () => {
                   <Card>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
-                          <Video className="w-5 h-5 text-secondary" />
+                        <div className="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
+                          <Video className="w-5 h-5 text-sky-600" />
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground">
                             Hours Watched
                           </p>
-                          <p className="text-xl font-bold">47h</p>
                         </div>
                       </div>
                     </CardContent>
@@ -164,8 +163,9 @@ const LMS = () => {
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground">
-                      Your learning journey continues. You have{" "}
-                      {assignments.length} assignments to review.
+                      Your learning journey continues. Explore your courses,
+                      check upcoming schedules, and make the most of your LMS
+                      experience.
                     </p>
                   </CardContent>
                 </Card>
