@@ -2,13 +2,15 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -17,24 +19,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Field,
+  FieldLabel,
+  FieldError,
+  FieldDescription,
+} from "@/components/ui/field";
 import { cn, generateSlug } from "@/lib/utils";
 import { Course } from "@/types";
 import { useCourseCategories, useTeachers } from "@/hooks/useData";
+import { courseSchema } from "@/lib/validators/courses";
 import ImageDropzone from "../ImageDropzone";
-import { FlowerLoader } from "../ui/flower-loader";
 
-const INITIAL_VALUES = {
-  name: "",
-  slug: "",
-  teacherId: "",
-  teacherName: "",
-  description: "",
-  coverImage: "",
-  price: "",
-  courseCategoryId: "",
-};
-
-type FormState = typeof INITIAL_VALUES;
+type CourseFormData = z.infer<typeof courseSchema>;
 
 interface CourseCreateFormProps {
   className?: string;
@@ -60,9 +57,18 @@ export function CourseCreateForm({
     error: categoriesError,
   } = useCourseCategories();
 
-  const deriveInitialState = useMemo<FormState>(() => {
+  const defaultValues = useMemo<CourseFormData>(() => {
     if (!course) {
-      return INITIAL_VALUES;
+      return {
+        name: "",
+        slug: "",
+        teacherId: "",
+        teacherName: "",
+        description: "",
+        coverImage: "",
+        price: 0,
+        courseCategoryId: "",
+      };
     }
 
     return {
@@ -72,15 +78,25 @@ export function CourseCreateForm({
       teacherName: course.teacherName,
       description: course.description,
       coverImage: course.coverImage,
-      price: (course.priceInCents / 100).toString(),
+      price: course.priceInCents / 100,
       courseCategoryId: course.courseCategoryId,
     };
   }, [course]);
 
-  const [formState, setFormState] = useState<FormState>(deriveInitialState);
-  const [isAutoSlug, setIsAutoSlug] = useState(!isEditMode);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
+  const form = useForm<CourseFormData>({
+    resolver: zodResolver(courseSchema),
+    defaultValues,
+    mode: "onBlur",
+  });
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
+    reset,
+  } = form;
 
   const teacherOptions = useMemo(() => {
     if (
@@ -121,101 +137,45 @@ export function CourseCreateForm({
     return categories;
   }, [categories, course]);
 
-  useEffect(() => {
-    setFormState(deriveInitialState);
-    setIsAutoSlug(!isEditMode);
-  }, [deriveInitialState, isEditMode]);
+  const nameValue = watch("name");
+  const teacherIdValue = watch("teacherId");
+  const coverImageValue = watch("coverImage");
 
+  // Reset form when course changes
   useEffect(() => {
-    if (!isEditMode && !formState.courseCategoryId && categoryOptions.length) {
-      setFormState((prev) => ({
-        ...prev,
-        courseCategoryId: categoryOptions[0]?.id ?? "",
-      }));
+    reset(defaultValues);
+  }, [defaultValues, reset]);
+
+  // Auto-set category if empty
+  useEffect(() => {
+    const currentCategory = watch("courseCategoryId");
+    if (!isEditMode && !currentCategory && categoryOptions.length) {
+      setValue("courseCategoryId", categoryOptions[0]?.id ?? "");
     }
-  }, [categoryOptions, formState.courseCategoryId, isEditMode]);
+  }, [categoryOptions, isEditMode, setValue, watch]);
 
+  // Auto-update teacher name when teacher changes
   useEffect(() => {
-    if (!formState.teacherId) {
-      if (course && teacherOptions.length > 0) {
-        const normalizedCourseTeacher = course.teacherName.trim().toLowerCase();
-        const matchingTeacher = teacherOptions.find(
-          (teacher) =>
-            teacher.name.trim().toLowerCase() === normalizedCourseTeacher
-        );
-
-        if (matchingTeacher) {
-          setFormState((prev) => ({
-            ...prev,
-            teacherId: matchingTeacher.id,
-            teacherName: matchingTeacher.name,
-          }));
-        }
-      }
-
-      return;
-    }
+    if (!teacherIdValue) return;
 
     const selectedTeacher = teacherOptions.find(
-      (teacher) => teacher.id === formState.teacherId
+      (teacher) => teacher.id === teacherIdValue
     );
 
-    if (selectedTeacher && selectedTeacher.name !== formState.teacherName) {
-      setFormState((prev) => ({
-        ...prev,
-        teacherName: selectedTeacher.name,
-      }));
+    if (selectedTeacher) {
+      setValue("teacherName", selectedTeacher.name);
     }
-  }, [course, formState.teacherId, formState.teacherName, teacherOptions]);
+  }, [teacherIdValue, teacherOptions, setValue]);
 
-  const isReadyToSubmit = useMemo(() => {
-    const priceValue = Number(formState.price);
-
-    return (
-      Boolean(formState.name.trim()) &&
-      Boolean(formState.slug.trim()) &&
-      Boolean(formState.teacherId.trim()) &&
-      Boolean(formState.teacherName.trim()) &&
-      Boolean(formState.description.trim()) &&
-      Boolean(formState.coverImage) &&
-      Boolean(formState.courseCategoryId) &&
-      Number.isFinite(priceValue) &&
-      priceValue > 0
-    );
-  }, [formState]);
-
-  const resetForm = () => {
-    setFormState(deriveInitialState);
-    setIsAutoSlug(!isEditMode);
-  };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!formState.coverImage) {
-      toast.error("Please upload a cover image before saving the course.");
-      return;
+  // Auto-generate slug from name
+  useEffect(() => {
+    if (!isEditMode && nameValue) {
+      setValue("slug", generateSlug(nameValue));
     }
+  }, [nameValue, isEditMode, setValue]);
 
-    const numericPrice = Number(formState.price);
-
-    if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
-      toast.error("Enter a valid price greater than zero.");
-      return;
-    }
-
-    if (!formState.teacherId) {
-      toast.error("Select Teacher before saving the course.");
-      return;
-    }
-
-    if (!formState.courseCategoryId) {
-      toast.error("Select a course category before saving the course.");
-      return;
-    }
-
+  const onSubmit = async (data: CourseFormData) => {
     try {
-      setIsSubmitting(true);
       let requestEndpoint = "/api/courses";
       let requestMethod: "POST" | "PATCH" = "POST";
 
@@ -231,10 +191,7 @@ export function CourseCreateForm({
       const response = await fetch(requestEndpoint, {
         method: requestMethod,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formState,
-          price: numericPrice,
-        }),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
@@ -252,9 +209,11 @@ export function CourseCreateForm({
           ? "Course updated successfully."
           : "Course created successfully."
       );
+
       if (!isEditMode) {
-        resetForm();
+        reset();
       }
+
       router.refresh();
       onSuccess?.();
     } catch (error) {
@@ -266,80 +225,49 @@ export function CourseCreateForm({
             ? "Failed to update course"
             : "Failed to create course"
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   return (
     <Card className={cn("w-full", className)}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="name">Course name</Label>
+            <Field>
+              <FieldLabel htmlFor="name">Course name</FieldLabel>
               <Input
                 id="name"
                 placeholder="e.g. Advanced Physics"
-                value={formState.name}
-                onChange={(event) => {
-                  const name = event.target.value;
-                  setFormState((prev) => ({
-                    ...prev,
-                    name,
-                    slug: isAutoSlug ? generateSlug(name) : prev.slug,
-                  }));
-                }}
-                required
+                {...register("name")}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="slug">Course slug</Label>
+              <FieldError errors={[errors.name]} />
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="slug">Course slug</FieldLabel>
               <Input
                 id="slug"
                 placeholder="advanced-physics"
-                value={formState.slug}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setIsAutoSlug(false);
-                  setFormState((prev) => ({
-                    ...prev,
-                    slug: generateSlug(value),
-                  }));
-                }}
-                required
+                {...register("slug")}
               />
-              {isAutoSlug ? (
-                <p className="text-xs text-muted-foreground">
+              <FieldError errors={[errors.slug]} />
+              {!isEditMode && (
+                <FieldDescription>
                   The slug is generated automatically from the course name.
-                </p>
-              ) : (
-                <button
-                  type="button"
-                  className="text-xs font-medium text-primary underline"
-                  onClick={() => {
-                    setIsAutoSlug(true);
-                    setFormState((prev) => ({
-                      ...prev,
-                      slug: generateSlug(prev.name),
-                    }));
-                  }}
-                >
-                  Revert to automatic slugging
-                </button>
+                </FieldDescription>
               )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="courseCategoryId">Course Category</Label>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="courseCategoryId">
+                Course Category
+              </FieldLabel>
               <Select
-                value={formState.courseCategoryId}
-                onValueChange={(value) =>
-                  setFormState((prev) => ({ ...prev, courseCategoryId: value }))
-                }
+                value={watch("courseCategoryId")}
+                onValueChange={(value) => setValue("courseCategoryId", value)}
                 disabled={
                   categoriesLoading ||
                   isSubmitting ||
-                  isUploading ||
                   categoryOptions.length === 0
                 }
               >
@@ -363,32 +291,22 @@ export function CourseCreateForm({
                   ))}
                 </SelectContent>
               </Select>
-              {categoriesError ? (
-                <p className="text-xs text-destructive">
+              <FieldError errors={[errors.courseCategoryId]} />
+              {categoriesError && (
+                <FieldDescription className="text-destructive">
                   Unable to load categories.{" "}
                   {categoryOptions.length > 0 ? "Using cached results." : ""}
-                </p>
-              ) : null}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="teacherId">Teacher</Label>
+                </FieldDescription>
+              )}
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="teacherId">Teacher</FieldLabel>
               <Select
-                value={formState.teacherId}
-                onValueChange={(value) => {
-                  const selectedTeacher = teacherOptions.find(
-                    (teacher) => teacher.id === value
-                  );
-                  setFormState((prev) => ({
-                    ...prev,
-                    teacherId: value,
-                    teacherName: selectedTeacher?.name ?? prev.teacherName,
-                  }));
-                }}
+                value={watch("teacherId")}
+                onValueChange={(value) => setValue("teacherId", value)}
                 disabled={
-                  teachersLoading ||
-                  isSubmitting ||
-                  isUploading ||
-                  teacherOptions.length === 0
+                  teachersLoading || isSubmitting || teacherOptions.length === 0
                 }
               >
                 <SelectTrigger id="teacherId" className="w-full">
@@ -413,27 +331,29 @@ export function CourseCreateForm({
                   ))}
                 </SelectContent>
               </Select>
+              <FieldError errors={[errors.teacherId]} />
               {teachersError ? (
-                <p className="text-xs text-destructive">
+                <FieldDescription className="text-destructive">
                   Unable to load teachers.{" "}
                   {teacherOptions.length > 0
                     ? "The current assignment is still selected."
                     : "Please try again."}
-                </p>
+                </FieldDescription>
               ) : teacherOptions.length === 0 && !teachersLoading ? (
-                <p className="text-xs text-destructive">
+                <FieldDescription className="text-destructive">
                   Add teachers in the management module before assigning a
                   course.
-                </p>
+                </FieldDescription>
               ) : (
-                <p className="text-xs text-muted-foreground">
+                <FieldDescription>
                   Select the teacher who will build lessons for this course in
                   the CMS.
-                </p>
+                </FieldDescription>
               )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="price">Monthly Price</Label>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="price">Monthly Price</FieldLabel>
               <Input
                 id="price"
                 type="number"
@@ -441,27 +361,19 @@ export function CourseCreateForm({
                 min="0"
                 step="0.01"
                 placeholder="e.g. 99.99"
-                value={formState.price}
-                onChange={(event) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    price: event.target.value,
-                  }))
-                }
-                required
+                {...register("price", { valueAsNumber: true })}
               />
-              <p className="text-xs text-muted-foreground">
-                Prices are charged in USD.
-              </p>
-            </div>
+              <FieldError errors={[errors.price]} />
+              <FieldDescription>Prices are charged in USD.</FieldDescription>
+            </Field>
 
-            <div className="space-y-2">
-              <Label>Cover image</Label>
+            <Field>
+              <FieldLabel>Cover image</FieldLabel>
               <div className="flex flex-col gap-3">
-                {formState.coverImage ? (
+                {coverImageValue ? (
                   <div className="relative h-40 w-full overflow-hidden rounded-md border">
                     <Image
-                      src={formState.coverImage}
+                      src={coverImageValue}
                       alt="Course cover preview"
                       fill
                       className="object-cover"
@@ -471,12 +383,7 @@ export function CourseCreateForm({
                         type="button"
                         variant="secondary"
                         size="sm"
-                        onClick={() =>
-                          setFormState((prev) => ({
-                            ...prev,
-                            coverImage: "",
-                          }))
-                        }
+                        onClick={() => setValue("coverImage", "")}
                       >
                         Remove
                       </Button>
@@ -484,57 +391,37 @@ export function CourseCreateForm({
                   </div>
                 ) : (
                   <ImageDropzone
-                    onUploadComplete={(url) => {
-                      setFormState((prev) => ({
-                        ...prev,
-                        coverImage: url,
-                      }));
-                    }}
+                    onUploadComplete={(url) => setValue("coverImage", url)}
                   />
                 )}
               </div>
-            </div>
+              <FieldError errors={[errors.coverImage]} />
+            </Field>
 
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="description">Description</Label>
+            <Field className="md:col-span-2">
+              <FieldLabel htmlFor="description">Description</FieldLabel>
               <Textarea
                 id="description"
                 placeholder="Describe the course content, prerequisites, and goals."
                 rows={6}
-                value={formState.description}
-                onChange={(event) =>
-                  setFormState((prev) => ({
-                    ...prev,
-                    description: event.target.value,
-                  }))
-                }
-                required
+                {...register("description")}
               />
-            </div>
+              <FieldError errors={[errors.description]} />
+            </Field>
           </div>
         </CardContent>
         <CardFooter className="justify-end space-x-3">
           <Button
             type="button"
             variant="ghost"
-            onClick={resetForm}
-            disabled={isSubmitting || isUploading}
+            onClick={() => reset()}
+            disabled={isSubmitting}
           >
             {isEditMode ? "Revert" : "Reset"}
           </Button>
-          <Button
-            type="submit"
-            disabled={
-              !isReadyToSubmit || isSubmitting || isUploading || teachersLoading
-            }
-          >
+          <Button type="submit" disabled={isSubmitting || teachersLoading}>
             {isSubmitting ? (
-              <>
-                <div className="text-center">
-                  <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
-                </div>
-                {isEditMode ? "Saving changes..." : "Saving..."}
-              </>
+              <>{isEditMode ? "Saving changes..." : "Saving..."}</>
             ) : isEditMode ? (
               "Update course"
             ) : (

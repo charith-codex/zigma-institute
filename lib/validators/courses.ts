@@ -13,7 +13,7 @@ export const courseSchema = z.object({
     )
     .min(3, "Slug must be at least 3 characters")
     .max(50, "Slug must be less than 50 characters"),
-  coverImage: z.string(),
+  coverImage: z.string().min(1, "Cover image is required"),
   description: z
     .string()
     .min(10, "Description must be at least 10 characters")
@@ -24,10 +24,7 @@ export const courseSchema = z.object({
     .min(3, "Teacher name must be at least 3 characters")
     .max(100, "Teacher name must be less than 100 characters"),
   courseCategoryId: z.string().min(1, "Course category is required"),
-  price: z.coerce
-    .number("Price is required")
-    .finite("Price must be a valid number")
-    .gt(0, "Price must be greater than 0"),
+  price: z.number("Price is required").gt(0, "Price must be greater than 0"),
 });
 
 export const lessonSchema = z.object({

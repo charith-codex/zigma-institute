@@ -367,7 +367,7 @@ export default function ExamAttemptPage() {
   if (loading || !exam) {
     return (
       <div className="text-center">
-        <FlowerLoader size="lg" className="text-[#A41FC5] mx-auto" />
+        <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
       </div>
     );
   }
@@ -667,12 +667,7 @@ export default function ExamAttemptPage() {
                             disabled={submitting}
                           >
                             {submitting ? (
-                              <div className="text-center">
-                                <FlowerLoader
-                                  size="lg"
-                                  className="text-[#A41FC5] mx-auto"
-                                />
-                              </div>
+                              "Submitting exam..."
                             ) : (
                               "Submit exam"
                             )}
