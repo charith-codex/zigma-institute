@@ -170,55 +170,53 @@ export function PhysicalMaterialDistribution() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Select Tute</Label>
-              <Select
-                value={selectedTute}
-                onValueChange={(tuteId) => setSelectedTute(tuteId)}
-                disabled={!selectedCourse || tutesLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      selectedCourse
-                        ? tutesLoading
-                          ? "Loading tutes..."
-                          : "Choose a tute"
-                        : "Select a course first"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {tutes.map((tute) => (
-                    <SelectItem key={tute.id} value={tute.id}>
-                      {tute.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {tutesError ? (
-                <p className="text-xs text-destructive">{tutesError}</p>
-              ) : null}
+              <Label>Create Tute</Label>
+              <div className="grid gap-3 rounded-md border p-4 md:grid-cols-[1fr_auto] md:items-end">
+                <Input
+                  value={newTuteName}
+                  onChange={(event) => setNewTuteName(event.target.value)}
+                  placeholder="e.g. Algebra Tute"
+                  spellCheck={false}
+                  disabled={!selectedCourse || tutesLoading}
+                />
+                <Button
+                  className="w-full md:w-auto"
+                  onClick={handleCreateTute}
+                  disabled={!selectedCourse || tutesLoading}
+                >
+                  Create tute
+                </Button>
+              </div>
             </div>
           </div>
 
-          <div className="grid gap-3 rounded-md border p-4 md:grid-cols-[1fr_auto] md:items-end">
-            <div className="space-y-2">
-              <Label>New Tute Name</Label>
-              <Input
-                value={newTuteName}
-                onChange={(event) => setNewTuteName(event.target.value)}
-                placeholder="e.g. Algebra Tute"
-                spellCheck={false}
-                disabled={!selectedCourse || tutesLoading}
-              />
-            </div>
-            <Button
-              className="w-full md:w-auto"
-              onClick={handleCreateTute}
+          <div className="space-y-2">
+            <Label>Select Tute</Label>
+            <Select
+              value={selectedTute}
+              onValueChange={(tuteId) => setSelectedTute(tuteId)}
               disabled={!selectedCourse || tutesLoading}
             >
-              Create tute
-            </Button>
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    selectedCourse
+                      ? tutesLoading
+                        ? "Loading tutes..."
+                        : "Choose a tute"
+                      : "Select a course first"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {tutes.map((tute) => (
+                  <SelectItem key={tute.id} value={tute.id}>
+                    {tute.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {tutesError ? <p className="text-xs text-destructive">{tutesError}</p> : null}
           </div>
 
           <div className="space-y-2">
