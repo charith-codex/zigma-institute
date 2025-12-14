@@ -53,13 +53,12 @@ const LMS = () => {
             coverImage: "/logo.png",
             teacherName: enrollment.teacherName ?? "Instructor",
             teacherId: null,
-            courseCategoryId: course?.courseCategoryId ?? "",
-            courseCategory: course?.courseCategory ?? null,
-            priceInCents:
-              course?.priceInCents ?? Math.max(enrollment.priceInCents, 0),
-            currency: course?.currency ?? enrollment.currency,
-            createdAt: course?.createdAt ?? fallbackDate,
-            updatedAt: course?.updatedAt ?? fallbackDate,
+            courseCategoryId: "",
+            courseCategory: null,
+            priceInCents: Math.max(enrollment.priceInCents, 0),
+            currency: enrollment.currency,
+            createdAt: fallbackDate,
+            updatedAt: fallbackDate,
           };
 
         return {

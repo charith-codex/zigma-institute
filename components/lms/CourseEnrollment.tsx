@@ -52,12 +52,16 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
   const filteredCourses = useMemo(() => {
     const normalized = search.trim().toLowerCase();
 
-    return courses.filter((course) =>
-      normalized.length === 0
-        ? true
-        : course.name.toLowerCase().includes(normalized) ||
-          course.slug.toLowerCase().includes(normalized)
-    );
+    return courses.filter((course) => {
+      if (normalized.length === 0) {
+        return true;
+      }
+
+      const nameMatch = course.name.toLowerCase().includes(normalized);
+      const slugMatch = course.slug?.toLowerCase().includes(normalized) ?? false;
+
+      return nameMatch || slugMatch;
+    });
   }, [courses, search]);
 
   const handleEnroll = async (course: Course) => {
