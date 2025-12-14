@@ -42,25 +42,36 @@ export async function GET() {
     orderBy: { enrolledAt: "desc" },
   });
 
-  const payload: EnrollmentPayload[] = enrollments
-    .filter((enrollment): enrollment is EnrollmentPayload => Boolean(enrollment.course))
-    .map((enrollment) => ({
-      id: enrollment.id,
-      courseId: enrollment.courseId,
-      enrolledAt: enrollment.enrolledAt,
-      course: {
-        id: enrollment.course.id,
-        name: enrollment.course.name,
-        slug: enrollment.course.slug,
-        description: enrollment.course.description,
-        coverImage: enrollment.course.coverImage,
-        teacherName: enrollment.course.teacherName,
-        priceInCents: enrollment.course.priceInCents,
-        currency: enrollment.course.currency,
-        createdAt: enrollment.course.createdAt,
-        updatedAt: enrollment.course.updatedAt,
-      },
-    }));
+  const payload: EnrollmentPayload[] = enrollments.reduce<EnrollmentPayload[]>(
+    (accumulator, enrollment) => {
+      if (!enrollment.course) {
+        return accumulator;
+      }
+
+      const course = enrollment.course;
+
+      accumulator.push({
+        id: enrollment.id,
+        courseId: enrollment.courseId,
+        enrolledAt: enrollment.enrolledAt,
+        course: {
+          id: course.id,
+          name: course.name,
+          slug: course.slug,
+          description: course.description,
+          coverImage: course.coverImage,
+          teacherName: course.teacherName,
+          priceInCents: course.priceInCents,
+          currency: course.currency,
+          createdAt: course.createdAt,
+          updatedAt: course.updatedAt,
+        },
+      });
+
+      return accumulator;
+    },
+    []
+  );
 
   return NextResponse.json(convertToPlainObject(payload));
 }
