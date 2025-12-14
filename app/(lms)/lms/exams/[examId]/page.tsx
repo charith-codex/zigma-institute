@@ -33,8 +33,6 @@ interface ExamQuestion {
 interface ExamPayload {
   id: string;
   title: string;
-  lessonTitle: string;
-  description?: string | null;
   instructions?: string | null;
   timeLimitMinutes?: number | null;
   status: "DRAFT" | "PUBLISHED" | "CLOSED";

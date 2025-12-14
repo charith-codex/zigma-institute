@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,8 +61,8 @@ type ExamQuestionRecord = {
 type ExamRecord = {
   id: string;
   title: string;
-  lessonTitle: string;
-  description?: string | null;
+  courseId: string | null;
+  course?: { name: string } | null;
   instructions?: string | null;
   timeLimitMinutes?: number | null;
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
@@ -77,7 +78,6 @@ type SelectedQuestion = {
 
 type ExamFormState = {
   title: string;
-  lessonTitle: string;
   instructions: string;
   timeLimitMinutes: string;
   publish: boolean;
@@ -85,13 +85,13 @@ type ExamFormState = {
 
 const DEFAULT_FORM: ExamFormState = {
   title: "",
-  lessonTitle: "",
   instructions: "",
   timeLimitMinutes: "",
   publish: false,
 };
 
-export function ExamBuilder() {
+export function ExamBuilder({ courseId }: { courseId: string }) {
+  const { data: session } = useSession();
   const [questionBank, setQuestionBank] = useState<QuestionRecord[]>([]);
   const [questionLessonFilter, setQuestionLessonFilter] = useState("all");
   const [selectedQuestions, setSelectedQuestions] = useState<
@@ -105,7 +105,7 @@ export function ExamBuilder() {
   });
   const [isSavingExam, setIsSavingExam] = useState(false);
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     try {
       setIsLoading((prev) => ({ ...prev, questions: true }));
       const response = await fetch("/api/questions");
@@ -122,12 +122,14 @@ export function ExamBuilder() {
     } finally {
       setIsLoading((prev) => ({ ...prev, questions: false }));
     }
-  };
+  }, []);
 
-  const fetchExams = async () => {
+  const fetchExams = useCallback(async () => {
     try {
       setIsLoading((prev) => ({ ...prev, exams: true }));
-      const response = await fetch("/api/exams");
+      const response = await fetch(
+        `/api/exams?${new URLSearchParams({ courseId })}`
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch exams");
       }
@@ -141,12 +143,12 @@ export function ExamBuilder() {
     } finally {
       setIsLoading((prev) => ({ ...prev, exams: false }));
     }
-  };
+  }, [courseId]);
 
   useEffect(() => {
     fetchQuestions();
     fetchExams();
-  }, []);
+  }, [courseId, fetchExams, fetchQuestions]);
 
   const lessons = useMemo(() => {
     const values = new Set(
@@ -173,8 +175,9 @@ export function ExamBuilder() {
   const toggleQuestionSelection = (question: QuestionRecord) => {
     setSelectedQuestions((prev) => {
       if (prev[question.id]) {
-        const { [question.id]: _removed, ...rest } = prev;
-        return rest;
+        const next = { ...prev };
+        delete next[question.id];
+        return next;
       }
 
       return {
@@ -205,8 +208,8 @@ export function ExamBuilder() {
       return;
     }
 
-    if (!examForm.lessonTitle.trim()) {
-      toast.error("Lesson title is required");
+    if (!courseId) {
+      toast.error("Select a course before creating an exam");
       return;
     }
 
@@ -238,9 +241,10 @@ export function ExamBuilder() {
     try {
       const payload = {
         title: examForm.title.trim(),
-        lessonTitle: examForm.lessonTitle.trim(),
+        courseId,
         instructions: examForm.instructions.trim() || undefined,
         timeLimitMinutes: parsedTimeLimit,
+        createdById: session?.user?.id,
         publish: examForm.publish,
         questions: questionEntries.map(([questionId, entry], index) => ({
           questionId,
@@ -462,20 +466,6 @@ export function ExamBuilder() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="exam-lesson">Lesson title</Label>
-                <Input
-                  id="exam-lesson"
-                  value={examForm.lessonTitle}
-                  onChange={(event) =>
-                    setExamForm((prev) => ({
-                      ...prev,
-                      lessonTitle: event.target.value,
-                    }))
-                  }
-                  placeholder="e.g. JavaScript Fundamentals"
-                />
-              </div>
-              <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="exam-time-limit">Time limit (minutes)</Label>
                   <span className="text-xs text-muted-foreground">Optional</span>
@@ -577,9 +567,11 @@ export function ExamBuilder() {
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <h3 className="text-lg font-semibold">{exam.title}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Lesson: {exam.lessonTitle}
-                        </p>
+                        {exam.course?.name ? (
+                          <p className="text-sm text-muted-foreground">
+                            Course: {exam.course.name}
+                          </p>
+                        ) : null}
                       </div>
                       {exam.status !== "PUBLISHED" && (
                         <Button

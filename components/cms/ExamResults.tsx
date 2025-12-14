@@ -62,7 +62,7 @@ type ExamAttemptRecord = {
   exam: {
     id: string;
     title: string;
-    lessonTitle: string;
+    courseName: string | null;
     status: "DRAFT" | "PUBLISHED" | "CLOSED";
   };
   answers: AttemptAnswer[];
@@ -299,9 +299,11 @@ export function ExamResults({ courseId }: ExamResultsProps) {
                             <span className="font-medium">
                               {attempt.exam.title}
                             </span>
-                            <span className="text-xs text-muted-foreground">
-                              {attempt.exam.lessonTitle}
-                            </span>
+                            {attempt.exam.courseName ? (
+                              <span className="text-xs text-muted-foreground">
+                                {attempt.exam.courseName}
+                              </span>
+                            ) : null}
                           </div>
                         </TableCell>
                         <TableCell>

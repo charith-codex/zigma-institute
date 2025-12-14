@@ -11,8 +11,7 @@ import { FlowerLoader } from "../ui/flower-loader";
 export type ExamSummary = {
   id: string;
   title: string;
-  lessonTitle: string;
-  description?: string | null;
+  course?: { name: string } | null;
   instructions?: string | null;
   timeLimitMinutes?: number | null;
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
@@ -86,9 +85,11 @@ export function PublishedExams({ heading, description }: PublishedExamsProps) {
                     <CardTitle className="text-lg font-semibold">
                       {exam.title}
                     </CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Lesson: {exam.lessonTitle}
-                    </p>
+                    {exam.course?.name ? (
+                      <p className="text-sm text-muted-foreground">
+                        Course: {exam.course.name}
+                      </p>
+                    ) : null}
                   </div>
                   <Badge
                     variant="secondary"

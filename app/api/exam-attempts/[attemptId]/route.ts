@@ -74,7 +74,7 @@ export async function PATCH(
             id: true,
             title: true,
             status: true,
-            lesson: { select: { title: true } },
+            course: { select: { name: true } },
           },
         },
         answers: {
@@ -91,7 +91,7 @@ export async function PATCH(
             id: updatedAttempt.exam.id,
             title: updatedAttempt.exam.title,
             status: updatedAttempt.exam.status,
-            lessonTitle: updatedAttempt.exam.lesson?.title ?? null,
+            courseName: updatedAttempt.exam.course?.name ?? null,
           }
         : null,
     };

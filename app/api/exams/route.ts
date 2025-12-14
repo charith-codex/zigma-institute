@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
-    const lessonTitle = searchParams.get("lessonTitle");
+    const courseId = searchParams.get("courseId");
 
     const exams = await prisma.examPaper.findMany({
       where: {
@@ -15,21 +15,10 @@ export async function GET(request: Request) {
           status === "DRAFT" || status === "PUBLISHED" || status === "CLOSED"
             ? status
             : undefined,
-        questions: lessonTitle
-          ? {
-              some: {
-                question: {
-                  lessonTitle: {
-                    contains: lessonTitle,
-                    mode: "insensitive",
-                  },
-                },
-              },
-            }
-          : undefined,
+        courseId: courseId ?? undefined,
       },
       include: {
-        lesson: { select: { title: true } },
+        course: { select: { name: true } },
         questions: {
           orderBy: { order: "asc" },
           include: {
@@ -40,21 +29,8 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
     });
 
-    const sanitizedExams = exams.map((exam) => {
-      const lessonTitleFromLesson = exam.lesson?.title ?? null;
-      const lessonTitleFromQuestion =
-        exam.questions[0]?.question.lessonTitle ?? null;
-
-      const { lesson, ...rest } = exam;
-
-      return {
-        ...rest,
-        lessonTitle: lessonTitleFromLesson ?? lessonTitleFromQuestion,
-      };
-    });
-
     return NextResponse.json({
-      exams: JSON.parse(JSON.stringify(sanitizedExams)),
+      exams: JSON.parse(JSON.stringify(exams)),
     });
   } catch (error) {
     console.error("Failed to fetch exams", error);
@@ -73,9 +49,9 @@ export async function POST(request: Request) {
     const exam = await prisma.examPaper.create({
       data: {
         title: data.title,
-        description: data.description ?? null,
         instructions: data.instructions ?? null,
         timeLimitMinutes: data.timeLimitMinutes ?? null,
+        courseId: data.courseId,
         status: data.publish ? "PUBLISHED" : "DRAFT",
         publishedAt: data.publish ? new Date() : null,
         createdById: data.createdById ?? null,
@@ -88,7 +64,7 @@ export async function POST(request: Request) {
         },
       },
       include: {
-        lesson: { select: { title: true } },
+        course: { select: { name: true } },
         questions: {
           orderBy: { order: "asc" },
           include: {
@@ -98,20 +74,8 @@ export async function POST(request: Request) {
       },
     });
 
-    const lessonTitleFromLesson = exam.lesson?.title ?? null;
-    const lessonTitleFromQuestion =
-      exam.questions[0]?.question.lessonTitle ?? null;
-
-    const { lesson, ...rest } = exam;
-
-    const sanitizedExam = {
-      ...rest,
-      lessonTitle:
-        lessonTitleFromLesson ?? data.lessonTitle ?? lessonTitleFromQuestion,
-    };
-
     return NextResponse.json(
-      { exam: JSON.parse(JSON.stringify(sanitizedExam)) },
+      { exam: JSON.parse(JSON.stringify(exam)) },
       { status: 201 }
     );
   } catch (error) {
