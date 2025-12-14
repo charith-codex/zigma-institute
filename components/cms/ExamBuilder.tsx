@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,8 +61,10 @@ type ExamQuestionRecord = {
 type ExamRecord = {
   id: string;
   title: string;
-  lessonTitle: string;
-  description?: string | null;
+  courseId: string | null;
+  course?: { name: string } | null;
+  instructions?: string | null;
+  timeLimitMinutes?: number | null;
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
   createdAt: string;
   publishedAt?: string | null;
@@ -75,19 +78,20 @@ type SelectedQuestion = {
 
 type ExamFormState = {
   title: string;
-  lessonTitle: string;
-  description: string;
+  instructions: string;
+  timeLimitMinutes: string;
   publish: boolean;
 };
 
 const DEFAULT_FORM: ExamFormState = {
   title: "",
-  lessonTitle: "",
-  description: "",
+  instructions: "",
+  timeLimitMinutes: "",
   publish: false,
 };
 
-export function ExamBuilder() {
+export function ExamBuilder({ courseId }: { courseId: string }) {
+  const { data: session } = useSession();
   const [questionBank, setQuestionBank] = useState<QuestionRecord[]>([]);
   const [questionLessonFilter, setQuestionLessonFilter] = useState("all");
   const [selectedQuestions, setSelectedQuestions] = useState<
@@ -101,7 +105,7 @@ export function ExamBuilder() {
   });
   const [isSavingExam, setIsSavingExam] = useState(false);
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     try {
       setIsLoading((prev) => ({ ...prev, questions: true }));
       const response = await fetch("/api/questions");
@@ -118,12 +122,14 @@ export function ExamBuilder() {
     } finally {
       setIsLoading((prev) => ({ ...prev, questions: false }));
     }
-  };
+  }, []);
 
-  const fetchExams = async () => {
+  const fetchExams = useCallback(async () => {
     try {
       setIsLoading((prev) => ({ ...prev, exams: true }));
-      const response = await fetch("/api/exams");
+      const response = await fetch(
+        `/api/exams?${new URLSearchParams({ courseId })}`
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch exams");
       }
@@ -137,12 +143,12 @@ export function ExamBuilder() {
     } finally {
       setIsLoading((prev) => ({ ...prev, exams: false }));
     }
-  };
+  }, [courseId]);
 
   useEffect(() => {
     fetchQuestions();
     fetchExams();
-  }, []);
+  }, [courseId, fetchExams, fetchQuestions]);
 
   const lessons = useMemo(() => {
     const values = new Set(
@@ -169,8 +175,9 @@ export function ExamBuilder() {
   const toggleQuestionSelection = (question: QuestionRecord) => {
     setSelectedQuestions((prev) => {
       if (prev[question.id]) {
-        const { [question.id]: _removed, ...rest } = prev;
-        return rest;
+        const next = { ...prev };
+        delete next[question.id];
+        return next;
       }
 
       return {
@@ -201,8 +208,8 @@ export function ExamBuilder() {
       return;
     }
 
-    if (!examForm.lessonTitle.trim()) {
-      toast.error("Lesson title is required");
+    if (!courseId) {
+      toast.error("Select a course before creating an exam");
       return;
     }
 
@@ -212,13 +219,32 @@ export function ExamBuilder() {
       return;
     }
 
+    const trimmedTimeLimit = examForm.timeLimitMinutes.trim();
+    const hasTimeLimit = trimmedTimeLimit.length > 0;
+    let parsedTimeLimit: number | undefined;
+
+    if (hasTimeLimit) {
+      parsedTimeLimit = Number.parseInt(trimmedTimeLimit, 10);
+      if (Number.isNaN(parsedTimeLimit) || parsedTimeLimit <= 0) {
+        toast.error("Enter a valid time limit in minutes");
+        return;
+      }
+
+      if (parsedTimeLimit > 600) {
+        toast.error("Time limit cannot exceed 600 minutes");
+        return;
+      }
+    }
+
     setIsSavingExam(true);
 
     try {
       const payload = {
         title: examForm.title.trim(),
-        lessonTitle: examForm.lessonTitle.trim(),
-        description: examForm.description.trim() || undefined,
+        courseId,
+        instructions: examForm.instructions.trim() || undefined,
+        timeLimitMinutes: parsedTimeLimit,
+        createdById: session?.user?.id,
         publish: examForm.publish,
         questions: questionEntries.map(([questionId, entry], index) => ({
           questionId,
@@ -440,31 +466,38 @@ export function ExamBuilder() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="exam-lesson">Lesson title</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="exam-time-limit">Time limit (minutes)</Label>
+                  <span className="text-xs text-muted-foreground">Optional</span>
+                </div>
                 <Input
-                  id="exam-lesson"
-                  value={examForm.lessonTitle}
+                  id="exam-time-limit"
+                  type="number"
+                  min={1}
+                  max={600}
+                  inputMode="numeric"
+                  value={examForm.timeLimitMinutes}
                   onChange={(event) =>
                     setExamForm((prev) => ({
                       ...prev,
-                      lessonTitle: event.target.value,
+                      timeLimitMinutes: event.target.value,
                     }))
                   }
-                  placeholder="e.g. JavaScript Fundamentals"
+                  placeholder="e.g. 90"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="exam-description">Instructions</Label>
+                <Label htmlFor="exam-description">Exam instructions</Label>
                 <Textarea
                   id="exam-description"
-                  value={examForm.description}
+                  value={examForm.instructions}
                   onChange={(event) =>
                     setExamForm((prev) => ({
                       ...prev,
-                      description: event.target.value,
+                      instructions: event.target.value,
                     }))
                   }
-                  placeholder="Optional instructions for students"
+                  placeholder="Share any rules, calculator restrictions, or submission notes"
                   rows={4}
                 />
               </div>
@@ -534,9 +567,11 @@ export function ExamBuilder() {
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <h3 className="text-lg font-semibold">{exam.title}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Lesson: {exam.lessonTitle}
-                        </p>
+                        {exam.course?.name ? (
+                          <p className="text-sm text-muted-foreground">
+                            Course: {exam.course.name}
+                          </p>
+                        ) : null}
                       </div>
                       {exam.status !== "PUBLISHED" && (
                         <Button
@@ -548,9 +583,9 @@ export function ExamBuilder() {
                         </Button>
                       )}
                     </div>
-                    {exam.description && (
+                    {exam.instructions && (
                       <p className="text-sm text-muted-foreground">
-                        {exam.description}
+                        {exam.instructions}
                       </p>
                     )}
                     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -568,6 +603,11 @@ export function ExamBuilder() {
                       <Badge variant="secondary">
                         Questions: {exam.questions.length}
                       </Badge>
+                      {exam.timeLimitMinutes ? (
+                        <Badge variant="outline">
+                          Time limit: {exam.timeLimitMinutes} mins
+                        </Badge>
+                      ) : null}
                       <Badge variant="outline">
                         Total marks:{" "}
                         {exam.questions.reduce(

@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,8 +33,8 @@ interface ExamQuestion {
 interface ExamPayload {
   id: string;
   title: string;
-  lessonTitle: string;
-  description?: string | null;
+  instructions?: string | null;
+  timeLimitMinutes?: number | null;
   status: "DRAFT" | "PUBLISHED" | "CLOSED";
   course?: {
     name: string;
@@ -128,10 +128,15 @@ export default function ExamAttemptPage() {
   const [checkingMarks, setCheckingMarks] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const [autoSubmitTriggered, setAutoSubmitTriggered] = useState(false);
   const [result, setResult] = useState<{
     attempt: AttemptRecord;
     evaluation: EvaluationResult[];
   } | null>(null);
+
+  const formatDuration = (seconds: number) =>
+    new Date(Math.max(seconds, 0) * 1000).toISOString().substring(11, 19);
 
   useEffect(() => {
     const fetchExam = async () => {
@@ -149,6 +154,10 @@ export default function ExamAttemptPage() {
           initialAnswers[entry.questionId] = {};
         });
         setAnswers(initialAnswers);
+        setAutoSubmitTriggered(false);
+        setTimeRemaining(
+          examData.timeLimitMinutes ? examData.timeLimitMinutes * 60 : null
+        );
       } catch (error) {
         console.error(error);
         toast.error(
@@ -183,6 +192,28 @@ export default function ExamAttemptPage() {
     return () => clearInterval(interval);
   }, [exam, result]);
 
+  useEffect(() => {
+    if (!exam?.timeLimitMinutes || result) {
+      setTimeRemaining(null);
+      return undefined;
+    }
+
+    setTimeRemaining(exam.timeLimitMinutes * 60);
+
+    const timer = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [exam?.timeLimitMinutes, result]);
+
   const totalMarks = useMemo(() => {
     if (!exam) return 0;
     return exam.questions.reduce((sum, entry) => sum + entry.marks, 0);
@@ -208,69 +239,100 @@ export default function ExamAttemptPage() {
     }));
   };
 
-  const handleSubmit = async () => {
-    if (!exam) return;
+  const handleSubmit = useCallback(
+    async (options?: { force?: boolean }) => {
+      if (!exam || submitting || result) return;
 
-    const unanswered = exam.questions.filter((entry) => {
-      const response = answers[entry.questionId];
-      if (entry.question.type === "MCQ") {
-        return !response?.selectedOption;
+      if (!studentId.trim()) {
+        toast.error("Student ID is required to submit this exam");
+        return;
       }
-      return false;
-    });
 
-    if (unanswered.length > 0) {
-      toast.error("Answer all multiple-choice questions before submitting");
+      const unanswered = exam.questions.filter((entry) => {
+        const response = answers[entry.questionId];
+        if (entry.question.type === "MCQ") {
+          return !response?.selectedOption;
+        }
+        return false;
+      });
+
+      if (!options?.force && unanswered.length > 0) {
+        toast.error("Answer all multiple-choice questions before submitting");
+        return;
+      }
+
+      setSubmitting(true);
+      try {
+        const payload = {
+          examId,
+          studentId: studentId.trim(),
+          studentName: studentName.trim() || undefined,
+          answers: exam.questions.map((entry) => ({
+            questionId: entry.questionId,
+            type: entry.question.type,
+            selectedOption:
+              entry.question.type === "MCQ"
+                ? (answers[entry.questionId]?.selectedOption ?? "")
+                : undefined,
+            answerText:
+              entry.question.type === "ESSAY"
+                ? (answers[entry.questionId]?.answerText ?? "")
+                : undefined,
+          })),
+        };
+
+        const response = await fetch("/api/exam-attempts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error ?? "Failed to submit exam");
+        }
+
+        const attempt: AttemptRecord = data.attempt;
+        const evaluation: EvaluationResult[] =
+          data.evaluation ?? buildEvaluation(attempt);
+        setResult({ attempt, evaluation });
+        toast.success("Exam submitted successfully");
+      } catch (error) {
+        console.error(error);
+        toast.error(
+          error instanceof Error ? error.message : "Unable to submit exam"
+        );
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [
+      answers,
+      exam,
+      examId,
+      result,
+      studentId,
+      studentName,
+      submitting,
+    ]
+  );
+
+  useEffect(() => {
+    if (
+      timeRemaining === null ||
+      timeRemaining > 0 ||
+      result ||
+      autoSubmitTriggered
+    ) {
       return;
     }
 
-    setSubmitting(true);
-    try {
-      const payload = {
-        examId,
-        studentId: studentId.trim(),
-        studentName: studentName.trim() || undefined,
-        answers: exam.questions.map((entry) => ({
-          questionId: entry.questionId,
-          type: entry.question.type,
-          selectedOption:
-            entry.question.type === "MCQ"
-              ? (answers[entry.questionId]?.selectedOption ?? "")
-              : undefined,
-          answerText:
-            entry.question.type === "ESSAY"
-              ? (answers[entry.questionId]?.answerText ?? "")
-              : undefined,
-        })),
-      };
-
-      const response = await fetch("/api/exam-attempts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error ?? "Failed to submit exam");
-      }
-
-      const attempt: AttemptRecord = data.attempt;
-      const evaluation: EvaluationResult[] =
-        data.evaluation ?? buildEvaluation(attempt);
-      setResult({ attempt, evaluation });
-      toast.success("Exam submitted successfully");
-    } catch (error) {
-      console.error(error);
-      toast.error(
-        error instanceof Error ? error.message : "Unable to submit exam"
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    setAutoSubmitTriggered(true);
+    toast.error("Time is up. Submitting your answers.");
+    void handleSubmit({ force: true });
+  }, [autoSubmitTriggered, handleSubmit, result, timeRemaining]);
 
   const refreshResults = async () => {
     try {
@@ -331,9 +393,9 @@ export default function ExamAttemptPage() {
       )
     : false;
 
-  const formattedElapsed = new Date(elapsedSeconds * 1000)
-    .toISOString()
-    .substring(11, 19);
+  const formattedElapsed = formatDuration(elapsedSeconds);
+  const formattedRemaining =
+    timeRemaining != null ? formatDuration(timeRemaining) : null;
 
   const goToQuestion = (index: number) => {
     if (index < 0 || index >= exam.questions.length) return;
@@ -377,18 +439,38 @@ export default function ExamAttemptPage() {
               </div>
               <div className="rounded-2xl border bg-background/80 px-4 py-3 text-left shadow-sm">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Time spent
+                  {exam.timeLimitMinutes ? "Time remaining" : "Time spent"}
                 </p>
                 <p className="text-2xl font-semibold text-primary">
-                  {formattedElapsed}
+                  {exam.timeLimitMinutes
+                    ? formattedRemaining ??
+                      formatDuration(exam.timeLimitMinutes * 60)
+                    : formattedElapsed}
                 </p>
+                {exam.timeLimitMinutes ? (
+                  <p className="text-xs text-muted-foreground">
+                    Time limit: {exam.timeLimitMinutes} minutes
+                  </p>
+                ) : null}
               </div>
             </div>
-            {exam.description ? (
-              <p className="max-w-3xl text-sm text-muted-foreground md:text-base">
-                {exam.description}
-              </p>
-            ) : null}
+            <div className="space-y-2 text-sm text-muted-foreground md:text-base">
+              {exam.instructions ? (
+                <p className="max-w-3xl leading-relaxed text-foreground">
+                  {exam.instructions}
+                </p>
+              ) : (
+                <p className="max-w-3xl">
+                  No specific instructions were provided for this exam.
+                </p>
+              )}
+              {exam.timeLimitMinutes ? (
+                <p className="text-xs font-medium uppercase tracking-wide text-primary">
+                  Time limit: {exam.timeLimitMinutes} minutes. The exam will
+                  submit automatically when the timer ends.
+                </p>
+              ) : null}
+            </div>
           </CardContent>
         </Card>
 
@@ -580,7 +662,10 @@ export default function ExamAttemptPage() {
                           </Button>
                         </div>
                         {!result ? (
-                          <Button onClick={handleSubmit} disabled={submitting}>
+                          <Button
+                            onClick={() => handleSubmit()}
+                            disabled={submitting}
+                          >
                             {submitting ? (
                               <div className="text-center">
                                 <FlowerLoader

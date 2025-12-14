@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Check, Pencil, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { FlowerLoader } from "../ui/flower-loader";
+import { useSession } from "next-auth/react";
 
 type AttemptAnswer = {
   id: string;
@@ -62,7 +63,7 @@ type ExamAttemptRecord = {
   exam: {
     id: string;
     title: string;
-    lessonTitle: string;
+    courseName: string | null;
     status: "DRAFT" | "PUBLISHED" | "CLOSED";
   };
   answers: AttemptAnswer[];
@@ -87,6 +88,7 @@ const STATUS_OPTIONS = [
 ] as const;
 
 export function ExamResults({ courseId }: ExamResultsProps) {
+  const { data: session } = useSession();
   const [attempts, setAttempts] = useState<ExamAttemptRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] =
@@ -164,6 +166,7 @@ export function ExamResults({ courseId }: ExamResultsProps) {
           marksAwarded: gradeForm[essay.id]?.marksAwarded ?? 0,
           feedback: gradeForm[essay.id]?.feedback ?? "",
         })),
+        gradedById: session?.user?.id,
       };
 
       const response = await fetch(`/api/exam-attempts/${gradingAttempt.id}`, {
@@ -299,9 +302,11 @@ export function ExamResults({ courseId }: ExamResultsProps) {
                             <span className="font-medium">
                               {attempt.exam.title}
                             </span>
-                            <span className="text-xs text-muted-foreground">
-                              {attempt.exam.lessonTitle}
-                            </span>
+                            {attempt.exam.courseName ? (
+                              <span className="text-xs text-muted-foreground">
+                                {attempt.exam.courseName}
+                              </span>
+                            ) : null}
                           </div>
                         </TableCell>
                         <TableCell>

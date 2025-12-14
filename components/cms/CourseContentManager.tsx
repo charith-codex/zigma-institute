@@ -367,7 +367,7 @@ export function CourseContentManager({
         return <QuestionCreation />;
 
       case "exams":
-        return <ExamBuilder />;
+        return <ExamBuilder courseId={courseId} />;
 
       case "exam-sessions":
         return <ExamScheduler courseId={courseId} />;

@@ -282,15 +282,14 @@ enum QuestionDifficulty {
 model ExamPaper {
   id          String         @id @default(uuid())
   title       String
-  description String?
+  instructions String?
+  timeLimitMinutes Int?
   courseId    String?
-  lessonId    String?
   status      ExamStatus     @default(DRAFT)
   publishedAt DateTime?
   createdById String?
   createdBy   User?          @relation("ExamCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   course      Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  lesson      Lesson?        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   questions   ExamQuestion[]
   attempts    ExamAttempt[]
 
@@ -499,7 +498,6 @@ model Lesson {
   studyMaterials  StudyMaterial[]
   videoRecordings VideoRecording[]
   questions       Question[]
-  exams           ExamPaper[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
