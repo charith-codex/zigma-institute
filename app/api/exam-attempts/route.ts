@@ -167,7 +167,7 @@ export async function POST(request: Request) {
             id: true,
             title: true,
             status: true,
-            lesson: { select: { title: true } },
+            course: { select: { name: true } },
           },
         },
         answers: {
@@ -184,7 +184,7 @@ export async function POST(request: Request) {
             id: attempt.exam.id,
             title: attempt.exam.title,
             status: attempt.exam.status,
-            lessonTitle: attempt.exam.lesson?.title ?? null,
+            courseName: attempt.exam.course?.name ?? null,
           }
         : null,
     };
