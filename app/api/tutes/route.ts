@@ -13,9 +13,19 @@ export async function GET(request: Request) {
     const tutes = await prisma.tute.findMany({
       where: courseId ? { courseId } : undefined,
       orderBy: { createdAt: "desc" },
+      include: {
+        _count: {
+          select: { distributions: { where: { distributed: true } } },
+        },
+      },
     });
 
-    return NextResponse.json(convertToPlainObject(tutes));
+    const formatted = tutes.map((tute) => ({
+      ...tute,
+      distributedCount: tute._count?.distributions ?? 0,
+    }));
+
+    return NextResponse.json(convertToPlainObject(formatted));
   } catch (error) {
     console.error("Failed to load tutes", error);
     return NextResponse.json(
@@ -59,7 +69,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(tute, { status: 201 });
+    return NextResponse.json({ ...tute, distributedCount: 0 }, { status: 201 });
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(

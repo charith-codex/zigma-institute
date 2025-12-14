@@ -7,12 +7,13 @@ const normalizeTute = (tute: unknown): Tute | null => {
     return null;
   }
 
-  const { id, name, courseId, createdAt, updatedAt } = tute as {
+  const { id, name, courseId, createdAt, updatedAt, distributedCount } = tute as {
     id?: unknown;
     name?: unknown;
     courseId?: unknown;
     createdAt?: unknown;
     updatedAt?: unknown;
+    distributedCount?: unknown;
   };
 
   if (typeof id !== "string" || typeof name !== "string" || typeof courseId !== "string") {
@@ -25,6 +26,10 @@ const normalizeTute = (tute: unknown): Tute | null => {
     courseId,
     createdAt: createdAt ? new Date(createdAt as string) : new Date(),
     updatedAt: updatedAt ? new Date(updatedAt as string) : new Date(),
+    distributedCount:
+      typeof distributedCount === "number" && Number.isFinite(distributedCount)
+        ? distributedCount
+        : 0,
   };
 };
 

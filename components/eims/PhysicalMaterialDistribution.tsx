@@ -19,6 +19,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useClasses } from "@/hooks/useData";
 import { useCourseStudents } from "@/hooks/useCourseStudents";
+import { useCourseTuteLedger } from "@/hooks/useCourseTuteLedger";
 import { useCourseTutes, useTuteDistributions } from "@/hooks/useTutes";
 
 const placeholderMessage = "Select a course to load students";
@@ -35,6 +36,7 @@ export function PhysicalMaterialDistribution() {
     loading: tutesLoading,
     error: tutesError,
     createTute,
+    refetch: refreshTutes,
   } = useCourseTutes(selectedCourse || null);
 
   const {
@@ -42,6 +44,13 @@ export function PhysicalMaterialDistribution() {
     loading: studentsLoading,
     error: studentsError,
   } = useCourseStudents(selectedCourse || null);
+
+  const {
+    ledger,
+    loading: ledgerLoading,
+    error: ledgerError,
+    updateEntry: updateLedgerEntry,
+  } = useCourseTuteLedger(selectedCourse || null);
 
   const {
     distributions,
@@ -116,6 +125,8 @@ export function PhysicalMaterialDistribution() {
 
     try {
       await updateDistribution(studentId, distributed);
+      updateLedgerEntry(studentId, { id: selectedTute, name: activeTuteName }, distributed);
+      void refreshTutes();
       toast.success(
         distributed
           ? `${activeTuteName} marked as distributed.`
@@ -211,7 +222,12 @@ export function PhysicalMaterialDistribution() {
               <SelectContent>
                 {tutes.map((tute) => (
                   <SelectItem key={tute.id} value={tute.id}>
-                    {tute.name}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate">{tute.name}</span>
+                      <Badge variant="outline" className="text-[10px] font-normal">
+                        {tute.distributedCount} given
+                      </Badge>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -258,6 +274,7 @@ export function PhysicalMaterialDistribution() {
             {studentsError ? (
               <p className="text-xs text-destructive">{studentsError}</p>
             ) : null}
+            {ledgerError ? <p className="text-xs text-destructive">{ledgerError}</p> : null}
             {distributionsError ? (
               <p className="text-xs text-destructive">{distributionsError}</p>
             ) : null}
@@ -270,6 +287,7 @@ export function PhysicalMaterialDistribution() {
                   filteredStudents.map((student) => {
                     const isDistributed = distributions[student.id]?.distributed ?? false;
                     const isDisabled = !selectedTute || distributionsLoading || updatingStudentId === student.id;
+                    const receivedTutes = ledger[student.id]?.tutes ?? [];
 
                     return (
                       <div
@@ -281,9 +299,20 @@ export function PhysicalMaterialDistribution() {
                           <p className="text-xs text-muted-foreground">
                             {student.studentPublicId ? `${student.id} · ${student.studentPublicId}` : student.id}
                           </p>
+                          {receivedTutes.length > 0 ? (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {receivedTutes.map((tute) => (
+                                <Badge key={tute.id} variant="outline" className="text-[10px] font-normal">
+                                  {tute.name}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : null}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">Distributed</span>
+                          <span className="text-xs text-muted-foreground">
+                            {ledgerLoading ? "Syncing..." : "Distributed"}
+                          </span>
                           <Switch
                             checked={isDistributed}
                             onCheckedChange={(checked) => void handleDistributionChange(student.id, checked)}
