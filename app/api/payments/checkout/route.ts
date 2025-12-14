@@ -226,11 +226,23 @@ export async function GET(request: Request) {
         ? new Date(checkoutSession.created * 1000)
         : new Date();
 
+      const previousInstallments = await prisma.paymentTransaction.count({
+        where: {
+          studentId: session.user.id,
+          courseId,
+          paymentType: "INSTALLMENT",
+        },
+      });
+
+      const monthNumber = previousInstallments + 1;
+
       await prisma.paymentTransaction.upsert({
         where: { transactionId },
         update: {
           amountInCents,
           currency: checkoutSession.currency ?? course?.currency ?? "usd",
+          monthNumber,
+          discountRate,
           paidAt,
         },
         create: {
@@ -240,7 +252,7 @@ export async function GET(request: Request) {
           amountInCents,
           currency: checkoutSession.currency ?? course?.currency ?? "usd",
           paymentType: "INSTALLMENT",
-          monthNumber: null,
+          monthNumber,
           discountRate,
           paidAt,
         },

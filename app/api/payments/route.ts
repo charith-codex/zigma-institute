@@ -14,6 +14,7 @@ interface PaymentCoursePayload {
   currency: string;
   createdAt: Date;
   updatedAt: Date;
+  enrolledAt: Date;
 }
 
 interface PaymentStudentPayload {
@@ -82,6 +83,7 @@ export async function GET() {
         currency: course.currency,
         createdAt: course.createdAt,
         updatedAt: course.updatedAt,
+        enrolledAt: enrollment.enrolledAt,
       },
     ];
   });

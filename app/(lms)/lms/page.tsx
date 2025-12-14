@@ -14,6 +14,7 @@ import { PublishedExams } from "@/components/lms/PublishedExams";
 import CourseCard from "@/components/courses/course-card";
 import { Course } from "@/types";
 import { Input } from "@/components/ui/input";
+import { CourseEnrollment } from "@/components/lms/CourseEnrollment";
 
 type EnrolledClass = Course & {
   code: string;
@@ -28,20 +29,50 @@ const LMS = () => {
     null
   );
   const [nameQuery, setNameQuery] = useState("");
-  const { enrollments, loading: enrollmentsLoading } = useEnrollments();
+  const {
+    enrollments,
+    loading: enrollmentsLoading,
+    refetch: refetchEnrollments,
+  } = useEnrollments();
   const { assignments, loading: assignmentsLoading } = useAssignments();
   const { courses } = useCourses();
+  const [paymentRefreshKey, setPaymentRefreshKey] = useState(0);
 
   const enrolledClasses = useMemo<EnrolledClass[]>(
     () =>
-      courses.map((course) => ({
-        ...course,
-        code: course.slug?.toUpperCase() ?? course.id.slice(0, 8).toUpperCase(),
-        instructor: course.teacherName ?? "Instructor",
-        progress: 0,
-        status: "active",
-      })),
-    [courses]
+      enrollments.map((enrollment) => {
+        const course = courses.find((item) => item.id === enrollment.courseId);
+        const fallbackDate = new Date(enrollment.enrolledAt);
+
+        const hydratedCourse: Course =
+          course ?? {
+            id: enrollment.courseId,
+            name: enrollment.courseName,
+            slug: enrollment.courseSlug ?? enrollment.courseId,
+            description: "Course description will be available soon.",
+            coverImage: "/logo.png",
+            teacherName: enrollment.teacherName ?? "Instructor",
+            teacherId: null,
+            courseCategoryId: course?.courseCategoryId ?? "",
+            courseCategory: course?.courseCategory ?? null,
+            priceInCents:
+              course?.priceInCents ?? Math.max(enrollment.priceInCents, 0),
+            currency: course?.currency ?? enrollment.currency,
+            createdAt: course?.createdAt ?? fallbackDate,
+            updatedAt: course?.updatedAt ?? fallbackDate,
+          };
+
+        return {
+          ...hydratedCourse,
+          code:
+            hydratedCourse.slug?.toUpperCase() ??
+            hydratedCourse.id.slice(0, 8).toUpperCase(),
+          instructor: hydratedCourse.teacherName ?? "Instructor",
+          progress: 0,
+          status: "active",
+        } satisfies EnrolledClass;
+      }),
+    [courses, enrollments]
   );
 
   const filteredClasses = useMemo<EnrolledClass[]>(() => {
@@ -58,13 +89,13 @@ const LMS = () => {
 
   const scheduleCourseOptions = useMemo(
     () =>
-      courses.map((course) => ({
+      enrolledClasses.map((course) => ({
         id: course.id,
         name: course.name,
         teacherId: course.teacherId ?? `${course.id}-teacher`,
         teacherName: course.teacherName ?? "Instructor",
       })),
-    [courses]
+    [enrolledClasses]
   );
 
   return (
@@ -251,7 +282,18 @@ const LMS = () => {
               <StudentPerformance enrolledClasses={enrolledClasses} />
             )}
 
-            {activeModule === "payments" && <PaymentSection />}
+            {activeModule === "enroll" && (
+              <CourseEnrollment
+                onEnrolled={() => {
+                  void refetchEnrollments();
+                  setPaymentRefreshKey((previous) => previous + 1);
+                }}
+              />
+            )}
+
+            {activeModule === "payments" && (
+              <PaymentSection refreshKey={paymentRefreshKey} />
+            )}
           </div>
         </div>
       </main>

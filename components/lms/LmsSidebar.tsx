@@ -17,6 +17,7 @@ import {
   TrendingUp,
   CreditCard,
   Paperclip,
+  SquarePlus,
 } from "lucide-react";
 
 interface LmsSidebarProps {
@@ -27,6 +28,7 @@ interface LmsSidebarProps {
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: Home },
   { id: "classes", label: "My Courses", icon: BookOpen },
+  { id: "enroll", label: "Enroll", icon: SquarePlus },
   { id: "exams", label: "Exams", icon: Paperclip },
   { id: "schedule", label: "Schedule", icon: Calendar },
   { id: "study-tools", label: "AI Study Tools", icon: Brain },
