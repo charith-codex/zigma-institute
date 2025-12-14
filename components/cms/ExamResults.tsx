@@ -31,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Check, Pencil, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { FlowerLoader } from "../ui/flower-loader";
+import { useSession } from "next-auth/react";
 
 type AttemptAnswer = {
   id: string;
@@ -87,6 +88,7 @@ const STATUS_OPTIONS = [
 ] as const;
 
 export function ExamResults({ courseId }: ExamResultsProps) {
+  const { data: session } = useSession();
   const [attempts, setAttempts] = useState<ExamAttemptRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] =
@@ -164,6 +166,7 @@ export function ExamResults({ courseId }: ExamResultsProps) {
           marksAwarded: gradeForm[essay.id]?.marksAwarded ?? 0,
           feedback: gradeForm[essay.id]?.feedback ?? "",
         })),
+        gradedById: session?.user?.id,
       };
 
       const response = await fetch(`/api/exam-attempts/${gradingAttempt.id}`, {
