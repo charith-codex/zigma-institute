@@ -45,6 +45,7 @@ import {
 interface DashboardSidebarProps {
   activeModule: string;
   onModuleChange: (module: string) => void;
+  menuEntries?: MenuEntry[];
 }
 
 type MenuEntry = {
@@ -54,7 +55,7 @@ type MenuEntry = {
   items?: Array<{ id: string; label: string; icon: LucideIcon }>;
 };
 
-const menuEntries: MenuEntry[] = [
+const baseMenuEntries: MenuEntry[] = [
   { id: "overview", label: "Dashboard", icon: BarChart3 },
   {
     id: "user-management",
@@ -116,9 +117,39 @@ const menuEntries: MenuEntry[] = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
+export const getMenuEntriesForRole = (
+  role?: string | null
+): MenuEntry[] => {
+  const isAdmin = role === "ADMIN";
+  const isManager = role === "MANAGER";
+
+  return baseMenuEntries
+    .map((entry) => {
+      if (entry.id !== "user-management" || !entry.items) {
+        return entry;
+      }
+
+      const filteredItems = entry.items.filter((item) => {
+        if (item.id === "staff-management") {
+          return isAdmin;
+        }
+
+        if (item.id === "students" || item.id === "teachers") {
+          return isAdmin || isManager;
+        }
+
+        return true;
+      });
+
+      return { ...entry, items: filteredItems };
+    })
+    .filter((entry) => entry.items == null || entry.items.length > 0);
+};
+
 export function DashboardSidebar({
   activeModule,
   onModuleChange,
+  menuEntries,
 }: DashboardSidebarProps) {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
@@ -141,7 +172,7 @@ export function DashboardSidebar({
           <SidebarGroupLabel>Staff Portal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuEntries.map((entry) => {
+              {(menuEntries ?? baseMenuEntries).map((entry) => {
                 // No sub-items → simple button
                 if (!entry.items || entry.items.length === 0) {
                   return (

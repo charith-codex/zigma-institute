@@ -21,6 +21,7 @@ import {
 } from "@/lib/validators/eims-user-management";
 
 const permittedRoles = ["ADMIN", "MANAGER"] as const;
+const adminOnlyRoles = ["ADMIN"] as const;
 
 type PermittedRole = (typeof permittedRoles)[number];
 
@@ -28,12 +29,14 @@ type BaseActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: string };
 
-const ensureAuthorized = async (): Promise<BaseActionResult<PermittedRole>> => {
+const ensureAuthorized = async (
+  allowedRoles: readonly PermittedRole[] = permittedRoles
+): Promise<BaseActionResult<PermittedRole>> => {
   const session = await auth();
 
   if (
     !session?.user?.role ||
-    !permittedRoles.includes(session.user.role as PermittedRole)
+    !allowedRoles.includes(session.user.role as PermittedRole)
   ) {
     return {
       success: false,
@@ -543,7 +546,7 @@ export async function deleteTeacher(
 }
 
 export async function listStaff(): Promise<BaseActionResult<StaffRecord[]>> {
-  const authorization = await ensureAuthorized();
+  const authorization = await ensureAuthorized(adminOnlyRoles);
   if (!authorization.success) {
     return authorization;
   }
@@ -571,7 +574,7 @@ export async function listStaff(): Promise<BaseActionResult<StaffRecord[]>> {
 export async function createStaff(
   input: StaffCreateValues
 ): Promise<BaseActionResult<StaffRecord>> {
-  const authorization = await ensureAuthorized();
+  const authorization = await ensureAuthorized(adminOnlyRoles);
   if (!authorization.success) {
     return authorization;
   }
@@ -622,7 +625,7 @@ export async function createStaff(
 export async function updateStaff(
   input: StaffUpsertValues
 ): Promise<BaseActionResult<StaffRecord>> {
-  const authorization = await ensureAuthorized();
+  const authorization = await ensureAuthorized(adminOnlyRoles);
   if (!authorization.success) {
     return authorization;
   }
@@ -677,7 +680,7 @@ export async function updateStaff(
 }
 
 export async function deleteStaff(id: string): Promise<BaseActionResult<null>> {
-  const authorization = await ensureAuthorized();
+  const authorization = await ensureAuthorized(adminOnlyRoles);
   if (!authorization.success) {
     return authorization;
   }
