@@ -69,7 +69,6 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
       toast({
         title: "Already enrolled",
         description: "You are already enrolled in this course.",
-        variant: "default",
       });
       return;
     }
