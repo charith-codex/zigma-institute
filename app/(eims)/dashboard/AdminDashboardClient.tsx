@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Users, PieChart, UserCheck } from "lucide-react";
-import { DashboardSidebar } from "@/components/eims/DashboardSidebar";
+import {
+  DashboardSidebar,
+  getMenuEntriesForRole,
+} from "@/components/eims/DashboardSidebar";
 import { DashboardContent } from "@/components/eims/DashboardContent";
 import { cn } from "@/lib/utils";
 
@@ -42,9 +45,10 @@ const portalColorStyles = {
 export function AdminDashboardClient({ session }: { session: SessionLike }) {
   const [activeModule, setActiveModule] = useState("overview");
   const router = useRouter();
+  const userRole = session?.user?.role ?? null;
 
   const getPortalButtons = () => {
-    const role = session?.user?.role;
+    const role = userRole ?? undefined;
     const buttons: Array<{
       title: string;
       description: string;
@@ -139,6 +143,31 @@ export function AdminDashboardClient({ session }: { session: SessionLike }) {
     return buttons;
   };
 
+  const menuEntries = useMemo(
+    () => getMenuEntriesForRole(userRole),
+    [userRole]
+  );
+
+  const allowedModules = useMemo(() => {
+    const modules = new Set<string>(["overview"]);
+
+    menuEntries.forEach((entry) => {
+      if (entry.items && entry.items.length > 0) {
+        entry.items.forEach((item) => modules.add(item.id));
+      } else {
+        modules.add(entry.id);
+      }
+    });
+
+    return modules;
+  }, [menuEntries]);
+
+  useEffect(() => {
+    if (!allowedModules.has(activeModule)) {
+      setActiveModule("overview");
+    }
+  }, [activeModule, allowedModules]);
+
   const portalButtons = getPortalButtons();
 
   const normalizedSession = session
@@ -159,6 +188,7 @@ export function AdminDashboardClient({ session }: { session: SessionLike }) {
       <DashboardSidebar
         activeModule={activeModule}
         onModuleChange={setActiveModule}
+        menuEntries={menuEntries}
       />
 
       <main className="mx-auto flex h-full w-full max-w-7xl flex-col rounded-2xl border border-border bg-background shadow-sm">

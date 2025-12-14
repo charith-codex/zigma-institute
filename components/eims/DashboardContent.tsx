@@ -51,6 +51,12 @@ export function DashboardContent({
 }: DashboardContentProps) {
   const { stats, loading: statsLoading } = useDashboardStats();
   const { courses } = useCourses();
+  const userRole = session?.user?.role ?? null;
+  const isAdmin = userRole === "ADMIN";
+  const isManager = userRole === "MANAGER";
+  const canManageStudents = isAdmin || isManager;
+  const canManageTeachers = canManageStudents;
+  const canManageStaff = isAdmin;
   const scheduleCourseOptions = useMemo(
     () =>
       courses.map((course) => ({
@@ -238,6 +244,28 @@ export function DashboardContent({
   );
 
   const renderContent = () => {
+    const isUserManagementRestricted =
+      (activeModule === "staff-management" && !canManageStaff) ||
+      ((activeModule === "students" || activeModule === "teachers") &&
+        !canManageStudents);
+
+    if (isUserManagementRestricted) {
+      return (
+        <Card className="max-w-2xl">
+          <CardHeader>
+            <CardTitle>Insufficient permissions</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-muted-foreground">
+            <p>You do not have access to manage this user group.</p>
+            <p className="text-sm">
+              Please switch to another section or contact an administrator for
+              elevated access.
+            </p>
+          </CardContent>
+        </Card>
+      );
+    }
+
     switch (activeModule) {
       case "overview":
         return renderOverview();
