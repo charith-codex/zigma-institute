@@ -102,7 +102,6 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
           enrollError instanceof Error
             ? enrollError.message
             : "We could not add this course. Please try again.",
-        variant: "destructive",
       });
     } finally {
       setEnrollingCourseId(null);
