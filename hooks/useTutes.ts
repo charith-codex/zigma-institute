@@ -241,6 +241,10 @@ export function useTuteDistributions(tuteId: string | null) {
     [distributions]
   );
 
+  useEffect(() => {
+    void refetch();
+  }, [refetch]);
+
   return {
     distributions,
     distributedStudentIds,
