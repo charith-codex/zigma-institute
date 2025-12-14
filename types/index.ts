@@ -47,3 +47,28 @@ export interface StudentRegistrationSummary {
   studentUserId: string | null;
   courses: string[];
 }
+
+export interface CourseStudentSummary {
+  id: string;
+  name: string;
+  studentPublicId: string | null;
+  email: string | null;
+}
+
+export interface Tute {
+  id: string;
+  name: string;
+  courseId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TuteDistributionStatus {
+  id: string;
+  tuteId: string;
+  studentId: string;
+  distributed: boolean;
+  distributedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}

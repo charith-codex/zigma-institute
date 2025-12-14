@@ -152,6 +152,7 @@ model Course {
   videoRecordings        VideoRecording[]
   exams                  ExamPaper[]
   lessons                Lesson[]
+  tutes                  Tute[]
   physicalExamMarks      PhysicalExamMark[]
   registrationSelections StudentRegistrationCourse[]
   paymentTransactions    PaymentTransaction[]
@@ -159,6 +160,34 @@ model Course {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Tute {
+  id        String @id @default(uuid())
+  name      String
+  courseId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course        Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  distributions TuteDistribution[]
+
+  @@unique([courseId, name])
+}
+
+model TuteDistribution {
+  id            String   @id @default(uuid())
+  tuteId        String
+  studentId     String
+  distributed   Boolean  @default(true)
+  distributedAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tute    Tute    @relation(fields: [tuteId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+
+  @@unique([tuteId, studentId])
 }
 
 model CourseCategory {

@@ -10,3 +10,4 @@ export * from "./schedules";
 export * from "./settings";
 export * from "./student-registration";
 export * from "./users";
+export * from "./tutes";
