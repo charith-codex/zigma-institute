@@ -4,6 +4,7 @@ import {
   useActionState,
   useEffect,
   useMemo,
+  startTransition,
   useState,
   useTransition,
   type ComponentType,
@@ -248,7 +249,9 @@ function ShowcaseStudentForm({ initialData, onSuccess, onCancelEdit }: StudentFo
     formData.append("category", values.category);
     formData.append("sortOrder", values.sortOrder.toString());
 
-    formAction(formData);
+    startTransition(() => {
+      formAction(formData);
+    });
   });
 
   return (
