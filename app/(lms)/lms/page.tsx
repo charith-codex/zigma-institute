@@ -38,41 +38,47 @@ const LMS = () => {
   const { courses } = useCourses();
   const [paymentRefreshKey, setPaymentRefreshKey] = useState(0);
 
-  const enrolledClasses = useMemo<EnrolledClass[]>(
-    () =>
-      enrollments.map((enrollment) => {
-        const course = courses.find((item) => item.id === enrollment.courseId);
-        const fallbackDate = new Date(enrollment.enrolledAt);
+  const enrolledClasses = useMemo<EnrolledClass[]>(() => {
+    const byCourseId = new Map<string, EnrolledClass>();
 
-        const hydratedCourse: Course =
-          course ?? {
-            id: enrollment.courseId,
-            name: enrollment.courseName,
-            slug: enrollment.courseSlug ?? enrollment.courseId,
-            description: "Course description will be available soon.",
-            coverImage: "/logo.png",
-            teacherName: enrollment.teacherName ?? "Instructor",
-            teacherId: null,
-            courseCategoryId: "",
-            courseCategory: null,
-            priceInCents: Math.max(enrollment.priceInCents, 0),
-            currency: enrollment.currency,
-            createdAt: fallbackDate,
-            updatedAt: fallbackDate,
-          };
+    enrollments.forEach((enrollment) => {
+      const course = courses.find((item) => item.id === enrollment.courseId);
+      const fallbackDate = new Date(enrollment.enrolledAt);
 
-        return {
-          ...hydratedCourse,
-          code:
-            hydratedCourse.slug?.toUpperCase() ??
-            hydratedCourse.id.slice(0, 8).toUpperCase(),
-          instructor: hydratedCourse.teacherName ?? "Instructor",
-          progress: 0,
-          status: "active",
-        } satisfies EnrolledClass;
-      }),
-    [courses, enrollments]
-  );
+      const hydratedCourse: Course =
+        course ?? {
+          id: enrollment.courseId,
+          name: enrollment.courseName,
+          slug: enrollment.courseSlug ?? enrollment.courseId,
+          description: "Course description will be available soon.",
+          coverImage: "/logo.png",
+          teacherName: enrollment.teacherName ?? "Instructor",
+          teacherId: null,
+          courseCategoryId: "",
+          courseCategory: null,
+          priceInCents: Math.max(enrollment.priceInCents, 0),
+          currency: enrollment.currency,
+          createdAt: fallbackDate,
+          updatedAt: fallbackDate,
+        };
+
+      const enrolledClass: EnrolledClass = {
+        ...hydratedCourse,
+        code:
+          hydratedCourse.slug?.toUpperCase() ??
+          hydratedCourse.id.slice(0, 8).toUpperCase(),
+        instructor: hydratedCourse.teacherName ?? "Instructor",
+        progress: 0,
+        status: "active",
+      };
+
+      if (!byCourseId.has(enrolledClass.id)) {
+        byCourseId.set(enrolledClass.id, enrolledClass);
+      }
+    });
+
+    return Array.from(byCourseId.values());
+  }, [courses, enrollments]);
 
   const filteredClasses = useMemo<EnrolledClass[]>(() => {
     const normalizedQuery = nameQuery.trim().toLowerCase();
