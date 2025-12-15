@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import Image from "next/image";
-import { useForm, type Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Award,
@@ -105,11 +105,11 @@ const colorStyles: Record<
   },
 };
 
-const studentResolver: Resolver<ShowcaseStudentFormValues> = zodResolver(
+const studentResolver = zodResolver<ShowcaseStudentFormValues>(
   showcaseStudentFormSchema
 );
 
-const achievementResolver: Resolver<InstituteAchievementFormValues> = zodResolver(
+const achievementResolver = zodResolver<InstituteAchievementFormValues>(
   instituteAchievementFormSchema
 );
 
