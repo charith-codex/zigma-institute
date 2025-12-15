@@ -1,18 +1,14 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { Search } from "lucide-react";
+import { toast } from "sonner";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -20,629 +16,323 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { useClasses } from "@/hooks/useData";
-import {
-  Plus,
-  Search,
-  Package,
-  Users,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
-import { toast } from "sonner";
+import { useCourseStudents } from "@/hooks/useCourseStudents";
+import { useCourseTuteLedger } from "@/hooks/useCourseTuteLedger";
+import { useCourseTutes, useTuteDistributions } from "@/hooks/useTutes";
 
-interface PhysicalMaterial {
-  id: string;
-  name: string;
-  description: string;
-  type: "handout" | "book" | "worksheet" | "exam_paper" | "other";
-  subject: string;
-  grade: string;
-  quantity: number;
-  remainingQuantity: number;
-  createdDate: string;
-  createdBy: string;
-}
-
-interface MaterialDistribution {
-  id: string;
-  materialId: string;
-  materialName: string;
-  studentId: string;
-  studentName: string;
-  courseId: string;
-  className: string;
-  distributedDate: string;
-  distributedBy: string;
-  received: boolean;
-  receivedDate?: string;
-  notes?: string;
-}
-
-// Mock data - replace with actual data hooks
-const mockMaterials: PhysicalMaterial[] = [
-  {
-    id: "MAT001",
-    name: "Chemistry Lab Manual",
-    description: "Complete lab manual for Chemistry practical sessions",
-    type: "book",
-    subject: "Chemistry",
-    grade: "Grade 12",
-    quantity: 50,
-    remainingQuantity: 15,
-    createdDate: "2024-01-15",
-    createdBy: "Admin",
-  },
-  {
-    id: "MAT002",
-    name: "Math Problem Set 1",
-    description: "Practice problems for algebra and calculus",
-    type: "worksheet",
-    subject: "Mathematics",
-    grade: "Grade 11",
-    quantity: 100,
-    remainingQuantity: 45,
-    createdDate: "2024-01-20",
-    createdBy: "Ms. Johnson",
-  },
-];
-
-const mockDistributions: MaterialDistribution[] = [
-  {
-    id: "DIST001",
-    materialId: "MAT001",
-    materialName: "Chemistry Lab Manual",
-    studentId: "STU001",
-    studentName: "John Smith",
-    courseId: "CLS001",
-    className: "Grade 12-A",
-    distributedDate: "2024-01-22",
-    distributedBy: "Admin",
-    received: true,
-    receivedDate: "2024-01-22",
-  },
-  {
-    id: "DIST002",
-    materialId: "MAT001",
-    materialName: "Chemistry Lab Manual",
-    studentId: "STU002",
-    studentName: "Jane Doe",
-    courseId: "CLS001",
-    className: "Grade 12-A",
-    distributedDate: "2024-01-22",
-    distributedBy: "Admin",
-    received: false,
-  },
-];
+const placeholderMessage = "Select a course to load students";
 
 export function PhysicalMaterialDistribution() {
-  const [materials, setMaterials] = useState<PhysicalMaterial[]>(mockMaterials);
-  const [distributions, setDistributions] =
-    useState<MaterialDistribution[]>(mockDistributions);
-  const [selectedClass, setSelectedClass] = useState<string>("");
-  const [selectedMaterial, setSelectedMaterial] = useState<string>("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const { classes, loading: coursesLoading } = useClasses();
+  const [selectedCourse, setSelectedCourse] = useState<string>("");
+  const [selectedTute, setSelectedTute] = useState<string>("");
+  const [newTuteName, setNewTuteName] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
-  const { classes } = useClasses();
+  const {
+    tutes,
+    loading: tutesLoading,
+    error: tutesError,
+    createTute,
+    refetch: refreshTutes,
+  } = useCourseTutes(selectedCourse || null);
 
-  const [newMaterial, setNewMaterial] = useState<Partial<PhysicalMaterial>>({
-    name: "",
-    description: "",
-    type: "handout",
-    subject: "",
-    grade: "",
-    quantity: 0,
-  });
+  const {
+    students,
+    loading: studentsLoading,
+    error: studentsError,
+  } = useCourseStudents(selectedCourse || null);
 
-  const handleAddMaterial = () => {
-    if (!newMaterial.name || !newMaterial.quantity) {
-      toast.error("Please fill in all required fields");
+  const {
+    ledger,
+    loading: ledgerLoading,
+    error: ledgerError,
+    updateEntry: updateLedgerEntry,
+  } = useCourseTuteLedger(selectedCourse || null);
+
+  const {
+    distributions,
+    distributedStudentIds,
+    loading: distributionsLoading,
+    error: distributionsError,
+    updatingStudentId,
+    updateDistribution,
+  } = useTuteDistributions(selectedTute || null);
+
+  useEffect(() => {
+    setSelectedTute("");
+    setSearchTerm("");
+  }, [selectedCourse]);
+
+  const filteredStudents = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return students;
+    }
+
+    const normalized = searchTerm.trim().toLowerCase();
+
+    return students.filter(
+      (student) =>
+        student.name.toLowerCase().includes(normalized) ||
+        student.id.toLowerCase().includes(normalized) ||
+        (student.studentPublicId?.toLowerCase().includes(normalized) ?? false)
+    );
+  }, [searchTerm, students]);
+
+  const activeTuteName = useMemo(
+    () => tutes.find((tute) => tute.id === selectedTute)?.name ?? "Tute",
+    [selectedTute, tutes]
+  );
+
+  const totalDistributed = distributedStudentIds.size;
+
+  const handleCreateTute = async () => {
+    if (!selectedCourse) {
+      toast.error("Select a course before creating a tute.");
       return;
     }
 
-    const material: PhysicalMaterial = {
-      id: `MAT${String(materials.length + 1).padStart(3, "0")}`,
-      name: newMaterial.name!,
-      description: newMaterial.description || "",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      type: newMaterial.type as any,
-      subject: newMaterial.subject || "",
-      grade: newMaterial.grade || "",
-      quantity: newMaterial.quantity!,
-      remainingQuantity: newMaterial.quantity!,
-      createdDate: new Date().toISOString().split("T")[0],
-      createdBy: "Admin",
-    };
+    const trimmedName = newTuteName.trim();
 
-    setMaterials([...materials, material]);
-    setNewMaterial({
-      name: "",
-      description: "",
-      type: "handout",
-      subject: "",
-      grade: "",
-      quantity: 0,
-    });
-    toast.success("Material added successfully");
-  };
-
-  const handleDistributeMaterial = (materialId: string, courseId: string) => {
-    // Mock student data for the selected class
-    const mockStudents = [
-      { id: "STU003", name: "Alice Johnson" },
-      { id: "STU004", name: "Bob Williams" },
-      { id: "STU005", name: "Carol Brown" },
-    ];
-
-    const material = materials.find((m) => m.id === materialId);
-    const selectedClassData = classes.find((c) => c.id === courseId);
-
-    if (!material || !selectedClassData) {
-      toast.error("Invalid material or class selection");
+    if (!trimmedName) {
+      toast.error("Enter a tute name to create it.");
       return;
     }
 
-    const newDistributions = mockStudents.map((student) => ({
-      id: `DIST${String(distributions.length + Math.random()).replace(".", "")}`,
-      materialId,
-      materialName: material.name,
-      studentId: student.id,
-      studentName: student.name,
-      courseId,
-      className: selectedClassData.name,
-      distributedDate: new Date().toISOString().split("T")[0],
-      distributedBy: "Admin",
-      received: false,
-    }));
-
-    setDistributions([...distributions, ...newDistributions]);
-
-    // Update material quantity
-    setMaterials(
-      materials.map((m) =>
-        m.id === materialId
-          ? {
-              ...m,
-              remainingQuantity: m.remainingQuantity - mockStudents.length,
-            }
-          : m
-      )
-    );
-
-    toast.success(`Material distributed to ${mockStudents.length} students`);
+    try {
+      const created = await createTute(trimmedName);
+      setSelectedTute(created.id);
+      setNewTuteName("");
+      toast.success(`${trimmedName} created for the course.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to create tute.";
+      toast.error(message);
+    }
   };
 
-  const toggleReceived = (distributionId: string) => {
-    setDistributions(
-      distributions.map((d) =>
-        d.id === distributionId
-          ? {
-              ...d,
-              received: !d.received,
-              receivedDate: !d.received
-                ? new Date().toISOString().split("T")[0]
-                : undefined,
-            }
-          : d
-      )
-    );
-    toast.success("Status updated successfully");
+  const handleDistributionChange = async (studentId: string, distributed: boolean) => {
+    if (!selectedCourse) {
+      toast.error("Select a course before marking distribution.");
+      return;
+    }
+
+    if (!selectedTute) {
+      toast.error("Select a tute before marking distribution.");
+      return;
+    }
+
+    try {
+      await updateDistribution(studentId, distributed);
+      updateLedgerEntry(studentId, { id: selectedTute, name: activeTuteName }, distributed);
+      void refreshTutes();
+      toast.success(
+        distributed
+          ? `${activeTuteName} marked as distributed.`
+          : `${activeTuteName} marked as pending.`
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to update distribution right now.";
+      toast.error(message);
+    }
   };
-
-  const filteredDistributions = distributions.filter((d) => {
-    const matchesSearch =
-      d.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      d.materialName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter =
-      filterStatus === "all" ||
-      (filterStatus === "received" && d.received) ||
-      (filterStatus === "pending" && !d.received);
-    return matchesSearch && matchesFilter;
-  });
-
-  const getStats = () => {
-    const totalDistributions = distributions.length;
-    const receivedCount = distributions.filter((d) => d.received).length;
-    const pendingCount = totalDistributions - receivedCount;
-    const totalMaterials = materials.length;
-
-    return { totalDistributions, receivedCount, pendingCount, totalMaterials };
-  };
-
-  const stats = getStats();
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
           <h1 className="text-2xl font-bold">Physical Material Distribution</h1>
-          <p className="text-muted-foreground">
-            Manage and track distribution of physical study materials
+          <p className="text-muted-foreground text-sm">
+            Select a course, choose a tute, search students, and mark who received it.
           </p>
         </div>
+        {selectedCourse && selectedTute ? (
+          <Badge variant="secondary" className="text-sm">
+            {totalDistributed} marked as distributed
+          </Badge>
+        ) : null}
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Materials
-            </CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalMaterials}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Distributions
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalDistributions}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Received</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {stats.receivedCount}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <XCircle className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {stats.pendingCount}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="distributions" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="distributions">Distribution Tracking</TabsTrigger>
-          <TabsTrigger value="materials">Material Management</TabsTrigger>
-          <TabsTrigger value="distribute">Distribute Materials</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="distributions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Distribution Status</CardTitle>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search student or material..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-8 w-64"
-                    />
-                  </div>
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="received">Received</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Student</TableHead>
-                    <TableHead>Material</TableHead>
-                    <TableHead>Course</TableHead>
-                    <TableHead>Distributed Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredDistributions.map((distribution) => (
-                    <TableRow key={distribution.id}>
-                      <TableCell className="font-medium">
-                        {distribution.studentName}
-                      </TableCell>
-                      <TableCell>{distribution.materialName}</TableCell>
-                      <TableCell>{distribution.className}</TableCell>
-                      <TableCell>{distribution.distributedDate}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            distribution.received ? "default" : "secondary"
-                          }
-                        >
-                          {distribution.received ? "Received" : "Pending"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => toggleReceived(distribution.id)}
-                        >
-                          Mark as{" "}
-                          {distribution.received ? "Pending" : "Received"}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="materials" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Material Inventory</CardTitle>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Material
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Add New Material</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Material Name</Label>
-                        <Input
-                          value={newMaterial.name || ""}
-                          onChange={(e) =>
-                            setNewMaterial({
-                              ...newMaterial,
-                              name: e.target.value,
-                            })
-                          }
-                          placeholder="Enter material name"
-                        />
-                      </div>
-                      <div>
-                        <Label>Description</Label>
-                        <Textarea
-                          value={newMaterial.description || ""}
-                          onChange={(e) =>
-                            setNewMaterial({
-                              ...newMaterial,
-                              description: e.target.value,
-                            })
-                          }
-                          placeholder="Enter description"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label>Type</Label>
-                          <Select
-                            value={newMaterial.type || "handout"}
-                            onValueChange={(value) =>
-                              setNewMaterial({
-                                ...newMaterial,
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                type: value as any,
-                              })
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="handout">Handout</SelectItem>
-                              <SelectItem value="book">Book</SelectItem>
-                              <SelectItem value="worksheet">
-                                Worksheet
-                              </SelectItem>
-                              <SelectItem value="exam_paper">
-                                Exam Paper
-                              </SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label>Quantity</Label>
-                          <Input
-                            type="number"
-                            value={newMaterial.quantity || 0}
-                            onChange={(e) =>
-                              setNewMaterial({
-                                ...newMaterial,
-                                quantity: parseInt(e.target.value),
-                              })
-                            }
-                            placeholder="0"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label>Subject</Label>
-                          <Input
-                            value={newMaterial.subject || ""}
-                            onChange={(e) =>
-                              setNewMaterial({
-                                ...newMaterial,
-                                subject: e.target.value,
-                              })
-                            }
-                            placeholder="Enter subject"
-                          />
-                        </div>
-                        <div>
-                          <Label>Grade</Label>
-                          <Input
-                            value={newMaterial.grade || ""}
-                            onChange={(e) =>
-                              setNewMaterial({
-                                ...newMaterial,
-                                grade: e.target.value,
-                              })
-                            }
-                            placeholder="Enter grade"
-                          />
-                        </div>
-                      </div>
-                      <Button onClick={handleAddMaterial} className="w-full">
-                        Add Material
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Material Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Grade</TableHead>
-                    <TableHead>Total Qty</TableHead>
-                    <TableHead>Remaining</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {materials.map((material) => (
-                    <TableRow key={material.id}>
-                      <TableCell className="font-medium">
-                        {material.name}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {material.type.replace("_", " ").toUpperCase()}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{material.subject}</TableCell>
-                      <TableCell>{material.grade}</TableCell>
-                      <TableCell>{material.quantity}</TableCell>
-                      <TableCell>{material.remainingQuantity}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            material.remainingQuantity > 10
-                              ? "default"
-                              : material.remainingQuantity > 0
-                                ? "secondary"
-                                : "destructive"
-                          }
-                        >
-                          {material.remainingQuantity > 10
-                            ? "In Stock"
-                            : material.remainingQuantity > 0
-                              ? "Low Stock"
-                              : "Out of Stock"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="distribute" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Distribute Materials to Course</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Select Material</Label>
-                  <Select
-                    value={selectedMaterial}
-                    onValueChange={setSelectedMaterial}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose material" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {materials
-                        .filter((m) => m.remainingQuantity > 0)
-                        .map((material) => (
-                          <SelectItem key={material.id} value={material.id}>
-                            {material.name} (Available:{" "}
-                            {material.remainingQuantity})
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Select Course</Label>
-                  <Select
-                    value={selectedClass}
-                    onValueChange={setSelectedClass}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose class" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {classes.map((cls) => (
-                        <SelectItem key={cls.id} value={cls.id}>
-                          {cls.name} ({cls.enrolled_students} students)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <Button
-                onClick={() =>
-                  selectedMaterial &&
-                  selectedClass &&
-                  handleDistributeMaterial(selectedMaterial, selectedClass)
-                }
-                disabled={!selectedMaterial || !selectedClass}
-                className="w-full"
+      <Card>
+        <CardHeader>
+          <CardTitle>Distribute a Tute</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Select Course</Label>
+              <Select
+                value={selectedCourse}
+                onValueChange={(courseId) => setSelectedCourse(courseId)}
+                disabled={coursesLoading}
               >
-                Distribute to All Students in Course
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                <SelectTrigger>
+                  <SelectValue placeholder={coursesLoading ? "Loading courses..." : "Choose a course"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {classes.map((course) => (
+                    <SelectItem key={course.id} value={course.id}>
+                      {course.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Create Tute</Label>
+              <div className="grid gap-3 rounded-md border p-4 md:grid-cols-[1fr_auto] md:items-end">
+                <Input
+                  value={newTuteName}
+                  onChange={(event) => setNewTuteName(event.target.value)}
+                  placeholder="e.g. Algebra Tute"
+                  spellCheck={false}
+                  disabled={!selectedCourse || tutesLoading}
+                />
+                <Button
+                  className="w-full md:w-auto"
+                  onClick={handleCreateTute}
+                  disabled={!selectedCourse || tutesLoading}
+                >
+                  Create tute
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Select Tute</Label>
+            <Select
+              value={selectedTute}
+              onValueChange={(tuteId) => setSelectedTute(tuteId)}
+              disabled={!selectedCourse || tutesLoading}
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    selectedCourse
+                      ? tutesLoading
+                        ? "Loading tutes..."
+                        : "Choose a tute"
+                      : "Select a course first"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {tutes.map((tute) => (
+                  <SelectItem key={tute.id} value={tute.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate">{tute.name}</span>
+                      <Badge variant="outline" className="text-[10px] font-normal">
+                        {tute.distributedCount} given
+                      </Badge>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {tutesError ? <p className="text-xs text-destructive">{tutesError}</p> : null}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Search Students</Label>
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search by name, student ID, or public ID"
+                className="pl-8"
+                spellCheck={false}
+                disabled={!selectedCourse || studentsLoading}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">
+                  {selectedCourse ? classes.find((c) => c.id === selectedCourse)?.name ?? "" : placeholderMessage}
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  {selectedCourse
+                    ? studentsLoading
+                      ? "Loading enrolled students..."
+                      : `${students.length} enrolled students`
+                    : "Course selection is required"}
+                </p>
+              </div>
+              {selectedTute ? (
+                <Badge variant="outline" className="text-xs">
+                  Tute: {activeTuteName}
+                </Badge>
+              ) : null}
+            </div>
+
+            {studentsError ? (
+              <p className="text-xs text-destructive">{studentsError}</p>
+            ) : null}
+            {ledgerError ? <p className="text-xs text-destructive">{ledgerError}</p> : null}
+            {distributionsError ? (
+              <p className="text-xs text-destructive">{distributionsError}</p>
+            ) : null}
+
+            <div className="space-y-2 rounded-md border p-4">
+              {selectedCourse ? (
+                studentsLoading ? (
+                  <p className="text-sm text-muted-foreground">Loading students...</p>
+                ) : filteredStudents.length > 0 ? (
+                  filteredStudents.map((student) => {
+                    const isDistributed = distributions[student.id]?.distributed ?? false;
+                    const isDisabled = !selectedTute || distributionsLoading || updatingStudentId === student.id;
+                    const receivedTutes = ledger[student.id]?.tutes ?? [];
+
+                    return (
+                      <div
+                        key={student.id}
+                        className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-2"
+                      >
+                        <div>
+                          <p className="text-sm font-medium">{student.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {student.studentPublicId ? `${student.id} · ${student.studentPublicId}` : student.id}
+                          </p>
+                          {receivedTutes.length > 0 ? (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {receivedTutes.map((tute) => (
+                                <Badge key={tute.id} variant="outline" className="text-[10px] font-normal">
+                                  {tute.name}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {ledgerLoading ? "Syncing..." : "Distributed"}
+                          </span>
+                          <Switch
+                            checked={isDistributed}
+                            onCheckedChange={(checked) => void handleDistributionChange(student.id, checked)}
+                            disabled={isDisabled}
+                            aria-label={`Mark ${activeTuteName} as distributed to ${student.name}`}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-muted-foreground">No students match your search.</p>
+                )
+              ) : (
+                <p className="text-sm text-muted-foreground">{placeholderMessage}.</p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

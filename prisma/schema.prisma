@@ -101,9 +101,10 @@ model Student {
   idCardKey       String?
   qrCodeUrl       String?
 
-  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  registration StudentRegistration? @relation(name: "StudentRegistrationStudent")
-  enrollments  Enrollment[]
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  registration      StudentRegistration? @relation(name: "StudentRegistrationStudent")
+  enrollments       Enrollment[]
+  tuteDistributions TuteDistribution[]
 }
 
 model Teacher {
@@ -133,18 +134,18 @@ model Notification {
 }
 
 model Course {
-  id           String @id @default(uuid())
-  name         String
-  slug         String @unique
-  coverImage   String
-  description  String
-  teacherName  String
-  priceInCents Int    @default(0)
-  currency     String @default("usd")
+  id               String @id @default(uuid())
+  name             String
+  slug             String @unique
+  coverImage       String
+  description      String
+  teacherName      String
+  priceInCents     Int    @default(0)
+  currency         String @default("usd")
   courseCategoryId String
 
-  teacherId String?
-  teacher   Teacher? @relation(fields: [teacherId], references: [userId], onDelete: SetNull)
+  teacherId      String?
+  teacher        Teacher?       @relation(fields: [teacherId], references: [userId], onDelete: SetNull)
   courseCategory CourseCategory @relation(fields: [courseCategoryId], references: [id], onDelete: Restrict)
 
   enrollments            Enrollment[]
@@ -152,6 +153,7 @@ model Course {
   videoRecordings        VideoRecording[]
   exams                  ExamPaper[]
   lessons                Lesson[]
+  tutes                  Tute[]
   physicalExamMarks      PhysicalExamMark[]
   registrationSelections StudentRegistrationCourse[]
   paymentTransactions    PaymentTransaction[]
@@ -159,6 +161,34 @@ model Course {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Tute {
+  id        String   @id @default(uuid())
+  name      String
+  courseId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  course        Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  distributions TuteDistribution[]
+
+  @@unique([courseId, name])
+}
+
+model TuteDistribution {
+  id            String    @id @default(uuid())
+  tuteId        String
+  studentId     String
+  distributed   Boolean   @default(true)
+  distributedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tute    Tute    @relation(fields: [tuteId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [userId], onDelete: Cascade)
+
+  @@unique([tuteId, studentId])
 }
 
 model CourseCategory {
@@ -280,18 +310,18 @@ enum QuestionDifficulty {
 }
 
 model ExamPaper {
-  id          String         @id @default(uuid())
-  title       String
-  instructions String?
+  id               String         @id @default(uuid())
+  title            String
+  instructions     String?
   timeLimitMinutes Int?
-  courseId    String?
-  status      ExamStatus     @default(DRAFT)
-  publishedAt DateTime?
-  createdById String?
-  createdBy   User?          @relation("ExamCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  course      Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  questions   ExamQuestion[]
-  attempts    ExamAttempt[]
+  courseId         String?
+  status           ExamStatus     @default(DRAFT)
+  publishedAt      DateTime?
+  createdById      String?
+  createdBy        User?          @relation("ExamCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  course           Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  questions        ExamQuestion[]
+  attempts         ExamAttempt[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
