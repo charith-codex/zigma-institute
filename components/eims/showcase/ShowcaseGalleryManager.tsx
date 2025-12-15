@@ -181,8 +181,13 @@ function ShowcaseStudentForm({ initialData, onSuccess, onCancelEdit }: StudentFo
     showcaseActionInitialState
   );
 
-  const form = useForm<ShowcaseStudentFormValues>({
+  const form = useForm<
+    ShowcaseStudentFormValues,
+    ShowcaseStudentFormValues,
+    ShowcaseStudentFormValues
+  >({
     resolver: zodResolver<
+      ShowcaseStudentFormValues,
       ShowcaseStudentFormValues,
       ShowcaseStudentFormValues
     >(showcaseStudentFormSchema),
@@ -378,8 +383,13 @@ function AchievementForm({ initialData, onSuccess, onCancelEdit }: AchievementFo
     showcaseActionInitialState
   );
 
-  const form = useForm<InstituteAchievementFormValues>({
+  const form = useForm<
+    InstituteAchievementFormValues,
+    InstituteAchievementFormValues,
+    InstituteAchievementFormValues
+  >({
     resolver: zodResolver<
+      InstituteAchievementFormValues,
       InstituteAchievementFormValues,
       InstituteAchievementFormValues
     >(instituteAchievementFormSchema),
