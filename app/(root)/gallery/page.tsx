@@ -37,9 +37,9 @@ const getInitials = (name: string): string =>
     .slice(0, 2);
 
 const StudentCard = ({ student }: { student: ShowcaseStudent }) => (
-  <Card className="h-full transition-shadow hover:shadow-lg">
+  <Card className="h-full min-h-[460px] transition-shadow hover:shadow-lg">
     <CardHeader className="space-y-4">
-      <Avatar className="h-48 w-full rounded-xl border">
+      <Avatar className="h-64 w-full rounded-xl border">
         {student.avatarUrl ? (
           <AvatarImage
             src={student.avatarUrl}
