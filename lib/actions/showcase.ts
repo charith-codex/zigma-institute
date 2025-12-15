@@ -1,6 +1,6 @@
 "use server";
 
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/db/prisma";
@@ -50,7 +50,7 @@ export async function createShowcaseStudent(
 
     return { success: true, message: "Showcase student saved." };
   } catch (error) {
-    if (error instanceof PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       return { success: false, message: "Unable to save showcase student." };
     }
 
@@ -101,7 +101,7 @@ export async function updateShowcaseStudent(
 
     return { success: true, message: "Showcase student updated." };
   } catch (error) {
-    if (error instanceof PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       return { success: false, message: "Unable to update showcase student." };
     }
 
@@ -129,7 +129,7 @@ export async function deleteShowcaseStudent(
     return { success: true, message: "Showcase student removed." };
   } catch (error) {
     if (
-      error instanceof PrismaClientKnownRequestError &&
+      error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2025"
     ) {
       return { success: false, message: "Student already removed." };
@@ -166,7 +166,7 @@ export async function createInstituteAchievement(
 
     return { success: true, message: "Achievement saved." };
   } catch (error) {
-    if (error instanceof PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       return { success: false, message: "Unable to save achievement." };
     }
 
@@ -211,7 +211,7 @@ export async function updateInstituteAchievement(
 
     return { success: true, message: "Achievement updated." };
   } catch (error) {
-    if (error instanceof PrismaClientKnownRequestError) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       return { success: false, message: "Unable to update achievement." };
     }
 
@@ -239,7 +239,7 @@ export async function deleteInstituteAchievement(
     return { success: true, message: "Achievement removed." };
   } catch (error) {
     if (
-      error instanceof PrismaClientKnownRequestError &&
+      error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2025"
     ) {
       return { success: false, message: "Achievement already removed." };
