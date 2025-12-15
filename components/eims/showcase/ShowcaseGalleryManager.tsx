@@ -436,7 +436,9 @@ function AchievementForm({ initialData, onSuccess, onCancelEdit }: AchievementFo
     formData.append("accentColor", values.accentColor);
     formData.append("sortOrder", values.sortOrder.toString());
 
-    formAction(formData);
+    startTransition(() => {
+      formAction(formData);
+    });
   });
 
   return (
