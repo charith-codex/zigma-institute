@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "@/lib/utils";
@@ -7,11 +7,18 @@ interface Params {
   courseId: string;
 }
 
-export async function GET(_request: Request, { params }: { params: Params }) {
-  const courseId = params.courseId?.trim();
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<Params> }
+) {
+  const { courseId: rawCourseId } = await params;
+  const courseId = rawCourseId?.trim();
 
   if (!courseId) {
-    return NextResponse.json({ error: "Course ID is required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Course ID is required." },
+      { status: 400 }
+    );
   }
 
   try {
@@ -29,7 +36,9 @@ export async function GET(_request: Request, { params }: { params: Params }) {
 
     const students = enrollments
       .map((enrollment) => enrollment.student)
-      .filter((student): student is NonNullable<typeof student> => Boolean(student))
+      .filter((student): student is NonNullable<typeof student> =>
+        Boolean(student)
+      )
       .map((student) => ({
         id: student.userId,
         name: student.user?.name ?? "Student",
