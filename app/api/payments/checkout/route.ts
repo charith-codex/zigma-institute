@@ -78,14 +78,22 @@ export async function POST(request: Request) {
     include: { course: true },
   });
 
-  if (!enrollment?.course) {
+  const course =
+    enrollment?.course ??
+    (await prisma.course.findUnique({
+      where: { id: normalizedCourseId },
+    }));
+
+  if (!course) {
     return NextResponse.json(
-      { error: "You are not enrolled in this course." },
-      { status: 403 }
+      { error: "Selected course could not be found." },
+      { status: 404 }
     );
   }
 
-  if (!enrollment.course.priceInCents || enrollment.course.priceInCents <= 0) {
+  const alreadyEnrolled = Boolean(enrollment);
+
+  if (!course.priceInCents || course.priceInCents <= 0) {
     return NextResponse.json(
       { error: "Course does not have a valid price configured." },
       { status: 400 }
@@ -96,9 +104,18 @@ export async function POST(request: Request) {
     where: { studentId: session.user.id },
   });
 
-  const discountRate = calculateDiscountRate(courseCount);
-  const baseMonthlyAmount = deriveMonthlyAmount(enrollment.course.priceInCents);
+  const discountRate = calculateDiscountRate(
+    alreadyEnrolled ? courseCount : courseCount + 1
+  );
+  const baseMonthlyAmount = deriveMonthlyAmount(course.priceInCents);
   const amountInCents = Math.round(baseMonthlyAmount * (1 - discountRate));
+
+  if (amountInCents <= 0) {
+    return NextResponse.json(
+      { error: "Course price is not set for billing." },
+      { status: 400 }
+    );
+  }
 
   const origin = resolveOrigin(request);
 
@@ -113,19 +130,19 @@ export async function POST(request: Request) {
     const sessionPayload = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
-      success_url: `${origin}/lms?payment=success&courseId=${enrollment.course.id}&planId=${encodeURIComponent(
+      success_url: `${origin}/lms?payment=success&courseId=${course.id}&planId=${encodeURIComponent(
         typeof planId === "string" && planId.trim().length > 0
           ? planId
-          : enrollment.course.id
+          : course.id
       )}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/lms?payment=cancelled`,
       line_items: [
         {
           price_data: {
-            currency: enrollment.course.currency,
+            currency: course.currency,
             product_data: {
-              name: `${enrollment.course.name} monthly installment`,
-              description: enrollment.course.description,
+              name: `${course.name} monthly installment`,
+              description: course.description,
             },
             unit_amount: amountInCents,
           },
@@ -133,14 +150,15 @@ export async function POST(request: Request) {
         },
       ],
       metadata: {
-        courseId: enrollment.course.id,
+        courseId: course.id,
         studentId: session.user.id,
         planId:
           typeof planId === "string" && planId.trim().length > 0
             ? planId
-            : enrollment.course.id,
+            : course.id,
         baseMonthlyAmount: baseMonthlyAmount.toString(),
         discountRate: discountRate.toString(),
+        enrollOnSuccess: alreadyEnrolled ? "false" : "true",
       },
     });
 
@@ -195,6 +213,7 @@ export async function GET(request: Request) {
     }
 
     const courseId = checkoutSession.metadata?.courseId ?? null;
+    const enrollOnSuccess = checkoutSession.metadata?.enrollOnSuccess === "true";
     const discountRate = Number(checkoutSession.metadata?.discountRate ?? 0);
     const estimatedBase = Number(
       checkoutSession.metadata?.baseMonthlyAmount ?? 0
@@ -203,7 +222,6 @@ export async function GET(request: Request) {
     const course = courseId
       ? await prisma.course.findUnique({
           where: { id: courseId },
-          select: { currency: true },
         })
       : null;
 
@@ -222,15 +240,56 @@ export async function GET(request: Request) {
         : null);
 
     if (checkoutSession.payment_status === "paid" && amountInCents && courseId) {
+      const existingEnrollment = await prisma.enrollment.findUnique({
+        where: {
+          studentId_courseId: { studentId: session.user.id, courseId },
+        },
+        include: { course: true },
+      });
+
+      if (!existingEnrollment && enrollOnSuccess) {
+        if (!course) {
+          return NextResponse.json(
+            { error: "Course not found for enrollment." },
+            { status: 404 }
+          );
+        }
+
+        await prisma.enrollment.create({
+          data: { studentId: session.user.id, courseId },
+        });
+      } else if (!existingEnrollment && !enrollOnSuccess) {
+        return NextResponse.json(
+          { error: "Enrollment not found for this payment." },
+          { status: 404 }
+        );
+      }
+
       const paidAt = checkoutSession.created
         ? new Date(checkoutSession.created * 1000)
         : new Date();
+
+      const previousInstallments = await prisma.paymentTransaction.count({
+        where: {
+          studentId: session.user.id,
+          courseId,
+          paymentType: "INSTALLMENT",
+        },
+      });
+
+      const monthNumber = previousInstallments + 1;
 
       await prisma.paymentTransaction.upsert({
         where: { transactionId },
         update: {
           amountInCents,
-          currency: checkoutSession.currency ?? course?.currency ?? "usd",
+          currency:
+            checkoutSession.currency ??
+            existingEnrollment?.course?.currency ??
+            course?.currency ??
+            "usd",
+          monthNumber,
+          discountRate,
           paidAt,
         },
         create: {
@@ -238,9 +297,13 @@ export async function GET(request: Request) {
           studentId: session.user.id,
           courseId,
           amountInCents,
-          currency: checkoutSession.currency ?? course?.currency ?? "usd",
+          currency:
+            checkoutSession.currency ??
+            existingEnrollment?.course?.currency ??
+            course?.currency ??
+            "usd",
           paymentType: "INSTALLMENT",
-          monthNumber: null,
+          monthNumber,
           discountRate,
           paidAt,
         },

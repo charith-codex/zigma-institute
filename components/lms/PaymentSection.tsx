@@ -2,7 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { AlertCircle, Calendar, CheckCircle, Clock, CreditCard, DollarSign, Percent, User } from "lucide-react";
+import {
+  AlertCircle,
+  Calendar,
+  CheckCircle,
+  Clock,
+  CreditCard,
+  DollarSign,
+  Percent,
+  User,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,17 +23,15 @@ import {
   deriveMonthlyAmount,
 } from "@/lib/payments";
 
-const PLAN_STORAGE_KEY = "lms-course-payment-plans";
-const HISTORY_STORAGE_KEY = "lms-course-payment-history";
-
 interface PaymentCourse {
   id: string;
   name: string;
   priceInCents: number;
   currency: string;
-  teacherName: string;
+  teacherName: string | null;
   createdAt: string;
   updatedAt: string;
+  enrolledAt: string;
 }
 
 interface PaymentStudent {
@@ -60,13 +67,15 @@ interface CoursePaymentPlan {
 
 interface PaymentReceipt {
   id: string;
-  courseName: string;
+  courseId: string | null;
+  courseName: string | null;
   paidOn: string;
   amountPaidInCents: number;
   monthNumber: number;
   transactionId: string;
   currency?: string;
   paymentType?: "INSTALLMENT" | "REGISTRATION";
+  discountRate?: number | null;
 }
 
 const formatCurrency = (cents: number, currency: string) =>
@@ -74,39 +83,22 @@ const formatCurrency = (cents: number, currency: string) =>
     cents / 100
   );
 
-const addMonths = (date: string | Date, months: number) => {
-  const next = new Date(date);
-  next.setMonth(next.getMonth() + months);
-  return next.toISOString();
+const calculateNextDueDate = (enrolledAt: string, completedPayments: number) => {
+  const anchor = new Date(enrolledAt);
+  anchor.setMonth(anchor.getMonth() + completedPayments);
+
+  return new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0, 23, 59, 59, 999);
 };
 
-const buildDefaultPlan = (
-  course: PaymentCourse,
-  index: number,
-  discountRate: number
-): CoursePaymentPlan => {
-  const duration = computeDurationInMonths(course.priceInCents);
-  const offsetDate = addMonths(new Date(), index % 2 === 0 ? 0 : 1);
-
-  return {
-    id: `plan-${course.id}`,
-    courseId: course.id,
-    courseName: course.name,
-    monthlyAmountInCents: deriveMonthlyAmount(course.priceInCents),
-    discountRate,
-    monthsRemaining: duration,
-    totalMonths: duration,
-    nextDueDate: offsetDate,
-  } satisfies CoursePaymentPlan;
+const daysUntil = (target: Date) => {
+  const now = new Date();
+  const diff = target.getTime() - now.getTime();
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
 };
 
-const planStorageKey = (studentId: string) => `${PLAN_STORAGE_KEY}-${studentId}`;
-const historyStorageKey = (studentId: string) => `${HISTORY_STORAGE_KEY}-${studentId}`;
-
-export const PaymentSection = () => {
+export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
   const [student, setStudent] = useState<PaymentStudent | null>(null);
   const [courses, setCourses] = useState<PaymentCourse[]>([]);
-  const [plans, setPlans] = useState<CoursePaymentPlan[]>([]);
   const [history, setHistory] = useState<PaymentReceipt[]>([]);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -117,6 +109,8 @@ export const PaymentSection = () => {
     () => calculateDiscountRate(courses.length),
     [courses.length]
   );
+
+  const activeCurrency = courses[0]?.currency ?? "USD";
 
   const fetchPaymentData = useCallback(async () => {
     setLoading(true);
@@ -162,6 +156,7 @@ export const PaymentSection = () => {
         payload.map((entry) => ({
           ...entry,
           monthNumber: entry.monthNumber ?? 1,
+          paymentType: entry.paymentType ?? "INSTALLMENT",
         }))
       );
     } catch (historyError) {
@@ -171,64 +166,13 @@ export const PaymentSection = () => {
 
   useEffect(() => {
     void fetchPaymentData();
-  }, [fetchPaymentData]);
+  }, [fetchPaymentData, refreshKey]);
 
   useEffect(() => {
     if (!student) return;
 
-    const planKey = planStorageKey(student.id);
-    const historyKey = historyStorageKey(student.id);
-
-    const storedPlans = localStorage.getItem(planKey);
-    const storedHistory = localStorage.getItem(historyKey);
-
-    const defaultPlans = courses.map((course, index) =>
-      buildDefaultPlan(course, index, discountRate)
-    );
-
-    if (storedHistory) {
-      const parsedHistory = JSON.parse(storedHistory) as PaymentReceipt[];
-      setHistory(parsedHistory);
-    } else {
-      setHistory([]);
-    }
-
-    if (storedPlans) {
-      const parsedPlans = JSON.parse(storedPlans) as CoursePaymentPlan[];
-      const courseIds = new Set(courses.map((course) => course.id));
-
-      const normalizedPlans = parsedPlans
-        .filter((plan) => courseIds.has(plan.courseId))
-        .map((plan) => ({
-          ...plan,
-          discountRate,
-        }));
-
-      const missingPlans = defaultPlans.filter(
-        (plan) => !normalizedPlans.some((existing) => existing.courseId === plan.courseId)
-      );
-
-      setPlans([...normalizedPlans, ...missingPlans]);
-    } else {
-      setPlans(defaultPlans);
-    }
-  }, [courses, discountRate, student]);
-
-  useEffect(() => {
-    if (!student) return;
-
-    localStorage.setItem(planStorageKey(student.id), JSON.stringify(plans));
-  }, [plans, student]);
-
-  useEffect(() => {
-    if (!student) return;
-
-    localStorage.setItem(historyStorageKey(student.id), JSON.stringify(history));
-  }, [history, student]);
-
-  useEffect(() => {
     void fetchPaymentHistory();
-  }, [fetchPaymentHistory]);
+  }, [fetchPaymentHistory, student]);
 
   useEffect(() => {
     if (!student) return;
@@ -241,7 +185,7 @@ export const PaymentSection = () => {
     if (paymentStatus !== "success" || !sessionId) return;
 
     const finalizePayment = async () => {
-      setProcessingId(returnedPlanId);
+      setProcessingId(returnedPlanId ?? returnedCourseId);
 
       try {
         const response = await fetch(
@@ -255,58 +199,12 @@ export const PaymentSection = () => {
 
         const payload = (await response.json()) as PaymentVerificationResult;
 
-        if (!payload.paid || !payload.courseId) {
+        if (!payload.paid) {
           return;
         }
 
-        const targetPlan =
-          plans.find(
-            (plan) =>
-              plan.id === (payload.planId ?? returnedPlanId ?? "") ||
-              plan.courseId === (payload.courseId ?? returnedCourseId ?? "")
-          ) ?? null;
-
-        if (!targetPlan) return;
-
-        const paidAmount =
-          payload.amountPaidInCents ??
-          Math.round(targetPlan.monthlyAmountInCents * (1 - targetPlan.discountRate));
-
-        const monthNumber = targetPlan.totalMonths - targetPlan.monthsRemaining + 1;
-
-        const receipt: PaymentReceipt = {
-          id: payload.transactionId ?? `receipt-${Date.now()}`,
-          courseName: targetPlan.courseName,
-          paidOn: new Date().toISOString(),
-          amountPaidInCents: paidAmount,
-          monthNumber,
-          transactionId: payload.transactionId ?? `SESSION-${sessionId}`,
-          currency: payload.currency ?? activeCurrency,
-          paymentType: "INSTALLMENT",
-        };
-
-        setHistory((previous) => [...previous, receipt]);
-
-        void fetchPaymentHistory();
-
-        setPlans((previous) =>
-          previous.flatMap((plan) => {
-            if (plan.id !== targetPlan.id) return plan;
-
-            const remaining = Math.max(0, plan.monthsRemaining - 1);
-            if (remaining === 0) {
-              return [];
-            }
-
-            return [
-              {
-                ...plan,
-                monthsRemaining: remaining,
-                nextDueDate: addMonths(plan.nextDueDate, 1),
-              },
-            ];
-          })
-        );
+        await fetchPaymentHistory();
+        await fetchPaymentData();
       } catch (verificationError) {
         console.error("Failed to record payment", verificationError);
       } finally {
@@ -322,20 +220,53 @@ export const PaymentSection = () => {
     };
 
     void finalizePayment();
-  }, [plans, searchParams, student]);
+  }, [fetchPaymentData, fetchPaymentHistory, searchParams, student]);
+
+  const pendingPlans = useMemo(() => {
+    if (!student) return [] as CoursePaymentPlan[];
+
+    return courses
+      .map((course) => {
+        const totalMonths = computeDurationInMonths(course.priceInCents);
+        const paidInstallments = history.filter(
+          (entry) =>
+            entry.courseId === course.id && entry.paymentType === "INSTALLMENT"
+        ).length;
+        const monthsRemaining = Math.max(totalMonths - paidInstallments, 0);
+
+        if (monthsRemaining <= 0) {
+          return null;
+        }
+
+        const monthlyAmount = deriveMonthlyAmount(course.priceInCents);
+        const nextDue = calculateNextDueDate(course.enrolledAt, paidInstallments);
+
+        return {
+          id: `plan-${course.id}`,
+          courseId: course.id,
+          courseName: course.name,
+          monthlyAmountInCents: monthlyAmount,
+          discountRate,
+          monthsRemaining,
+          totalMonths,
+          nextDueDate: nextDue.toISOString(),
+        } satisfies CoursePaymentPlan;
+      })
+      .filter((plan): plan is CoursePaymentPlan => plan !== null);
+  }, [courses, discountRate, history, student]);
 
   const totalPending = useMemo(
     () =>
-      plans.reduce(
+      pendingPlans.reduce(
         (total, plan) =>
           total + Math.round(plan.monthlyAmountInCents * (1 - plan.discountRate)),
         0
       ),
-    [plans]
+    [pendingPlans]
   );
 
   const handlePayment = async (planId: string, courseId: string) => {
-    const targetPlan = plans.find((plan) => plan.id === planId);
+    const targetPlan = pendingPlans.find((plan) => plan.id === planId);
     if (!targetPlan) return;
 
     setProcessingId(planId);
@@ -402,8 +333,6 @@ export const PaymentSection = () => {
     return null;
   }
 
-  const activeCurrency = courses[0]?.currency ?? "USD";
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -463,7 +392,7 @@ export const PaymentSection = () => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Active Courses</p>
-                    <p className="text-xl font-bold">{plans.length}</p>
+                    <p className="text-xl font-bold">{pendingPlans.length}</p>
                   </div>
                 </div>
               </CardContent>
@@ -497,7 +426,7 @@ export const PaymentSection = () => {
             </TabsList>
 
             <TabsContent value="pending" className="space-y-4">
-              {plans.length === 0 ? (
+              {pendingPlans.length === 0 ? (
                 <Card>
                   <CardContent className="p-12 text-center">
                     <CheckCircle className="mx-auto mb-4 h-16 w-16 text-success" />
@@ -509,10 +438,18 @@ export const PaymentSection = () => {
                 </Card>
               ) : (
                 <div className="grid gap-4">
-                  {plans.map((plan) => {
+                  {pendingPlans.map((plan) => {
                     const discountedAmount = Math.round(
                       plan.monthlyAmountInCents * (1 - plan.discountRate)
                     );
+                    const dueDate = new Date(plan.nextDueDate);
+                    const daysRemaining = daysUntil(dueDate);
+                    const isOverdue = daysRemaining < 0;
+                    const reminderLabel = isOverdue
+                      ? `Overdue by ${Math.abs(daysRemaining)} day(s)`
+                      : daysRemaining === 0
+                        ? "Due today"
+                        : `Due in ${daysRemaining} day(s)`;
 
                     return (
                       <Card
@@ -547,9 +484,16 @@ export const PaymentSection = () => {
                             <div className="flex items-center gap-2">
                               <Calendar className="h-4 w-4" />
                               <span>
-                                Due by {new Date(plan.nextDueDate).toLocaleDateString()}
+                                Due by {dueDate.toLocaleDateString()}
                               </span>
                             </div>
+                            <Badge
+                              variant={isOverdue ? "destructive" : "secondary"}
+                              className="gap-2"
+                            >
+                              <Clock className="h-3 w-3" />
+                              {reminderLabel}
+                            </Badge>
                           </div>
 
                           <div className="flex flex-wrap gap-2">
@@ -593,7 +537,7 @@ export const PaymentSection = () => {
                       <Card key={receipt.id}>
                         <CardContent className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
                           <div className="space-y-1">
-                            <p className="text-sm text-muted-foreground">{receipt.courseName}</p>
+                            <p className="text-sm text-muted-foreground">{receipt.courseName ?? "Course"}</p>
                             <p className="font-semibold text-foreground">
                               {formatCurrency(
                                 receipt.amountPaidInCents,
@@ -601,7 +545,8 @@ export const PaymentSection = () => {
                               )}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              Month {receipt.monthNumber} • Transaction {receipt.transactionId}
+                              {receipt.paymentType === "REGISTRATION" ? "Registration" : "Installment"} • Month {receipt.monthNumber}
+                              {receipt.discountRate ? ` • ${Math.round(receipt.discountRate * 100)}% discount` : ""} • Transaction {receipt.transactionId}
                             </p>
                           </div>
                           <Badge className="gap-2 self-start bg-success/10 text-success hover:bg-success/10">

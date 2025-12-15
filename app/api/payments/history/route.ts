@@ -6,6 +6,7 @@ import { convertToPlainObject } from "@/lib/utils";
 
 interface PaymentHistoryResponse {
   id: string;
+  courseId: string | null;
   courseName: string | null;
   paidOn: string;
   amountPaidInCents: number;
@@ -13,6 +14,7 @@ interface PaymentHistoryResponse {
   paymentType: "INSTALLMENT" | "REGISTRATION";
   monthNumber: number | null;
   transactionId: string;
+  discountRate: number | null;
 }
 
 export async function GET() {
@@ -22,7 +24,9 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session.user.role !== "STUDENT") {
+  const isAdmin = session.user.role === "ADMIN";
+
+  if (!isAdmin && session.user.role !== "STUDENT") {
     return NextResponse.json(
       { error: "Only students can view their payments." },
       { status: 403 }
@@ -30,13 +34,14 @@ export async function GET() {
   }
 
   const transactions = await prisma.paymentTransaction.findMany({
-    where: { studentId: session.user.id },
-    include: { course: { select: { name: true } } },
+    where: isAdmin ? undefined : { studentId: session.user.id },
+    include: { course: { select: { id: true, name: true } } },
     orderBy: { paidAt: "desc" },
   });
 
   const payload: PaymentHistoryResponse[] = transactions.map((payment) => ({
     id: payment.id,
+    courseId: payment.course?.id ?? null,
     courseName: payment.course?.name ?? null,
     paidOn: payment.paidAt.toISOString(),
     amountPaidInCents: payment.amountInCents,
@@ -44,6 +49,7 @@ export async function GET() {
     paymentType: payment.paymentType,
     monthNumber: payment.monthNumber ?? null,
     transactionId: payment.transactionId,
+    discountRate: payment.discountRate ?? null,
   }));
 
   return NextResponse.json(convertToPlainObject(payload));

@@ -1,5 +1,6 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEnrollments, useAssignments, useCourses } from "@/hooks/useData";
 import { BookOpen, Star, CheckCircle, Video } from "lucide-react";
@@ -14,6 +15,7 @@ import { PublishedExams } from "@/components/lms/PublishedExams";
 import CourseCard from "@/components/courses/course-card";
 import { Course } from "@/types";
 import { Input } from "@/components/ui/input";
+import { CourseEnrollment } from "@/components/lms/CourseEnrollment";
 
 type EnrolledClass = Course & {
   code: string;
@@ -28,21 +30,57 @@ const LMS = () => {
     null
   );
   const [nameQuery, setNameQuery] = useState("");
-  const { enrollments, loading: enrollmentsLoading } = useEnrollments();
+  const searchParams = useSearchParams();
+  const {
+    enrollments,
+    loading: enrollmentsLoading,
+    refetch: refetchEnrollments,
+  } = useEnrollments();
   const { assignments, loading: assignmentsLoading } = useAssignments();
   const { courses } = useCourses();
+  const [paymentRefreshKey, setPaymentRefreshKey] = useState(0);
 
-  const enrolledClasses = useMemo<EnrolledClass[]>(
-    () =>
-      courses.map((course) => ({
-        ...course,
-        code: course.slug?.toUpperCase() ?? course.id.slice(0, 8).toUpperCase(),
-        instructor: course.teacherName ?? "Instructor",
+  const enrolledClasses = useMemo<EnrolledClass[]>(() => {
+    const byCourseId = new Map<string, EnrolledClass>();
+
+    enrollments.forEach((enrollment) => {
+      const course = courses.find((item) => item.id === enrollment.courseId);
+      const fallbackDate = new Date(enrollment.enrolledAt);
+
+      const hydratedCourse: Course =
+        course ?? {
+          id: enrollment.courseId,
+          name: enrollment.courseName,
+          slug: enrollment.courseSlug ?? enrollment.courseId,
+          description: "Course description will be available soon.",
+          coverImage: "/logo.png",
+          teacherName: enrollment.teacherName ?? "Instructor",
+          teacherId: null,
+          courseCategoryId: "",
+          courseCategory: null,
+          priceInCents: Math.max(enrollment.priceInCents, 0),
+          currency: enrollment.currency,
+          createdAt: fallbackDate,
+          updatedAt: fallbackDate,
+        };
+
+      const enrolledClass: EnrolledClass = {
+        ...hydratedCourse,
+        code:
+          hydratedCourse.slug?.toUpperCase() ??
+          hydratedCourse.id.slice(0, 8).toUpperCase(),
+        instructor: hydratedCourse.teacherName ?? "Instructor",
         progress: 0,
         status: "active",
-      })),
-    [courses]
-  );
+      };
+
+      if (!byCourseId.has(enrolledClass.id)) {
+        byCourseId.set(enrolledClass.id, enrolledClass);
+      }
+    });
+
+    return Array.from(byCourseId.values());
+  }, [courses, enrollments]);
 
   const filteredClasses = useMemo<EnrolledClass[]>(() => {
     const normalizedQuery = nameQuery.trim().toLowerCase();
@@ -58,14 +96,68 @@ const LMS = () => {
 
   const scheduleCourseOptions = useMemo(
     () =>
-      courses.map((course) => ({
+      enrolledClasses.map((course) => ({
         id: course.id,
         name: course.name,
         teacherId: course.teacherId ?? `${course.id}-teacher`,
         teacherName: course.teacherName ?? "Instructor",
       })),
-    [courses]
+    [enrolledClasses]
   );
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get("payment");
+    const sessionId = searchParams.get("session_id");
+
+    if (paymentStatus !== "success" || !sessionId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const clearPaymentParams = () => {
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.delete("payment");
+      currentUrl.searchParams.delete("courseId");
+      currentUrl.searchParams.delete("planId");
+      currentUrl.searchParams.delete("session_id");
+      window.history.replaceState({}, document.title, currentUrl.toString());
+    };
+
+    const finalizePayment = async () => {
+      try {
+        const response = await fetch(
+          `/api/payments/checkout?session_id=${encodeURIComponent(sessionId)}`,
+          { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+          throw new Error("Unable to verify payment session.");
+        }
+
+        const payload = (await response.json()) as { paid?: boolean };
+
+        if (!payload.paid) {
+          return;
+        }
+
+        await refetchEnrollments();
+        setPaymentRefreshKey((previous) => previous + 1);
+      } catch (verificationError) {
+        console.error("Failed to finalize payment", verificationError);
+      } finally {
+        if (!cancelled) {
+          clearPaymentParams();
+        }
+      }
+    };
+
+    void finalizePayment();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [refetchEnrollments, searchParams]);
 
   return (
     <div className="flex w-full min-h-[calc(100vh-3.5rem)]">
@@ -251,7 +343,18 @@ const LMS = () => {
               <StudentPerformance enrolledClasses={enrolledClasses} />
             )}
 
-            {activeModule === "payments" && <PaymentSection />}
+            {activeModule === "enroll" && (
+              <CourseEnrollment
+                onEnrolled={() => {
+                  void refetchEnrollments();
+                  setPaymentRefreshKey((previous) => previous + 1);
+                }}
+              />
+            )}
+
+            {activeModule === "payments" && (
+              <PaymentSection refreshKey={paymentRefreshKey} />
+            )}
           </div>
         </div>
       </main>

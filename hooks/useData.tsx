@@ -30,6 +30,17 @@ export interface LessonSummary {
   updatedAt: string;
 }
 
+export interface StudentEnrollment {
+  id: string;
+  courseId: string;
+  courseName: string;
+  courseSlug: string | null;
+  enrolledAt: string;
+  priceInCents: number;
+  currency: string;
+  teacherName: string | null;
+}
+
 // Mock data hooks for demonstration - replace with your Neon PostgreSQL implementation
 export function useProfiles() {
   const [profiles, setProfiles] = useState<any[]>([]);
@@ -507,21 +518,93 @@ export function useLessons(courseId?: string) {
 }
 
 export function useEnrollments() {
-  const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [enrollments, setEnrollments] = useState<StudentEnrollment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refetch = async () => {
-    setLoading(true);
-    setTimeout(() => {
+  const refetch = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/lms/enrollments", { cache: "no-store" });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error ?? "Failed to load enrollments");
+      }
+
+      const payload = await response.json();
+
+      const normalized: StudentEnrollment[] = Array.isArray(payload)
+        ? payload
+            .map((entry) => {
+              const course = (entry as { course?: unknown }).course as
+                | Record<string, unknown>
+                | undefined;
+              const courseId =
+                typeof entry.courseId === "string"
+                  ? entry.courseId
+                  : typeof course?.id === "string"
+                    ? (course.id as string)
+                    : null;
+
+              if (!courseId) return null;
+
+              const courseName =
+                typeof course?.name === "string"
+                  ? course.name
+                  : typeof (entry as { courseName?: unknown }).courseName ===
+                      "string"
+                    ? ((entry as { courseName: string }).courseName as string)
+                    : "Course";
+
+              return {
+                id: typeof entry.id === "string" ? entry.id : courseId,
+                courseId,
+                courseName,
+                courseSlug:
+                  typeof course?.slug === "string"
+                    ? (course.slug as string)
+                    : null,
+                enrolledAt:
+                  typeof (entry as { enrolledAt?: unknown }).enrolledAt ===
+                  "string"
+                    ? ((entry as { enrolledAt: string }).enrolledAt as string)
+                    : new Date().toISOString(),
+                priceInCents:
+                  typeof course?.priceInCents === "number"
+                    ? (course.priceInCents as number)
+                    : 0,
+                currency:
+                  typeof course?.currency === "string"
+                    ? (course.currency as string)
+                    : "usd",
+                teacherName:
+                  typeof course?.teacherName === "string"
+                    ? (course.teacherName as string)
+                    : null,
+              } satisfies StudentEnrollment;
+            })
+            .filter((entry): entry is StudentEnrollment => entry !== null)
+        : [];
+
+      setEnrollments(normalized);
+      setError(null);
+    } catch (fetchError) {
+      console.error("Failed to fetch enrollments", fetchError);
       setEnrollments([]);
+      setError(
+        fetchError instanceof Error
+          ? fetchError.message
+          : "Failed to load enrollments"
+      );
+    } finally {
       setLoading(false);
-    }, 1000);
-  };
+    }
+  }, []);
 
   useEffect(() => {
-    refetch();
-  }, []);
+    void refetch();
+  }, [refetch]);
 
   return { enrollments, loading, error, refetch };
 }

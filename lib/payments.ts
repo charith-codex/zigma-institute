@@ -12,7 +12,5 @@ export const computeDurationInMonths = (priceInCents: number): number => {
   return Math.min(12, Math.max(4, estimatedMonths));
 };
 
-export const deriveMonthlyAmount = (priceInCents: number): number => {
-  const duration = computeDurationInMonths(priceInCents);
-  return Math.max(Math.round(priceInCents / duration), MINIMUM_MONTHLY_CENTS);
-};
+export const deriveMonthlyAmount = (priceInCents: number): number =>
+  Math.max(Math.round(priceInCents), 0);

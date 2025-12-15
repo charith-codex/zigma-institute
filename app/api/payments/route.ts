@@ -14,6 +14,7 @@ interface PaymentCoursePayload {
   currency: string;
   createdAt: Date;
   updatedAt: Date;
+  enrolledAt: Date;
 }
 
 interface PaymentStudentPayload {
@@ -34,7 +35,9 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session.user.role !== "STUDENT") {
+  const isAdmin = session.user.role === "ADMIN";
+
+  if (!isAdmin && session.user.role !== "STUDENT") {
     return NextResponse.json(
       { error: "Only students can view payment information." },
       { status: 403 }
@@ -51,18 +54,20 @@ export async function GET() {
     },
   });
 
-  if (!student || !student.student) {
+  if (!student || (!student.student && !isAdmin)) {
     return NextResponse.json(
       { error: "Student profile not found for this account." },
       { status: 404 }
     );
   }
 
-  const enrollments = await prisma.enrollment.findMany({
-    where: { studentId: session.user.id },
-    include: { course: true },
-    orderBy: { enrolledAt: "desc" },
-  });
+  const enrollments = isAdmin
+    ? []
+    : await prisma.enrollment.findMany({
+        where: { studentId: session.user.id },
+        include: { course: true },
+        orderBy: { enrolledAt: "desc" },
+      });
 
   const courses: PaymentCoursePayload[] = enrollments.flatMap((enrollment) => {
     const course = enrollment.course;
@@ -82,6 +87,7 @@ export async function GET() {
         currency: course.currency,
         createdAt: course.createdAt,
         updatedAt: course.updatedAt,
+        enrolledAt: enrollment.enrolledAt,
       },
     ];
   });
