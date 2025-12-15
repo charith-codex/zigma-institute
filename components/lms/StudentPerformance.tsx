@@ -36,6 +36,12 @@ type CoursePerformance = {
   papers: ExamPaper[];
 };
 
+type PaperChartItem = {
+  label: string;
+  percent: number;
+  color: string;
+};
+
 interface StudentPerformanceProps {
   enrolledClasses: EnrolledClass[];
 }
@@ -105,6 +111,26 @@ export const StudentPerformance = ({
       };
     });
   }, [enrolledClasses]);
+
+  const coursePaperCharts: Record<string, PaperChartItem[]> = useMemo(() => {
+    return coursePerformances.reduce<Record<string, PaperChartItem[]>>(
+      (acc, course) => {
+        const papers = course.papers.map<PaperChartItem>((paper) => {
+          const paperScore = Math.round((paper.score / paper.maxScore) * 1000) / 10;
+
+          return {
+            label: paper.paper,
+            percent: Math.min(Math.max(paperScore, 0), 100),
+            color: paper.mode === "physical" ? "bg-primary" : "bg-secondary",
+          };
+        });
+
+        acc[course.courseId] = papers;
+        return acc;
+      },
+      {}
+    );
+  }, [coursePerformances]);
 
   const physicalPapers = coursePerformances.flatMap((course) =>
     course.papers.filter((paper) => paper.mode === "physical")
@@ -295,6 +321,46 @@ export const StudentPerformance = ({
                   <span className="text-xs text-muted-foreground">
                     {course.papers.length} paper{course.papers.length === 1 ? "" : "s"}
                   </span>
+                </div>
+                <div className="mt-3">
+                  <p className="text-xs font-medium text-muted-foreground">Paper performance chart</p>
+                  <div className="mt-2 flex items-end gap-3 rounded-lg border border-dashed border-border bg-background px-3 py-4">
+                    {(() => {
+                      const paperChartData = coursePaperCharts[course.courseId] ?? [];
+                      if (paperChartData.length === 0) {
+                        return (
+                          <p className="text-xs text-muted-foreground">No papers graded yet.</p>
+                        );
+                      }
+
+                      const maxPercent = Math.max(
+                        ...paperChartData.map((item) => item.percent),
+                        1
+                      );
+
+                      return paperChartData.map((paper) => {
+                        const heightPercent = (paper.percent / maxPercent) * 100;
+
+                        return (
+                          <div key={`${course.courseId}-${paper.label}`} className="flex flex-1 flex-col items-center gap-2">
+                            <div
+                              className="flex h-32 w-full items-end rounded-md bg-muted/40 p-1 shadow-inner"
+                              aria-label={`${paper.label} ${paper.percent}%`}
+                            >
+                              <div
+                                className={`${paper.color} h-full w-full rounded-sm transition-all duration-500`}
+                                style={{ height: `${heightPercent}%` }}
+                              />
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs font-semibold text-foreground">{paper.percent.toFixed(1)}%</p>
+                              <p className="text-[11px] text-muted-foreground">{paper.label}</p>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
                 </div>
                 <div className="space-y-3">
                   {course.papers.map((paper) => {
