@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { prisma } from "@/db/prisma";
@@ -9,11 +9,18 @@ interface Params {
   tuteId: string;
 }
 
-export async function GET(_request: Request, { params }: { params: Params }) {
-  const tuteId = params.tuteId?.trim();
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<Params> }
+) {
+  const { tuteId: rawTuteId } = await params;
+  const tuteId = rawTuteId?.trim();
 
   if (!tuteId) {
-    return NextResponse.json({ error: "Tute ID is required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Tute ID is required." },
+      { status: 400 }
+    );
   }
 
   try {
@@ -38,11 +45,18 @@ export async function GET(_request: Request, { params }: { params: Params }) {
   }
 }
 
-export async function POST(request: Request, { params }: { params: Params }) {
-  const tuteId = params.tuteId?.trim();
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<Params> }
+) {
+  const { tuteId: rawTuteId } = await params;
+  const tuteId = rawTuteId?.trim();
 
   if (!tuteId) {
-    return NextResponse.json({ error: "Tute ID is required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Tute ID is required." },
+      { status: 400 }
+    );
   }
 
   try {
@@ -56,7 +70,12 @@ export async function POST(request: Request, { params }: { params: Params }) {
     }
 
     const enrollment = await prisma.enrollment.findUnique({
-      where: { studentId_courseId: { studentId: data.studentId, courseId: tute.courseId } },
+      where: {
+        studentId_courseId: {
+          studentId: data.studentId,
+          courseId: tute.courseId,
+        },
+      },
     });
 
     if (!enrollment) {
