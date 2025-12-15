@@ -28,9 +28,21 @@ import ImageDropzone from "@/components/ImageDropzone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldContent, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
@@ -53,7 +65,10 @@ import {
 } from "@/lib/validators";
 import type { InstituteAchievement, ShowcaseStudent } from "@/types";
 
-const achievementIcons: Record<string, ComponentType<{ className?: string }>> = {
+const achievementIcons: Record<
+  string,
+  ComponentType<{ className?: string }>
+> = {
   Trophy,
   Zap,
   Target,
@@ -105,13 +120,9 @@ const colorStyles: Record<
   },
 };
 
-const studentResolver = zodResolver<ShowcaseStudentFormValues>(
-  showcaseStudentFormSchema
-);
+const studentResolver = zodResolver(showcaseStudentFormSchema);
 
-const achievementResolver = zodResolver<InstituteAchievementFormValues>(
-  instituteAchievementFormSchema
-);
+const achievementResolver = zodResolver(instituteAchievementFormSchema);
 
 const defaultStudentValues = (): ShowcaseStudentFormValues => ({
   name: "",
@@ -183,7 +194,11 @@ interface StudentFormProps {
   onCancelEdit?: () => void;
 }
 
-function ShowcaseStudentForm({ initialData, onSuccess, onCancelEdit }: StudentFormProps) {
+function ShowcaseStudentForm({
+  initialData,
+  onSuccess,
+  onCancelEdit,
+}: StudentFormProps) {
   const [state, formAction, pending] = useActionState(
     initialData ? updateShowcaseStudent : createShowcaseStudent,
     showcaseActionInitialState
@@ -268,35 +283,59 @@ function ShowcaseStudentForm({ initialData, onSuccess, onCancelEdit }: StudentFo
         title={initialData ? "Edit Student" : "Add Showcase Student"}
         actionLabel={initialData ? "Update" : "Save"}
         isPending={pending}
-        onCancel={initialData ? () => {
-          form.reset(defaultStudentValues());
-          onCancelEdit?.();
-        } : undefined}
+        onCancel={
+          initialData
+            ? () => {
+                form.reset(defaultStudentValues());
+                onCancelEdit?.();
+              }
+            : undefined
+        }
       >
         <FieldGroup>
           <Field>
             <FieldLabel htmlFor="student-name">Name</FieldLabel>
-            <Input id="student-name" {...form.register("name")} disabled={pending} />
+            <Input
+              id="student-name"
+              {...form.register("name")}
+              disabled={pending}
+            />
             <FieldError errors={[form.formState.errors.name]} />
           </Field>
           <Field>
             <FieldLabel htmlFor="student-grade">Grade</FieldLabel>
-            <Input id="student-grade" {...form.register("grade")} disabled={pending} />
+            <Input
+              id="student-grade"
+              {...form.register("grade")}
+              disabled={pending}
+            />
             <FieldError errors={[form.formState.errors.grade]} />
           </Field>
           <Field>
             <FieldLabel htmlFor="student-subject">Subject</FieldLabel>
-            <Input id="student-subject" {...form.register("subject")} disabled={pending} />
+            <Input
+              id="student-subject"
+              {...form.register("subject")}
+              disabled={pending}
+            />
             <FieldError errors={[form.formState.errors.subject]} />
           </Field>
           <Field>
             <FieldLabel htmlFor="student-position">Position</FieldLabel>
-            <Input id="student-position" {...form.register("position")} disabled={pending} />
+            <Input
+              id="student-position"
+              {...form.register("position")}
+              disabled={pending}
+            />
             <FieldError errors={[form.formState.errors.position]} />
           </Field>
           <Field>
             <FieldLabel htmlFor="student-score">Score</FieldLabel>
-            <Input id="student-score" {...form.register("score")} disabled={pending} />
+            <Input
+              id="student-score"
+              {...form.register("score")}
+              disabled={pending}
+            />
             <FieldError errors={[form.formState.errors.score]} />
           </Field>
           <Field>
@@ -315,7 +354,9 @@ function ShowcaseStudentForm({ initialData, onSuccess, onCancelEdit }: StudentFo
             <FieldLabel htmlFor="student-category">Category</FieldLabel>
             <Select
               value={form.watch("category")}
-              onValueChange={(value) => form.setValue("category", value as ShowcaseStudent["category"])}
+              onValueChange={(value) =>
+                form.setValue("category", value as ShowcaseStudent["category"])
+              }
               disabled={pending}
             >
               <SelectTrigger id="student-category">
@@ -329,8 +370,14 @@ function ShowcaseStudentForm({ initialData, onSuccess, onCancelEdit }: StudentFo
             <FieldError errors={[form.formState.errors.category]} />
           </Field>
           <Field>
-            <FieldLabel htmlFor="student-district">District (for district rankings)</FieldLabel>
-            <Input id="student-district" {...form.register("district")} disabled={pending} />
+            <FieldLabel htmlFor="student-district">
+              District (for district rankings)
+            </FieldLabel>
+            <Input
+              id="student-district"
+              {...form.register("district")}
+              disabled={pending}
+            />
             <FieldError errors={[form.formState.errors.district]} />
           </Field>
           <Field>
@@ -349,7 +396,9 @@ function ShowcaseStudentForm({ initialData, onSuccess, onCancelEdit }: StudentFo
             <FieldContent>
               <ImageDropzone
                 disabled={pending}
-                onUploadComplete={(url) => form.setValue("avatarUrl", url, { shouldValidate: true })}
+                onUploadComplete={(url) =>
+                  form.setValue("avatarUrl", url, { shouldValidate: true })
+                }
               />
               {form.watch("avatarUrl") ? (
                 <div className="relative mt-2 h-20 w-20 overflow-hidden rounded-lg">
@@ -377,7 +426,11 @@ interface AchievementFormProps {
   onCancelEdit?: () => void;
 }
 
-function AchievementForm({ initialData, onSuccess, onCancelEdit }: AchievementFormProps) {
+function AchievementForm({
+  initialData,
+  onSuccess,
+  onCancelEdit,
+}: AchievementFormProps) {
   const [state, formAction, pending] = useActionState(
     initialData ? updateInstituteAchievement : createInstituteAchievement,
     showcaseActionInitialState
@@ -391,7 +444,9 @@ function AchievementForm({ initialData, onSuccess, onCancelEdit }: AchievementFo
           category: initialData.category,
           year: initialData.year,
           description: initialData.description,
-          icon: (initialData.icon as InstituteAchievementFormValues["icon"]) ?? "Trophy",
+          icon:
+            (initialData.icon as InstituteAchievementFormValues["icon"]) ??
+            "Trophy",
           accentColor: initialData.accentColor,
           sortOrder: initialData.sortOrder,
         }
@@ -421,7 +476,9 @@ function AchievementForm({ initialData, onSuccess, onCancelEdit }: AchievementFo
         category: initialData.category,
         year: initialData.year,
         description: initialData.description,
-        icon: (initialData.icon as InstituteAchievementFormValues["icon"]) ?? "Trophy",
+        icon:
+          (initialData.icon as InstituteAchievementFormValues["icon"]) ??
+          "Trophy",
         accentColor: initialData.accentColor,
         sortOrder: initialData.sortOrder,
       });
@@ -455,20 +512,32 @@ function AchievementForm({ initialData, onSuccess, onCancelEdit }: AchievementFo
         title={initialData ? "Edit Achievement" : "Add Achievement"}
         actionLabel={initialData ? "Update" : "Save"}
         isPending={pending}
-        onCancel={initialData ? () => {
-          form.reset(defaultAchievementValues());
-          onCancelEdit?.();
-        } : undefined}
+        onCancel={
+          initialData
+            ? () => {
+                form.reset(defaultAchievementValues());
+                onCancelEdit?.();
+              }
+            : undefined
+        }
       >
         <FieldGroup>
           <Field>
             <FieldLabel htmlFor="achievement-title">Title</FieldLabel>
-            <Input id="achievement-title" {...form.register("title")} disabled={pending} />
+            <Input
+              id="achievement-title"
+              {...form.register("title")}
+              disabled={pending}
+            />
             <FieldError errors={[form.formState.errors.title]} />
           </Field>
           <Field>
             <FieldLabel htmlFor="achievement-category">Category</FieldLabel>
-            <Input id="achievement-category" {...form.register("category")} disabled={pending} />
+            <Input
+              id="achievement-category"
+              {...form.register("category")}
+              disabled={pending}
+            />
             <FieldError errors={[form.formState.errors.category]} />
           </Field>
           <Field>
@@ -487,7 +556,12 @@ function AchievementForm({ initialData, onSuccess, onCancelEdit }: AchievementFo
             <FieldLabel htmlFor="achievement-icon">Icon</FieldLabel>
             <Select
               value={form.watch("icon")}
-              onValueChange={(value) => form.setValue("icon", value as InstituteAchievementFormValues["icon"])}
+              onValueChange={(value) =>
+                form.setValue(
+                  "icon",
+                  value as InstituteAchievementFormValues["icon"]
+                )
+              }
               disabled={pending}
             >
               <SelectTrigger id="achievement-icon">
@@ -524,7 +598,9 @@ function AchievementForm({ initialData, onSuccess, onCancelEdit }: AchievementFo
             <FieldError errors={[form.formState.errors.accentColor]} />
           </Field>
           <Field>
-            <FieldLabel htmlFor="achievement-sort-order">Display Order</FieldLabel>
+            <FieldLabel htmlFor="achievement-sort-order">
+              Display Order
+            </FieldLabel>
             <Input
               id="achievement-sort-order"
               type="number"
@@ -535,7 +611,9 @@ function AchievementForm({ initialData, onSuccess, onCancelEdit }: AchievementFo
             <FieldError errors={[form.formState.errors.sortOrder]} />
           </Field>
           <Field>
-            <FieldLabel htmlFor="achievement-description">Description</FieldLabel>
+            <FieldLabel htmlFor="achievement-description">
+              Description
+            </FieldLabel>
             <Textarea
               id="achievement-description"
               rows={3}
@@ -558,7 +636,13 @@ interface StudentListProps {
   isDeleting: boolean;
 }
 
-function StudentList({ title, students, onEdit, onDelete, isDeleting }: StudentListProps) {
+function StudentList({
+  title,
+  students,
+  onEdit,
+  onDelete,
+  isDeleting,
+}: StudentListProps) {
   return (
     <Card>
       <CardHeader>
@@ -601,12 +685,19 @@ function StudentList({ title, students, onEdit, onDelete, isDeleting }: StudentL
                     {student.grade} • {student.subject}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {student.district ? `${student.district} District` : "Island Wide"} · {student.year}
+                    {student.district
+                      ? `${student.district} District`
+                      : "Island Wide"}{" "}
+                    · {student.year}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => onEdit(student)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onEdit(student)}
+                >
                   Edit
                 </Button>
                 <Button
@@ -633,11 +724,18 @@ interface AchievementListProps {
   isDeleting: boolean;
 }
 
-function AchievementList({ achievements, onEdit, onDelete, isDeleting }: AchievementListProps) {
+function AchievementList({
+  achievements,
+  onEdit,
+  onDelete,
+  isDeleting,
+}: AchievementListProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">Institute Achievements</CardTitle>
+        <CardTitle className="text-lg font-semibold">
+          Institute Achievements
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {achievements.length === 0 ? (
@@ -645,27 +743,40 @@ function AchievementList({ achievements, onEdit, onDelete, isDeleting }: Achieve
         ) : (
           achievements.map((achievement) => {
             const IconComponent = achievementIcons[achievement.icon] ?? Award;
-            const colors = colorStyles[achievement.accentColor] ?? colorStyles.yellow;
+            const colors =
+              colorStyles[achievement.accentColor] ?? colorStyles.yellow;
             return (
               <div
                 key={achievement.id}
                 className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex items-start gap-3">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${colors.background}`}>
+                  <div
+                    className={`flex h-12 w-12 items-center justify-center rounded-lg ${colors.background}`}
+                  >
                     <IconComponent className={`h-6 w-6 ${colors.text}`} />
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold">{achievement.title}</span>
-                      <Badge className={colors.badge}>{achievement.category}</Badge>
+                      <Badge className={colors.badge}>
+                        {achievement.category}
+                      </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                    <p className="text-xs text-muted-foreground">{achievement.year}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {achievement.description}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {achievement.year}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => onEdit(achievement)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit(achievement)}
+                  >
                     Edit
                   </Button>
                   <Button
@@ -688,8 +799,11 @@ function AchievementList({ achievements, onEdit, onDelete, isDeleting }: Achieve
 
 export function ShowcaseGalleryManager() {
   const { students, achievements, loading, refetch } = useShowcaseGallery();
-  const [editingStudent, setEditingStudent] = useState<ShowcaseStudent | null>(null);
-  const [editingAchievement, setEditingAchievement] = useState<InstituteAchievement | null>(null);
+  const [editingStudent, setEditingStudent] = useState<ShowcaseStudent | null>(
+    null
+  );
+  const [editingAchievement, setEditingAchievement] =
+    useState<InstituteAchievement | null>(null);
   const [isDeletingStudent, startDeleteStudent] = useTransition();
   const [isDeletingAchievement, startDeleteAchievement] = useTransition();
 
@@ -706,7 +820,10 @@ export function ShowcaseGalleryManager() {
     startDeleteStudent(async () => {
       const formData = new FormData();
       formData.append("id", id);
-      const result = await deleteShowcaseStudent(showcaseActionInitialState, formData);
+      const result = await deleteShowcaseStudent(
+        showcaseActionInitialState,
+        formData
+      );
       if (result.success) {
         toast({ title: result.message });
         if (editingStudent?.id === id) {
@@ -714,7 +831,11 @@ export function ShowcaseGalleryManager() {
         }
         await refetch();
       } else if (result.message) {
-        toast({ title: "Unable to delete student", description: result.message, variant: "destructive" });
+        toast({
+          title: "Unable to delete student",
+          description: result.message,
+          variant: "destructive",
+        });
       }
     });
   };
@@ -723,7 +844,10 @@ export function ShowcaseGalleryManager() {
     startDeleteAchievement(async () => {
       const formData = new FormData();
       formData.append("id", id);
-      const result = await deleteInstituteAchievement(showcaseActionInitialState, formData);
+      const result = await deleteInstituteAchievement(
+        showcaseActionInitialState,
+        formData
+      );
       if (result.success) {
         toast({ title: result.message });
         if (editingAchievement?.id === id) {
@@ -731,7 +855,11 @@ export function ShowcaseGalleryManager() {
         }
         await refetch();
       } else if (result.message) {
-        toast({ title: "Unable to delete achievement", description: result.message, variant: "destructive" });
+        toast({
+          title: "Unable to delete achievement",
+          description: result.message,
+          variant: "destructive",
+        });
       }
     });
   };
@@ -784,7 +912,9 @@ export function ShowcaseGalleryManager() {
       />
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading showcase data...</p>
+        <p className="text-sm text-muted-foreground">
+          Loading showcase data...
+        </p>
       ) : null}
     </div>
   );
