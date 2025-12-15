@@ -39,10 +39,10 @@ import {
   createShowcaseStudent,
   deleteInstituteAchievement,
   deleteShowcaseStudent,
-  showcaseActionInitialState,
   updateInstituteAchievement,
   updateShowcaseStudent,
 } from "@/lib/actions/showcase";
+import { showcaseActionInitialState } from "@/lib/actions/showcaseState";
 import {
   achievementIconSchema,
   instituteAchievementFormSchema,

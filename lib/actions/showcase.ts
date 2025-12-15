@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/db/prisma";
 import type { ActionState } from "./user";
+import { showcaseActionInitialState } from "./showcaseState";
 import {
   instituteAchievementFormSchema,
   instituteAchievementUpdateSchema,
@@ -12,7 +13,7 @@ import {
   showcaseStudentUpdateSchema,
 } from "@/lib/validators";
 
-const initialState: ActionState = { success: false, message: "" };
+const initialState: ActionState = showcaseActionInitialState;
 
 const toStringValue = (value: FormDataEntryValue | null): string => {
   return typeof value === "string" ? value : "";
@@ -252,5 +253,3 @@ export async function deleteInstituteAchievement(
     return initialState;
   }
 }
-
-export const showcaseActionInitialState = initialState;
