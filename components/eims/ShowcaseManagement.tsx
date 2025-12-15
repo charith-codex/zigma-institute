@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { ShowcaseGalleryManager } from "./showcase/ShowcaseGalleryManager";
 import { toast } from "@/hooks/use-toast";
 import {
   Globe,
@@ -15,7 +16,6 @@ import {
   Star,
   BookOpen,
   GraduationCap,
-  Camera,
   Phone,
   Plus,
   Trash2,
@@ -70,14 +70,6 @@ interface TestimonialItem {
   rating: number;
 }
 
-interface GalleryItem {
-  id: string;
-  title: string;
-  description: string;
-  category: "achievement" | "student" | "institute" | "event";
-  imageUrl?: string;
-}
-
 export function ShowcaseManagement() {
   const [activeTab, setActiveTab] = useState("hero");
 
@@ -130,34 +122,6 @@ export function ShowcaseManagement() {
     },
   ]);
 
-  // Gallery State
-  const [gallery, setGallery] = useState<GalleryItem[]>([
-    {
-      id: "1",
-      title: "Island Rank 1st - Mathematics",
-      description: "Our student achieved island's top rank",
-      category: "achievement",
-    },
-    {
-      id: "2",
-      title: "District Champion - Science Fair",
-      description: "First place in district science competition",
-      category: "student",
-    },
-    {
-      id: "3",
-      title: "ISO 9001:2015 Certification",
-      description: "Quality management certification",
-      category: "institute",
-    },
-    {
-      id: "4",
-      title: "Annual Cultural Festival",
-      description: "Students showcasing talents",
-      category: "event",
-    },
-  ]);
-
   const [newStat, setNewStat] = useState({
     label: "",
     value: "",
@@ -168,11 +132,6 @@ export function ShowcaseManagement() {
     description: "",
     icon: "Star",
     color: "primary",
-  });
-  const [newGalleryItem, setNewGalleryItem] = useState({
-    title: "",
-    description: "",
-    category: "achievement" as const,
   });
 
   const handleSaveHero = () => {
@@ -208,26 +167,6 @@ export function ShowcaseManagement() {
   const removeFeature = (id: string) => {
     setFeatures(features.filter((feature) => feature.id !== id));
     toast({ title: "Feature removed successfully!" });
-  };
-
-  const addGalleryItem = () => {
-    if (newGalleryItem.title && newGalleryItem.description) {
-      setGallery([
-        ...gallery,
-        { ...newGalleryItem, id: Date.now().toString() },
-      ]);
-      setNewGalleryItem({
-        title: "",
-        description: "",
-        category: "achievement",
-      });
-      toast({ title: "Gallery item added successfully!" });
-    }
-  };
-
-  const removeGalleryItem = (id: string) => {
-    setGallery(gallery.filter((item) => item.id !== id));
-    toast({ title: "Gallery item removed successfully!" });
   };
 
   return (
@@ -532,131 +471,7 @@ export function ShowcaseManagement() {
 
         {/* Gallery Section */}
         <TabsContent value="gallery">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Camera className="w-5 h-5" />
-                Gallery Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Gallery Items by Category */}
-              <div className="space-y-6">
-                {["achievement", "student", "institute", "event"].map(
-                  (category) => (
-                    <div key={category} className="space-y-4">
-                      <h3 className="font-semibold capitalize flex items-center gap-2">
-                        {category === "achievement" && (
-                          <Trophy className="w-4 h-4" />
-                        )}
-                        {category === "student" && (
-                          <Users className="w-4 h-4" />
-                        )}
-                        {category === "institute" && (
-                          <Award className="w-4 h-4" />
-                        )}
-                        {category === "event" && (
-                          <Calendar className="w-4 h-4" />
-                        )}
-                        {category} Gallery
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {gallery
-                          .filter((item) => item.category === category)
-                          .map((item) => (
-                            <div
-                              key={item.id}
-                              className="p-4 border rounded-lg space-y-2"
-                            >
-                              <div className="flex items-center justify-between">
-                                <h4 className="font-medium">{item.title}</h4>
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => removeGalleryItem(item.id)}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                              <p className="text-sm text-muted-foreground">
-                                {item.description}
-                              </p>
-                              <Badge variant="outline" className="capitalize">
-                                {item.category}
-                              </Badge>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )
-                )}
-              </div>
-
-              <Separator />
-
-              {/* Add New Gallery Item */}
-              <div className="space-y-4">
-                <h3 className="font-semibold">Add New Gallery Item</h3>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Title</Label>
-                      <Input
-                        value={newGalleryItem.title}
-                        onChange={(e) =>
-                          setNewGalleryItem({
-                            ...newGalleryItem,
-                            title: e.target.value,
-                          })
-                        }
-                        placeholder="Gallery item title"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Category</Label>
-                      <select
-                        className="w-full p-2 border rounded-md"
-                        value={newGalleryItem.category}
-                        onChange={(e) =>
-                          setNewGalleryItem({
-                            ...newGalleryItem,
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            category: e.target.value as any,
-                          })
-                        }
-                      >
-                        <option value="achievement">Achievement</option>
-                        <option value="student">Student</option>
-                        <option value="institute">Institute</option>
-                        <option value="event">Event</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Description</Label>
-                    <Textarea
-                      value={newGalleryItem.description}
-                      onChange={(e) =>
-                        setNewGalleryItem({
-                          ...newGalleryItem,
-                          description: e.target.value,
-                        })
-                      }
-                      placeholder="Gallery item description"
-                      rows={2}
-                    />
-                  </div>
-                </div>
-                <Button
-                  onClick={addGalleryItem}
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Gallery Item
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <ShowcaseGalleryManager />
         </TabsContent>
 
         {/* Courses Section */}

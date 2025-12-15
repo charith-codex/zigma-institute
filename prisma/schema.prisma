@@ -7,6 +7,11 @@ datasource db {
   provider = "postgresql"
 }
 
+enum ShowcaseStudentCategory {
+  ISLAND
+  DISTRICT
+}
+
 model User {
   id            String     @id @default(uuid())
   name          String     @default("NO_NAME")
@@ -513,6 +518,37 @@ model Inquiry {
   response    String?
   respondedAt DateTime?
   assignedTo  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ShowcaseStudent {
+  id        String                  @id @default(uuid())
+  name      String
+  grade     String
+  subject   String
+  position  String
+  score     String?
+  year      Int
+  district  String?
+  avatarUrl String?
+  category  ShowcaseStudentCategory
+  sortOrder Int                     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InstituteAchievement {
+  id          String   @id @default(uuid())
+  title       String
+  category    String
+  year        Int
+  description String
+  icon        String
+  accentColor String   @default("primary")
+  sortOrder   Int      @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
