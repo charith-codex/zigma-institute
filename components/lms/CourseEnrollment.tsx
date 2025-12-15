@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import CourseCard from "@/components/courses/course-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -241,18 +242,24 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
             </div>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filteredCourses.map((course) => {
               const isEnrolled = enrolledIds.has(course.id);
               const monthlyAmount = getMonthlyAmount(course);
+              const courseCardData: Course = {
+                ...course,
+                teacherName: course.teacherName ?? "Instructor",
+              };
 
               return (
-                <Card key={course.id} className="flex h-full flex-col border-muted">
-                  <CardHeader className="space-y-2">
-                    <CardTitle className="text-lg">{course.name}</CardTitle>
-                    <CardDescription>{course.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-1 flex-col gap-4">
+                <div key={course.id} className="flex h-full flex-col gap-3">
+                  <CourseCard
+                    course={courseCardData}
+                    showDescription
+                    clickable={false}
+                    showPrice={false}
+                  />
+                  <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-3">
                     <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                       <Badge variant="secondary" className="gap-2">
                         <Wallet2 className="h-4 w-4" />
@@ -263,11 +270,7 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
                         Billed until course completion
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Pay at the end of each month for every enrolled course. Switching plans is
-                      not required for additional classes.
-                    </p>
-                    <div className="mt-auto flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="text-xs text-muted-foreground">
                         Teacher: {course.teacherName ?? "Instructor"}
                       </div>
@@ -290,8 +293,8 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
                         )}
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               );
             })}
           </div>
