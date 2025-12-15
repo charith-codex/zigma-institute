@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import Image from "next/image";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Award,
@@ -105,6 +105,14 @@ const colorStyles: Record<
   },
 };
 
+const studentResolver: Resolver<ShowcaseStudentFormValues> = zodResolver(
+  showcaseStudentFormSchema
+);
+
+const achievementResolver: Resolver<InstituteAchievementFormValues> = zodResolver(
+  instituteAchievementFormSchema
+);
+
 const defaultStudentValues = (): ShowcaseStudentFormValues => ({
   name: "",
   grade: "",
@@ -181,16 +189,8 @@ function ShowcaseStudentForm({ initialData, onSuccess, onCancelEdit }: StudentFo
     showcaseActionInitialState
   );
 
-  const form = useForm<
-    ShowcaseStudentFormValues,
-    ShowcaseStudentFormValues,
-    ShowcaseStudentFormValues
-  >({
-    resolver: zodResolver<
-      ShowcaseStudentFormValues,
-      ShowcaseStudentFormValues,
-      ShowcaseStudentFormValues
-    >(showcaseStudentFormSchema),
+  const form = useForm<ShowcaseStudentFormValues>({
+    resolver: studentResolver,
     defaultValues: initialData
       ? {
           name: initialData.name,
@@ -383,16 +383,8 @@ function AchievementForm({ initialData, onSuccess, onCancelEdit }: AchievementFo
     showcaseActionInitialState
   );
 
-  const form = useForm<
-    InstituteAchievementFormValues,
-    InstituteAchievementFormValues,
-    InstituteAchievementFormValues
-  >({
-    resolver: zodResolver<
-      InstituteAchievementFormValues,
-      InstituteAchievementFormValues,
-      InstituteAchievementFormValues
-    >(instituteAchievementFormSchema),
+  const form = useForm<InstituteAchievementFormValues>({
+    resolver: achievementResolver,
     defaultValues: initialData
       ? {
           title: initialData.title,
