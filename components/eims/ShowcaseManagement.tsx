@@ -188,12 +188,10 @@ export function ShowcaseManagement() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="hero">Hero</TabsTrigger>
           <TabsTrigger value="stats">Statistics</TabsTrigger>
           <TabsTrigger value="features">Features</TabsTrigger>
-          <TabsTrigger value="courses">Courses</TabsTrigger>
-          <TabsTrigger value="faculty">Faculty</TabsTrigger>
           <TabsTrigger value="gallery">Gallery</TabsTrigger>
           <TabsTrigger value="contact">Contact</TabsTrigger>
         </TabsList>
@@ -472,52 +470,6 @@ export function ShowcaseManagement() {
         {/* Gallery Section */}
         <TabsContent value="gallery">
           <ShowcaseGalleryManager />
-        </TabsContent>
-
-        {/* Courses Section */}
-        <TabsContent value="courses">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5" />
-                Courses Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Course management functionality will be implemented here.</p>
-                <p className="text-sm">
-                  This will include course creation, editing, and showcase
-                  display management.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Faculty Section */}
-        <TabsContent value="faculty">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <GraduationCap className="w-5 h-5" />
-                Faculty Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <GraduationCap className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>
-                  Faculty management functionality will be implemented here.
-                </p>
-                <p className="text-sm">
-                  This will include faculty profiles, qualifications, and
-                  showcase display management.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Contact Section */}
