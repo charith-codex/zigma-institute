@@ -32,12 +32,14 @@ export async function GET() {
     return buildUnauthorized("Unauthorized");
   }
 
-  if (session.user.role !== "STUDENT") {
+  const isAdmin = session.user.role === "ADMIN";
+
+  if (!isAdmin && session.user.role !== "STUDENT") {
     return buildUnauthorized("Only students can view enrollments.", 403);
   }
 
   const enrollments = await prisma.enrollment.findMany({
-    where: { studentId: session.user.id },
+    where: isAdmin ? undefined : { studentId: session.user.id },
     include: { course: true },
     orderBy: { enrolledAt: "desc" },
   });

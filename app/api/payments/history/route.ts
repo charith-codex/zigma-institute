@@ -24,7 +24,9 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session.user.role !== "STUDENT") {
+  const isAdmin = session.user.role === "ADMIN";
+
+  if (!isAdmin && session.user.role !== "STUDENT") {
     return NextResponse.json(
       { error: "Only students can view their payments." },
       { status: 403 }
@@ -32,7 +34,7 @@ export async function GET() {
   }
 
   const transactions = await prisma.paymentTransaction.findMany({
-    where: { studentId: session.user.id },
+    where: isAdmin ? undefined : { studentId: session.user.id },
     include: { course: { select: { id: true, name: true } } },
     orderBy: { paidAt: "desc" },
   });
