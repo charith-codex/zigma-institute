@@ -17,7 +17,10 @@ const showcaseStudentShape = z.object({
 
 export type ShowcaseStudentFormValues = z.infer<typeof showcaseStudentShape>;
 
-const validateDistrictRequirement = (value: z.infer<typeof showcaseStudentShape>, ctx: z.RefinementCtx) => {
+const validateDistrictRequirement = (
+  value: z.infer<typeof showcaseStudentShape>,
+  ctx: z.RefinementCtx
+) => {
   if (value.category === "DISTRICT" && !value.district?.trim()) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -27,11 +30,12 @@ const validateDistrictRequirement = (value: z.infer<typeof showcaseStudentShape>
   }
 };
 
-export const showcaseStudentFormSchema = showcaseStudentShape.superRefine(
-  validateDistrictRequirement,
-);
+export const showcaseStudentFormSchema: z.ZodType<ShowcaseStudentFormValues> =
+  showcaseStudentShape.superRefine(validateDistrictRequirement);
 
-export const showcaseStudentUpdateSchema = showcaseStudentShape
+export const showcaseStudentUpdateSchema: z.ZodType<
+  ShowcaseStudentFormValues & { id: string }
+> = showcaseStudentShape
   .extend({
     id: z.string().min(1),
   })
