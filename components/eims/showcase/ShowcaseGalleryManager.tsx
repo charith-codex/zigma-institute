@@ -182,7 +182,7 @@ function ShowcaseStudentForm({ initialData, onSuccess, onCancelEdit }: StudentFo
   );
 
   const form = useForm<ShowcaseStudentFormValues>({
-    resolver: zodResolver(showcaseStudentFormSchema),
+    resolver: zodResolver<ShowcaseStudentFormValues>(showcaseStudentFormSchema),
     defaultValues: initialData
       ? {
           name: initialData.name,
@@ -376,7 +376,9 @@ function AchievementForm({ initialData, onSuccess, onCancelEdit }: AchievementFo
   );
 
   const form = useForm<InstituteAchievementFormValues>({
-    resolver: zodResolver(instituteAchievementFormSchema),
+    resolver: zodResolver<InstituteAchievementFormValues>(
+      instituteAchievementFormSchema
+    ),
     defaultValues: initialData
       ? {
           title: initialData.title,
