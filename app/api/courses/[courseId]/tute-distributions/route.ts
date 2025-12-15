@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "@/lib/utils";
@@ -7,11 +7,18 @@ interface Params {
   courseId: string;
 }
 
-export async function GET(_request: Request, { params }: { params: Params }) {
-  const courseId = params.courseId?.trim();
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<Params> }
+) {
+  const { courseId: rawCourseId } = await params;
+  const courseId = rawCourseId?.trim();
 
   if (!courseId) {
-    return NextResponse.json({ error: "Course ID is required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Course ID is required." },
+      { status: 400 }
+    );
   }
 
   try {
@@ -27,7 +34,15 @@ export async function GET(_request: Request, { params }: { params: Params }) {
       orderBy: { distributedAt: "desc" },
     });
 
-    const ledger = distributions.reduce<Record<string, { studentId: string; tutes: { id: string; name: string; distributedAt: Date | null }[] }>>((acc, entry) => {
+    const ledger = distributions.reduce<
+      Record<
+        string,
+        {
+          studentId: string;
+          tutes: { id: string; name: string; distributedAt: Date | null }[];
+        }
+      >
+    >((acc, entry) => {
       const existing = acc[entry.studentId]?.tutes ?? [];
 
       acc[entry.studentId] = {
@@ -49,7 +64,10 @@ export async function GET(_request: Request, { params }: { params: Params }) {
   } catch (error) {
     console.error("Failed to load course tute distributions", error);
     return NextResponse.json(
-      { error: "Unable to load course tute distributions. Please try again later." },
+      {
+        error:
+          "Unable to load course tute distributions. Please try again later.",
+      },
       { status: 500 }
     );
   }
