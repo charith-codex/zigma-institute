@@ -2,9 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getUsers } from "@/lib/actions/user";
+import { getCourses } from "@/lib/actions/course";
 import { Button } from "@/components/ui/button";
-import { CreateUserForm } from "@/app/(eims)/dashboard/users/create-user-form";
 import { UsersTable } from "@/app/(eims)/dashboard/users/users-table";
+import { AdminStudentRegistrationPanel } from "@/app/(eims)/dashboard/users/admin-student-registration-panel";
+import type { StudentRegistrationCourse } from "@/components/student-registration/RegistrationForm";
 
 export default async function AdminUsersPage() {
   const session = await auth();
@@ -13,11 +15,31 @@ export default async function AdminUsersPage() {
     redirect("/sign-in?callbackUrl=/dashboard/users");
   }
 
-  if (session.user.role !== "ADMIN") {
+  const isAuthorizedRole = ["ADMIN", "MANAGER"].includes(
+    session.user.role ?? ""
+  );
+
+  if (!isAuthorizedRole) {
     redirect("/");
   }
 
   const users = await getUsers();
+  const courses = await getCourses();
+
+  const registrationCourses: StudentRegistrationCourse[] = courses.map(
+    (course) => ({
+      id: course.id,
+      name: course.name,
+      priceInCents: course.priceInCents,
+      currency: course.currency,
+      teacherName: course.teacherName,
+    })
+  );
+
+  const INSTITUTE_NAME = "Zigma Institute";
+  const INSTITUTE_TAGLINE =
+    "AI-powered personalized learning for ambitious students.";
+  const INSTITUTE_ADDRESS = "Colombo Innovation Hub, 512 Galle Road, Colombo 03";
 
   return (
     <div className="space-y-10">
@@ -38,11 +60,19 @@ export default async function AdminUsersPage() {
       </header>
 
       <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
-        <h2 className="text-xl font-semibold">Add a new user</h2>
+        <h2 className="text-xl font-semibold">Add a student</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          New users will be able to sign in with the email and password you set.
+          Capture student details, enroll them into courses, and generate their
+          ID card without requiring online payment.
         </p>
-        <CreateUserForm />
+        <div className="mt-4">
+          <AdminStudentRegistrationPanel
+            courses={registrationCourses}
+            instituteName={INSTITUTE_NAME}
+            instituteTagline={INSTITUTE_TAGLINE}
+            instituteAddress={INSTITUTE_ADDRESS}
+          />
+        </div>
       </section>
 
       <section className="rounded-lg border border-border bg-card p-6 shadow-sm">

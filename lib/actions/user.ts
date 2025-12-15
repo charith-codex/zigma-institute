@@ -257,6 +257,23 @@ export async function getUsers() {
       email: true,
       role: true,
       createdAt: true,
+      student: {
+        select: {
+          studentPublicId: true,
+          enrollments: {
+            include: {
+              course: {
+                select: { id: true, name: true },
+              },
+            },
+          },
+        },
+      },
+      paymentTransactions: {
+        where: { paymentType: "INSTALLMENT" },
+        select: { courseId: true, monthNumber: true, paidAt: true },
+        orderBy: { paidAt: "desc" },
+      },
     },
   });
 

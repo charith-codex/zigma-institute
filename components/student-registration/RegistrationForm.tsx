@@ -13,7 +13,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -46,6 +45,13 @@ interface StudentRegistrationFormProps {
   instituteName: string;
   instituteTagline: string;
   instituteAddress: string;
+  mode?: "checkout" | "admin";
+  onSuccess?: (payload: {
+    registrationId: string;
+    studentPublicId?: string | null;
+    idCardUrl?: string | null;
+    temporaryPassword?: string;
+  }) => void;
 }
 
 export function StudentRegistrationForm({
@@ -53,6 +59,8 @@ export function StudentRegistrationForm({
   instituteName,
   instituteTagline,
   instituteAddress,
+  mode = "checkout",
+  onSuccess,
 }: StudentRegistrationFormProps) {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -121,6 +129,35 @@ export function StudentRegistrationForm({
     setIsSubmitting(true);
 
     try {
+      if (mode === "admin") {
+        const response = await fetch("/api/admin/student-registration", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => null);
+          throw new Error(errorPayload?.error ?? "Unable to create student");
+        }
+
+        const responsePayload = (await response.json()) as {
+          registrationId: string;
+          studentPublicId?: string | null;
+          idCardUrl?: string | null;
+          temporaryPassword?: string;
+        };
+
+        toast.success("Student added without payment");
+        form.reset();
+        setPhotoPreview(null);
+        onSuccess?.(responsePayload);
+        setIsSubmitting(false);
+        return;
+      }
+
       const response = await fetch("/api/student-registration/checkout", {
         method: "POST",
         headers: {
@@ -436,25 +473,42 @@ export function StudentRegistrationForm({
               )}
             />
 
-            <div className="rounded-lg border border-dashed p-4">
-              <p className="text-sm font-medium text-foreground">
-                Total due today
-              </p>
-              <p className="text-3xl font-bold">
-                {totals.amount > 0
-                  ? formatCurrency(totals.amount, totals.currency)
-                  : "Select a course"}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                You will be redirected to Stripe Checkout to complete payment.
-              </p>
-            </div>
+            {mode === "checkout" ? (
+              <>
+                <div className="rounded-lg border border-dashed p-4">
+                  <p className="text-sm font-medium text-foreground">
+                    Total due today
+                  </p>
+                  <p className="text-3xl font-bold">
+                    {totals.amount > 0
+                      ? formatCurrency(totals.amount, totals.currency)
+                      : "Select a course"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    You will be redirected to Stripe Checkout to complete
+                    payment.
+                  </p>
+                </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <Button type="submit" size="lg" disabled={isSubmitting}>
-                {isSubmitting ? "Redirecting to Stripe…" : "Proceed to payment"}
-              </Button>
-            </div>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <Button type="submit" size="lg" disabled={isSubmitting}>
+                    {isSubmitting
+                      ? "Redirecting to Stripe…"
+                      : "Proceed to payment"}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="text-sm text-muted-foreground">
+                  Payment is skipped for admin-created students.
+                  Enrolments and ID card will be generated automatically.
+                </div>
+                <Button type="submit" size="lg" disabled={isSubmitting}>
+                  {isSubmitting ? "Creating student…" : "Create student"}
+                </Button>
+              </div>
+            )}
           </form>
         </Form>
       </CardContent>
