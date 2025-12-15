@@ -2,20 +2,7 @@ import { z } from "zod";
 
 export const showcaseStudentCategorySchema = z.enum(["ISLAND", "DISTRICT"]);
 
-export type ShowcaseStudentFormValues = {
-  name: string;
-  grade: string;
-  subject: string;
-  position: string;
-  score?: string;
-  year: number;
-  district?: string;
-  avatarUrl?: string;
-  category: z.infer<typeof showcaseStudentCategorySchema>;
-  sortOrder: number;
-};
-
-const showcaseStudentShape: z.ZodType<ShowcaseStudentFormValues> = z.object({
+const showcaseStudentShape = z.object({
   name: z.string().min(2, "Name is required"),
   grade: z.string().min(1, "Grade is required"),
   subject: z.string().min(1, "Subject is required"),
@@ -27,6 +14,8 @@ const showcaseStudentShape: z.ZodType<ShowcaseStudentFormValues> = z.object({
   category: showcaseStudentCategorySchema,
   sortOrder: z.coerce.number().int().min(0).default(0),
 });
+
+export type ShowcaseStudentFormValues = z.infer<typeof showcaseStudentShape>;
 
 const validateDistrictRequirement = (value: z.infer<typeof showcaseStudentShape>, ctx: z.RefinementCtx) => {
   if (value.category === "DISTRICT" && !value.district?.trim()) {
