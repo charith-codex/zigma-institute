@@ -38,26 +38,24 @@ const getInitials = (name: string): string =>
 
 const StudentCard = ({ student }: { student: ShowcaseStudent }) => (
   <Card className="h-full transition-shadow hover:shadow-lg">
-    <CardHeader className="text-center">
-      <div className="flex flex-col items-center space-y-4">
-        <Avatar className="h-24 w-24 rounded-lg border">
-          {student.avatarUrl ? (
-            <AvatarImage
-              src={student.avatarUrl}
-              alt={student.name}
-              className="object-cover"
-            />
-          ) : null}
-          <AvatarFallback className="rounded-lg text-lg font-semibold bg-gradient-primary">
-            {getInitials(student.name)}
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <CardTitle className="text-xl">{student.name}</CardTitle>
-          <CardDescription className="text-sm">
-            {student.grade} • {student.subject}
-          </CardDescription>
-        </div>
+    <CardHeader className="space-y-4">
+      <Avatar className="h-48 w-full rounded-xl border">
+        {student.avatarUrl ? (
+          <AvatarImage
+            src={student.avatarUrl}
+            alt={student.name}
+            className="h-full w-full object-cover"
+          />
+        ) : null}
+        <AvatarFallback className="flex h-full w-full items-center justify-center rounded-xl bg-gradient-primary text-3xl font-semibold">
+          {getInitials(student.name)}
+        </AvatarFallback>
+      </Avatar>
+      <div className="space-y-1 text-center">
+        <CardTitle className="text-xl">{student.name}</CardTitle>
+        <CardDescription className="text-sm">
+          {student.grade} • {student.subject}
+        </CardDescription>
       </div>
     </CardHeader>
     <CardContent className="space-y-4">
