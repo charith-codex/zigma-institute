@@ -181,8 +181,16 @@ function ShowcaseStudentForm({ initialData, onSuccess, onCancelEdit }: StudentFo
     showcaseActionInitialState
   );
 
-  const form = useForm<ShowcaseStudentFormValues>({
-    resolver: zodResolver<ShowcaseStudentFormValues>(showcaseStudentFormSchema),
+  const form = useForm<
+    ShowcaseStudentFormValues,
+    Record<string, never>,
+    ShowcaseStudentFormValues
+  >({
+    resolver: zodResolver<
+      ShowcaseStudentFormValues,
+      Record<string, never>,
+      ShowcaseStudentFormValues
+    >(showcaseStudentFormSchema),
     defaultValues: initialData
       ? {
           name: initialData.name,
@@ -375,10 +383,16 @@ function AchievementForm({ initialData, onSuccess, onCancelEdit }: AchievementFo
     showcaseActionInitialState
   );
 
-  const form = useForm<InstituteAchievementFormValues>({
-    resolver: zodResolver<InstituteAchievementFormValues>(
-      instituteAchievementFormSchema
-    ),
+  const form = useForm<
+    InstituteAchievementFormValues,
+    Record<string, never>,
+    InstituteAchievementFormValues
+  >({
+    resolver: zodResolver<
+      InstituteAchievementFormValues,
+      Record<string, never>,
+      InstituteAchievementFormValues
+    >(instituteAchievementFormSchema),
     defaultValues: initialData
       ? {
           title: initialData.title,
