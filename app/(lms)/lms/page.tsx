@@ -1,5 +1,6 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEnrollments, useAssignments, useCourses } from "@/hooks/useData";
 import { BookOpen, Star, CheckCircle, Video } from "lucide-react";
@@ -29,6 +30,7 @@ const LMS = () => {
     null
   );
   const [nameQuery, setNameQuery] = useState("");
+  const searchParams = useSearchParams();
   const {
     enrollments,
     loading: enrollmentsLoading,
@@ -102,6 +104,60 @@ const LMS = () => {
       })),
     [enrolledClasses]
   );
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get("payment");
+    const sessionId = searchParams.get("session_id");
+
+    if (paymentStatus !== "success" || !sessionId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const clearPaymentParams = () => {
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.delete("payment");
+      currentUrl.searchParams.delete("courseId");
+      currentUrl.searchParams.delete("planId");
+      currentUrl.searchParams.delete("session_id");
+      window.history.replaceState({}, document.title, currentUrl.toString());
+    };
+
+    const finalizePayment = async () => {
+      try {
+        const response = await fetch(
+          `/api/payments/checkout?session_id=${encodeURIComponent(sessionId)}`,
+          { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+          throw new Error("Unable to verify payment session.");
+        }
+
+        const payload = (await response.json()) as { paid?: boolean };
+
+        if (!payload.paid) {
+          return;
+        }
+
+        await refetchEnrollments();
+        setPaymentRefreshKey((previous) => previous + 1);
+      } catch (verificationError) {
+        console.error("Failed to finalize payment", verificationError);
+      } finally {
+        if (!cancelled) {
+          clearPaymentParams();
+        }
+      }
+    };
+
+    void finalizePayment();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [refetchEnrollments, searchParams]);
 
   return (
     <div className="flex w-full min-h-[calc(100vh-3.5rem)]">

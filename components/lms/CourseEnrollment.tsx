@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +34,7 @@ const getMonthlyAmount = (course: Course) =>
 
 export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const { courses, loading: coursesLoading, error: coursesError, refetch: refetchCourses } =
     useCourses();
   const {
@@ -76,7 +78,7 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
     setEnrollingCourseId(course.id);
 
     try {
-      const response = await fetch("/api/lms/enrollments", {
+      const response = await fetch("/api/payments/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ courseId: course.id }),
@@ -84,16 +86,16 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
 
       if (!response.ok) {
         const body = await response.json().catch(() => null);
-        throw new Error(body?.error ?? "Unable to enroll in this course.");
+        throw new Error(body?.error ?? "Unable to start checkout.");
       }
 
-      toast({
-        title: "Enrollment confirmed",
-        description: `${course.name} was added to your LMS. Monthly billing is now active.`,
-      });
+      const payload = (await response.json()) as { url?: string };
 
-      await Promise.all([refetchEnrollments(), refetchCourses()]);
-      onEnrolled?.();
+      if (!payload.url) {
+        throw new Error("Invalid checkout response from server.");
+      }
+
+      window.location.href = payload.url;
     } catch (enrollError) {
       console.error("Failed to enroll", enrollError);
       toast({
@@ -107,6 +109,76 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
       setEnrollingCourseId(null);
     }
   };
+
+  useEffect(() => {
+    const paymentStatus = searchParams.get("payment");
+    const sessionId = searchParams.get("session_id");
+
+    if (paymentStatus !== "success" || !sessionId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const clearPaymentParams = () => {
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.delete("payment");
+      currentUrl.searchParams.delete("courseId");
+      currentUrl.searchParams.delete("planId");
+      currentUrl.searchParams.delete("session_id");
+      window.history.replaceState({}, document.title, currentUrl.toString());
+    };
+
+    const finalizePayment = async () => {
+      try {
+        const response = await fetch(
+          `/api/payments/checkout?session_id=${encodeURIComponent(sessionId)}`,
+          { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+          throw new Error("Unable to verify payment session.");
+        }
+
+        const payload = (await response.json()) as { paid?: boolean };
+
+        if (!payload.paid) {
+          return;
+        }
+
+        await Promise.all([refetchEnrollments(), refetchCourses()]);
+        onEnrolled?.();
+
+        if (!cancelled) {
+          toast({
+            title: "Enrollment confirmed",
+            description: "Payment processed and course added to your LMS.",
+          });
+        }
+      } catch (verificationError) {
+        console.error("Failed to verify payment", verificationError);
+        if (!cancelled) {
+          toast({
+            title: "Payment verification failed",
+            description:
+              verificationError instanceof Error
+                ? verificationError.message
+                : "We could not confirm your enrollment payment.",
+          });
+        }
+      } finally {
+        if (!cancelled) {
+          clearPaymentParams();
+        }
+      }
+    };
+
+    void finalizePayment();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [onEnrolled, refetchCourses, refetchEnrollments, searchParams, toast]);
 
   if (coursesLoading || enrollmentsLoading) {
     return (
@@ -206,11 +278,16 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
                         className="gap-2"
                       >
                         {enrollingCourseId === course.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Redirecting...
+                          </>
                         ) : (
-                          <CreditCard className="h-4 w-4" />
+                          <>
+                            {!isEnrolled && <CreditCard className="h-4 w-4" />}
+                            {isEnrolled ? "Enrolled" : "Enroll now"}
+                          </>
                         )}
-                        {isEnrolled ? "Enrolled" : "Enroll & start billing"}
                       </Button>
                     </div>
                   </CardContent>
