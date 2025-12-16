@@ -60,13 +60,57 @@ export const ourFileRouter = {
   studentRegistrationPhoto: f({
     image: {
       maxFileSize: "4MB",
+      maxFileCount: 1,
     },
-  }).onUploadComplete(async ({ file }) => {
-    if (!file.type?.includes("jpeg")) {
-      throw new UploadThingError("Student photo must be a JPEG image");
-    }
-    return { url: file.url, key: file.key };
-  }),
+  })
+    .middleware(async () => {
+      // No authentication required for student registration
+      // This allows prospective students to upload photos before having an account
+      return { isPublic: true };
+    })
+    .onUploadComplete(async ({ file, metadata }) => {
+      // Validate file exists
+      if (!file) {
+        throw new UploadThingError("No file received");
+      }
+
+      // Validate file URL
+      if (!file.url || !file.key) {
+        throw new UploadThingError("Invalid file upload response");
+      }
+
+      // Validate file size (double-check server-side)
+      const maxSizeBytes = 4 * 1024 * 1024; // 4MB
+      if (file.size > maxSizeBytes) {
+        throw new UploadThingError(
+          "File size exceeds 4MB limit. Please upload a smaller image."
+        );
+      }
+
+      // Validate image type - accept common formats for student photos
+      const allowedImageTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+        "image/avif",
+      ];
+
+      if (!file.type || !allowedImageTypes.includes(file.type)) {
+        throw new UploadThingError(
+          "Invalid image format. Please upload JPEG, PNG, WebP, or AVIF."
+        );
+      }
+
+      // Return sanitized response
+      return {
+        url: file.url,
+        key: file.key,
+        size: file.size,
+        type: file.type,
+        name: file.name,
+      };
+    }),
   studyMaterialUploader: f({
     blob: {
       maxFileSize: "64MB",

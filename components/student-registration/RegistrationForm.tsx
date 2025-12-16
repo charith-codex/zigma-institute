@@ -316,6 +316,7 @@ export function StudentRegistrationForm({
                       </div>
                     ) : (
                       <ImageDropzone
+                        endpoint="studentRegistrationPhoto"
                         onUploadComplete={(url) => {
                           if (!url) {
                             toast.error("Upload failed. Please try again.");

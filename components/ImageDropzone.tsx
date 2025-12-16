@@ -13,6 +13,7 @@ interface ImageDropzoneProps {
   onUploadComplete: (url: string) => void;
   className?: string;
   disabled?: boolean;
+  endpoint?: "imageUploader" | "studentRegistrationPhoto";
 }
 
 const MAX_IMAGE_SIZE = 4 * 1024 * 1024; // 4MB limit to mirror server rules
@@ -21,13 +22,14 @@ export default function ImageDropzone({
   onUploadComplete,
   className,
   disabled = false,
+  endpoint = "imageUploader",
 }: ImageDropzoneProps) {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<"idle" | "uploading" | "success">(
     "idle"
   );
 
-  const { startUpload, isUploading } = useUploadThing("imageUploader", {
+  const { startUpload, isUploading } = useUploadThing(endpoint, {
     uploadProgressGranularity: "fine",
     onUploadBegin: () => {
       setStatus("uploading");
