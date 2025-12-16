@@ -9,5 +9,6 @@ export * from "./course-category";
 export * from "./schedules";
 export * from "./settings";
 export * from "./student-registration";
+export * from "./showcase";
 export * from "./users";
 export * from "./tutes";

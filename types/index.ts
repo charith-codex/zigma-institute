@@ -78,3 +78,34 @@ export interface CourseTuteLedger {
   studentId: string;
   tutes: { id: string; name: string; distributedAt: Date | null }[];
 }
+
+export type ShowcaseStudentCategory = "ISLAND" | "DISTRICT";
+
+export interface ShowcaseStudent {
+  id: string;
+  name: string;
+  grade: string;
+  subject: string;
+  position: string;
+  score?: string | null;
+  year: number;
+  district?: string | null;
+  avatarUrl?: string | null;
+  category: ShowcaseStudentCategory;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface InstituteAchievement {
+  id: string;
+  title: string;
+  category: string;
+  year: number;
+  description: string;
+  icon: string;
+  accentColor: string;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
