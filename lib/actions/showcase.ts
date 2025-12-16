@@ -1,6 +1,6 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@/lib/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/db/prisma";
@@ -36,11 +36,11 @@ export async function createShowcaseStudent(
       subject: toStringValue(formData.get("subject")).trim(),
       position: toStringValue(formData.get("position")).trim(),
       score: toStringValue(formData.get("score")).trim() || undefined,
-      year: toStringValue(formData.get("year")),
+      year: Number(toStringValue(formData.get("year"))),
       district: toStringValue(formData.get("district")).trim() || undefined,
       avatarUrl: toStringValue(formData.get("avatarUrl")).trim() || undefined,
       category: toStringValue(formData.get("category")),
-      sortOrder: toStringValue(formData.get("sortOrder")) || "0",
+      sortOrder: Number(toStringValue(formData.get("sortOrder")) || "0"),
     });
 
     await prisma.showcaseStudent.create({
@@ -75,11 +75,11 @@ export async function updateShowcaseStudent(
       subject: toStringValue(formData.get("subject")).trim(),
       position: toStringValue(formData.get("position")).trim(),
       score: toStringValue(formData.get("score")).trim() || undefined,
-      year: toStringValue(formData.get("year")),
+      year: Number(toStringValue(formData.get("year"))),
       district: toStringValue(formData.get("district")).trim() || undefined,
       avatarUrl: toStringValue(formData.get("avatarUrl")).trim() || undefined,
       category: toStringValue(formData.get("category")),
-      sortOrder: toStringValue(formData.get("sortOrder")) || "0",
+      sortOrder: Number(toStringValue(formData.get("sortOrder")) || "0"),
     });
 
     await prisma.showcaseStudent.update({
@@ -152,11 +152,11 @@ export async function createInstituteAchievement(
     const parsed = instituteAchievementFormSchema.parse({
       title: toStringValue(formData.get("title")).trim(),
       category: toStringValue(formData.get("category")).trim(),
-      year: toStringValue(formData.get("year")),
+      year: Number(toStringValue(formData.get("year"))),
       description: toStringValue(formData.get("description")).trim(),
       icon: toStringValue(formData.get("icon")),
       accentColor: toStringValue(formData.get("accentColor")) || "yellow",
-      sortOrder: toStringValue(formData.get("sortOrder")) || "0",
+      sortOrder: Number(toStringValue(formData.get("sortOrder")) || "0"),
     });
 
     await prisma.instituteAchievement.create({
@@ -188,11 +188,11 @@ export async function updateInstituteAchievement(
       id: toStringValue(formData.get("id")),
       title: toStringValue(formData.get("title")).trim(),
       category: toStringValue(formData.get("category")).trim(),
-      year: toStringValue(formData.get("year")),
+      year: Number(toStringValue(formData.get("year"))),
       description: toStringValue(formData.get("description")).trim(),
       icon: toStringValue(formData.get("icon")),
       accentColor: toStringValue(formData.get("accentColor")) || "yellow",
-      sortOrder: toStringValue(formData.get("sortOrder")) || "0",
+      sortOrder: Number(toStringValue(formData.get("sortOrder")) || "0"),
     });
 
     await prisma.instituteAchievement.update({

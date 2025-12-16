@@ -8,11 +8,13 @@ const showcaseStudentShape = z.object({
   subject: z.string().min(1, "Subject is required"),
   position: z.string().min(1, "Position is required"),
   score: z.string().optional(),
-  year: z.coerce.number().int().min(2000).max(3000),
+  year: z.number().int().min(2000).max(3000),
   district: z.string().optional(),
-  avatarUrl: z.string().url({ message: "Image URL must be valid" }).optional(),
+  avatarUrl: z
+    .string("Image URL must be valid")
+    .min(1, "Image URL is required"),
   category: showcaseStudentCategorySchema,
-  sortOrder: z.coerce.number().int().min(0).default(0),
+  sortOrder: z.number().int().min(0),
 });
 
 export type ShowcaseStudentFormValues = z.infer<typeof showcaseStudentShape>;
@@ -30,12 +32,11 @@ const validateDistrictRequirement = (
   }
 };
 
-export const showcaseStudentFormSchema: z.ZodType<ShowcaseStudentFormValues> =
-  showcaseStudentShape.superRefine(validateDistrictRequirement);
+export const showcaseStudentFormSchema = showcaseStudentShape.superRefine(
+  validateDistrictRequirement
+);
 
-export const showcaseStudentUpdateSchema: z.ZodType<
-  ShowcaseStudentFormValues & { id: string }
-> = showcaseStudentShape
+export const showcaseStudentUpdateSchema = showcaseStudentShape
   .extend({
     id: z.string().min(1),
   })
@@ -55,18 +56,25 @@ export const achievementIconSchema = z.enum([
 export const instituteAchievementFormSchema = z.object({
   title: z.string().min(2, "Title is required"),
   category: z.string().min(2, "Category is required"),
-  year: z.coerce.number().int().min(2000).max(3000),
+  year: z.number().int().min(2000).max(3000),
   description: z.string().min(10, "Description is required"),
   icon: achievementIconSchema,
-  accentColor: z
-    .enum(["yellow", "blue", "green", "purple", "orange", "emerald", "pink"])
-    .default("yellow"),
-  sortOrder: z.coerce.number().int().min(0).default(0),
+  accentColor: z.enum([
+    "yellow",
+    "blue",
+    "green",
+    "purple",
+    "orange",
+    "emerald",
+    "pink",
+  ]),
+  sortOrder: z.number().int().min(0),
 });
 
-export const instituteAchievementUpdateSchema = instituteAchievementFormSchema.extend({
-  id: z.string().min(1),
-});
+export const instituteAchievementUpdateSchema =
+  instituteAchievementFormSchema.extend({
+    id: z.string().min(1),
+  });
 
 export type InstituteAchievementFormValues = z.infer<
   typeof instituteAchievementFormSchema

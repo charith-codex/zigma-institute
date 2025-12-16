@@ -2,6 +2,7 @@
 
 import {
   useActionState,
+  useCallback,
   useEffect,
   useMemo,
   startTransition,
@@ -45,6 +46,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfirmDialog } from "@/components/eims/manage-users/ConfirmDialog";
 import { toast } from "@/hooks/use-toast";
 import { useShowcaseGallery } from "@/hooks/useShowcaseGallery";
 import {
@@ -190,14 +192,16 @@ function FormShell({
 
 interface StudentFormProps {
   initialData?: ShowcaseStudent | null;
-  onSuccess: () => Promise<void> | void;
+  onSuccess: () => void;
   onCancelEdit?: () => void;
+  refetch: () => Promise<void>;
 }
 
 function ShowcaseStudentForm({
   initialData,
   onSuccess,
   onCancelEdit,
+  refetch,
 }: StudentFormProps) {
   const [state, formAction, pending] = useActionState(
     initialData ? updateShowcaseStudent : createShowcaseStudent,
@@ -225,16 +229,14 @@ function ShowcaseStudentForm({
   useEffect(() => {
     if (state.success) {
       toast({ title: state.message });
-      form.reset(defaultStudentValues());
-      onSuccess();
+      void refetch().then(() => onSuccess());
     } else if (state.message) {
       toast({
         title: "Unable to save student",
         description: state.message,
-        variant: "destructive",
       });
     }
-  }, [form, onSuccess, state.message, state.success]);
+  }, [onSuccess, refetch, state.message, state.success]);
 
   useEffect(() => {
     if (initialData) {
@@ -253,7 +255,7 @@ function ShowcaseStudentForm({
     } else {
       form.reset(defaultStudentValues());
     }
-  }, [form, initialData]);
+  }, [initialData]);
 
   const onSubmit = form.handleSubmit((values) => {
     const formData = new FormData();
@@ -422,14 +424,16 @@ function ShowcaseStudentForm({
 
 interface AchievementFormProps {
   initialData?: InstituteAchievement | null;
-  onSuccess: () => Promise<void> | void;
+  onSuccess: () => void;
   onCancelEdit?: () => void;
+  refetch: () => Promise<void>;
 }
 
 function AchievementForm({
   initialData,
   onSuccess,
   onCancelEdit,
+  refetch,
 }: AchievementFormProps) {
   const [state, formAction, pending] = useActionState(
     initialData ? updateInstituteAchievement : createInstituteAchievement,
@@ -447,7 +451,9 @@ function AchievementForm({
           icon:
             (initialData.icon as InstituteAchievementFormValues["icon"]) ??
             "Trophy",
-          accentColor: initialData.accentColor,
+          accentColor:
+            (initialData.accentColor as InstituteAchievementFormValues["accentColor"]) ??
+            "yellow",
           sortOrder: initialData.sortOrder,
         }
       : defaultAchievementValues(),
@@ -458,16 +464,14 @@ function AchievementForm({
   useEffect(() => {
     if (state.success) {
       toast({ title: state.message });
-      form.reset(defaultAchievementValues());
-      onSuccess();
+      void refetch().then(() => onSuccess());
     } else if (state.message) {
       toast({
         title: "Unable to save achievement",
         description: state.message,
-        variant: "destructive",
       });
     }
-  }, [form, onSuccess, state.message, state.success]);
+  }, [onSuccess, refetch, state.message, state.success]);
 
   useEffect(() => {
     if (initialData) {
@@ -479,13 +483,15 @@ function AchievementForm({
         icon:
           (initialData.icon as InstituteAchievementFormValues["icon"]) ??
           "Trophy",
-        accentColor: initialData.accentColor,
+        accentColor:
+          (initialData.accentColor as InstituteAchievementFormValues["accentColor"]) ??
+          "yellow",
         sortOrder: initialData.sortOrder,
       });
     } else {
       form.reset(defaultAchievementValues());
     }
-  }, [form, initialData]);
+  }, [initialData]);
 
   const onSubmit = form.handleSubmit((values) => {
     const formData = new FormData();
@@ -581,7 +587,12 @@ function AchievementForm({
             <FieldLabel htmlFor="achievement-accent">Accent Color</FieldLabel>
             <Select
               value={form.watch("accentColor")}
-              onValueChange={(value) => form.setValue("accentColor", value)}
+              onValueChange={(value) =>
+                form.setValue(
+                  "accentColor",
+                  value as InstituteAchievementFormValues["accentColor"]
+                )
+              }
               disabled={pending}
             >
               <SelectTrigger id="achievement-accent">
@@ -804,6 +815,10 @@ export function ShowcaseGalleryManager() {
   );
   const [editingAchievement, setEditingAchievement] =
     useState<InstituteAchievement | null>(null);
+  const [deleteStudentId, setDeleteStudentId] = useState<string | null>(null);
+  const [deleteAchievementId, setDeleteAchievementId] = useState<string | null>(
+    null
+  );
   const [isDeletingStudent, startDeleteStudent] = useTransition();
   const [isDeletingAchievement, startDeleteAchievement] = useTransition();
 
@@ -816,72 +831,79 @@ export function ShowcaseGalleryManager() {
     [students]
   );
 
-  const handleDeleteStudent = (id: string) => {
+  const handleDeleteStudent = () => {
+    if (!deleteStudentId) return;
+
     startDeleteStudent(async () => {
       const formData = new FormData();
-      formData.append("id", id);
+      formData.append("id", deleteStudentId);
       const result = await deleteShowcaseStudent(
         showcaseActionInitialState,
         formData
       );
       if (result.success) {
         toast({ title: result.message });
-        if (editingStudent?.id === id) {
+        if (editingStudent?.id === deleteStudentId) {
           setEditingStudent(null);
         }
+        setDeleteStudentId(null);
         await refetch();
       } else if (result.message) {
         toast({
           title: "Unable to delete student",
           description: result.message,
-          variant: "destructive",
         });
       }
     });
   };
 
-  const handleDeleteAchievement = (id: string) => {
+  const handleDeleteAchievement = () => {
+    if (!deleteAchievementId) return;
+
     startDeleteAchievement(async () => {
       const formData = new FormData();
-      formData.append("id", id);
+      formData.append("id", deleteAchievementId);
       const result = await deleteInstituteAchievement(
         showcaseActionInitialState,
         formData
       );
       if (result.success) {
         toast({ title: result.message });
-        if (editingAchievement?.id === id) {
+        if (editingAchievement?.id === deleteAchievementId) {
           setEditingAchievement(null);
         }
+        setDeleteAchievementId(null);
         await refetch();
       } else if (result.message) {
         toast({
           title: "Unable to delete achievement",
           description: result.message,
-          variant: "destructive",
         });
       }
     });
   };
 
-  const resetEditing = async () => {
+  const resetEditing = useCallback(() => {
     setEditingStudent(null);
     setEditingAchievement(null);
-    await refetch();
-  };
+  }, []);
 
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
         <ShowcaseStudentForm
+          key={editingStudent?.id ?? "new-student"}
           initialData={editingStudent}
           onSuccess={resetEditing}
           onCancelEdit={() => setEditingStudent(null)}
+          refetch={refetch}
         />
         <AchievementForm
+          key={editingAchievement?.id ?? "new-achievement"}
           initialData={editingAchievement}
           onSuccess={resetEditing}
           onCancelEdit={() => setEditingAchievement(null)}
+          refetch={refetch}
         />
       </div>
 
@@ -892,14 +914,14 @@ export function ShowcaseGalleryManager() {
           title="Island Top Ranking"
           students={islandStudents}
           onEdit={(student) => setEditingStudent(student)}
-          onDelete={handleDeleteStudent}
+          onDelete={setDeleteStudentId}
           isDeleting={isDeletingStudent}
         />
         <StudentList
           title="District Top Ranking"
           students={districtStudents}
           onEdit={(student) => setEditingStudent(student)}
-          onDelete={handleDeleteStudent}
+          onDelete={setDeleteStudentId}
           isDeleting={isDeletingStudent}
         />
       </div>
@@ -907,7 +929,7 @@ export function ShowcaseGalleryManager() {
       <AchievementList
         achievements={achievements}
         onEdit={(achievement) => setEditingAchievement(achievement)}
-        onDelete={handleDeleteAchievement}
+        onDelete={setDeleteAchievementId}
         isDeleting={isDeletingAchievement}
       />
 
@@ -916,6 +938,30 @@ export function ShowcaseGalleryManager() {
           Loading showcase data...
         </p>
       ) : null}
+
+      <ConfirmDialog
+        open={Boolean(deleteStudentId)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteStudentId(null);
+        }}
+        title="Delete Student"
+        description="Are you sure you want to delete this student from the showcase? This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={handleDeleteStudent}
+        isPending={isDeletingStudent}
+      />
+
+      <ConfirmDialog
+        open={Boolean(deleteAchievementId)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteAchievementId(null);
+        }}
+        title="Delete Achievement"
+        description="Are you sure you want to delete this achievement? This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={handleDeleteAchievement}
+        isPending={isDeletingAchievement}
+      />
     </div>
   );
 }
