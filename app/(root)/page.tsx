@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { APP_NAME } from "@/lib/constants";
+import { HeroSection } from "@/components/home/HeroSection";
 
 const modules = [
   {
@@ -100,67 +101,7 @@ const timeline = [
 export default function ShowcaseSite() {
   return (
     <div className="space-y-24 py-10 lg:space-y-32 lg:py-16 ">
-      <section className="relative overflow-hidden rounded-3xl border bg-slate-950/95 text-slate-50 py-6 px-10">
-        <Image
-          src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1600&q=80"
-          alt="Students collaborating with laptops"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover opacity-30"
-        />
-        <div className="absolute inset-0 bg-linear-to-r from-slate-900 via-slate-900/95 to-primary/20" />
-        <div className="relative z-10 wrapper flex flex-col gap-10 py-20 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-2xl space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm uppercase tracking-[0.3em] text-primary">
-              Future-Ready Institute
-            </div>
-            <h1 className="text-4xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
-              Next-era educational experience with modern comfort zone
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              {APP_NAME} unifies enrollment, communication, and
-              analytics so your team can focus on what matters most student
-              success.
-            </p>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/student-registration"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:scale-[1.02]"
-              >
-                Start Student Registration
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </div>
-          <div className="grid w-full max-w-sm grid-cols-2 gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200 backdrop-blur">
-            <div className="rounded-xl bg-slate-900/70 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                Active Learners
-              </p>
-              <p className="mt-3 text-3xl font-semibold">3,500+</p>
-            </div>
-            <div className="rounded-xl bg-slate-900/70 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                Staff Workflows Automated
-              </p>
-              <p className="mt-3 text-3xl font-semibold">45+</p>
-            </div>
-            <div className="rounded-xl bg-slate-900/70 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                Parent Satisfaction
-              </p>
-              <p className="mt-3 text-3xl font-semibold">97%</p>
-            </div>
-            <div className="rounded-xl bg-slate-900/70 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                AI Study Sessions
-              </p>
-              <p className="mt-3 text-3xl font-semibold">12k</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroSection />
 
       <section className="wrapper space-y-12">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
