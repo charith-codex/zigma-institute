@@ -118,8 +118,8 @@ const LMSCMS = () => {
         onModuleChange={setActiveModule}
       />
 
-      <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto flex h-full w-full max-w-7xl flex-col rounded-2xl border border-border/60 bg-background shadow-sm">
+      <main className="flex-1 px-3 py-4 sm:px-6 lg:px-8">
+        <div className="flex h-full w-full flex-col rounded-2xl border border-border/60 bg-background shadow-sm">
           <div className="flex-1 overflow-hidden">
             {combinedLoading ? (
               <div className="flex h-full items-center justify-center p-8">

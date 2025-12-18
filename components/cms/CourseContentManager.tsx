@@ -102,7 +102,7 @@ const CourseSidebar = ({
 }: CourseSidebarProps) => {
   const { isMobile, setOpenMobile } = useSidebar();
 
-  const handleSelect = (sectionId: string) => {
+  const handleSelect = (sectionId: CourseSectionId) => {
     onSectionChange(sectionId);
     if (isMobile) {
       setOpenMobile(false);
@@ -581,7 +581,7 @@ export function CourseContentManager({
         />
 
         <SidebarInset className="flex-1 overflow-hidden">
-          <div className="mx-auto flex h-full w-full max-w-6xl flex-col p-4 sm:p-6 lg:p-8">
+          <div className="flex h-full w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
             {renderContent()}
           </div>
         </SidebarInset>
