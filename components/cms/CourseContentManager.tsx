@@ -33,6 +33,13 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import type { ClassSummary } from "@/hooks/useData";
 import { useLessons } from "@/hooks/useData";
 import { StudyMaterialManager } from "./StudyMaterialManager";
@@ -41,6 +48,7 @@ import { PhysicalExamUploader } from "./PhysicalExamUploader";
 import { LessonForm } from "./LessonForm";
 import { deleteLesson } from "@/lib/actions/lesson";
 import { EnrolledStudents } from "./EnrolledStudents";
+import { LessonNavigation } from "../lms/LessonNavigation";
 
 interface CourseContentManagerProps {
   courseId: string;
@@ -70,6 +78,7 @@ export function CourseContentManager({
   const [editLessonDialogOpen, setEditLessonDialogOpen] = useState(false);
   const [deleteLessonDialogOpen, setDeleteLessonDialogOpen] = useState(false);
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
+  const [lessonSheetOpen, setLessonSheetOpen] = useState(false);
   const [lessonToEdit, setLessonToEdit] = useState<{
     id: string;
     title: string;
@@ -81,14 +90,10 @@ export function CourseContentManager({
   } | null>(null);
   const [deletingLesson, setDeletingLesson] = useState(false);
 
-  console.log("CourseContentManager - courseId:", courseId);
-  console.log("CourseContentManager - classes:", classes);
-
   const classItem = useMemo(
     () => classes.find((cls) => cls.id === courseId),
     [classes, courseId]
   );
-  console.log("CourseContentManager - classItem:", classItem);
 
   const {
     lessons,
@@ -127,6 +132,21 @@ export function CourseContentManager({
       sortedLessons.find((lesson) => lesson.id === selectedLessonId) ?? null,
     [selectedLessonId, sortedLessons]
   );
+
+  const currentLessonPosition = useMemo(() => {
+    if (!selectedLesson) return null;
+
+    const lessonIndex = sortedLessons.findIndex(
+      (lesson) => lesson.id === selectedLesson.id
+    );
+
+    return lessonIndex >= 0 ? lessonIndex + 1 : null;
+  }, [selectedLesson, sortedLessons]);
+
+  const handleSelectLesson = (lessonId: string) => {
+    setSelectedLessonId(lessonId);
+    setLessonSheetOpen(false);
+  };
 
   const handleEditLesson = (lesson: {
     id: string;
@@ -184,36 +204,56 @@ export function CourseContentManager({
               <div className="space-y-1">
                 <h3 className="text-2xl font-semibold">Course Lessons</h3>
                 <p className="text-sm text-muted-foreground">
-                  Create lessons to organize materials, exams, and student
-                  activities for this course. Select a lesson to upload study
-                  materials and videos for it.
+                  Create lessons to organize materials, exams, and student activities for this
+                  course. Select a lesson to upload study materials and videos for it.
                 </p>
               </div>
-              <Dialog
-                open={lessonDialogOpen}
-                onOpenChange={setLessonDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-primary hover:shadow-medium">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create lesson
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Create a new lesson</DialogTitle>
-                    <DialogDescription>
-                      Provide a title and optional description to add a lesson
-                      to this course.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <LessonForm
-                    courseId={courseId}
-                    onSuccess={handleLessonSuccess}
-                    onCancel={() => setLessonDialogOpen(false)}
-                  />
-                </DialogContent>
-              </Dialog>
+              <div className="flex flex-wrap items-center gap-2">
+                <Sheet open={lessonSheetOpen} onOpenChange={setLessonSheetOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" className="sm:hidden">
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      Lessons
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-full max-w-full p-0 sm:max-w-md">
+                    <SheetHeader className="border-b border-border bg-muted/40 px-4 py-3">
+                      <SheetTitle className="flex items-center gap-2">
+                        <BookOpen className="h-4 w-4" /> Lesson list
+                      </SheetTitle>
+                    </SheetHeader>
+                    <div className="h-full overflow-hidden">
+                      <LessonNavigation
+                        lessons={sortedLessons}
+                        selectedLessonId={selectedLessonId}
+                        onSelectLesson={handleSelectLesson}
+                        isLoading={lessonsLoading}
+                      />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+                <Dialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-gradient-primary hover:shadow-medium">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create lesson
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Create a new lesson</DialogTitle>
+                      <DialogDescription>
+                        Provide a title and optional description to add a lesson to this course.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <LessonForm
+                      courseId={courseId}
+                      onSuccess={handleLessonSuccess}
+                      onCancel={() => setLessonDialogOpen(false)}
+                    />
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
 
             {lessonsError && (
@@ -223,12 +263,10 @@ export function CourseContentManager({
             )}
 
             {lessonsLoading ? (
-              <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-border">
-                <div className="flex justify-center">
-                  <FlowerLoader size="md" className="text-[#A41FC5]" />
-                </div>
+              <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-border">
+                <FlowerLoader size="md" className="text-[#A41FC5]" />
               </div>
-            ) : lessons.length === 0 ? (
+            ) : sortedLessons.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border/70 bg-card/50 p-12 text-center">
                 <BookOpen className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                 <h4 className="text-lg font-semibold">No lessons yet</h4>
@@ -237,73 +275,65 @@ export function CourseContentManager({
                 </p>
               </div>
             ) : (
-              <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
-                <Card className="h-full">
-                  <CardContent className="p-0">
-                    <div className="divide-y">
-                      {sortedLessons.map((lesson) => {
-                        const createdDate = new Date(lesson.createdAt);
-                        const formattedDate = isNaN(createdDate.getTime())
-                          ? "Recently created"
-                          : createdDate.toLocaleString();
+              <div className="flex min-h-0 flex-col gap-4 lg:flex-row">
+                <aside className="hidden w-80 flex-shrink-0 flex-col overflow-hidden rounded-xl border border-border/70 bg-card/60 lg:flex">
+                  <div className="border-b border-border px-4 py-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold">Lessons</p>
+                        <p className="text-xs text-muted-foreground">
+                          Select a lesson to manage content
+                        </p>
+                      </div>
+                      <Badge variant="secondary">{sortedLessons.length}</Badge>
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <LessonNavigation
+                      lessons={sortedLessons}
+                      selectedLessonId={selectedLessonId}
+                      onSelectLesson={handleSelectLesson}
+                      isLoading={lessonsLoading}
+                    />
+                  </div>
+                </aside>
 
-                        const isSelected = selectedLesson?.id === lesson.id;
-
-                        return (
-                          <button
-                            key={lesson.id}
-                            type="button"
-                            onClick={() => setSelectedLessonId(lesson.id)}
-                            className={`flex w-full flex-col items-start gap-2 px-4 py-3 text-left transition-colors ${
-                              isSelected ? "bg-primary/5" : "hover:bg-muted/50"
-                            }`}
-                          >
-                            <div className="flex w-full items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Badge
-                                  variant={isSelected ? "default" : "outline"}
-                                >
-                                  Lesson
-                                </Badge>
-                                <span className="text-sm font-semibold">
-                                  {lesson.title}
-                                </span>
-                              </div>
+                <Card className="flex-1 border-border/70 bg-card/70">
+                  <CardContent className="space-y-5 p-4 sm:p-6">
+                    {selectedLesson ? (
+                      <>
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                          <div className="space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge variant="secondary">
+                                Lesson {currentLessonPosition ?? "-"}
+                              </Badge>
+                              <Badge variant="outline">
+                                {selectedLesson.id.slice(0, 8).toUpperCase()}
+                              </Badge>
                               <span className="text-xs text-muted-foreground">
-                                {formattedDate}
+                                Updated {new Date(selectedLesson.updatedAt).toLocaleDateString()}
                               </span>
                             </div>
-                            {lesson.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-2">
-                                {lesson.description}
-                              </p>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <div className="space-y-4">
-                  {selectedLesson ? (
-                    <Card className="border-border/60 bg-card">
-                      <CardContent className="space-y-3 p-5">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="flex-1">
-                            <h4 className="text-xl font-semibold">
+                            <h4 className="text-xl font-semibold leading-tight">
                               {selectedLesson.title}
                             </h4>
                             {selectedLesson.description && (
-                              <p className="mt-1 text-sm text-muted-foreground">
+                              <p className="text-sm text-muted-foreground">
                                 {selectedLesson.description}
                               </p>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline">
-                              ID: {selectedLesson.id.slice(0, 8).toUpperCase()}
-                            </Badge>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="sm:hidden"
+                              onClick={() => setLessonSheetOpen(true)}
+                            >
+                              <BookOpen className="mr-2 h-4 w-4" />
+                              Lesson list
+                            </Button>
                             <Button
                               variant="outline"
                               size="sm"
@@ -315,7 +345,7 @@ export function CourseContentManager({
                                 })
                               }
                             >
-                              <Pencil className="h-4 w-4 mr-1.5" />
+                              <Pencil className="mr-1.5 h-4 w-4" />
                               Edit
                             </Button>
                             <Button
@@ -328,11 +358,12 @@ export function CourseContentManager({
                                 })
                               }
                             >
-                              <Trash2 className="h-4 w-4 mr-1.5" />
+                              <Trash2 className="mr-1.5 h-4 w-4" />
                               Delete
                             </Button>
                           </div>
                         </div>
+
                         <div className="grid gap-4">
                           <StudyMaterialManager
                             lessonId={selectedLesson.id}
@@ -343,16 +374,14 @@ export function CourseContentManager({
                             lessonTitle={selectedLesson.title}
                           />
                         </div>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <Card className="border-dashed">
-                      <CardContent className="p-8 text-center text-muted-foreground">
+                      </>
+                    ) : (
+                      <div className="py-12 text-center text-muted-foreground">
                         Select a lesson to manage study materials and videos.
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             )}
           </div>

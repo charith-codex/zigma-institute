@@ -10,17 +10,25 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import type { LucideIcon } from "lucide-react";
 
-const CmsSidebar = ({
-  sidebarItems,
-  activeModule,
-  setActiveModule,
-}: // eslint-disable-next-line @typescript-eslint/no-explicit-any
-any) => {
+interface CmsSidebarItem {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+interface CmsSidebarProps {
+  items: CmsSidebarItem[];
+  activeModule: string;
+  onModuleChange: (moduleId: string) => void;
+}
+
+const CmsSidebar = ({ items, activeModule, onModuleChange }: CmsSidebarProps) => {
   const { state, isMobile, setOpenMobile } = useSidebar();
 
   const handleModuleChange = (moduleId: string) => {
-    setActiveModule(moduleId);
+    onModuleChange(moduleId);
     if (isMobile) {
       setOpenMobile(false);
     }
@@ -45,8 +53,7 @@ any) => {
           )}
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {sidebarItems.map((item: any) => (
+              {items.map((item) => (
                 <SidebarMenuItem key={item.id}>
                   <SidebarMenuButton
                     onClick={() => handleModuleChange(item.id)}

@@ -4,11 +4,13 @@ import { APP_NAME } from "@/lib/constants";
 import ModeToggle from "../shared/header/mode-toggle";
 import { NotificationDropdown } from "../lms/NotificationDropdown";
 import UserButton from "../shared/header/user-button";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const CmsHeader = ({ title }: { title: string }) => {
   return (
     <header className="fixed top-0 left-0 right-0 h-14 flex items-center justify-between bg-background border-b border-border px-12 z-50">
       <div className="flex items-center gap-3">
+        <SidebarTrigger className="hover:bg-muted rounded-md p-1" />
         <div className="flex-start">
           <Link href="/" className="flex-start">
             <Image
