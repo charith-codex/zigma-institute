@@ -40,6 +40,19 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import type { ClassSummary } from "@/hooks/useData";
 import { useLessons } from "@/hooks/useData";
 import { StudyMaterialManager } from "./StudyMaterialManager";
@@ -49,6 +62,7 @@ import { LessonForm } from "./LessonForm";
 import { deleteLesson } from "@/lib/actions/lesson";
 import { EnrolledStudents } from "./EnrolledStudents";
 import { LessonNavigation } from "../lms/LessonNavigation";
+import { cn } from "@/lib/utils";
 
 interface CourseContentManagerProps {
   courseId: string;
@@ -67,13 +81,104 @@ const navigationItems = [
   { id: "analytics", label: "Analytics", icon: BarChart3 },
 ];
 
+type CourseSectionId = (typeof navigationItems)[number]["id"];
+
+interface CourseSidebarProps {
+  courseName: string;
+  courseCode: string;
+  activeSection: CourseSectionId;
+  onSectionChange: (sectionId: CourseSectionId) => void;
+  onBack: () => void;
+  className?: string;
+}
+
+const CourseSidebar = ({
+  courseName,
+  courseCode,
+  activeSection,
+  onSectionChange,
+  onBack,
+  className,
+}: CourseSidebarProps) => {
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleSelect = (sectionId: string) => {
+    onSectionChange(sectionId);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
+  return (
+    <Sidebar collapsible="offcanvas" className={cn("bg-card text-foreground", className)}>
+      <SidebarContent className="flex h-full flex-col gap-4 p-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start rounded-xl"
+          onClick={onBack}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Courses
+        </Button>
+
+        <div className="space-y-1 px-1">
+          <h2 className="text-lg font-bold leading-tight">{courseName}</h2>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            {courseCode}
+          </p>
+        </div>
+
+        <SidebarGroup className="flex-1">
+          <SidebarGroupLabel className="text-xs uppercase tracking-wide text-muted-foreground">
+            Course navigation
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-1">
+              {navigationItems.map((item) => {
+                const isActive = activeSection === item.id;
+
+                return (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton
+                      asChild
+                      className={cn(
+                        "h-12 justify-start rounded-xl text-sm font-medium transition-all",
+                        isActive
+                          ? "bg-gradient-primary text-white shadow-medium"
+                          : "hover:bg-muted"
+                      )}
+                      aria-current={isActive ? "page" : undefined}
+                    >
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-3"
+                        onClick={() => handleSelect(item.id)}
+                      >
+                        <item.icon
+                          className={cn("h-4 w-4", isActive ? "text-white" : "text-primary")}
+                        />
+                        <span>{item.label}</span>
+                      </button>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  );
+};
+
 export function CourseContentManager({
   courseId,
   loading = false,
   classes = [],
 }: CourseContentManagerProps) {
   const router = useRouter();
-  const [activeSection, setActiveSection] = useState("lessons");
+  const [activeSection, setActiveSection] = useState<CourseSectionId>("lessons");
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
   const [editLessonDialogOpen, setEditLessonDialogOpen] = useState(false);
   const [deleteLessonDialogOpen, setDeleteLessonDialogOpen] = useState(false);
@@ -464,63 +569,22 @@ export function CourseContentManager({
   }
 
   return (
-    <>
+    <SidebarProvider defaultOpen>
       <div className="flex min-h-screen bg-linear-to-br from-background via-background to-muted/20">
-        {/* Left Sidebar */}
-        <div className="w-64 bg-card/50 backdrop-blur-sm border-r border-border/50 p-4">
-          {/* Header */}
-          <div className="mb-6">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push("/lms-cms")}
-              className="mb-4"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Courses
-            </Button>
-            <div>
-              <h2 className="text-lg font-bold">{classItem.name}</h2>
-              <p className="text-sm text-muted-foreground">
-                {classItem.code || classItem.slug || classItem.id}
-              </p>
-            </div>
+        <CourseSidebar
+          className="w-72 border-r border-border/60 bg-card/90"
+          courseName={classItem.name}
+          courseCode={classItem.code || classItem.slug || classItem.id}
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          onBack={() => router.push("/lms-cms")}
+        />
+
+        <SidebarInset className="flex-1 overflow-hidden">
+          <div className="mx-auto flex h-full w-full max-w-6xl flex-col p-4 sm:p-6 lg:p-8">
+            {renderContent()}
           </div>
-
-          {/* Navigation Menu */}
-          <nav className="space-y-1">
-            {navigationItems.map((item) => (
-              <Button
-                key={item.id}
-                variant={activeSection === item.id ? "default" : "ghost"}
-                className={`w-full justify-start h-12 rounded-xl transition-all duration-300 ${
-                  activeSection === item.id
-                    ? "bg-gradient-primary text-white shadow-medium"
-                    : "hover:bg-primary/5 hover:shadow-soft"
-                }`}
-                onClick={() => setActiveSection(item.id)}
-              >
-                <item.icon
-                  className={`w-4 h-4 mr-3 ${
-                    activeSection === item.id ? "text-white" : "text-primary"
-                  }`}
-                />
-                <span
-                  className={`font-medium ${
-                    activeSection === item.id ? "text-white" : ""
-                  }`}
-                >
-                  {item.label}
-                </span>
-              </Button>
-            ))}
-          </nav>
-        </div>
-
-        {/* Main Content Area */}
-        <div className="flex-1 overflow-hidden">
-          <div className="p-8">{renderContent()}</div>
-        </div>
+        </SidebarInset>
       </div>
 
       {/* Edit Lesson Dialog */}
@@ -590,6 +654,6 @@ export function CourseContentManager({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </SidebarProvider>
   );
 }
