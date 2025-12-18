@@ -45,27 +45,39 @@ export function LessonNavigation({
 
   return (
     <ScrollArea className="h-full">
-      <div className="space-y-2 p-2">
+      <div className="space-y-2 p-3">
         {sortedLessons.map((lesson, index) => (
+          // Using a button instead of Link to avoid navigation side effects inside the LMS shell
           <Button
             key={lesson.id}
             variant={selectedLessonId === lesson.id ? "default" : "ghost"}
-            className={`h-auto w-full justify-start p-3 ${
+            className={`h-auto w-full justify-start p-3 text-left shadow-sm transition-all ${
               selectedLessonId === lesson.id
                 ? "bg-gradient-primary text-white shadow-medium"
                 : "hover:bg-primary/5"
             }`}
             onClick={() => onSelectLesson(lesson.id)}
+            aria-current={selectedLessonId === lesson.id ? "page" : undefined}
           >
             <div className="flex w-full flex-col items-start">
-              <div className="mb-1 flex w-full items-center justify-between">
-                <span
-                  className={`text-sm font-medium ${
-                    selectedLessonId === lesson.id ? "text-white" : ""
-                  }`}
-                >
-                  Lesson {index + 1}
-                </span>
+              <div className="mb-2 flex w-full items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-sm font-semibold ${
+                      selectedLessonId === lesson.id ? "text-white" : "text-foreground"
+                    }`}
+                  >
+                    Lesson {index + 1}
+                  </span>
+                  <Badge
+                    variant={selectedLessonId === lesson.id ? "secondary" : "outline"}
+                    className={`h-5 text-[10px] ${
+                      selectedLessonId === lesson.id ? "bg-white/15 text-white" : ""
+                    }`}
+                  >
+                    {new Date(lesson.createdAt).toLocaleDateString()}
+                  </Badge>
+                </div>
               </div>
               <span
                 className={`w-full truncate text-left text-xs ${
