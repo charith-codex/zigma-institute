@@ -22,6 +22,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleManager";
 import CmsSidebar from "@/components/cms/CmsSidebar";
+import { SidebarInset } from "@/components/ui/sidebar";
 
 const LMSCMS = () => {
   const { courseId } = useParams<{ courseId: string }>();
@@ -118,7 +119,7 @@ const LMSCMS = () => {
         onModuleChange={setActiveModule}
       />
 
-      <main className="flex-1 px-3 py-4 sm:px-6 lg:px-8">
+      <SidebarInset className="flex-1 px-3 py-4 sm:px-6 lg:px-8">
         <div className="flex h-full w-full flex-col rounded-2xl border border-border/60 bg-background shadow-sm">
           <div className="flex-1 overflow-hidden">
             {combinedLoading ? (
@@ -603,7 +604,7 @@ const LMSCMS = () => {
             )}
           </div>
         </div>
-      </main>
+      </SidebarInset>
     </div>
   );
 };
