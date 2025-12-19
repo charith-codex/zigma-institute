@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FlowerLoader } from "@/components/ui/flower-loader";
 import {
-  ArrowLeft,
   FileText,
   Plus,
   BookOpen,
@@ -49,15 +48,8 @@ import { LessonForm } from "./LessonForm";
 import { deleteLesson } from "@/lib/actions/lesson";
 import { EnrolledStudents } from "./EnrolledStudents";
 import { LessonNavigation } from "../lms/LessonNavigation";
-import { cn } from "@/lib/utils";
 
-interface CourseContentManagerProps {
-  courseId: string;
-  loading?: boolean;
-  classes?: ClassSummary[];
-}
-
-const navigationItems = [
+export const courseNavigationItems = [
   { id: "lessons", label: "Lessons", icon: BookOpen },
   { id: "students", label: "Students", icon: Users },
   { id: "quizzes", label: "Question Bank", icon: ClipboardList },
@@ -68,82 +60,24 @@ const navigationItems = [
   { id: "analytics", label: "Analytics", icon: BarChart3 },
 ];
 
-type CourseSectionId = (typeof navigationItems)[number]["id"];
+export type CourseSectionId = (typeof courseNavigationItems)[number]["id"];
 
-interface CourseSidebarProps {
-  courseName: string;
-  courseCode: string;
+interface CourseContentManagerProps {
+  courseId: string;
+  loading?: boolean;
+  classes?: ClassSummary[];
   activeSection: CourseSectionId;
   onSectionChange: (sectionId: CourseSectionId) => void;
-  onBack: () => void;
-  className?: string;
 }
-
-const CourseSidebar = ({
-  courseName,
-  courseCode,
-  activeSection,
-  onSectionChange,
-  onBack,
-  className,
-}: CourseSidebarProps) => (
-  <aside
-    className={cn(
-      "flex h-full flex-col gap-4 rounded-2xl border border-border/60 bg-card/90 p-4 shadow-sm",
-      className
-    )}
-  >
-    <Button
-      variant="ghost"
-      size="sm"
-      className="w-full justify-start rounded-xl"
-      onClick={onBack}
-    >
-      <ArrowLeft className="mr-2 h-4 w-4" />
-      Back to Courses
-    </Button>
-
-    <div className="space-y-1 px-1">
-      <h2 className="text-lg font-bold leading-tight">{courseName}</h2>
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">{courseCode}</p>
-    </div>
-
-    <div className="flex flex-1 flex-col gap-2">
-      <p className="text-xs uppercase tracking-wide text-muted-foreground">Course navigation</p>
-      <div className="flex flex-col gap-2">
-        {navigationItems.map((item) => {
-          const isActive = activeSection === item.id;
-
-          return (
-            <Button
-              key={item.id}
-              variant={isActive ? "default" : "ghost"}
-              className={cn(
-                "h-12 justify-start gap-3 rounded-xl text-sm font-medium transition-all",
-                isActive
-                  ? "bg-gradient-primary text-white shadow-medium"
-                  : "border border-transparent bg-muted/40 text-foreground hover:border-border"
-              )}
-              aria-current={isActive ? "page" : undefined}
-              onClick={() => onSectionChange(item.id)}
-            >
-              <item.icon className={cn("h-4 w-4", isActive ? "text-white" : "text-primary")} />
-              <span>{item.label}</span>
-            </Button>
-          );
-        })}
-      </div>
-    </div>
-  </aside>
-);
 
 export function CourseContentManager({
   courseId,
   loading = false,
   classes = [],
+  activeSection,
+  onSectionChange,
 }: CourseContentManagerProps) {
   const router = useRouter();
-  const [activeSection, setActiveSection] = useState<CourseSectionId>("lessons");
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
   const [editLessonDialogOpen, setEditLessonDialogOpen] = useState(false);
   const [deleteLessonDialogOpen, setDeleteLessonDialogOpen] = useState(false);
@@ -535,46 +469,33 @@ export function CourseContentManager({
 
   return (
     <>
-      <div className="flex min-h-screen bg-linear-to-br from-background via-background to-muted/20">
-        <CourseSidebar
-          className="hidden w-72 lg:flex"
-          courseName={classItem.name}
-          courseCode={classItem.code || classItem.slug || classItem.id}
-          activeSection={activeSection}
-          onSectionChange={setActiveSection}
-          onBack={() => router.push("/lms-cms")}
-        />
-
-        <div className="flex-1 overflow-hidden">
-          <div className="flex h-full w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
-            <div className="flex flex-col gap-3 lg:hidden">
+      <div className="flex h-full w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
+        <div className="flex flex-col gap-3 lg:hidden">
+          <Button
+            variant="outline"
+            className="w-full justify-start"
+            onClick={() => onSectionChange("lessons")}
+          >
+            <BookOpen className="mr-2 h-4 w-4" />
+            Lessons
+          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            {courseNavigationItems.map((item) => (
               <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => setActiveSection("lessons")}
+                key={item.id}
+                variant={activeSection === item.id ? "default" : "outline"}
+                className="justify-start"
+                onClick={() => onSectionChange(item.id)}
+                aria-current={activeSection === item.id ? "page" : undefined}
               >
-                <BookOpen className="mr-2 h-4 w-4" />
-                Lessons
+                <item.icon className="mr-2 h-4 w-4" />
+                {item.label}
               </Button>
-              <div className="grid grid-cols-2 gap-2">
-                {navigationItems.map((item) => (
-                  <Button
-                    key={item.id}
-                    variant={activeSection === item.id ? "default" : "outline"}
-                    className="justify-start"
-                    onClick={() => setActiveSection(item.id)}
-                    aria-current={activeSection === item.id ? "page" : undefined}
-                  >
-                    <item.icon className="mr-2 h-4 w-4" />
-                    {item.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {renderContent()}
+            ))}
           </div>
         </div>
+
+        {renderContent()}
       </div>
 
       <Dialog open={editLessonDialogOpen} onOpenChange={setEditLessonDialogOpen}>

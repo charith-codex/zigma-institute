@@ -18,17 +18,48 @@ interface CmsSidebarItem {
   icon: LucideIcon;
 }
 
+interface CourseNavItem {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+interface CourseSidebarDetails {
+  name: string;
+  code: string;
+  onBack?: () => void;
+}
+
 interface CmsSidebarProps {
   items: CmsSidebarItem[];
   activeModule: string;
   onModuleChange: (moduleId: string) => void;
+  courseNavItems?: CourseNavItem[];
+  activeCourseSection?: string;
+  onCourseSectionChange?: (sectionId: string) => void;
+  courseDetails?: CourseSidebarDetails;
 }
 
-const CmsSidebar = ({ items, activeModule, onModuleChange }: CmsSidebarProps) => {
+const CmsSidebar = ({
+  items,
+  activeModule,
+  onModuleChange,
+  courseNavItems,
+  activeCourseSection,
+  onCourseSectionChange,
+  courseDetails,
+}: CmsSidebarProps) => {
   const { state, isMobile, setOpenMobile } = useSidebar();
 
   const handleModuleChange = (moduleId: string) => {
     onModuleChange(moduleId);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
+  const handleCourseSectionChange = (sectionId: string) => {
+    onCourseSectionChange?.(sectionId);
     if (isMobile) {
       setOpenMobile(false);
     }
@@ -73,6 +104,49 @@ const CmsSidebar = ({ items, activeModule, onModuleChange }: CmsSidebarProps) =>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {courseNavItems && courseNavItems.length > 0 && (
+          <SidebarGroup>
+            {state === "expanded" && (
+              <div className="flex items-center justify-between px-3 pb-1">
+                <SidebarGroupLabel className="truncate">
+                  {courseDetails?.name ?? "Course"}
+                </SidebarGroupLabel>
+                {courseDetails?.onBack && (
+                  <SidebarMenuButton
+                    className="h-8 px-2 text-xs"
+                    onClick={courseDetails.onBack}
+                  >
+                    Back
+                  </SidebarMenuButton>
+                )}
+              </div>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {courseNavItems.map((item) => (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton
+                      onClick={() => handleCourseSectionChange(item.id)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                        activeCourseSection === item.id
+                          ? "bg-primary/10 text-primary shadow-sm"
+                          : "hover:bg-muted"
+                      )}
+                      aria-current={
+                        activeCourseSection === item.id ? "page" : undefined
+                      }
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {state === "expanded" && <span>{item.label}</span>}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
     </Sidebar>
   );

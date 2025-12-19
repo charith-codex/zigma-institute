@@ -16,7 +16,11 @@ import {
   FileText,
 } from "lucide-react";
 import { TeacherCourseList } from "@/components/cms/TeacherCourseList";
-import { CourseContentManager } from "@/components/cms/CourseContentManager";
+import {
+  CourseContentManager,
+  courseNavigationItems,
+  type CourseSectionId,
+} from "@/components/cms/CourseContentManager";
 import { useParams, useRouter } from "next/navigation";
 
 import { useSession } from "next-auth/react";
@@ -58,6 +62,7 @@ const LMSCMS = () => {
   const [activeModule, setActiveModule] = useState(
     courseId && classIsAccessible ? "class-content" : "my-classes"
   );
+  const [activeSection, setActiveSection] = useState<CourseSectionId>("lessons");
 
   useEffect(() => {
     if (courseId && classIsAccessible) {
@@ -67,8 +72,20 @@ const LMSCMS = () => {
     }
   }, [courseId, classIsAccessible]);
 
+  useEffect(() => {
+    setActiveSection("lessons");
+  }, [courseId]);
+
   // Filter classes for the current teacher
   const teacherClasses = accessibleClasses;
+
+  const currentCourse = useMemo(
+    () => accessibleClasses.find((cls) => cls.id === courseId),
+    [accessibleClasses, courseId]
+  );
+
+  const showCourseNav =
+    activeModule === "class-content" && Boolean(courseId) && classIsAccessible;
 
   const scheduleCourseOptions = useMemo(
     () =>
@@ -105,6 +122,7 @@ const LMSCMS = () => {
   // Handle class selection from TeacherCourseList
   const handleSelectClass = (selectedCourseId: string) => {
     setActiveModule("class-content");
+    setActiveSection("lessons");
     router.push(`/lms-cms/${selectedCourseId}`);
   };
 
@@ -117,6 +135,18 @@ const LMSCMS = () => {
         items={menuItems}
         activeModule={activeModule}
         onModuleChange={setActiveModule}
+        courseNavItems={showCourseNav ? courseNavigationItems : undefined}
+        activeCourseSection={showCourseNav ? activeSection : undefined}
+        onCourseSectionChange={showCourseNav ? setActiveSection : undefined}
+        courseDetails={
+          showCourseNav && currentCourse
+            ? {
+                name: currentCourse.name,
+                code: currentCourse.code || currentCourse.slug || currentCourse.id,
+                onBack: () => router.push("/lms-cms"),
+              }
+            : undefined
+        }
       />
 
       <SidebarInset className="flex-1 px-3 py-4 sm:px-6 lg:px-8">
@@ -272,6 +302,8 @@ const LMSCMS = () => {
                     courseId={courseId}
                     classes={teacherClasses}
                     loading={combinedLoading}
+                    activeSection={activeSection}
+                    onSectionChange={setActiveSection}
                   />
                 )}
 
