@@ -250,7 +250,8 @@ export function ExamResults({ courseId }: ExamResultsProps) {
         </CardHeader>
 
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -354,6 +355,122 @@ export function ExamResults({ courseId }: ExamResultsProps) {
               </TableBody>
             </Table>
           </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {loading ? (
+              <div className="py-12 text-center">
+                <FlowerLoader size="lg" className="mx-auto text-[#A41FC5]" />
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Loading exam attempts...
+                </p>
+              </div>
+            ) : filteredAttempts.length === 0 ? (
+              <div className="py-6 text-center text-muted-foreground border rounded-lg border-dashed">
+                No exam attempts found.
+              </div>
+            ) : (
+              filteredAttempts.map((attempt) => {
+                const essayPending = attempt.answers.some(
+                  (a) => a.question.type === "ESSAY" && a.marksAwarded == null
+                );
+                const totalMarks = attempt.answers.reduce(
+                  (sum, a) => sum + (a.marksAwarded ?? 0),
+                  0
+                );
+
+                return (
+                  <Card
+                    key={attempt.id}
+                    className="overflow-hidden border-muted/60"
+                  >
+                    <CardContent className="p-4 space-y-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-1">
+                          <p className="font-semibold leading-tight">
+                            {attempt.studentName || attempt.studentId}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            ID: {attempt.studentId}
+                          </p>
+                        </div>
+                        {renderStatusBadge(attempt.status)}
+                      </div>
+
+                      <div className="space-y-2 text-sm">
+                        <div className="flex flex-col">
+                          <span className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">
+                            Exam
+                          </span>
+                          <span className="font-medium">
+                            {attempt.exam.title}
+                          </span>
+                          {attempt.exam.courseName && (
+                            <span className="text-xs text-muted-foreground">
+                              {attempt.exam.courseName}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 pt-2">
+                          <div className="flex flex-col">
+                            <span className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">
+                              Score
+                            </span>
+                            <span className="text-lg font-bold">
+                              {attempt.status === "GRADED"
+                                ? totalMarks
+                                : (attempt.score ?? 0)}
+                            </span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">
+                              Submitted
+                            </span>
+                            <span className="text-xs">
+                              {attempt.submittedAt
+                                ? new Date(
+                                    attempt.submittedAt
+                                  ).toLocaleDateString()
+                                : "—"}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              {attempt.submittedAt
+                                ? new Date(
+                                    attempt.submittedAt
+                                  ).toLocaleTimeString([], {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })
+                                : ""}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-2">
+                        {essayPending ? (
+                          <Button
+                            className="w-full"
+                            variant="default"
+                            onClick={() => openGradingDialog(attempt)}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" /> Grade essays
+                          </Button>
+                        ) : (
+                          <div className="text-center py-2 bg-muted/30 rounded-md">
+                            <span className="text-xs text-muted-foreground">
+                              No grading required
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -362,7 +479,7 @@ export function ExamResults({ courseId }: ExamResultsProps) {
           open={Boolean(gradingAttempt)}
           onOpenChange={(open) => !open && setGradingAttempt(null)}
         >
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Grade essay responses</DialogTitle>
             </DialogHeader>
