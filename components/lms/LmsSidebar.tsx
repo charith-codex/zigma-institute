@@ -4,9 +4,11 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
@@ -19,6 +21,7 @@ import {
   Paperclip,
   SquarePlus,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface LmsSidebarProps {
   activeModule: string;
@@ -51,10 +54,18 @@ export function LmsSidebar({ activeModule, onModuleChange }: LmsSidebarProps) {
 
   return (
     <Sidebar
-      className={`${collapsed ? "w-14" : "w-60"} border-r border-border bg-background`}
+      className={cn(
+        collapsed ? "w-14" : "w-60",
+        "border-r border-border bg-sidebar"
+      )}
       collapsible="icon"
     >
-      <SidebarContent className="pt-6 pb-6 lg:pt-16">
+      <div className="flex justify-end p-2 lg:hidden">
+        <SidebarTrigger className="h-8 w-8 hover:bg-muted" />
+      </div>
+      <SidebarContent
+        className={cn("pb-6", !isMobile && "pt-15", isMobile && "pt-2")}
+      >
         <SidebarGroup>
           <SidebarGroupLabel>Student Portal Menu</SidebarGroupLabel>
           <SidebarGroupContent>
