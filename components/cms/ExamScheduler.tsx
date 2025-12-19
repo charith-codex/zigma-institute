@@ -25,27 +25,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CalendarIcon,
   Clock,
   Users,
   Play,
-  Pause,
   Square,
   Eye,
   FileText,
-  Monitor,
   Settings,
-  AlertCircle,
   CheckCircle,
   Plus,
 } from "lucide-react";
@@ -70,25 +59,12 @@ interface ExamSession {
   showResultsImmediately: boolean;
 }
 
-interface LiveSession {
-  id: string;
-  sessionId: string;
-  studentName: string;
-  status: "not-started" | "in-progress" | "submitted" | "time-up";
-  startedAt?: string;
-  timeRemaining?: number;
-  currentQuestion: number;
-  totalQuestions: number;
-  flaggedQuestions: number[];
-}
-
 export function ExamScheduler({ courseId }: { courseId: string }) {
   const [activeTab, setActiveTab] = useState("scheduled");
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date()
   );
-  const [liveSessionId, setLiveSessionId] = useState<string | null>(null);
 
   const [examSessions] = useState<ExamSession[]>([
     {
@@ -127,51 +103,16 @@ export function ExamScheduler({ courseId }: { courseId: string }) {
     },
   ]);
 
-  const [liveSessions] = useState<LiveSession[]>([
-    {
-      id: "live-001",
-      sessionId: "session-002",
-      studentName: "John Smith",
-      status: "in-progress",
-      startedAt: "14:05",
-      timeRemaining: 145,
-      currentQuestion: 8,
-      totalQuestions: 25,
-      flaggedQuestions: [3, 7, 12],
-    },
-    {
-      id: "live-002",
-      sessionId: "session-002",
-      studentName: "Sarah Johnson",
-      status: "submitted",
-      startedAt: "14:02",
-      currentQuestion: 25,
-      totalQuestions: 25,
-      flaggedQuestions: [1, 15],
-    },
-    {
-      id: "live-003",
-      sessionId: "session-002",
-      studentName: "Mike Davis",
-      status: "not-started",
-      currentQuestion: 0,
-      totalQuestions: 25,
-      flaggedQuestions: [],
-    },
-  ]);
-
   const handleScheduleExam = () => {
     toast.success("Exam scheduled successfully!");
     setScheduleDialogOpen(false);
   };
 
   const startExamSession = (sessionId: string) => {
-    setLiveSessionId(sessionId);
     toast.success("Exam session started! Students can now access the exam.");
   };
 
   const endExamSession = (sessionId: string) => {
-    setLiveSessionId(null);
     toast.success("Exam session ended. All submissions collected.");
   };
 
@@ -188,27 +129,6 @@ export function ExamScheduler({ courseId }: { courseId: string }) {
       default:
         return "bg-muted text-muted-foreground";
     }
-  };
-
-  const getLiveStatusColor = (status: LiveSession["status"]) => {
-    switch (status) {
-      case "not-started":
-        return "bg-warning/10 text-warning border-warning/20";
-      case "in-progress":
-        return "bg-primary/10 text-primary border-primary/20";
-      case "submitted":
-        return "bg-success/10 text-success border-success/20";
-      case "time-up":
-        return "bg-destructive/10 text-destructive border-destructive/20";
-      default:
-        return "bg-muted text-muted-foreground";
-    }
-  };
-
-  const formatTimeRemaining = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}:${mins.toString().padStart(2, "0")}`;
   };
 
   return (
@@ -328,9 +248,8 @@ export function ExamScheduler({ courseId }: { courseId: string }) {
         onValueChange={setActiveTab}
         className="space-y-4"
       >
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="scheduled">Scheduled Exams</TabsTrigger>
-          <TabsTrigger value="live">Live Monitoring</TabsTrigger>
           <TabsTrigger value="completed">Completed Exams</TabsTrigger>
         </TabsList>
 
@@ -395,15 +314,6 @@ export function ExamScheduler({ courseId }: { courseId: string }) {
                           <>
                             <Button
                               size="sm"
-                              variant="outline"
-                              onClick={() => setActiveTab("live")}
-                              className="border-primary text-primary hover:bg-primary/10"
-                            >
-                              <Monitor className="w-4 h-4 mr-1" />
-                              Monitor
-                            </Button>
-                            <Button
-                              size="sm"
                               variant="destructive"
                               onClick={() => endExamSession(session.id)}
                             >
@@ -426,111 +336,6 @@ export function ExamScheduler({ courseId }: { courseId: string }) {
                 </Card>
               ))}
           </div>
-        </TabsContent>
-
-        <TabsContent value="live" className="space-y-4">
-          {liveSessionId ? (
-            <Card className="edu-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Monitor className="w-5 h-5 text-primary" />
-                  Live Exam Monitoring
-                  <Badge className="bg-success/10 text-success border-success/20 ml-auto">
-                    Active Session
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Student</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Progress</TableHead>
-                      <TableHead>Time Remaining</TableHead>
-                      <TableHead>Flagged Questions</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {liveSessions
-                      .filter((session) => session.sessionId === liveSessionId)
-                      .map((session) => (
-                        <TableRow key={session.id}>
-                          <TableCell className="font-medium">
-                            {session.studentName}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              className={getLiveStatusColor(session.status)}
-                            >
-                              {session.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {session.currentQuestion}/{session.totalQuestions}
-                            <div className="w-full bg-muted rounded-full h-2 mt-1">
-                              <div
-                                className="bg-primary h-2 rounded-full transition-all"
-                                style={{
-                                  width: `${(session.currentQuestion / session.totalQuestions) * 100}%`,
-                                }}
-                              />
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {session.timeRemaining ? (
-                              <span
-                                className={
-                                  session.timeRemaining < 30
-                                    ? "text-destructive font-medium"
-                                    : ""
-                                }
-                              >
-                                {formatTimeRemaining(session.timeRemaining)}
-                              </span>
-                            ) : (
-                              "-"
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
-                              <AlertCircle className="w-4 h-4 text-warning" />
-                              {session.flaggedQuestions.length}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button size="sm" variant="ghost">
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              {session.status === "in-progress" && (
-                                <Button size="sm" variant="ghost">
-                                  <Pause className="w-4 h-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="edu-card">
-              <CardContent className="p-8 text-center">
-                <Monitor className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">
-                  No Active Exam Session
-                </h3>
-                <p className="text-muted-foreground">
-                  Start an exam session to monitor student progress in
-                  real-time.
-                </p>
-              </CardContent>
-            </Card>
-          )}
         </TabsContent>
 
         <TabsContent value="completed" className="space-y-4">

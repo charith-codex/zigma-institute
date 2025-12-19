@@ -161,6 +161,7 @@ export const ourFileRouter = {
       z.object({
         courseId: z.string().min(1, "courseId is required"),
         examTitle: z.string().min(1, "examTitle is required"),
+        examDate: z.string().min(1, "examDate is required"),
       })
     )
     .middleware(async ({ input }) => {
@@ -174,6 +175,7 @@ export const ourFileRouter = {
         userId: session.user.id,
         courseId: input.courseId,
         examTitle: input.examTitle,
+        examDate: input.examDate,
       };
     })
     .onUploadComplete(async ({ file, metadata }) => {

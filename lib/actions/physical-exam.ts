@@ -18,6 +18,7 @@ export interface PhysicalExamMarkRecord {
   studentPublicId: string;
   studentName: string;
   examTitle: string;
+  examDate: string;
   paperUrl: string;
   score: number;
   recordedAt: string;
@@ -30,7 +31,8 @@ export type SavePhysicalExamMarksResult =
 const saveMarksSchema = z.object({
   courseId: z.string().min(1),
   examTitle: z.string().min(1),
-  paperUrl: z.string().url(),
+  examDate: z.string().transform((str) => new Date(str)),
+  paperUrl: z.string(),
   scores: z
     .array(
       z.object({
@@ -41,7 +43,16 @@ const saveMarksSchema = z.object({
     .nonempty(),
 });
 
-export type SavePhysicalExamMarksInput = z.infer<typeof saveMarksSchema>;
+export type SavePhysicalExamMarksInput = {
+  courseId: string;
+  examTitle: string;
+  examDate: string;
+  paperUrl: string;
+  scores: {
+    studentRegistrationId: string;
+    score: number;
+  }[];
+};
 
 export async function getEnrolledStudentsForCourse(
   courseId: string
@@ -104,6 +115,7 @@ export async function getPhysicalExamMarks(
   return convertToPlainObject(
     marks.map((mark) => ({
       ...mark,
+      examDate: mark.examDate.toISOString(),
       recordedAt: mark.recordedAt.toISOString(),
     }))
   );
@@ -150,14 +162,17 @@ export async function savePhysicalExamMarks(
     const now = new Date();
 
     const transactions = validScores.map((entry) => {
-      const registration = allowedRegistrations.get(entry.studentRegistrationId)!;
+      const registration = allowedRegistrations.get(
+        entry.studentRegistrationId
+      )!;
 
       return prisma.physicalExamMark.upsert({
         where: {
-          courseId_studentRegistrationId_examTitle: {
+          courseId_studentRegistrationId_examTitle_examDate: {
             courseId: trimmedCourseId,
             studentRegistrationId: entry.studentRegistrationId,
             examTitle: trimmedExamTitle,
+            examDate: payload.examDate,
           },
         },
         update: {
@@ -171,6 +186,7 @@ export async function savePhysicalExamMarks(
           studentPublicId: registration.studentPublicId || registration.id,
           studentName: registration.name,
           examTitle: trimmedExamTitle,
+          examDate: payload.examDate,
           paperUrl: payload.paperUrl,
           score: entry.score,
           recordedAt: now,
@@ -186,17 +202,21 @@ export async function savePhysicalExamMarks(
         savedMarks
           .map((mark) => ({
             ...mark,
+            examDate: mark.examDate.toISOString(),
             recordedAt: mark.recordedAt.toISOString(),
           }))
           .sort(
             (a, b) =>
-              new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime()
+              new Date(b.recordedAt).getTime() -
+              new Date(a.recordedAt).getTime()
           )
       ),
     } satisfies SavePhysicalExamMarksResult;
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "Failed to save physical exam marks.";
+      error instanceof Error
+        ? error.message
+        : "Failed to save physical exam marks.";
 
     return { success: false, message } satisfies SavePhysicalExamMarksResult;
   }
