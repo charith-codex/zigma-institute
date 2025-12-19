@@ -40,19 +40,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  useSidebar,
-} from "@/components/ui/sidebar";
 import type { ClassSummary } from "@/hooks/useData";
 import { useLessons } from "@/hooks/useData";
 import { StudyMaterialManager } from "./StudyMaterialManager";
@@ -99,78 +86,56 @@ const CourseSidebar = ({
   onSectionChange,
   onBack,
   className,
-}: CourseSidebarProps) => {
-  const { isMobile, setOpenMobile } = useSidebar();
+}: CourseSidebarProps) => (
+  <aside
+    className={cn(
+      "flex h-full flex-col gap-4 rounded-2xl border border-border/60 bg-card/90 p-4 shadow-sm",
+      className
+    )}
+  >
+    <Button
+      variant="ghost"
+      size="sm"
+      className="w-full justify-start rounded-xl"
+      onClick={onBack}
+    >
+      <ArrowLeft className="mr-2 h-4 w-4" />
+      Back to Courses
+    </Button>
 
-  const handleSelect = (sectionId: CourseSectionId) => {
-    onSectionChange(sectionId);
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-  };
+    <div className="space-y-1 px-1">
+      <h2 className="text-lg font-bold leading-tight">{courseName}</h2>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{courseCode}</p>
+    </div>
 
-  return (
-    <Sidebar collapsible="offcanvas" className={cn("bg-card text-foreground", className)}>
-      <SidebarContent className="flex h-full flex-col gap-4 p-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full justify-start rounded-xl"
-          onClick={onBack}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Courses
-        </Button>
+    <div className="flex flex-1 flex-col gap-2">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">Course navigation</p>
+      <div className="flex flex-col gap-2">
+        {navigationItems.map((item) => {
+          const isActive = activeSection === item.id;
 
-        <div className="space-y-1 px-1">
-          <h2 className="text-lg font-bold leading-tight">{courseName}</h2>
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            {courseCode}
-          </p>
-        </div>
-
-        <SidebarGroup className="flex-1">
-          <SidebarGroupLabel className="text-xs uppercase tracking-wide text-muted-foreground">
-            Course navigation
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
-              {navigationItems.map((item) => {
-                const isActive = activeSection === item.id;
-
-                return (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      asChild
-                      className={cn(
-                        "h-12 justify-start rounded-xl text-sm font-medium transition-all",
-                        isActive
-                          ? "bg-gradient-primary text-white shadow-medium"
-                          : "hover:bg-muted"
-                      )}
-                      aria-current={isActive ? "page" : undefined}
-                    >
-                      <button
-                        type="button"
-                        className="flex w-full items-center gap-3"
-                        onClick={() => handleSelect(item.id)}
-                      >
-                        <item.icon
-                          className={cn("h-4 w-4", isActive ? "text-white" : "text-primary")}
-                        />
-                        <span>{item.label}</span>
-                      </button>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
-  );
-};
+          return (
+            <Button
+              key={item.id}
+              variant={isActive ? "default" : "ghost"}
+              className={cn(
+                "h-12 justify-start gap-3 rounded-xl text-sm font-medium transition-all",
+                isActive
+                  ? "bg-gradient-primary text-white shadow-medium"
+                  : "border border-transparent bg-muted/40 text-foreground hover:border-border"
+              )}
+              aria-current={isActive ? "page" : undefined}
+              onClick={() => onSectionChange(item.id)}
+            >
+              <item.icon className={cn("h-4 w-4", isActive ? "text-white" : "text-primary")} />
+              <span>{item.label}</span>
+            </Button>
+          );
+        })}
+      </div>
+    </div>
+  </aside>
+);
 
 export function CourseContentManager({
   courseId,
@@ -569,10 +534,10 @@ export function CourseContentManager({
   }
 
   return (
-    <SidebarProvider defaultOpen>
+    <>
       <div className="flex min-h-screen bg-linear-to-br from-background via-background to-muted/20">
         <CourseSidebar
-          className="w-72 border-r border-border/60 bg-card/90"
+          className="hidden w-72 lg:flex"
           courseName={classItem.name}
           courseCode={classItem.code || classItem.slug || classItem.id}
           activeSection={activeSection}
@@ -580,18 +545,39 @@ export function CourseContentManager({
           onBack={() => router.push("/lms-cms")}
         />
 
-        <SidebarInset className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden">
           <div className="flex h-full w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-col gap-3 lg:hidden">
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => setActiveSection("lessons")}
+              >
+                <BookOpen className="mr-2 h-4 w-4" />
+                Lessons
+              </Button>
+              <div className="grid grid-cols-2 gap-2">
+                {navigationItems.map((item) => (
+                  <Button
+                    key={item.id}
+                    variant={activeSection === item.id ? "default" : "outline"}
+                    className="justify-start"
+                    onClick={() => setActiveSection(item.id)}
+                    aria-current={activeSection === item.id ? "page" : undefined}
+                  >
+                    <item.icon className="mr-2 h-4 w-4" />
+                    {item.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             {renderContent()}
           </div>
-        </SidebarInset>
+        </div>
       </div>
 
-      {/* Edit Lesson Dialog */}
-      <Dialog
-        open={editLessonDialogOpen}
-        onOpenChange={setEditLessonDialogOpen}
-      >
+      <Dialog open={editLessonDialogOpen} onOpenChange={setEditLessonDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Lesson</DialogTitle>
@@ -614,7 +600,6 @@ export function CourseContentManager({
         </DialogContent>
       </Dialog>
 
-      {/* Delete Lesson Confirmation Dialog */}
       <Dialog
         open={deleteLessonDialogOpen}
         onOpenChange={setDeleteLessonDialogOpen}
@@ -624,8 +609,8 @@ export function CourseContentManager({
             <DialogTitle>Delete Lesson</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete &quot;{lessonToDelete?.title}
-              &quot;? This will also delete all associated study materials,
-              videos, and questions. This action cannot be undone.
+              &quot;? This will also delete all associated study materials, videos,
+              and questions. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -654,6 +639,6 @@ export function CourseContentManager({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </SidebarProvider>
+    </>
   );
 }
