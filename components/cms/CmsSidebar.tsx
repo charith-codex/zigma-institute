@@ -4,13 +4,17 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
+  SidebarFooter,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
+import { ChevronLeft, LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface CmsSidebarItem {
   id: string;
@@ -71,55 +75,55 @@ const CmsSidebar = ({
       collapsible="icon"
       className="border-border/60 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/90"
     >
+      <div className="flex justify-end p-2 lg:hidden">
+        <SidebarTrigger className="h-8 w-8 hover:bg-muted" />
+      </div>
       <SidebarContent
-        className={cn(
-          "flex flex-col gap-2 pb-6",
-          isMobile ? "pt-6" : "pt-6 mt-14"
-        )}
+        className={cn("flex flex-col gap-2 pb-6", !isMobile && "pt-15")}
       >
         {/* Navigation */}
-        <SidebarGroup>
-          {state === "expanded" && (
-            <SidebarGroupLabel>Teacher Portal</SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton
-                    onClick={() => handleModuleChange(item.id)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                      activeModule === item.id
-                        ? "bg-primary/10 text-primary shadow-sm"
-                        : "hover:bg-muted"
-                    )}
-                    aria-current={activeModule === item.id ? "page" : undefined}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {state === "expanded" && <span>{item.label}</span>}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {items && items.length > 0 && (
+          <SidebarGroup>
+            {state === "expanded" && (
+              <SidebarGroupLabel>Teacher Portal</SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {items.map((item) => (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton
+                      onClick={() => handleModuleChange(item.id)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                        activeModule === item.id
+                          ? "bg-primary/10 text-primary shadow-sm"
+                          : "hover:bg-muted"
+                      )}
+                      aria-current={
+                        activeModule === item.id ? "page" : undefined
+                      }
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {state === "expanded" && <span>{item.label}</span>}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {courseNavItems && courseNavItems.length > 0 && (
           <SidebarGroup>
             {state === "expanded" && (
-              <div className="flex items-center justify-between px-3 pb-1">
-                <SidebarGroupLabel className="truncate">
-                  {courseDetails?.name ?? "Course"}
-                </SidebarGroupLabel>
-                {courseDetails?.onBack && (
-                  <SidebarMenuButton
-                    className="h-8 px-2 text-xs"
-                    onClick={courseDetails.onBack}
-                  >
-                    Back
-                  </SidebarMenuButton>
-                )}
+              <div className="mx-2 mb-4 rounded-xl bg-muted/40 ring-1 ring-border/50">
+                <div className="flex flex-col gap-1 overflow-hidden py-3">
+                  <div className="flex items-center justify-center gap-2 overflow-hidden">
+                    <span className="truncate font-bold uppercase tracking-wider text-primary">
+                      {courseDetails?.name ?? "Course"}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
             <SidebarGroupContent>
@@ -148,6 +152,20 @@ const CmsSidebar = ({
           </SidebarGroup>
         )}
       </SidebarContent>
+
+      <SidebarFooter className="p-4">
+        {state === "expanded" && courseDetails?.onBack && (
+          <div className="flex items-center rounded-xl bg-muted/40 p-2 ring-1 ring-border/50">
+            <button
+              onClick={courseDetails.onBack}
+              className="group flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
+            >
+              <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+              <span>Back to Dashboard</span>
+            </button>
+          </div>
+        )}
+      </SidebarFooter>
     </Sidebar>
   );
 };

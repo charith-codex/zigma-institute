@@ -208,8 +208,8 @@ export function CourseContentManager({
               <div className="space-y-1">
                 <h3 className="text-2xl font-semibold">Course Lessons</h3>
                 <p className="text-sm text-muted-foreground">
-                  Create lessons to organize materials, exams, and student activities for this
-                  course. Select a lesson to upload study materials and videos for it.
+                  Create lessons to organize materials for this course. Select a
+                  lesson to upload study materials and videos for it.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -220,7 +220,10 @@ export function CourseContentManager({
                       Lessons
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="w-full max-w-full p-0 sm:max-w-md">
+                  <SheetContent
+                    side="left"
+                    className="w-full max-w-full p-0 sm:max-w-md"
+                  >
                     <SheetHeader className="border-b border-border bg-muted/40 px-4 py-3">
                       <SheetTitle className="flex items-center gap-2">
                         <BookOpen className="h-4 w-4" /> Lesson list
@@ -236,7 +239,10 @@ export function CourseContentManager({
                     </div>
                   </SheetContent>
                 </Sheet>
-                <Dialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen}>
+                <Dialog
+                  open={lessonDialogOpen}
+                  onOpenChange={setLessonDialogOpen}
+                >
                   <DialogTrigger asChild>
                     <Button className="bg-gradient-primary hover:shadow-medium">
                       <Plus className="mr-2 h-4 w-4" />
@@ -247,7 +253,8 @@ export function CourseContentManager({
                     <DialogHeader>
                       <DialogTitle>Create a new lesson</DialogTitle>
                       <DialogDescription>
-                        Provide a title and optional description to add a lesson to this course.
+                        Provide a title and optional description to add a lesson
+                        to this course.
                       </DialogDescription>
                     </DialogHeader>
                     <LessonForm
@@ -280,14 +287,11 @@ export function CourseContentManager({
               </div>
             ) : (
               <div className="flex min-h-0 flex-col gap-4 lg:flex-row">
-                <aside className="hidden w-80 flex-shrink-0 flex-col overflow-hidden rounded-xl border border-border/70 bg-card/60 lg:flex">
+                <aside className="hidden w-80 shrink-0 flex-col overflow-hidden rounded-xl border border-border/70 bg-card/60 lg:flex">
                   <div className="border-b border-border px-4 py-3">
                     <div className="flex items-center justify-between gap-2">
                       <div>
-                        <p className="text-sm font-semibold">Lessons</p>
-                        <p className="text-xs text-muted-foreground">
-                          Select a lesson to manage content
-                        </p>
+                        <p className="font-semibold px-2">Lessons</p>
                       </div>
                       <Badge variant="secondary">{sortedLessons.length}</Badge>
                     </div>
@@ -312,11 +316,11 @@ export function CourseContentManager({
                               <Badge variant="secondary">
                                 Lesson {currentLessonPosition ?? "-"}
                               </Badge>
-                              <Badge variant="outline">
-                                {selectedLesson.id.slice(0, 8).toUpperCase()}
-                              </Badge>
                               <span className="text-xs text-muted-foreground">
-                                Updated {new Date(selectedLesson.updatedAt).toLocaleDateString()}
+                                Updated{" "}
+                                {new Date(
+                                  selectedLesson.updatedAt
+                                ).toLocaleDateString()}
                               </span>
                             </div>
                             <h4 className="text-xl font-semibold leading-tight">
@@ -470,35 +474,13 @@ export function CourseContentManager({
   return (
     <>
       <div className="flex h-full w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
-        <div className="flex flex-col gap-3 lg:hidden">
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-            onClick={() => onSectionChange("lessons")}
-          >
-            <BookOpen className="mr-2 h-4 w-4" />
-            Lessons
-          </Button>
-          <div className="grid grid-cols-2 gap-2">
-            {courseNavigationItems.map((item) => (
-              <Button
-                key={item.id}
-                variant={activeSection === item.id ? "default" : "outline"}
-                className="justify-start"
-                onClick={() => onSectionChange(item.id)}
-                aria-current={activeSection === item.id ? "page" : undefined}
-              >
-                <item.icon className="mr-2 h-4 w-4" />
-                {item.label}
-              </Button>
-            ))}
-          </div>
-        </div>
-
         {renderContent()}
       </div>
 
-      <Dialog open={editLessonDialogOpen} onOpenChange={setEditLessonDialogOpen}>
+      <Dialog
+        open={editLessonDialogOpen}
+        onOpenChange={setEditLessonDialogOpen}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Lesson</DialogTitle>
@@ -530,8 +512,8 @@ export function CourseContentManager({
             <DialogTitle>Delete Lesson</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete &quot;{lessonToDelete?.title}
-              &quot;? This will also delete all associated study materials, videos,
-              and questions. This action cannot be undone.
+              &quot;? This will also delete all associated study materials,
+              videos, and questions. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

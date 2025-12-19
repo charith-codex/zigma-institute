@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,10 +10,6 @@ import {
   Maximize,
   SkipBack,
   SkipForward,
-  Settings,
-  Download,
-  Bookmark,
-  MessageCircle,
 } from "lucide-react";
 
 interface VideoPlayerProps {
@@ -39,6 +35,15 @@ export const VideoPlayer = ({
   const [totalDuration, setTotalDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Handle source changes - reset state and reload video element
+  useEffect(() => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+    if (videoRef.current) {
+      videoRef.current.load();
+    }
+  }, [src]);
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -118,15 +123,16 @@ export const VideoPlayer = ({
           onMouseLeave={() => setShowControls(false)}
         >
           <video
+            key={src} // Force fresh element on source change
             ref={videoRef}
             className="w-full aspect-video"
+            src={src} // Move src directly here for better reactivity
             poster="/placeholder.svg"
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
           >
-            <source src={src} type="video/mp4" />
             Your browser does not support the video tag.
           </video>
 

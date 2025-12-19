@@ -64,19 +64,13 @@ export function LessonNavigation({
                 <div className="flex items-center gap-2">
                   <span
                     className={`text-sm font-semibold ${
-                      selectedLessonId === lesson.id ? "text-white" : "text-foreground"
+                      selectedLessonId === lesson.id
+                        ? "text-white"
+                        : "text-foreground"
                     }`}
                   >
                     Lesson {index + 1}
                   </span>
-                  <Badge
-                    variant={selectedLessonId === lesson.id ? "secondary" : "outline"}
-                    className={`h-5 text-[10px] ${
-                      selectedLessonId === lesson.id ? "bg-white/15 text-white" : ""
-                    }`}
-                  >
-                    {new Date(lesson.createdAt).toLocaleDateString()}
-                  </Badge>
                 </div>
               </div>
               <span
