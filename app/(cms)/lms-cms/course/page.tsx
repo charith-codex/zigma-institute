@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useClasses } from "@/hooks/useData";
+import { useCourseSummaries } from "@/hooks/useData";
 import { FlowerLoader } from "@/components/ui/flower-loader";
 import {
   CourseContentManager,
@@ -18,7 +18,7 @@ import { SidebarInset } from "@/components/ui/sidebar";
 const LMSCMS = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const router = useRouter();
-  const { classes, loading } = useClasses();
+  const { courseSummaries, loading } = useCourseSummaries();
   const { data: session, status } = useSession();
   const sessionLoading = status === "loading";
   const userId = session?.user?.id ?? null;
@@ -26,25 +26,25 @@ const LMSCMS = () => {
   const isAdmin = role === "ADMIN";
   const isTeacher = role === "TEACHER";
 
-  const accessibleClasses = useMemo(() => {
+  const accessibleCourses = useMemo(() => {
     if (isAdmin) {
-      return classes;
+      return courseSummaries;
     }
 
     if (isTeacher && userId) {
-      return classes.filter((cls) => cls.teacher_id === userId);
+      return courseSummaries.filter((cls) => cls.teacher_id === userId);
     }
 
     return [];
-  }, [classes, isAdmin, isTeacher, userId]);
+  }, [courseSummaries, isAdmin, isTeacher, userId]);
 
-  const classIsAccessible = useMemo(() => {
+  const courseIsAccessible = useMemo(() => {
     if (!courseId) {
       return true;
     }
 
-    return accessibleClasses.some((cls) => cls.id === courseId);
-  }, [accessibleClasses, courseId]);
+    return accessibleCourses.some((cls) => cls.id === courseId);
+  }, [accessibleCourses, courseId]);
 
   const [activeSection, setActiveSection] =
     useState<CourseSectionId>("lessons");
@@ -54,11 +54,11 @@ const LMSCMS = () => {
   }, [courseId]);
 
   // Filter classes for the current teacher
-  const teacherClasses = accessibleClasses;
+  const teacherCourses = accessibleCourses;
 
   const currentCourse = useMemo(
-    () => accessibleClasses.find((cls) => cls.id === courseId),
-    [accessibleClasses, courseId]
+    () => accessibleCourses.find((cls) => cls.id === courseId),
+    [accessibleCourses, courseId]
   );
 
   const isAuthenticated = Boolean(session?.user);
@@ -71,16 +71,16 @@ const LMSCMS = () => {
         activeModule="class-content"
         onModuleChange={() => {}}
         courseNavItems={
-          courseId && classIsAccessible ? courseNavigationItems : undefined
+          courseId && courseIsAccessible ? courseNavigationItems : undefined
         }
         activeCourseSection={
-          courseId && classIsAccessible ? activeSection : undefined
+          courseId && courseIsAccessible ? activeSection : undefined
         }
         onCourseSectionChange={
-          courseId && classIsAccessible ? setActiveSection : undefined
+          courseId && courseIsAccessible ? setActiveSection : undefined
         }
         courseDetails={
-          courseId && classIsAccessible && currentCourse
+          courseId && courseIsAccessible && currentCourse
             ? {
                 name: currentCourse.name,
                 code:
@@ -111,10 +111,10 @@ const LMSCMS = () => {
                   </p>
                 </div>
               </div>
-            ) : courseId && classIsAccessible ? (
+            ) : courseId && courseIsAccessible ? (
               <CourseContentManager
                 courseId={courseId}
-                classes={teacherClasses}
+                courses={teacherCourses}
                 loading={combinedLoading}
                 activeSection={activeSection}
                 onSectionChange={setActiveSection}

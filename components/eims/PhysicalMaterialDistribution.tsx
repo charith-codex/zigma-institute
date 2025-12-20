@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useClasses } from "@/hooks/useData";
+import { useCourseSummaries } from "@/hooks/useData";
 import { useCourseStudents } from "@/hooks/useCourseStudents";
 import { useCourseTuteLedger } from "@/hooks/useCourseTuteLedger";
 import { useCourseTutes, useTuteDistributions } from "@/hooks/useTutes";
@@ -25,7 +25,7 @@ import { useCourseTutes, useTuteDistributions } from "@/hooks/useTutes";
 const placeholderMessage = "Select a course to load students";
 
 export function PhysicalMaterialDistribution() {
-  const { classes, loading: coursesLoading } = useClasses();
+  const { courseSummaries, loading: coursesLoading } = useCourseSummaries();
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [selectedTute, setSelectedTute] = useState<string>("");
   const [newTuteName, setNewTuteName] = useState<string>("");
@@ -107,12 +107,16 @@ export function PhysicalMaterialDistribution() {
       setNewTuteName("");
       toast.success(`${trimmedName} created for the course.`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to create tute.";
+      const message =
+        error instanceof Error ? error.message : "Failed to create tute.";
       toast.error(message);
     }
   };
 
-  const handleDistributionChange = async (studentId: string, distributed: boolean) => {
+  const handleDistributionChange = async (
+    studentId: string,
+    distributed: boolean
+  ) => {
     if (!selectedCourse) {
       toast.error("Select a course before marking distribution.");
       return;
@@ -125,7 +129,11 @@ export function PhysicalMaterialDistribution() {
 
     try {
       await updateDistribution(studentId, distributed);
-      updateLedgerEntry(studentId, { id: selectedTute, name: activeTuteName }, distributed);
+      updateLedgerEntry(
+        studentId,
+        { id: selectedTute, name: activeTuteName },
+        distributed
+      );
       void refreshTutes();
       toast.success(
         distributed
@@ -134,7 +142,9 @@ export function PhysicalMaterialDistribution() {
       );
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Unable to update distribution right now.";
+        error instanceof Error
+          ? error.message
+          : "Unable to update distribution right now.";
       toast.error(message);
     }
   };
@@ -145,7 +155,8 @@ export function PhysicalMaterialDistribution() {
         <div className="space-y-2">
           <h1 className="text-2xl font-bold">Physical Material Distribution</h1>
           <p className="text-muted-foreground text-sm">
-            Select a course, choose a tute, search students, and mark who received it.
+            Select a course, choose a tute, search students, and mark who
+            received it.
           </p>
         </div>
         {selectedCourse && selectedTute ? (
@@ -169,10 +180,14 @@ export function PhysicalMaterialDistribution() {
                 disabled={coursesLoading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={coursesLoading ? "Loading courses..." : "Choose a course"} />
+                  <SelectValue
+                    placeholder={
+                      coursesLoading ? "Loading courses..." : "Choose a course"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  {classes.map((course) => (
+                  {courseSummaries.map((course) => (
                     <SelectItem key={course.id} value={course.id}>
                       {course.name}
                     </SelectItem>
@@ -224,7 +239,10 @@ export function PhysicalMaterialDistribution() {
                   <SelectItem key={tute.id} value={tute.id}>
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate">{tute.name}</span>
-                      <Badge variant="outline" className="text-[10px] font-normal">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] font-normal"
+                      >
                         {tute.distributedCount} given
                       </Badge>
                     </div>
@@ -232,7 +250,9 @@ export function PhysicalMaterialDistribution() {
                 ))}
               </SelectContent>
             </Select>
-            {tutesError ? <p className="text-xs text-destructive">{tutesError}</p> : null}
+            {tutesError ? (
+              <p className="text-xs text-destructive">{tutesError}</p>
+            ) : null}
           </div>
 
           <div className="space-y-2">
@@ -254,7 +274,10 @@ export function PhysicalMaterialDistribution() {
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm font-medium">
-                  {selectedCourse ? classes.find((c) => c.id === selectedCourse)?.name ?? "" : placeholderMessage}
+                  {selectedCourse
+                    ? (courseSummaries.find((c) => c.id === selectedCourse)
+                        ?.name ?? "")
+                    : placeholderMessage}
                 </p>
                 <p className="text-muted-foreground text-xs">
                   {selectedCourse
@@ -274,7 +297,9 @@ export function PhysicalMaterialDistribution() {
             {studentsError ? (
               <p className="text-xs text-destructive">{studentsError}</p>
             ) : null}
-            {ledgerError ? <p className="text-xs text-destructive">{ledgerError}</p> : null}
+            {ledgerError ? (
+              <p className="text-xs text-destructive">{ledgerError}</p>
+            ) : null}
             {distributionsError ? (
               <p className="text-xs text-destructive">{distributionsError}</p>
             ) : null}
@@ -282,11 +307,17 @@ export function PhysicalMaterialDistribution() {
             <div className="space-y-2 rounded-md border p-4">
               {selectedCourse ? (
                 studentsLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading students...</p>
+                  <p className="text-sm text-muted-foreground">
+                    Loading students...
+                  </p>
                 ) : filteredStudents.length > 0 ? (
                   filteredStudents.map((student) => {
-                    const isDistributed = distributions[student.id]?.distributed ?? false;
-                    const isDisabled = !selectedTute || distributionsLoading || updatingStudentId === student.id;
+                    const isDistributed =
+                      distributions[student.id]?.distributed ?? false;
+                    const isDisabled =
+                      !selectedTute ||
+                      distributionsLoading ||
+                      updatingStudentId === student.id;
                     const receivedTutes = ledger[student.id]?.tutes ?? [];
 
                     return (
@@ -297,12 +328,18 @@ export function PhysicalMaterialDistribution() {
                         <div>
                           <p className="text-sm font-medium">{student.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {student.studentPublicId ? `${student.id} · ${student.studentPublicId}` : student.id}
+                            {student.studentPublicId
+                              ? `${student.id} · ${student.studentPublicId}`
+                              : student.id}
                           </p>
                           {receivedTutes.length > 0 ? (
                             <div className="mt-1 flex flex-wrap gap-1">
                               {receivedTutes.map((tute) => (
-                                <Badge key={tute.id} variant="outline" className="text-[10px] font-normal">
+                                <Badge
+                                  key={tute.id}
+                                  variant="outline"
+                                  className="text-[10px] font-normal"
+                                >
                                   {tute.name}
                                 </Badge>
                               ))}
@@ -315,7 +352,9 @@ export function PhysicalMaterialDistribution() {
                           </span>
                           <Switch
                             checked={isDistributed}
-                            onCheckedChange={(checked) => void handleDistributionChange(student.id, checked)}
+                            onCheckedChange={(checked) =>
+                              void handleDistributionChange(student.id, checked)
+                            }
                             disabled={isDisabled}
                             aria-label={`Mark ${activeTuteName} as distributed to ${student.name}`}
                           />
@@ -324,10 +363,14 @@ export function PhysicalMaterialDistribution() {
                     );
                   })
                 ) : (
-                  <p className="text-sm text-muted-foreground">No students match your search.</p>
+                  <p className="text-sm text-muted-foreground">
+                    No students match your search.
+                  </p>
                 )
               ) : (
-                <p className="text-sm text-muted-foreground">{placeholderMessage}.</p>
+                <p className="text-sm text-muted-foreground">
+                  {placeholderMessage}.
+                </p>
               )}
             </div>
           </div>

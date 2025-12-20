@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useClasses, type ClassSummary } from "@/hooks/useData";
+import { useCourseSummaries, type CourseSummary } from "@/hooks/useData";
 import { useSession } from "next-auth/react";
 
 export interface TeacherInfo {
@@ -9,11 +9,11 @@ export interface TeacherInfo {
   id: string;
   department: string;
   totalStudents: number;
-  activeClasses: number;
+  activeCourses: number;
 }
 
 export interface TeacherDashboardData {
-  accessibleClasses: ClassSummary[];
+  accessibleCourses: CourseSummary[];
   combinedLoading: boolean;
   loading: boolean;
   sessionLoading: boolean;
@@ -27,7 +27,7 @@ export interface TeacherDashboardData {
 }
 
 export function useTeacherDashboardData(): TeacherDashboardData {
-  const { classes, loading } = useClasses();
+  const { courseSummaries, loading } = useCourseSummaries();
   const { data: session, status } = useSession();
 
   const sessionLoading = status === "loading";
@@ -36,17 +36,17 @@ export function useTeacherDashboardData(): TeacherDashboardData {
   const isAdmin = role === "ADMIN";
   const isTeacher = role === "TEACHER";
 
-  const accessibleClasses = useMemo(() => {
+  const accessibleCourses = useMemo(() => {
     if (isAdmin) {
-      return classes;
+      return courseSummaries;
     }
 
     if (isTeacher && userId) {
-      return classes.filter((cls) => cls.teacher_id === userId);
+      return courseSummaries.filter((cls) => cls.teacher_id === userId);
     }
 
     return [];
-  }, [classes, isAdmin, isTeacher, userId]);
+  }, [courseSummaries, isAdmin, isTeacher, userId]);
 
   const teacherInfo = useMemo<TeacherInfo>(() => {
     const teacherId = userId ? userId.slice(0, 8).toUpperCase() : "TEA000000";
@@ -55,18 +55,18 @@ export function useTeacherDashboardData(): TeacherDashboardData {
       name: session?.user?.name || "Teacher",
       id: teacherId,
       department: isAdmin ? "Administration" : "Computer Science",
-      totalStudents: accessibleClasses.reduce(
+      totalStudents: accessibleCourses.reduce(
         (sum, cls) => sum + (cls.enrolled_students || 0),
         0
       ),
-      activeClasses: accessibleClasses.length,
+      activeCourses: accessibleCourses.length,
     };
-  }, [accessibleClasses, isAdmin, session?.user?.name, userId]);
+  }, [accessibleCourses, isAdmin, session?.user?.name, userId]);
 
   const isAuthenticated = Boolean(session?.user);
 
   return {
-    accessibleClasses,
+    accessibleCourses,
     combinedLoading: loading || sessionLoading,
     loading,
     sessionLoading,

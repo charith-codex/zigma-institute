@@ -17,7 +17,7 @@ import { Course } from "@/types";
 import { Input } from "@/components/ui/input";
 import { CourseEnrollment } from "@/components/lms/CourseEnrollment";
 
-type EnrolledClass = Course & {
+type EnrolledCourse = Course & {
   code: string;
   instructor: string;
   progress: number;
@@ -26,7 +26,7 @@ type EnrolledClass = Course & {
 
 const LMS = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
-  const [selectedClass, setSelectedClass] = useState<EnrolledClass | null>(
+  const [selectedCourse, setSelectedCourse] = useState<EnrolledCourse | null>(
     null
   );
   const [nameQuery, setNameQuery] = useState("");
@@ -40,31 +40,30 @@ const LMS = () => {
   const { courses } = useCourses();
   const [paymentRefreshKey, setPaymentRefreshKey] = useState(0);
 
-  const enrolledClasses = useMemo<EnrolledClass[]>(() => {
-    const byCourseId = new Map<string, EnrolledClass>();
+  const enrolledCourses = useMemo<EnrolledCourse[]>(() => {
+    const byCourseId = new Map<string, EnrolledCourse>();
 
     enrollments.forEach((enrollment) => {
       const course = courses.find((item) => item.id === enrollment.courseId);
       const fallbackDate = new Date(enrollment.enrolledAt);
 
-      const hydratedCourse: Course =
-        course ?? {
-          id: enrollment.courseId,
-          name: enrollment.courseName,
-          slug: enrollment.courseSlug ?? enrollment.courseId,
-          description: "Course description will be available soon.",
-          coverImage: "/logo.png",
-          teacherName: enrollment.teacherName ?? "Instructor",
-          teacherId: null,
-          courseCategoryId: "",
-          courseCategory: null,
-          priceInCents: Math.max(enrollment.priceInCents, 0),
-          currency: enrollment.currency,
-          createdAt: fallbackDate,
-          updatedAt: fallbackDate,
-        };
+      const hydratedCourse: Course = course ?? {
+        id: enrollment.courseId,
+        name: enrollment.courseName,
+        slug: enrollment.courseSlug ?? enrollment.courseId,
+        description: "Course description will be available soon.",
+        coverImage: "/logo.png",
+        teacherName: enrollment.teacherName ?? "Instructor",
+        teacherId: null,
+        courseCategoryId: "",
+        courseCategory: null,
+        priceInCents: Math.max(enrollment.priceInCents, 0),
+        currency: enrollment.currency,
+        createdAt: fallbackDate,
+        updatedAt: fallbackDate,
+      };
 
-      const enrolledClass: EnrolledClass = {
+      const enrolledCourse: EnrolledCourse = {
         ...hydratedCourse,
         code:
           hydratedCourse.slug?.toUpperCase() ??
@@ -74,35 +73,35 @@ const LMS = () => {
         status: "active",
       };
 
-      if (!byCourseId.has(enrolledClass.id)) {
-        byCourseId.set(enrolledClass.id, enrolledClass);
+      if (!byCourseId.has(enrolledCourse.id)) {
+        byCourseId.set(enrolledCourse.id, enrolledCourse);
       }
     });
 
     return Array.from(byCourseId.values());
   }, [courses, enrollments]);
 
-  const filteredClasses = useMemo<EnrolledClass[]>(() => {
+  const filteredCourses = useMemo<EnrolledCourse[]>(() => {
     const normalizedQuery = nameQuery.trim().toLowerCase();
 
     if (!normalizedQuery) {
-      return enrolledClasses;
+      return enrolledCourses;
     }
 
-    return enrolledClasses.filter((classItem) =>
-      classItem.name.toLowerCase().includes(normalizedQuery)
+    return enrolledCourses.filter((courseItem) =>
+      courseItem.name.toLowerCase().includes(normalizedQuery)
     );
-  }, [enrolledClasses, nameQuery]);
+  }, [enrolledCourses, nameQuery]);
 
   const scheduleCourseOptions = useMemo(
     () =>
-      enrolledClasses.map((course) => ({
+      enrolledCourses.map((course) => ({
         id: course.id,
         name: course.name,
         teacherId: course.teacherId ?? `${course.id}-teacher`,
         teacherName: course.teacherName ?? "Instructor",
       })),
-    [enrolledClasses]
+    [enrolledCourses]
   );
 
   useEffect(() => {
@@ -265,10 +264,10 @@ const LMS = () => {
             )}
 
             {activeModule === "classes" &&
-              (selectedClass ? (
+              (selectedCourse ? (
                 <CourseDetailView
-                  classData={selectedClass}
-                  onBack={() => setSelectedClass(null)}
+                  classData={selectedCourse}
+                  onBack={() => setSelectedCourse(null)}
                 />
               ) : (
                 <div className="space-y-6">
@@ -289,18 +288,18 @@ const LMS = () => {
                     </div>
                   </div>
 
-                  {filteredClasses.length > 0 ? (
+                  {filteredCourses.length > 0 ? (
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                      {filteredClasses.map((classItem) => (
+                      {filteredCourses.map((courseItem) => (
                         <CourseCard
-                          key={classItem.id}
-                          course={classItem}
+                          key={courseItem.id}
+                          course={courseItem}
                           showPrice={false}
                           showDescription
-                          href={`/lms/courses/${classItem.slug}`}
+                          href={`/lms/courses/${courseItem.slug}`}
                           onClick={(event) => {
                             event.preventDefault();
-                            setSelectedClass(classItem);
+                            setSelectedCourse(courseItem);
                           }}
                         />
                       ))}
@@ -340,7 +339,7 @@ const LMS = () => {
             {activeModule === "study-tools" && <AIStudyTools />}
 
             {activeModule === "performance" && (
-              <StudentPerformance enrolledClasses={enrolledClasses} />
+              <StudentPerformance enrolledCourses={enrolledCourses} />
             )}
 
             {activeModule === "enroll" && (

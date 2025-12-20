@@ -21,7 +21,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FlowerLoader } from "../ui/flower-loader";
 
-type EnrolledClass = Course & {
+type EnrolledCourse = Course & {
   code: string;
   instructor: string;
   progress: number;
@@ -52,7 +52,7 @@ type PaperChartItem = {
 };
 
 interface StudentPerformanceProps {
-  enrolledClasses: EnrolledClass[];
+  enrolledCourses: EnrolledCourse[];
 }
 
 const calculateAverage = (papers: ExamPaper[]): number => {
@@ -80,7 +80,7 @@ const percentWidth = (score: number): string =>
   `${Math.min(Math.max(score, 0), 100)}%`;
 
 export const StudentPerformance = ({
-  enrolledClasses,
+  enrolledCourses,
 }: StudentPerformanceProps) => {
   const [data, setData] = useState<StudentPerformanceData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -109,11 +109,11 @@ export const StudentPerformance = ({
   }, []);
 
   const coursePerformances = useMemo<CoursePerformance[]>(() => {
-    if (!data || enrolledClasses.length === 0) {
+    if (!data || enrolledCourses.length === 0) {
       return [];
     }
 
-    return enrolledClasses.map((course) => {
+    return enrolledCourses.map((course) => {
       // Filter papers for this course
       const physicals = data.physicalExams
         .filter((e) => e.courseName === course.name)
@@ -151,7 +151,7 @@ export const StudentPerformance = ({
         papers: combinedPapers,
       };
     });
-  }, [data, enrolledClasses]);
+  }, [data, enrolledCourses]);
 
   const coursePaperCharts: Record<string, PaperChartItem[]> = useMemo(() => {
     return coursePerformances.reduce<Record<string, PaperChartItem[]>>(

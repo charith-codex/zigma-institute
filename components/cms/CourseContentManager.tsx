@@ -39,7 +39,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import type { ClassSummary } from "@/hooks/useData";
+import type { CourseSummary } from "@/hooks/useData";
 import { useLessons } from "@/hooks/useData";
 import { StudyMaterialManager } from "./StudyMaterialManager";
 import { VideoRecordingManager } from "./VideoRecordingManager";
@@ -65,7 +65,7 @@ export type CourseSectionId = (typeof courseNavigationItems)[number]["id"];
 interface CourseContentManagerProps {
   courseId: string;
   loading?: boolean;
-  classes?: ClassSummary[];
+  courses?: CourseSummary[];
   activeSection: CourseSectionId;
   onSectionChange: (sectionId: CourseSectionId) => void;
 }
@@ -73,7 +73,7 @@ interface CourseContentManagerProps {
 export function CourseContentManager({
   courseId,
   loading = false,
-  classes = [],
+  courses = [],
   activeSection,
   onSectionChange,
 }: CourseContentManagerProps) {
@@ -94,9 +94,9 @@ export function CourseContentManager({
   } | null>(null);
   const [deletingLesson, setDeletingLesson] = useState(false);
 
-  const classItem = useMemo(
-    () => classes.find((cls) => cls.id === courseId),
-    [classes, courseId]
+  const courseItem = useMemo(
+    () => courses.find((cls) => cls.id === courseId),
+    [courses, courseId]
   );
 
   const {
@@ -104,7 +104,7 @@ export function CourseContentManager({
     loading: lessonsLoading,
     error: lessonsError,
     refetch,
-  } = useLessons(classItem?.id);
+  } = useLessons(courseItem?.id);
 
   const sortedLessons = useMemo(
     () =>
@@ -396,8 +396,8 @@ export function CourseContentManager({
         );
 
       case "students":
-        return classItem ? (
-          <EnrolledStudents courseId={courseId} courseName={classItem.name} />
+        return courseItem ? (
+          <EnrolledStudents courseId={courseId} courseName={courseItem.name} />
         ) : null;
 
       case "quizzes":
@@ -451,8 +451,8 @@ export function CourseContentManager({
     );
   }
 
-  // Handle class not found case
-  if (!classItem) {
+  // Handle course not found case
+  if (!courseItem) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <div className="text-center">
@@ -463,7 +463,7 @@ export function CourseContentManager({
             Looking for course ID: {courseId}
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            Available courses: {classes.map((c) => c.id).join(", ")}
+            Available courses: {courses.map((c) => c.id).join(", ")}
           </p>
         </div>
         <Button onClick={() => router.push("/lms-cms")}>Back to Courses</Button>

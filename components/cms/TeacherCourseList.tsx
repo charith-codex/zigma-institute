@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import type { ClassSummary } from "@/hooks/useData";
+import type { CourseSummary } from "@/hooks/useData";
 import type { Course } from "@/types";
 import { BookOpen, Plus } from "lucide-react";
 import CourseCard from "@/components/courses/course-card";
@@ -9,34 +9,34 @@ import { FlowerLoader } from "../ui/flower-loader";
 
 interface TeacherCourseListProps {
   onSelectClass: (courseId: string) => void;
-  classes: ClassSummary[];
+  courses: CourseSummary[];
   loading: boolean;
 }
 
 export function TeacherCourseList({
   onSelectClass,
-  classes,
+  courses,
   loading,
 }: TeacherCourseListProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Transform ClassSummary to Course type for CourseCard
+  // Transform CourseSummary to Course type for CourseCard
   const transformedCourses = useMemo<Course[]>(() => {
-    return classes.map((classItem) => ({
-      id: classItem.id,
-      name: classItem.name,
-      slug: classItem.slug || classItem.code?.toLowerCase() || classItem.id,
-      description: classItem.description || "",
-      coverImage: classItem.coverImage || "/images/placeholder-course.jpg",
-      teacherId: classItem.teacher_id,
-      teacherName: classItem.teacher_name || "No Teacher Assigned",
+    return courses.map((courseItem) => ({
+      id: courseItem.id,
+      name: courseItem.name,
+      slug: courseItem.slug || courseItem.code?.toLowerCase() || courseItem.id,
+      description: courseItem.description || "",
+      coverImage: courseItem.coverImage || "/images/placeholder-course.jpg",
+      teacherId: courseItem.teacher_id,
+      teacherName: courseItem.teacher_name || "No Teacher Assigned",
       courseCategoryId: "",
       priceInCents: 0,
       currency: "LKR",
       createdAt: new Date(),
       updatedAt: new Date(),
     }));
-  }, [classes]);
+  }, [courses]);
 
   // Filter courses by search query
   const filteredCourses = useMemo(() => {
@@ -78,7 +78,7 @@ export function TeacherCourseList({
         </div>
 
         {/* Search Input */}
-        {classes.length > 0 && (
+        {courses.length > 0 && (
           <div className="space-y-2 max-w-sm w-full sm:w-auto">
             <Input
               id="course-search"
@@ -132,7 +132,7 @@ export function TeacherCourseList({
         </div>
       )}
 
-      {classes.length === 0 && !loading && (
+      {courses.length === 0 && !loading && (
         <div className="text-center py-24 animate-fade-in">
           <div className="w-32 h-32 mx-auto mb-6 rounded-2xl bg-linear-to-br from-primary/10 to-primary/5 flex items-center justify-center ring-1 ring-primary/10">
             <BookOpen className="w-16 h-16 text-primary" />
