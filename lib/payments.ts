@@ -1,11 +1,5 @@
 export const MINIMUM_MONTHLY_CENTS = 2500;
 
-export const calculateDiscountRate = (courseCount: number): number => {
-  if (courseCount >= 5) return 0.15;
-  if (courseCount >= 3) return 0.1;
-  return 0;
-};
-
 export const computeDurationInMonths = (priceInCents: number): number => {
   const normalizedPrice = Math.max(priceInCents, MINIMUM_MONTHLY_CENTS);
   const estimatedMonths = Math.ceil(normalizedPrice / 15000);

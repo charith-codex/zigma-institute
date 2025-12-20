@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { prisma } from "@/db/prisma";
-import { calculateDiscountRate, deriveMonthlyAmount } from "@/lib/payments";
+import { deriveMonthlyAmount } from "@/lib/payments";
 import { stripe } from "@/lib/stripe";
 
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
@@ -58,17 +58,26 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid request body." },
+      { status: 400 }
+    );
   }
 
   if (!body || typeof body !== "object") {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid request body." },
+      { status: 400 }
+    );
   }
 
   const { courseId, planId } = body as { courseId?: unknown; planId?: unknown };
 
   if (typeof courseId !== "string" || courseId.trim().length === 0) {
-    return NextResponse.json({ error: "courseId is required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "courseId is required." },
+      { status: 400 }
+    );
   }
 
   const normalizedCourseId = courseId.trim();
@@ -100,15 +109,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const courseCount = await prisma.enrollment.count({
-    where: { studentId: session.user.id },
-  });
-
-  const discountRate = calculateDiscountRate(
-    alreadyEnrolled ? courseCount : courseCount + 1
-  );
-  const baseMonthlyAmount = deriveMonthlyAmount(course.priceInCents);
-  const amountInCents = Math.round(baseMonthlyAmount * (1 - discountRate));
+  const amountInCents = deriveMonthlyAmount(course.priceInCents);
 
   if (amountInCents <= 0) {
     return NextResponse.json(
@@ -156,8 +157,8 @@ export async function POST(request: Request) {
           typeof planId === "string" && planId.trim().length > 0
             ? planId
             : course.id,
-        baseMonthlyAmount: baseMonthlyAmount.toString(),
-        discountRate: discountRate.toString(),
+        baseMonthlyAmount: amountInCents.toString(),
+        discountRate: "0",
         enrollOnSuccess: alreadyEnrolled ? "false" : "true",
       },
     });
@@ -196,7 +197,10 @@ export async function GET(request: Request) {
   const sessionId = searchParams.get("session_id");
 
   if (!sessionId) {
-    return NextResponse.json({ error: "session_id is required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "session_id is required." },
+      { status: 400 }
+    );
   }
 
   try {
@@ -213,7 +217,8 @@ export async function GET(request: Request) {
     }
 
     const courseId = checkoutSession.metadata?.courseId ?? null;
-    const enrollOnSuccess = checkoutSession.metadata?.enrollOnSuccess === "true";
+    const enrollOnSuccess =
+      checkoutSession.metadata?.enrollOnSuccess === "true";
     const discountRate = Number(checkoutSession.metadata?.discountRate ?? 0);
     const estimatedBase = Number(
       checkoutSession.metadata?.baseMonthlyAmount ?? 0
@@ -228,7 +233,7 @@ export async function GET(request: Request) {
     const transactionId =
       typeof checkoutSession.payment_intent === "string"
         ? checkoutSession.payment_intent
-        : checkoutSession.payment_intent?.id ?? checkoutSession.id;
+        : (checkoutSession.payment_intent?.id ?? checkoutSession.id);
 
     const amountInCents =
       checkoutSession.amount_total ??
@@ -239,7 +244,11 @@ export async function GET(request: Request) {
           )
         : null);
 
-    if (checkoutSession.payment_status === "paid" && amountInCents && courseId) {
+    if (
+      checkoutSession.payment_status === "paid" &&
+      amountInCents &&
+      courseId
+    ) {
       const existingEnrollment = await prisma.enrollment.findUnique({
         where: {
           studentId_courseId: { studentId: session.user.id, courseId },
@@ -319,7 +328,7 @@ export async function GET(request: Request) {
       transactionId:
         typeof checkoutSession.payment_intent === "string"
           ? checkoutSession.payment_intent
-          : checkoutSession.payment_intent?.id ?? checkoutSession.id,
+          : (checkoutSession.payment_intent?.id ?? checkoutSession.id),
     };
 
     return NextResponse.json(response);

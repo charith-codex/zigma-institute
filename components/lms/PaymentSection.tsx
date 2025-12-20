@@ -9,7 +9,6 @@ import {
   Clock,
   CreditCard,
   DollarSign,
-  Percent,
   User,
 } from "lucide-react";
 
@@ -17,11 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  calculateDiscountRate,
-  computeDurationInMonths,
-  deriveMonthlyAmount,
-} from "@/lib/payments";
+import { computeDurationInMonths, deriveMonthlyAmount } from "@/lib/payments";
 
 interface PaymentCourse {
   id: string;
@@ -59,7 +54,6 @@ interface CoursePaymentPlan {
   courseId: string;
   courseName: string;
   monthlyAmountInCents: number;
-  discountRate: number;
   monthsRemaining: number;
   totalMonths: number;
   nextDueDate: string;
@@ -75,7 +69,6 @@ interface PaymentReceipt {
   transactionId: string;
   currency?: string;
   paymentType?: "INSTALLMENT" | "REGISTRATION";
-  discountRate?: number | null;
 }
 
 const formatCurrency = (cents: number, currency: string) =>
@@ -83,11 +76,22 @@ const formatCurrency = (cents: number, currency: string) =>
     cents / 100
   );
 
-const calculateNextDueDate = (enrolledAt: string, completedPayments: number) => {
+const calculateNextDueDate = (
+  enrolledAt: string,
+  completedPayments: number
+) => {
   const anchor = new Date(enrolledAt);
   anchor.setMonth(anchor.getMonth() + completedPayments);
 
-  return new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0, 23, 59, 59, 999);
+  return new Date(
+    anchor.getFullYear(),
+    anchor.getMonth() + 1,
+    0,
+    23,
+    59,
+    59,
+    999
+  );
 };
 
 const daysUntil = (target: Date) => {
@@ -104,11 +108,6 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
-
-  const discountRate = useMemo(
-    () => calculateDiscountRate(courses.length),
-    [courses.length]
-  );
 
   const activeCurrency = courses[0]?.currency ?? "USD";
 
@@ -145,7 +144,9 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
     if (!student) return;
 
     try {
-      const response = await fetch("/api/payments/history", { cache: "no-store" });
+      const response = await fetch("/api/payments/history", {
+        cache: "no-store",
+      });
 
       if (!response.ok) {
         return;
@@ -239,27 +240,28 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
         }
 
         const monthlyAmount = deriveMonthlyAmount(course.priceInCents);
-        const nextDue = calculateNextDueDate(course.enrolledAt, paidInstallments);
+        const nextDue = calculateNextDueDate(
+          course.enrolledAt,
+          paidInstallments
+        );
 
         return {
           id: `plan-${course.id}`,
           courseId: course.id,
           courseName: course.name,
           monthlyAmountInCents: monthlyAmount,
-          discountRate,
           monthsRemaining,
           totalMonths,
           nextDueDate: nextDue.toISOString(),
         } satisfies CoursePaymentPlan;
       })
       .filter((plan): plan is CoursePaymentPlan => plan !== null);
-  }, [courses, discountRate, history, student]);
+  }, [courses, history, student]);
 
   const totalPending = useMemo(
     () =>
       pendingPlans.reduce(
-        (total, plan) =>
-          total + Math.round(plan.monthlyAmountInCents * (1 - plan.discountRate)),
+        (total, plan) => total + plan.monthlyAmountInCents,
         0
       ),
     [pendingPlans]
@@ -339,31 +341,27 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
         <div className="space-y-1">
           <h2 className="text-2xl font-bold text-foreground">Payments</h2>
           <p className="text-muted-foreground">
-            Pay monthly installments until each course ends. Discounts apply when you
-            subscribe to multiple courses in the same period.
+            Pay monthly installments until each course ends.
           </p>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex items-center font-semibold gap-2 text-sm text-primary">
             <User className="h-4 w-4" />
             <span>
-              {student.name ?? "Student"} • {student.email ?? "No email on file"}
+              {student.name ?? "Student"} •{" "}
+              {student.email ?? "No email on file"}
             </span>
           </div>
         </div>
-        {discountRate > 0 && (
-          <Badge variant="secondary" className="gap-2 px-3 py-1">
-            <Percent className="h-4 w-4" />
-            {Math.round(discountRate * 100)}% bundle discount active
-          </Badge>
-        )}
       </div>
 
       {courses.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
             <Clock className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
-            <h3 className="mb-2 text-lg font-semibold">No active enrollments</h3>
+            <h3 className="mb-2 text-lg font-semibold">
+              No active enrollments
+            </h3>
             <p className="text-muted-foreground">
-              Enroll in a course to see your monthly payments and discounts.
+              Enroll in a course to see your monthly payments.
             </p>
           </CardContent>
         </Card>
@@ -377,8 +375,12 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                     <Clock className="h-5 w-5 text-warning" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Due This Month</p>
-                    <p className="text-xl font-bold">{formatCurrency(totalPending, activeCurrency)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Total Due This Month
+                    </p>
+                    <p className="text-xl font-bold">
+                      {formatCurrency(totalPending, activeCurrency)}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -391,7 +393,9 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                     <AlertCircle className="h-5 w-5 text-destructive" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Active Courses</p>
+                    <p className="text-sm text-muted-foreground">
+                      Active Courses
+                    </p>
                     <p className="text-xl font-bold">{pendingPlans.length}</p>
                   </div>
                 </div>
@@ -405,7 +409,9 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                     <CheckCircle className="h-5 w-5 text-success" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Payments Completed</p>
+                    <p className="text-sm text-muted-foreground">
+                      Payments Completed
+                    </p>
                     <p className="text-xl font-bold">{history.length}</p>
                   </div>
                 </div>
@@ -430,7 +436,9 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                 <Card>
                   <CardContent className="p-12 text-center">
                     <CheckCircle className="mx-auto mb-4 h-16 w-16 text-success" />
-                    <h3 className="mb-2 text-lg font-semibold">All caught up</h3>
+                    <h3 className="mb-2 text-lg font-semibold">
+                      All caught up
+                    </h3>
                     <p className="text-muted-foreground">
                       You have paid every installment for your enrolled courses.
                     </p>
@@ -439,9 +447,6 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
               ) : (
                 <div className="grid gap-4">
                   {pendingPlans.map((plan) => {
-                    const discountedAmount = Math.round(
-                      plan.monthlyAmountInCents * (1 - plan.discountRate)
-                    );
                     const dueDate = new Date(plan.nextDueDate);
                     const daysRemaining = daysUntil(dueDate);
                     const isOverdue = daysRemaining < 0;
@@ -454,38 +459,34 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                     return (
                       <Card
                         key={plan.id}
-                        className={plan.monthsRemaining <= 1 ? "border-success/40" : ""}
+                        className={
+                          plan.monthsRemaining <= 1 ? "border-success/40" : ""
+                        }
                       >
                         <CardHeader className="flex flex-row items-start justify-between space-y-0">
                           <div>
-                            <CardTitle className="text-lg">{plan.courseName}</CardTitle>
+                            <CardTitle className="text-lg">
+                              {plan.courseName}
+                            </CardTitle>
                             <p className="text-sm text-muted-foreground">
                               {plan.monthsRemaining} monthly payment(s) left
                             </p>
                           </div>
-                          {plan.discountRate > 0 && (
-                            <Badge variant="outline" className="gap-2">
-                              <Percent className="h-3 w-3" />
-                              {Math.round(plan.discountRate * 100)}% off
-                            </Badge>
-                          )}
                         </CardHeader>
                         <CardContent className="space-y-4">
                           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2">
                               <DollarSign className="h-4 w-4" />
                               <span className="font-semibold text-foreground">
-                                {formatCurrency(discountedAmount, activeCurrency)}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                (from {formatCurrency(plan.monthlyAmountInCents, activeCurrency)})
+                                {formatCurrency(
+                                  plan.monthlyAmountInCents,
+                                  activeCurrency
+                                )}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
                               <Calendar className="h-4 w-4" />
-                              <span>
-                                Due by {dueDate.toLocaleDateString()}
-                              </span>
+                              <span>Due by {dueDate.toLocaleDateString()}</span>
                             </div>
                             <Badge
                               variant={isOverdue ? "destructive" : "secondary"}
@@ -499,17 +500,22 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                           <div className="flex flex-wrap gap-2">
                             <Button
                               className="gap-2"
-                              onClick={() => handlePayment(plan.id, plan.courseId)}
+                              onClick={() =>
+                                handlePayment(plan.id, plan.courseId)
+                              }
                               disabled={processingId === plan.id}
                             >
                               <CreditCard className="h-4 w-4" />
                               {processingId === plan.id
                                 ? "Processing..."
-                                : `Pay ${formatCurrency(discountedAmount, activeCurrency)}`}
+                                : `Pay ${formatCurrency(plan.monthlyAmountInCents, activeCurrency)}`}
                             </Button>
                             <Badge variant="secondary" className="gap-2">
                               <Clock className="h-3 w-3" />
-                              Month {plan.totalMonths - plan.monthsRemaining + 1} of {plan.totalMonths}
+                              Month{" "}
+                              {plan.totalMonths -
+                                plan.monthsRemaining +
+                                1} of {plan.totalMonths}
                             </Badge>
                           </div>
                         </CardContent>
@@ -525,7 +531,9 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                 <Card>
                   <CardContent className="p-10 text-center">
                     <Clock className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                    <p className="text-muted-foreground">No payments recorded yet.</p>
+                    <p className="text-muted-foreground">
+                      No payments recorded yet.
+                    </p>
                   </CardContent>
                 </Card>
               ) : (
@@ -537,7 +545,9 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                       <Card key={receipt.id}>
                         <CardContent className="flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
                           <div className="space-y-1">
-                            <p className="text-sm text-muted-foreground">{receipt.courseName ?? "Course"}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {receipt.courseName ?? "Course"}
+                            </p>
                             <p className="font-semibold text-foreground">
                               {formatCurrency(
                                 receipt.amountPaidInCents,
@@ -545,13 +555,17 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                               )}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {receipt.paymentType === "REGISTRATION" ? "Registration" : "Installment"} • Month {receipt.monthNumber}
-                              {receipt.discountRate ? ` • ${Math.round(receipt.discountRate * 100)}% discount` : ""} • Transaction {receipt.transactionId}
+                              {receipt.paymentType === "REGISTRATION"
+                                ? "Registration"
+                                : "Installment"}{" "}
+                              • Month {receipt.monthNumber} • Transaction{" "}
+                              {receipt.transactionId}
                             </p>
                           </div>
                           <Badge className="gap-2 self-start bg-success/10 text-success hover:bg-success/10">
                             <CheckCircle className="h-4 w-4" />
-                            Paid on {new Date(receipt.paidOn).toLocaleDateString()}
+                            Paid on{" "}
+                            {new Date(receipt.paidOn).toLocaleDateString()}
                           </Badge>
                         </CardContent>
                       </Card>

@@ -28,7 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, Pencil, RefreshCw } from "lucide-react";
+import { Check, Loader2, Pencil, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { FlowerLoader } from "../ui/flower-loader";
 import { useSession } from "next-auth/react";
@@ -241,7 +241,7 @@ export function ExamResults({ courseId }: ExamResultsProps) {
               disabled={loading}
             >
               {loading ? (
-                <FlowerLoader size="sm" className="h-4 w-4 text-[#A41FC5]" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <RefreshCw className="h-4 w-4" />
               )}
@@ -558,10 +558,7 @@ export function ExamResults({ courseId }: ExamResultsProps) {
                 </Button>
                 <Button onClick={submitGrades} disabled={isSavingGrade}>
                   {isSavingGrade ? (
-                    <FlowerLoader
-                      size="md"
-                      className="h-4 w-4 text-[#A41FC5] mr-2"
-                    />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
                     <Check className="h-4 w-4" />
                   )}
