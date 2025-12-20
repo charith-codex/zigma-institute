@@ -5,30 +5,28 @@ import { useToast } from "@/hooks/use-toast";
 export interface ScheduleEvent {
   id: string;
   courseId: string;
-  className: string;
+  courseName: string;
   date: string;
   startTime: string;
   endTime: string;
   dayOfWeek: string;
   teacherName?: string;
   notes?: string;
-  recurring?: boolean;
   createdAt: string;
 }
 
 interface ScheduleResponse {
   id: string;
   courseId: string;
-  className: string;
+  courseName?: string;
   date: string;
   startTime: string;
   endTime: string;
   dayOfWeek: string;
   notes?: string | null;
-  recurring?: boolean | null;
   createdAt: string;
   teacherName?: string | null;
-  course?: { teacherName?: string | null };
+  course?: { name?: string; teacherName?: string | null };
 }
 
 function formatDateOnly(value: string): string {
@@ -44,9 +42,9 @@ export function useSchedules() {
   const mapSchedule = useCallback((value: ScheduleResponse): ScheduleEvent => {
     return {
       ...value,
+      courseName: value.courseName ?? value.course?.name ?? "Unknown Course",
       date: formatDateOnly(value.date),
       notes: value.notes ?? undefined,
-      recurring: Boolean(value.recurring),
       teacherName: value.teacherName ?? value.course?.teacherName ?? undefined,
     };
   }, []);
@@ -92,7 +90,9 @@ export function useSchedules() {
   }, [loadSchedules]);
 
   const addSchedule = useCallback(
-    async (schedule: Omit<ScheduleEvent, "id" | "createdAt">) => {
+    async (
+      schedule: Omit<ScheduleEvent, "id" | "createdAt" | "courseName">
+    ) => {
       try {
         const response = await fetch("/api/schedules", {
           method: "POST",
@@ -112,7 +112,7 @@ export function useSchedules() {
 
         toast({
           title: "Schedule Created",
-          description: `Scheduled ${schedule.className} on ${schedule.date} at ${schedule.startTime}.`,
+          description: `Scheduled ${created.courseName} on ${schedule.date} at ${schedule.startTime}.`,
         });
 
         return created;
@@ -131,7 +131,7 @@ export function useSchedules() {
   const updateScheduleDetails = useCallback(
     async (
       scheduleId: string,
-      updates: Partial<Omit<ScheduleEvent, "id" | "createdAt">>
+      updates: Partial<Omit<ScheduleEvent, "id" | "createdAt" | "courseName">>
     ) => {
       try {
         const response = await fetch(`/api/schedules/${scheduleId}`, {

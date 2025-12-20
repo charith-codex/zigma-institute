@@ -43,7 +43,9 @@ export function ScheduleCalendar({
   }, [selectedDate]);
 
   const monthLabel = format(currentMonth, "MMMM yyyy");
-  const startDate = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
+  const startDate = startOfWeek(startOfMonth(currentMonth), {
+    weekStartsOn: 1,
+  });
   const endDate = endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 1 });
 
   const days = useMemo(() => {
@@ -57,16 +59,19 @@ export function ScheduleCalendar({
   }, [endDate, startDate]);
 
   const eventsByDate = useMemo(() => {
-    return events.reduce<Record<string, ScheduleEvent[]>>((accumulator, event) => {
-      const dayKey = event.date;
-      if (!accumulator[dayKey]) {
-        accumulator[dayKey] = [];
-      }
-      accumulator[dayKey] = [...accumulator[dayKey], event].sort((a, b) =>
-        a.startTime.localeCompare(b.startTime)
-      );
-      return accumulator;
-    }, {});
+    return events.reduce<Record<string, ScheduleEvent[]>>(
+      (accumulator, event) => {
+        const dayKey = event.date;
+        if (!accumulator[dayKey]) {
+          accumulator[dayKey] = [];
+        }
+        accumulator[dayKey] = [...accumulator[dayKey], event].sort((a, b) =>
+          a.startTime.localeCompare(b.startTime)
+        );
+        return accumulator;
+      },
+      {}
+    );
   }, [events]);
 
   const handleMonthChange = (delta: number) => {
@@ -87,7 +92,8 @@ export function ScheduleCalendar({
         <div>
           <CardTitle>Schedule Calendar</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Tap a date to view sessions{allowCreate ? " or add a new one." : "."}
+            Tap a date to view sessions
+            {allowCreate ? " or add a new one." : "."}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -99,7 +105,9 @@ export function ScheduleCalendar({
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <div className="min-w-[120px] text-center text-sm font-semibold">{monthLabel}</div>
+          <div className="min-w-[120px] text-center text-sm font-semibold">
+            {monthLabel}
+          </div>
           <Button
             variant="outline"
             size="icon"
@@ -172,7 +180,7 @@ export function ScheduleCalendar({
                       <div className="h-2 w-2 rounded-full bg-primary" />
                       <div className="flex-1 truncate">
                         <p className="truncate font-medium">
-                          {courseNames?.[event.courseId] ?? event.className}
+                          {courseNames?.[event.courseId] ?? event.courseName}
                         </p>
                         <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                           <Clock className="h-3 w-3" />

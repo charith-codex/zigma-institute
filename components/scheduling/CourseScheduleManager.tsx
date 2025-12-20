@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -34,7 +35,7 @@ interface CourseScheduleManagerProps {
 
 function getDayOfWeek(date: string) {
   const parsed = new Date(date);
-  return parsed.toLocaleDateString(undefined, { weekday: "long" });
+  return format(parsed, "EEEE");
 }
 
 function EventDetails({
@@ -51,7 +52,7 @@ function EventDetails({
       <div>
         <p className="text-sm text-muted-foreground">Course</p>
         <p className="text-base font-semibold">
-          {courseName ?? event.className}
+          {courseName ?? event.courseName}
         </p>
       </div>
       <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
@@ -130,7 +131,7 @@ export function CourseScheduleManager({
     [courseOptions]
   );
 
-  const selectedDateKey = selectedDate.toISOString().split("T")[0];
+  const selectedDateKey = format(selectedDate, "yyyy-MM-dd");
 
   const openCreateDialog = (date: Date) => {
     if (mode !== "manage") return;
@@ -245,9 +246,7 @@ export function CourseScheduleManager({
               onSubmit={handleSubmit}
               initialValues={activeEvent ?? undefined}
               defaultDate={
-                draftDate
-                  ? draftDate.toISOString().split("T")[0]
-                  : selectedDateKey
+                draftDate ? format(draftDate, "yyyy-MM-dd") : selectedDateKey
               }
               submitting={submitting}
               onDelete={activeEvent ? handleDelete : undefined}

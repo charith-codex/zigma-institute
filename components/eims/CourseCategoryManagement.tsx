@@ -233,12 +233,7 @@ export function CourseCategoryManagement() {
                               disabled={isDeleting || isRefetching}
                             >
                               {isDeleting ? (
-                                <div className="text-center">
-                                  <FlowerLoader
-                                    size="md"
-                                    className="text-[#A41FC5] mx-auto"
-                                  />
-                                </div>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                               ) : (
                                 <Trash2 className="mr-2 h-4 w-4" />
                               )}
@@ -279,9 +274,7 @@ export function CourseCategoryManagement() {
               disabled={deletingId !== null}
             >
               {deletingId !== null && (
-                <div className="text-center">
-                  <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
-                </div>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
               Delete
             </Button>
@@ -421,9 +414,7 @@ function CourseCategoryCreateForm({
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={pending || isProcessing}>
           {(pending || isProcessing) && (
-            <div className="text-center">
-              <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
-            </div>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           )}
           Add category
         </Button>
