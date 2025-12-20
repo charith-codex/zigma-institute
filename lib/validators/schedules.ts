@@ -5,7 +5,7 @@ import { timeStringSchema } from "./common";
 export const scheduleSchema = z
   .object({
     courseId: z.string().trim().min(1, "Course is required"),
-    className: z.string().trim().min(1, "Class name is required"),
+
     date: z
       .string()
       .trim()
@@ -16,7 +16,6 @@ export const scheduleSchema = z
     endTime: timeStringSchema,
     dayOfWeek: z.string().trim().min(2, "Day of week is required"),
     notes: z.string().trim().optional(),
-    recurring: z.boolean().optional(),
   })
   .refine((value) => value.endTime > value.startTime, {
     message: "End time must be after the start time",

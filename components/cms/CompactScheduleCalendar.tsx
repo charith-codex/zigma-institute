@@ -128,7 +128,7 @@ export function CompactScheduleCalendar({
                   isSelected &&
                     "bg-primary text-primary-foreground hover:bg-primary/90",
                   !isSelected && isToday && "border border-primary",
-                  !isCurrentMonth && "text-muted-foreground/40",
+                  !isCurrentMonth && "text-foreground/60",
                   dayEvents.length > 0 &&
                     !isSelected &&
                     "font-semibold border-2 border-green-600"
@@ -153,7 +153,7 @@ export function CompactScheduleCalendar({
                   className="rounded-lg bg-accent/50 px-2.5 py-1.5 text-left"
                 >
                   <p className="text-xs font-medium leading-tight">
-                    {event.className}
+                    {event.courseName}
                   </p>
                   <div className="mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
                     <Clock className="h-2.5 w-2.5" />

@@ -19,12 +19,12 @@ const metricIcons = {
 
 export default function LmsCmsOverviewPage() {
   const router = useRouter();
-  const { accessibleClasses, combinedLoading, isAuthenticated, teacherInfo } =
+  const { accessibleCourses, combinedLoading, isAuthenticated, teacherInfo } =
     useTeacherDashboardData();
 
   const contentItems = useMemo(
-    () => Math.max(accessibleClasses.length * 6, 0),
-    [accessibleClasses.length]
+    () => Math.max(accessibleCourses.length * 6, 0),
+    [accessibleCourses.length]
   );
 
   const { schedules } = useSchedules();
@@ -68,7 +68,7 @@ export default function LmsCmsOverviewPage() {
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <DashboardMetricCard
           title="Active Courses"
-          value={teacherInfo.activeClasses}
+          value={teacherInfo.activeCourses}
           description="Courses currently available to manage"
           icon={metricIcons.courses}
         />
@@ -91,7 +91,7 @@ export default function LmsCmsOverviewPage() {
           <div className="p-6">
             <TeacherCourseList
               onSelectClass={(courseId) => router.push(`/lms-cms/${courseId}`)}
-              classes={accessibleClasses}
+              courses={accessibleCourses}
               loading={combinedLoading}
             />
           </div>

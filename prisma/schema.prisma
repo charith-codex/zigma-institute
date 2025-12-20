@@ -209,13 +209,11 @@ model CourseCategory {
 model Schedule {
   id        String   @id @default(uuid())
   courseId  String
-  className String
   date      DateTime
   startTime String
   endTime   String
   dayOfWeek String
   notes     String?
-  recurring Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

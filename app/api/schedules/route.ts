@@ -12,14 +12,18 @@ function toDateOnly(value: string): Date {
 export async function GET() {
   try {
     const schedules = await prisma.schedule.findMany({
-      include: { course: { select: { teacherName: true } } },
-      orderBy: [
-        { date: "asc" },
-        { startTime: "asc" },
-      ],
+      include: {
+        course: { select: { name: true, teacherName: true } },
+      },
+      orderBy: [{ date: "asc" }, { startTime: "asc" }],
     });
 
-    return NextResponse.json(convertToPlainObject(schedules));
+    const formattedSchedules = schedules.map((schedule) => ({
+      ...schedule,
+      courseName: schedule.course.name,
+    }));
+
+    return NextResponse.json(convertToPlainObject(formattedSchedules));
   } catch (error) {
     console.error("Failed to load schedules", error);
     return NextResponse.json(
@@ -39,12 +43,20 @@ export async function POST(request: Request) {
         ...data,
         date: toDateOnly(data.date),
         notes: data.notes?.trim() || undefined,
-        recurring: data.recurring ?? false,
       },
-      include: { course: { select: { teacherName: true } } },
+      include: {
+        course: { select: { name: true, teacherName: true } },
+      },
     });
 
-    return NextResponse.json(convertToPlainObject(schedule), { status: 201 });
+    const formattedSchedule = {
+      ...schedule,
+      courseName: schedule.course.name,
+    };
+
+    return NextResponse.json(convertToPlainObject(formattedSchedule), {
+      status: 201,
+    });
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(

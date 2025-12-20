@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,12 +25,11 @@ interface CourseOption {
 
 export interface SchedulePayload {
   courseId: string;
-  className: string;
+
   date: string;
   startTime: string;
   endTime: string;
   notes?: string;
-  recurring?: boolean;
 }
 
 interface ScheduleFormProps {
@@ -49,7 +49,7 @@ const defaultTimes = {
 
 function getDayOfWeek(date: string) {
   const parsed = new Date(date);
-  return parsed.toLocaleDateString(undefined, { weekday: "long" });
+  return format(parsed, "EEEE");
 }
 
 export function ScheduleForm({
@@ -65,7 +65,7 @@ export function ScheduleForm({
     initialValues?.courseId ?? courseOptions[0]?.id ?? ""
   );
   const [date, setDate] = useState<string>(
-    initialValues?.date ?? defaultDate ?? new Date().toISOString().split("T")[0]
+    initialValues?.date ?? defaultDate ?? format(new Date(), "yyyy-MM-dd")
   );
   const [startTime, setStartTime] = useState<string>(
     initialValues?.startTime ?? defaultTimes.startTime
@@ -74,9 +74,6 @@ export function ScheduleForm({
     initialValues?.endTime ?? defaultTimes.endTime
   );
   const [notes, setNotes] = useState<string>(initialValues?.notes ?? "");
-  const [recurring, setRecurring] = useState<boolean>(
-    Boolean(initialValues?.recurring)
-  );
   const [validationError, setValidationError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -108,12 +105,11 @@ export function ScheduleForm({
 
     const payload: SchedulePayload = {
       courseId,
-      className: selectedCourse.name,
+
       date,
       startTime,
       endTime,
       notes: notes.trim() || undefined,
-      recurring,
     };
 
     try {
@@ -198,18 +194,6 @@ export function ScheduleForm({
           onChange={(event) => setNotes(event.target.value)}
           disabled={isBusy}
         />
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id="recurring"
-          checked={recurring}
-          onCheckedChange={(value) => setRecurring(Boolean(value))}
-          disabled={isBusy}
-        />
-        <Label htmlFor="recurring" className="text-sm text-muted-foreground">
-          Repeat weekly on {getDayOfWeek(date)}
-        </Label>
       </div>
 
       {validationError ? (
