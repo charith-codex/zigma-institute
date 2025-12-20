@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "@/lib/utils";
 import { lessonSchema } from "@/lib/validators";
+import { Prisma } from "@/lib/generated/prisma/client";
 
 export async function GET(request: Request) {
   try {
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get("courseId");
 
-    const where: any = {};
+    const where: Prisma.LessonWhereInput = {};
 
     if (courseId) {
       where.courseId = courseId;
