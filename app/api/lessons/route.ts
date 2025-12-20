@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
-
 import { auth } from "@/auth";
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "@/lib/utils";
 import { lessonSchema } from "@/lib/validators";
+import { Prisma } from "@/lib/generated/prisma/client";
 
 export async function GET(request: Request) {
   try {
@@ -18,17 +18,31 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get("courseId");
 
-    const filters: Record<string, unknown>[] = [];
+    const where: Prisma.LessonWhereInput = {};
 
     if (courseId) {
-      filters.push({ courseId });
+      where.courseId = courseId;
     }
 
-    if (role !== "ADMIN") {
-      filters.push({ course: { teacherId: session.user.id } });
+    if (role === "STUDENT") {
+      // Students only see lessons for courses they are enrolled in
+      where.course = {
+        enrollments: {
+          some: {
+            studentId: session.user.id,
+          },
+        },
+      };
+    } else if (role === "TEACHER") {
+      // Teachers only see lessons for courses they teach
+      where.course = {
+        teacherId: session.user.id,
+      };
+    } else if (role !== "ADMIN" && role !== "MANAGER") {
+      // Other roles (e.g., ATTENDANCE) might not have access, or default to restrictive
+      // For now, let's treat them as unauthorized or highly restricted
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
-
-    const where = filters.length > 0 ? { AND: filters } : undefined;
 
     const lessons = await prisma.lesson.findMany({
       where,

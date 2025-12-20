@@ -217,7 +217,7 @@ export function CourseContentManager({
                   <SheetTrigger asChild>
                     <Button variant="outline" className="sm:hidden">
                       <BookOpen className="mr-2 h-4 w-4" />
-                      Lessons
+                      Open Lessons
                     </Button>
                   </SheetTrigger>
                   <SheetContent

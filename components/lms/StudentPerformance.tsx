@@ -184,7 +184,22 @@ export const StudentPerformance = ({
 
   const physicalAverage = calculateAverage(physicalPapers);
   const onlineAverage = calculateAverage(onlinePapers);
-  const overallAverage = calculateAverage([...physicalPapers, ...onlinePapers]);
+
+  // Calculate Overall Average as (online + physical) / 2
+  // Handle cases where one mode might have no data
+  const overallAverage = useMemo(() => {
+    if (physicalPapers.length > 0 && onlinePapers.length > 0) {
+      return (physicalAverage + onlineAverage) / 2;
+    }
+    if (physicalPapers.length > 0) return physicalAverage;
+    if (onlinePapers.length > 0) return onlineAverage;
+    return 0;
+  }, [
+    physicalAverage,
+    onlineAverage,
+    physicalPapers.length,
+    onlinePapers.length,
+  ]);
 
   if (loading) {
     return (
@@ -325,7 +340,7 @@ export const StudentPerformance = ({
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Combined weightage from all modules.
+              Mean average of online and physical scores.
             </p>
           </CardContent>
         </Card>

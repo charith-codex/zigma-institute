@@ -10,7 +10,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, CalendarClock, LayoutList, Play, StepForward } from "lucide-react";
+import {
+  BookOpen,
+  CalendarClock,
+  LayoutList,
+  Play,
+  StepForward,
+} from "lucide-react";
 import { LessonNavigation } from "./LessonNavigation";
 import StudyMaterialManager from "../cms/StudyMaterialManager";
 import VideoRecordingManager from "../cms/VideoRecordingManager";
@@ -57,16 +63,17 @@ export const CourseDetailView = ({
     return orderedLessons.findIndex((lesson) => lesson.id === selectedLessonId);
   }, [orderedLessons, selectedLessonId]);
 
-  const currentLessonPosition = currentLessonIndex >= 0 ? currentLessonIndex + 1 : null;
+  const currentLessonPosition =
+    currentLessonIndex >= 0 ? currentLessonIndex + 1 : null;
 
   const previousLessonId =
     currentLessonIndex > 0
-      ? orderedLessons[currentLessonIndex - 1]?.id ?? null
+      ? (orderedLessons[currentLessonIndex - 1]?.id ?? null)
       : null;
 
   const nextLessonId =
     currentLessonIndex >= 0 && currentLessonIndex < orderedLessons.length - 1
-      ? orderedLessons[currentLessonIndex + 1]?.id ?? null
+      ? (orderedLessons[currentLessonIndex + 1]?.id ?? null)
       : null;
 
   const handleSelectLesson = (lessonId: string) => {
@@ -93,10 +100,13 @@ export const CourseDetailView = ({
   }, [lessonsLoading, orderedLessons]);
 
   const selectedLesson = useMemo(() => {
-    return orderedLessons.find((lesson) => lesson.id === selectedLessonId) ?? null;
+    return (
+      orderedLessons.find((lesson) => lesson.id === selectedLessonId) ?? null
+    );
   }, [orderedLessons, selectedLessonId]);
 
-  const instructorName = classData.instructor ?? classData.teacherName ?? "Instructor";
+  const instructorName =
+    classData.instructor ?? classData.teacherName ?? "Instructor";
   const totalLessons = orderedLessons.length;
   const lastUpdatedLesson = orderedLessons[orderedLessons.length - 1];
   const lastUpdatedLabel = lastUpdatedLesson
@@ -117,7 +127,7 @@ export const CourseDetailView = ({
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-background">
-      <div className="flex flex-col gap-4 border-b border-border bg-background/80 p-4 backdrop-blur supports-[backdrop-filter]:backdrop-blur lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-4 border-b border-border bg-background/80 p-4 backdrop-blur supports-backdrop-filter:backdrop-blur lg:flex-row lg:items-center lg:justify-between">
         <div className="space-y-2">
           <Button variant="ghost" onClick={onBack} className="w-fit">
             <Play className="mr-2 h-4 w-4 rotate-180" />
@@ -129,11 +139,6 @@ export const CourseDetailView = ({
               <h2 className="text-xl font-semibold leading-tight">
                 {classData.name}
               </h2>
-              {classData.code ? (
-                <Badge variant="outline" className="text-xs">
-                  {classData.code}
-                </Badge>
-              ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <span className="flex items-center gap-2">
@@ -157,7 +162,7 @@ export const CourseDetailView = ({
             <SheetTrigger asChild>
               <Button variant="outline" className="lg:hidden" size="sm">
                 <LayoutList className="mr-2 h-4 w-4" />
-                Lessons
+                Open Lessons
               </Button>
             </SheetTrigger>
             <SheetContent
@@ -204,7 +209,7 @@ export const CourseDetailView = ({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <aside className="hidden w-80 flex-shrink-0 flex-col border-r border-border lg:flex">
+        <aside className="hidden w-80 shrink-0 flex-col border-r border-border lg:flex">
           <div className="border-b border-border p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -237,7 +242,9 @@ export const CourseDetailView = ({
           ) : !selectedLesson ? (
             <div className="py-12 text-center">
               <BookOpen className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
-              <h3 className="mb-2 text-lg font-semibold">No lessons available</h3>
+              <h3 className="mb-2 text-lg font-semibold">
+                No lessons available
+              </h3>
               <p className="text-muted-foreground">
                 Lessons will appear here once they are created for this course.
               </p>
@@ -255,7 +262,8 @@ export const CourseDetailView = ({
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <CalendarClock className="h-3.5 w-3.5" />
-                  Updated {new Date(selectedLesson.updatedAt).toLocaleDateString()}
+                  Updated{" "}
+                  {new Date(selectedLesson.updatedAt).toLocaleDateString()}
                 </div>
               </div>
 
@@ -279,7 +287,8 @@ export const CourseDetailView = ({
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <CalendarClock className="h-3.5 w-3.5" />
-                      Updated {new Date(selectedLesson.updatedAt).toLocaleDateString()}
+                      Updated{" "}
+                      {new Date(selectedLesson.updatedAt).toLocaleDateString()}
                     </span>
                   </div>
                 </CardHeader>

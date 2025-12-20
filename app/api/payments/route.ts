@@ -35,11 +35,15 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const isAdmin = session.user.role === "ADMIN";
+  const isAdmin =
+    session.user.role === "ADMIN" || session.user.role === "MANAGER";
+  const isStudent = session.user.role === "STUDENT";
 
-  if (!isAdmin && session.user.role !== "STUDENT") {
+  if (!isAdmin && !isStudent) {
     return NextResponse.json(
-      { error: "Only students can view payment information." },
+      {
+        error: "Only students or administrators can view payment information.",
+      },
       { status: 403 }
     );
   }
