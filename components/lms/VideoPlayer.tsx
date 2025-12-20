@@ -127,7 +127,7 @@ export const VideoPlayer = ({
             ref={videoRef}
             className="w-full aspect-video"
             src={src} // Move src directly here for better reactivity
-            poster="/placeholder.svg"
+            // poster="/placeholder.svg"
             onTimeUpdate={handleTimeUpdate}
             onLoadedMetadata={handleLoadedMetadata}
             onPlay={() => setIsPlaying(true)}

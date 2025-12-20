@@ -162,7 +162,7 @@ export const CourseDetailView = ({
             <SheetTrigger asChild>
               <Button variant="outline" className="lg:hidden" size="sm">
                 <LayoutList className="mr-2 h-4 w-4" />
-                Lessons
+                Open Lessons
               </Button>
             </SheetTrigger>
             <SheetContent
