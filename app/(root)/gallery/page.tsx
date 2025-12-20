@@ -1,13 +1,31 @@
-import { Award, Medal, Star, Target, TrendingUp, Trophy, Users, Zap } from "lucide-react";
+import {
+  Award,
+  Medal,
+  Star,
+  Target,
+  TrendingUp,
+  Trophy,
+  Users,
+  Zap,
+} from "lucide-react";
 import type { ComponentType } from "react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { prisma } from "@/db/prisma";
 import type { InstituteAchievement, ShowcaseStudent } from "@/types";
 
-const achievementIcons: Record<string, ComponentType<{ className?: string }>> = {
+const achievementIcons: Record<
+  string,
+  ComponentType<{ className?: string }>
+> = {
   Trophy,
   Zap,
   Target,
@@ -18,15 +36,16 @@ const achievementIcons: Record<string, ComponentType<{ className?: string }>> = 
   Star,
 };
 
-const achievementColors: Record<string, { text: string; background: string }> = {
-  yellow: { text: "text-yellow-600", background: "bg-yellow-50" },
-  blue: { text: "text-blue-600", background: "bg-blue-50" },
-  green: { text: "text-green-600", background: "bg-green-50" },
-  purple: { text: "text-purple-600", background: "bg-purple-50" },
-  orange: { text: "text-orange-600", background: "bg-orange-50" },
-  emerald: { text: "text-emerald-600", background: "bg-emerald-50" },
-  pink: { text: "text-pink-600", background: "bg-pink-50" },
-};
+const achievementColors: Record<string, { text: string; background: string }> =
+  {
+    yellow: { text: "text-yellow-600", background: "bg-yellow-50" },
+    blue: { text: "text-blue-600", background: "bg-blue-50" },
+    green: { text: "text-green-600", background: "bg-green-50" },
+    purple: { text: "text-purple-600", background: "bg-purple-50" },
+    orange: { text: "text-orange-600", background: "bg-orange-50" },
+    emerald: { text: "text-emerald-600", background: "bg-emerald-50" },
+    pink: { text: "text-pink-600", background: "bg-pink-50" },
+  };
 
 const getInitials = (name: string): string =>
   name
@@ -39,18 +58,20 @@ const getInitials = (name: string): string =>
 const StudentCard = ({ student }: { student: ShowcaseStudent }) => (
   <Card className="h-full min-h-[460px] transition-shadow hover:shadow-lg">
     <CardHeader className="space-y-4">
-      <Avatar className="h-64 w-full rounded-xl border">
+      <div className="relative h-64 w-full overflow-hidden rounded-xl border">
         {student.avatarUrl ? (
-          <AvatarImage
+          <Image
             src={student.avatarUrl}
             alt={student.name}
-            className="h-full w-full object-cover"
+            fill
+            className="object-cover"
           />
-        ) : null}
-        <AvatarFallback className="flex h-full w-full items-center justify-center rounded-xl bg-gradient-primary text-3xl font-semibold">
-          {getInitials(student.name)}
-        </AvatarFallback>
-      </Avatar>
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-primary text-3xl font-semibold">
+            {getInitials(student.name)}
+          </div>
+        )}
+      </div>
       <div className="space-y-1 text-center">
         <CardTitle className="text-xl">{student.name}</CardTitle>
         <CardDescription className="text-sm">
@@ -65,7 +86,9 @@ const StudentCard = ({ student }: { student: ShowcaseStudent }) => (
           {student.position}
         </Badge>
         {student.score ? (
-          <span className="text-lg font-bold text-primary">{student.score}</span>
+          <span className="text-lg font-bold text-primary">
+            {student.score}
+          </span>
         ) : null}
       </div>
 
@@ -84,9 +107,14 @@ const StudentCard = ({ student }: { student: ShowcaseStudent }) => (
   </Card>
 );
 
-const AchievementCard = ({ achievement }: { achievement: InstituteAchievement }) => {
+const AchievementCard = ({
+  achievement,
+}: {
+  achievement: InstituteAchievement;
+}) => {
   const IconComponent = achievementIcons[achievement.icon] ?? Award;
-  const colors = achievementColors[achievement.accentColor] ?? achievementColors.yellow;
+  const colors =
+    achievementColors[achievement.accentColor] ?? achievementColors.yellow;
 
   return (
     <Card className="h-full transition-shadow hover:shadow-lg">
@@ -114,16 +142,10 @@ const AchievementCard = ({ achievement }: { achievement: InstituteAchievement })
 async function getShowcaseEntries() {
   const [students, achievements] = await Promise.all([
     prisma.showcaseStudent.findMany({
-      orderBy: [
-        { sortOrder: "asc" },
-        { createdAt: "desc" },
-      ],
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
     }),
     prisma.instituteAchievement.findMany({
-      orderBy: [
-        { sortOrder: "asc" },
-        { createdAt: "desc" },
-      ],
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
     }),
   ]);
 
@@ -145,7 +167,9 @@ const Gallery = async () => {
       <section className="bg-gradient-hero py-20">
         <div className="container mx-auto px-4 text-center">
           <div className="mx-auto max-w-4xl">
-            <h1 className="mb-6 text-4xl font-bold md:text-5xl">Gallery of Excellence</h1>
+            <h1 className="mb-6 text-4xl font-bold md:text-5xl">
+              Gallery of Excellence
+            </h1>
             <p className="text-xl text-muted-foreground md:text-2xl">
               Celebrating Outstanding Achievements and Academic Excellence
             </p>
@@ -172,14 +196,19 @@ const Gallery = async () => {
           <div className="mb-12 text-center">
             <div className="mb-4 flex items-center justify-center space-x-2">
               <Trophy className="h-8 w-8 text-primary" />
-              <h2 className="text-3xl font-bold">Island Top Ranking Students</h2>
+              <h2 className="text-3xl font-bold">
+                Island Top Ranking Students
+              </h2>
             </div>
             <p className="mx-auto max-w-2xl text-muted-foreground">
-              Celebrating our students who achieved top positions in island-wide examinations and competitions.
+              Celebrating our students who achieved top positions in island-wide
+              examinations and competitions.
             </p>
           </div>
           {islandTopStudents.length === 0 ? (
-            <p className="text-center text-muted-foreground">No island rankings published yet.</p>
+            <p className="text-center text-muted-foreground">
+              No island rankings published yet.
+            </p>
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {islandTopStudents.map((student) => (
@@ -195,14 +224,19 @@ const Gallery = async () => {
           <div className="mb-12 text-center">
             <div className="mb-4 flex items-center justify-center space-x-2">
               <Medal className="h-8 w-8 text-primary" />
-              <h2 className="text-3xl font-bold">District Top Ranking Students</h2>
+              <h2 className="text-3xl font-bold">
+                District Top Ranking Students
+              </h2>
             </div>
             <p className="mx-auto max-w-2xl text-muted-foreground">
-              Outstanding students who secured first positions in their respective district examinations.
+              Outstanding students who secured first positions in their
+              respective district examinations.
             </p>
           </div>
           {districtTopStudents.length === 0 ? (
-            <p className="text-center text-muted-foreground">No district rankings published yet.</p>
+            <p className="text-center text-muted-foreground">
+              No district rankings published yet.
+            </p>
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {districtTopStudents.map((student) => (
@@ -221,15 +255,21 @@ const Gallery = async () => {
               <h2 className="text-3xl font-bold">Institute Achievements</h2>
             </div>
             <p className="mx-auto max-w-2xl text-muted-foreground">
-              Recognition and awards received by ZIGMA Institute for excellence in education and innovation.
+              Recognition and awards received by ZIGMA Institute for excellence
+              in education and innovation.
             </p>
           </div>
           {featuredAchievements.length === 0 ? (
-            <p className="text-center text-muted-foreground">No achievements published yet.</p>
+            <p className="text-center text-muted-foreground">
+              No achievements published yet.
+            </p>
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {featuredAchievements.map((achievement) => (
-                <AchievementCard key={achievement.id} achievement={achievement} />
+                <AchievementCard
+                  key={achievement.id}
+                  achievement={achievement}
+                />
               ))}
             </div>
           )}
