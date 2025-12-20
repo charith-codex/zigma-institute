@@ -32,10 +32,15 @@ export async function GET() {
     return buildUnauthorized("Unauthorized");
   }
 
-  const isAdmin = session.user.role === "ADMIN";
+  const isAdmin =
+    session.user.role === "ADMIN" || session.user.role === "MANAGER";
+  const isStudent = session.user.role === "STUDENT";
 
-  if (!isAdmin && session.user.role !== "STUDENT") {
-    return buildUnauthorized("Only students can view enrollments.", 403);
+  if (!isAdmin && !isStudent) {
+    return buildUnauthorized(
+      "Only students or administrators can view enrollments.",
+      403
+    );
   }
 
   const enrollments = await prisma.enrollment.findMany({
@@ -94,22 +99,33 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid request body." },
+      { status: 400 }
+    );
   }
 
   if (!body || typeof body !== "object") {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid request body." },
+      { status: 400 }
+    );
   }
 
   const courseId = (body as { courseId?: unknown }).courseId;
 
   if (typeof courseId !== "string" || courseId.trim().length === 0) {
-    return NextResponse.json({ error: "courseId is required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "courseId is required." },
+      { status: 400 }
+    );
   }
 
   const normalizedCourseId = courseId.trim();
 
-  const course = await prisma.course.findUnique({ where: { id: normalizedCourseId } });
+  const course = await prisma.course.findUnique({
+    where: { id: normalizedCourseId },
+  });
 
   if (!course) {
     return NextResponse.json(
@@ -119,7 +135,12 @@ export async function POST(request: Request) {
   }
 
   const existing = await prisma.enrollment.findUnique({
-    where: { studentId_courseId: { studentId: session.user.id, courseId: normalizedCourseId } },
+    where: {
+      studentId_courseId: {
+        studentId: session.user.id,
+        courseId: normalizedCourseId,
+      },
+    },
   });
 
   if (existing) {
