@@ -22,6 +22,7 @@ export interface StudentPerformanceData {
     submittedAt: Date | null;
     status: string;
   }[];
+  courseAverages: Record<string, number>;
 }
 
 export async function getStudentPerformance(): Promise<
@@ -125,11 +126,73 @@ export async function getStudentPerformance(): Promise<
       };
     });
 
+    // 4. Calculate Course Averages
+    // We need to get all PHYSICAL and ONLINE exam marks for each course
+    const allPhysicalMarks = await prisma.physicalExamMark.findMany({
+      select: {
+        courseId: true,
+        score: true,
+      },
+    });
+
+    const allOnlineAttempts = await prisma.examAttempt.findMany({
+      where: { status: "GRADED" },
+      select: {
+        score: true,
+        exam: {
+          select: {
+            courseId: true,
+            questions: { select: { marks: true } },
+          },
+        },
+      },
+    });
+
+    const courseStats: Record<string, { totalScore: number; count: number }> =
+      {};
+
+    // Process physical marks
+    allPhysicalMarks.forEach((mark) => {
+      if (!courseStats[mark.courseId]) {
+        courseStats[mark.courseId] = { totalScore: 0, count: 0 };
+      }
+      courseStats[mark.courseId].totalScore += mark.score;
+      courseStats[mark.courseId].count += 1;
+    });
+
+    // Process online attempts
+    allOnlineAttempts.forEach((attempt) => {
+      const courseId = attempt.exam.courseId;
+      if (!courseId) return;
+
+      const totalMarks = attempt.exam.questions.reduce(
+        (sum, q) => sum + q.marks,
+        0
+      );
+      if (totalMarks === 0) return;
+
+      const percentage = (attempt.score || 0) / totalMarks;
+
+      if (!courseStats[courseId]) {
+        courseStats[courseId] = { totalScore: 0, count: 0 };
+      }
+      // Store physical as 0-100, online percentage * 100 for consistency
+      courseStats[courseId].totalScore += percentage * 100;
+      courseStats[courseId].count += 1;
+    });
+
+    const courseAverages: Record<string, number> = {};
+    Object.entries(courseStats).forEach(([courseId, stats]) => {
+      courseAverages[courseId] =
+        stats.count > 0 ? stats.totalScore / stats.count : 0;
+    });
+
     return {
       success: true,
       data: convertToPlainObject({
         physicalExams: formattedPhysicalExams,
         onlineExams: formattedOnlineExams,
+        courseAverages,
       }),
     };
   } catch (error) {

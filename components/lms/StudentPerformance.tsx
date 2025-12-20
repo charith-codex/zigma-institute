@@ -39,7 +39,7 @@ type ExamPaper = {
 type CoursePerformance = {
   courseId: string;
   courseName: string;
-  classAverage: number;
+  courseAverage: number;
   studentAverage: number;
   papers: ExamPaper[];
 };
@@ -140,16 +140,13 @@ export const StudentPerformance = ({
 
       const combinedPapers = [...physicals, ...onlines];
       const studentAverage = calculateAverage(combinedPapers);
-      // Demo class average since we don't have it in the action yet
-      const classAverage = Math.max(
-        60,
-        Math.min(95, studentAverage - 5 + Math.random() * 10)
-      );
+      // Use real course average from server data, fallback to student's own average if none exists
+      const courseAverage = data.courseAverages[course.id] ?? studentAverage;
 
       return {
         courseId: course.id,
         courseName: course.name,
-        classAverage,
+        courseAverage,
         studentAverage,
         papers: combinedPapers,
       };
@@ -221,7 +218,7 @@ export const StudentPerformance = ({
             Monitor physical and online exam marks with course comparisons.
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-xl bg-linear-to-r from-primary to-primary-light px-4 py-2 text-white shadow-lg backdrop-blur-sm border border-white/10 font-medium">
+        <div className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-white backdrop-blur-sm border border-white/10 font-medium">
           <Trophy className="h-5 w-5" />
           <span>Performance Monitor</span>
         </div>
@@ -375,10 +372,10 @@ export const StudentPerformance = ({
                     <div className="w-px h-6 bg-border/50" />
                     <div className="flex flex-col items-center">
                       <span className="text-[10px] uppercase font-bold text-muted-foreground/60">
-                        Class
+                        Course
                       </span>
                       <span className="text-sm font-bold text-muted-foreground/80">
-                        {course.classAverage.toFixed(1)}%
+                        {course.courseAverage.toFixed(1)}%
                       </span>
                     </div>
                   </div>
@@ -392,8 +389,8 @@ export const StudentPerformance = ({
                       glow: "shadow-[0_0_10px_rgba(var(--primary),0.3)]",
                     },
                     {
-                      label: "Class Average",
-                      value: course.classAverage,
+                      label: "Course Average",
+                      value: course.courseAverage,
                       color: "bg-muted-foreground/30",
                       glow: "",
                     },
