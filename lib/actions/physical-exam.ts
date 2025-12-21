@@ -92,7 +92,7 @@ export async function getPhysicalExamMarks(
   if (!trimmedCourseId) {
     return [];
   }
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = { courseId: trimmedCourseId };
   if (examTitle) where.examTitle = examTitle;
   if (examDate) where.examDate = new Date(examDate);
