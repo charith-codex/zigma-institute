@@ -83,7 +83,9 @@ export async function getEnrolledStudentsForCourse(
 }
 
 export async function getPhysicalExamMarks(
-  courseId: string
+  courseId: string,
+  examTitle?: string,
+  examDate?: string
 ): Promise<PhysicalExamMarkRecord[]> {
   const trimmedCourseId = courseId.trim();
 
@@ -91,8 +93,12 @@ export async function getPhysicalExamMarks(
     return [];
   }
 
+  const where: any = { courseId: trimmedCourseId };
+  if (examTitle) where.examTitle = examTitle;
+  if (examDate) where.examDate = new Date(examDate);
+
   const marks = await prisma.physicalExamMark.findMany({
-    where: { courseId: trimmedCourseId },
+    where,
     orderBy: { recordedAt: "desc" },
   });
 
@@ -111,37 +117,31 @@ export async function getPhysicalExamSummaries(
   const trimmedCourseId = courseId.trim();
   if (!trimmedCourseId) return [];
 
-  const marks = await prisma.physicalExamMark.findMany({
+  const groups = await prisma.physicalExamMark.groupBy({
+    by: ["examTitle", "examDate", "paperUrl"],
     where: { courseId: trimmedCourseId },
-    orderBy: { recordedAt: "desc" },
+    _count: {
+      studentRegistrationId: true,
+    },
+    _max: {
+      recordedAt: true,
+    },
+    orderBy: {
+      _max: {
+        recordedAt: "desc",
+      },
+    },
   });
 
-  // Group by title and date
-  const summariesMap = new Map<string, PhysicalExamSummary>();
+  const summaries: PhysicalExamSummary[] = groups.map((group) => ({
+    examTitle: group.examTitle,
+    examDate: group.examDate.toISOString(),
+    paperUrl: group.paperUrl,
+    studentCount: group._count.studentRegistrationId,
+    recordedAt: (group._max.recordedAt || new Date()).toISOString(),
+  }));
 
-  for (const mark of marks) {
-    const dateStr = mark.examDate.toISOString().split("T")[0];
-    const key = `${mark.examTitle}-${dateStr}`;
-
-    if (!summariesMap.has(key)) {
-      summariesMap.set(key, {
-        examTitle: mark.examTitle,
-        examDate: mark.examDate.toISOString(),
-        paperUrl: mark.paperUrl,
-        studentCount: 0,
-        recordedAt: mark.recordedAt.toISOString(),
-      });
-    }
-
-    const summary = summariesMap.get(key)!;
-    summary.studentCount += 1;
-    // Keep the latest recordedAt
-    if (new Date(mark.recordedAt) > new Date(summary.recordedAt)) {
-      summary.recordedAt = mark.recordedAt.toISOString();
-    }
-  }
-
-  return convertToPlainObject(Array.from(summariesMap.values()));
+  return convertToPlainObject(summaries);
 }
 
 export async function savePhysicalExamMarks(

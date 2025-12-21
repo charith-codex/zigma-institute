@@ -115,32 +115,45 @@ export function PhysicalExamUploader({ courseId }: { courseId: string }) {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [studentsData, summariesData] = await Promise.all([
-        getEnrolledStudentsForCourse(courseId),
-        getPhysicalExamSummaries(courseId),
-      ]);
-      setStudents(studentsData);
+      const summariesData = await getPhysicalExamSummaries(courseId);
       setSummaries(summariesData);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to load course data.");
+      toast.error("Failed to load physical exams.");
     } finally {
       setLoading(false);
     }
   }, [courseId]);
 
+  const ensureStudentsLoaded = async () => {
+    if (students.length > 0) return students;
+    setLoading(true);
+    try {
+      const studentsData = await getEnrolledStudentsForCourse(courseId);
+      setStudents(studentsData);
+      return studentsData;
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load enrolled students.");
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, [loadData]);
 
-  const handleCreateNew = () => {
+  const handleCreateNew = async () => {
     setEditingExam(null);
+    const sList = await ensureStudentsLoaded();
     reset({
       courseId,
       examTitle: "",
       examDate: new Date().toISOString().split("T")[0],
       paperUrl: "",
-      scores: (students || []).map((s) => ({
+      scores: (sList || []).map((s) => ({
         studentRegistrationId: s.registrationId,
         score: 0,
       })),
@@ -154,16 +167,14 @@ export function PhysicalExamUploader({ courseId }: { courseId: string }) {
   const handleEdit = async (summary: PhysicalExamSummary) => {
     setLoading(true);
     try {
-      const allMarks = await getPhysicalExamMarks(courseId);
+      const [examMarks, sList] = await Promise.all([
+        getPhysicalExamMarks(courseId, summary.examTitle, summary.examDate),
+        ensureStudentsLoaded(),
+      ]);
+
       const examDateStr = new Date(summary.examDate)
         .toISOString()
         .split("T")[0];
-
-      const filteredMarks = allMarks.filter(
-        (m) =>
-          m.examTitle === summary.examTitle &&
-          new Date(m.examDate).toISOString().split("T")[0] === examDateStr
-      );
 
       setEditingExam(summary);
       reset({
@@ -171,8 +182,8 @@ export function PhysicalExamUploader({ courseId }: { courseId: string }) {
         examTitle: summary.examTitle,
         examDate: examDateStr,
         paperUrl: summary.paperUrl,
-        scores: students.map((s) => {
-          const mark = filteredMarks.find(
+        scores: sList.map((s) => {
+          const mark = examMarks.find(
             (m) => m.studentRegistrationId === s.registrationId
           );
           return {
