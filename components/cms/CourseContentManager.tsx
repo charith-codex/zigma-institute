@@ -53,7 +53,15 @@ import { CourseAnalytics } from "./CourseAnalytics";
 export const courseNavigationItems = [
   { id: "lessons", label: "Lessons", icon: BookOpen },
   { id: "students", label: "Students", icon: Users },
-  { id: "quizzes", label: "Question Bank", icon: ClipboardList },
+  {
+    id: "questions",
+    label: "Questions",
+    icon: ClipboardList,
+    subItems: [
+      { id: "question-creation", label: "Question Creation" },
+      { id: "question-bank", label: "Question Bank" },
+    ],
+  },
   { id: "exams", label: "Exam Papers", icon: FileText },
   { id: "exam-sessions", label: "Exam Sessions", icon: Target },
   { id: "exam-results", label: "Exam Results", icon: BarChart3 },
@@ -61,7 +69,10 @@ export const courseNavigationItems = [
   { id: "analytics", label: "Analytics", icon: BarChart3 },
 ];
 
-export type CourseSectionId = (typeof courseNavigationItems)[number]["id"];
+export type CourseSectionId =
+  | (typeof courseNavigationItems)[number]["id"]
+  | "question-creation"
+  | "question-bank";
 
 interface CourseContentManagerProps {
   courseId: string;
@@ -401,8 +412,12 @@ export function CourseContentManager({
           <EnrolledStudents courseId={courseId} courseName={courseItem.name} />
         ) : null;
 
-      case "quizzes":
-        return <QuestionCreation />;
+      case "questions":
+      case "question-creation":
+        return <QuestionCreation courseId={courseId} initialView="creation" />;
+
+      case "question-bank":
+        return <QuestionCreation courseId={courseId} initialView="bank" />;
 
       case "exams":
         return <ExamBuilder courseId={courseId} />;

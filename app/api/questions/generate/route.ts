@@ -4,11 +4,12 @@ import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
 
 const generateSchema = z.object({
+  lessonId: z.string("Lesson ID is required"),
   lessonTitle: z.string().min(1, "Lesson title is required"),
   difficulty: z.enum(["EASY", "MEDIUM", "HARD"]).default("MEDIUM"),
   mcqCount: z.coerce.number().int().min(0),
   essayCount: z.coerce.number().int().min(0),
-  createdById: z.string().uuid().optional(),
+  createdById: z.string().optional(),
 });
 
 const JSON_FENCE = /```json([\s\S]*?)```/i;
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
     }
 
     const parsed = generateSchema.parse({
+      lessonId: formData.get("lessonId"),
       lessonTitle: formData.get("lessonTitle"),
       difficulty: formData.get("difficulty") ?? undefined,
       mcqCount: formData.get("mcqCount"),
@@ -130,6 +132,7 @@ Ensure the number of MCQ and essay questions matches the counts requested. Expla
     const structured = resultSchema.parse(parsedJson);
 
     return NextResponse.json({
+      lessonId: parsed.lessonId,
       lessonTitle: parsed.lessonTitle,
       difficulty: parsed.difficulty,
       sourceFileName: pdf.name,

@@ -280,7 +280,6 @@ model PhysicalExamMark {
 
 model Question {
   id            String              @id @default(uuid())
-  lessonTitle   String
   type          QuestionType
   questionText  String
   options       Json?
@@ -288,13 +287,12 @@ model Question {
   explanation   String?
   sampleAnswer  String?
   difficulty    QuestionDifficulty?
-  sourceFileUrl String?
-  createdById   String?
-  courseId      String?
-  lessonId      String?
 
-  createdBy User?          @relation("QuestionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  lesson    Lesson?        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  createdById String
+  lessonId    String
+
+  createdBy User           @relation("QuestionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  lesson    Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   exams     ExamQuestion[]
   answers   ExamAnswer[]
 
@@ -540,14 +538,14 @@ model ShowcaseStudent {
 }
 
 model InstituteAchievement {
-  id          String   @id @default(uuid())
+  id          String @id @default(uuid())
   title       String
   category    String
   year        Int
   description String
   icon        String
-  accentColor String   @default("primary")
-  sortOrder   Int      @default(0)
+  accentColor String @default("primary")
+  sortOrder   Int    @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

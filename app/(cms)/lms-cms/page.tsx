@@ -81,7 +81,7 @@ export default function LmsCmsOverviewPage() {
         <DashboardMetricCard
           title="Content Items"
           value={contentItems}
-          description="Estimated lessons, quizzes, and resources"
+          description="Estimated lessons, questions, and resources"
           icon={metricIcons.content}
         />
       </section>

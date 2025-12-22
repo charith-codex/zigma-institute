@@ -14,7 +14,6 @@ const questionInputSchema = z
     explanation: z.string().optional(),
     sampleAnswer: z.string().optional(),
     difficulty: difficultyEnum.optional(),
-    sourceFileUrl: z.string().optional(),
   })
   .superRefine((value, ctx) => {
     if (value.type === "MCQ") {
@@ -35,7 +34,9 @@ const questionInputSchema = z
       } else if (
         value.options &&
         !value.options.some(
-          (option) => option.trim().toLowerCase() === value.correctAnswer?.trim().toLowerCase(),
+          (option) =>
+            option.trim().toLowerCase() ===
+            value.correctAnswer?.trim().toLowerCase()
         )
       ) {
         ctx.addIssue({
@@ -56,28 +57,34 @@ const questionInputSchema = z
   });
 
 const createQuestionsSchema = z.object({
-  lessonTitle: z.string().min(1, "Lesson title is required"),
+  lessonId: z.string().uuid("Lesson ID is required"),
+  createdById: z.string().uuid("Creator ID is required"),
   difficulty: difficultyEnum.optional(),
-  createdById: z.string().uuid().optional(),
-  sourceFileUrl: z.string().optional(),
-  questions: z.array(questionInputSchema).min(1, "At least one question is required"),
+  questions: z
+    .array(questionInputSchema)
+    .min(1, "At least one question is required"),
 });
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const lessonTitle = searchParams.get("lessonTitle");
+    const lessonId = searchParams.get("lessonId");
     const type = searchParams.get("type");
 
     const questions = await prisma.question.findMany({
       where: {
-        lessonTitle: lessonTitle
-          ? {
-              contains: lessonTitle,
-              mode: "insensitive",
-            }
-          : undefined,
-        type: type === "MCQ" || type === "ESSAY" ? (type as "MCQ" | "ESSAY") : undefined,
+        lessonId: lessonId || undefined,
+        type:
+          type === "MCQ" || type === "ESSAY"
+            ? (type as "MCQ" | "ESSAY")
+            : undefined,
+      },
+      include: {
+        lesson: {
+          select: {
+            title: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -89,7 +96,7 @@ export async function GET(request: Request) {
     console.error("Failed to fetch questions", error);
     return NextResponse.json(
       { error: "Unable to fetch questions. Please try again later." },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -103,43 +110,46 @@ export async function POST(request: Request) {
       data.questions.map((question) =>
         prisma.question.create({
           data: {
-            lessonTitle: data.lessonTitle,
+            lessonId: data.lessonId,
+            createdById: data.createdById,
             type: question.type,
             questionText: question.questionText,
             options:
               question.type === "MCQ"
-                ? question.options?.map((text, index) => ({
+                ? (question.options?.map((text, index) => ({
                     id: index,
                     text,
-                  })) ?? []
+                  })) ?? [])
                 : undefined,
-            correctAnswer: question.type === "MCQ" ? question.correctAnswer ?? null : null,
+            correctAnswer:
+              question.type === "MCQ" ? (question.correctAnswer ?? null) : null,
             explanation: question.explanation ?? null,
-            sampleAnswer: question.type === "ESSAY" ? question.sampleAnswer ?? null : question.sampleAnswer ?? null,
+            sampleAnswer:
+              question.type === "ESSAY"
+                ? (question.sampleAnswer ?? null)
+                : null,
             difficulty: question.difficulty ?? data.difficulty ?? null,
-            sourceFileUrl: question.sourceFileUrl ?? data.sourceFileUrl ?? null,
-            createdById: data.createdById ?? null,
           },
-        }),
-      ),
+        })
+      )
     );
 
     return NextResponse.json(
       { questions: JSON.parse(JSON.stringify(createdQuestions)) },
-      { status: 201 },
+      { status: 201 }
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: error.issues.map((issue) => issue.message).join("\n") },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     console.error("Failed to create questions", error);
     return NextResponse.json(
       { error: "Unable to create questions. Please try again later." },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
