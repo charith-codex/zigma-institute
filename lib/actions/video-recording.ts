@@ -22,11 +22,9 @@ export async function createVideoRecording(input: {
   description?: string | null;
   fileUrl: string;
   uploadedById?: string | null;
-  courseId?: string | null;
   lessonId: string;
 }) {
-  const { title, description, fileUrl, uploadedById, courseId, lessonId } =
-    input;
+  const { title, description, fileUrl, uploadedById, lessonId } = input;
 
   const created = await prisma.videoRecording.create({
     data: {
@@ -34,7 +32,6 @@ export async function createVideoRecording(input: {
       description: description ?? null,
       fileUrl,
       uploadedById: uploadedById ?? null,
-      courseId: courseId ?? null,
       lessonId,
     },
     select: {
@@ -46,4 +43,36 @@ export async function createVideoRecording(input: {
   });
 
   return created;
+}
+
+export async function updateVideoRecording(
+  id: string,
+  data: { title: string; description?: string | null }
+) {
+  const updated = await prisma.videoRecording.update({
+    where: { id },
+    data: {
+      title: data.title,
+      description: data.description,
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      fileUrl: true,
+    },
+  });
+
+  return updated;
+}
+
+export async function deleteVideoRecording(id: string) {
+  const deleted = await prisma.videoRecording.delete({
+    where: { id },
+    select: {
+      id: true,
+    },
+  });
+
+  return deleted;
 }

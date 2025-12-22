@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { PlayCircle } from "lucide-react";
+import { MoreVertical, Pencil, PlayCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -12,18 +12,39 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { VideoPlayer } from "@/components/lms/VideoPlayer";
+import {
+  deleteVideoRecording,
+  updateVideoRecording,
+} from "@/lib/actions/video-recording";
 
 interface VideoRecording {
   id: string;
@@ -51,6 +72,21 @@ export function VideoRecordingManager({
     description: "",
     fileUrl: "",
   });
+
+  const [editingVideo, setEditingVideo] = useState<VideoRecording | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editFormState, setEditFormState] = useState({
+    title: "",
+    description: "",
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const [deletingVideo, setDeletingVideo] = useState<VideoRecording | null>(
+    null
+  );
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
 
   const selectedVideo = useMemo(() => {
@@ -130,7 +166,10 @@ export function VideoRecordingManager({
         body: JSON.stringify({ title, description, fileUrl, lessonId }),
       });
 
-      if (!response.ok) throw new Error("Failed to add video recording");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to add video recording");
+      }
 
       toast.success("Video recording added successfully.");
       setFormState({ title: "", description: "", fileUrl: "" });
@@ -141,6 +180,64 @@ export function VideoRecordingManager({
       toast.error(
         error instanceof Error ? error.message : "Failed to add video"
       );
+    }
+  };
+
+  const handleEditClick = (video: VideoRecording) => {
+    setEditingVideo(video);
+    setEditFormState({
+      title: video.title,
+      description: video.description ?? "",
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingVideo) return;
+
+    if (!editFormState.title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      await updateVideoRecording(editingVideo.id, {
+        title: editFormState.title.trim(),
+        description: editFormState.description.trim() || null,
+      });
+      toast.success("Video recording updated successfully");
+      setIsEditDialogOpen(false);
+      setEditingVideo(null);
+      await fetchVideos();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update video recording");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteClick = (video: VideoRecording) => {
+    setDeletingVideo(video);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingVideo) return;
+
+    try {
+      setIsDeleting(true);
+      await deleteVideoRecording(deletingVideo.id);
+      toast.success("Video recording deleted successfully");
+      setIsDeleteDialogOpen(false);
+      setDeletingVideo(null);
+      await fetchVideos();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete video recording");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -265,13 +362,20 @@ export function VideoRecordingManager({
               {videos.map((video) => {
                 const isActive = video.id === selectedVideoId;
                 return (
-                  <button
+                  <div
                     key={video.id}
-                    type="button"
                     onClick={() => setSelectedVideoId(video.id)}
-                    className={`w-full rounded-lg border p-4 text-left transition hover:bg-muted/60 ${
+                    className={`w-full rounded-lg border p-4 text-left transition cursor-pointer hover:bg-muted/60 ${
                       isActive ? "border-primary bg-primary/10" : "bg-card"
                     }`}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedVideoId(video.id);
+                      }
+                    }}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-1">
@@ -284,19 +388,134 @@ export function VideoRecordingManager({
                           </p>
                         )}
                       </div>
-                      <PlayCircle
-                        className={`h-4 w-4 ${
-                          isActive ? "text-primary" : "text-muted-foreground"
-                        }`}
-                      />
+                      <div className="flex items-center gap-2">
+                        <PlayCircle
+                          className={`h-4 w-4 ${
+                            isActive ? "text-primary" : "text-muted-foreground"
+                          }`}
+                        />
+                        {!readOnly && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                }}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditClick(video);
+                                }}
+                              >
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteClick(video);
+                                }}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
           </div>
         )}
       </CardContent>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit video recording</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-video-title">Title</Label>
+              <Input
+                id="edit-video-title"
+                value={editFormState.title}
+                onChange={(e) =>
+                  setEditFormState((prev) => ({
+                    ...prev,
+                    title: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-video-description">Description</Label>
+              <Textarea
+                id="edit-video-description"
+                value={editFormState.description}
+                onChange={(e) =>
+                  setEditFormState((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+              disabled={isUpdating}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleUpdate} disabled={isUpdating}>
+              {isUpdating ? "Updating..." : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              video recording &quot;{deletingVideo?.title}&quot; from the
+              server.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
