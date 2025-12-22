@@ -29,6 +29,7 @@ type EnrolledCourse = Course & {
 };
 
 type ExamPaper = {
+  id: string;
   paper: string;
   score: number;
   maxScore: number;
@@ -45,6 +46,7 @@ type CoursePerformance = {
 };
 
 type PaperChartItem = {
+  id: string;
   label: string;
   percent: number;
   color: string;
@@ -119,6 +121,7 @@ export const StudentPerformance = ({
         .filter((e) => e.courseName === course.name)
         .map(
           (e): ExamPaper => ({
+            id: e.id,
             paper: e.examTitle,
             score: e.score,
             maxScore: 100, // Assuming 100 for percentage marks
@@ -131,6 +134,7 @@ export const StudentPerformance = ({
         .filter((e) => e.courseName === course.name)
         .map(
           (e): ExamPaper => ({
+            id: e.id,
             paper: e.examTitle,
             score: e.score || 0,
             maxScore: e.totalMarks,
@@ -161,6 +165,7 @@ export const StudentPerformance = ({
             Math.round((paper.score / paper.maxScore) * 1000) / 10;
 
           return {
+            id: paper.id,
             label: paper.paper,
             percent: Math.min(Math.max(paperScore, 0), 100),
             color: paper.mode === "physical" ? "bg-primary" : "bg-secondary",
@@ -490,7 +495,7 @@ export const StudentPerformance = ({
 
                         return (
                           <div
-                            key={`${course.courseId}-${paper.label}`}
+                            key={paper.id}
                             className="flex flex-1 flex-col items-center gap-2"
                           >
                             <div
@@ -531,7 +536,7 @@ export const StudentPerformance = ({
                     const isPhysical = paper.mode === "physical";
                     return (
                       <div
-                        key={`${course.courseId}-${paper.paper}-${paper.mode}`}
+                        key={paper.id}
                         className={`rounded-lg border bg-background/60 p-3 shadow-sm transition-colors hover:bg-background/80 ${isPhysical ? "border-blue-500/20" : "border-purple-500/20"}`}
                       >
                         <div className="flex items-center justify-between gap-3 flex-wrap">
