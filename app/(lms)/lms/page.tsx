@@ -12,6 +12,7 @@ import { PaymentSection } from "@/components/lms/PaymentSection";
 import StudentPerformance from "@/components/lms/StudentPerformance";
 import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleManager";
 import { PublishedExams } from "@/components/lms/PublishedExams";
+import ExamMarksDisplay from "@/components/lms/ExamMarksDisplay";
 import CourseCard from "@/components/courses/course-card";
 import { Course } from "@/types";
 import { Input } from "@/components/ui/input";
@@ -340,6 +341,10 @@ const LMS = () => {
 
             {activeModule === "performance" && (
               <StudentPerformance enrolledCourses={enrolledCourses} />
+            )}
+
+            {activeModule === "exam-marks" && (
+              <ExamMarksDisplay enrolledCourses={enrolledCourses} />
             )}
 
             {activeModule === "enroll" && (
