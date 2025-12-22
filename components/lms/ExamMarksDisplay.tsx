@@ -112,8 +112,8 @@ export default function ExamMarksDisplay({
         <div className="space-y-2">
           <h3 className="text-xl font-bold">No Exam Marks Found</h3>
           <p className="text-muted-foreground max-w-sm">
-            You don't have any recorded exam marks yet. Keep learning and take
-            exams to see your progress here!
+            You do not have any recorded exam marks yet. Keep learning and take
+            exams to see your exam marks here!
           </p>
         </div>
       </div>
