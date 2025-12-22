@@ -38,6 +38,16 @@ export async function GET(request: Request) {
       orderBy: { submittedAt: "desc" },
     });
 
+    const studentIds = [...new Set(attempts.map((a) => a.studentId))];
+    const students = await prisma.student.findMany({
+      where: { userId: { in: studentIds } },
+      select: { userId: true, studentPublicId: true },
+    });
+
+    const studentMap = new Map(
+      students.map((s) => [s.userId, s.studentPublicId])
+    );
+
     const sanitizedAttempts = attempts.map((attempt) => ({
       ...attempt,
       exam: attempt.exam
@@ -48,6 +58,7 @@ export async function GET(request: Request) {
             courseName: attempt.exam.course?.name ?? null,
           }
         : null,
+      studentPublicId: studentMap.get(attempt.studentId) ?? null,
     }));
 
     return NextResponse.json({
@@ -177,8 +188,14 @@ export async function POST(request: Request) {
       },
     });
 
+    const student = await prisma.student.findUnique({
+      where: { userId: attempt.studentId },
+      select: { studentPublicId: true },
+    });
+
     const sanitizedAttempt = {
       ...attempt,
+      studentPublicId: student?.studentPublicId ?? null,
       exam: attempt.exam
         ? {
             id: attempt.exam.id,

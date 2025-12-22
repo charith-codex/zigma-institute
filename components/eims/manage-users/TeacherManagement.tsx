@@ -100,9 +100,8 @@ export function TeacherManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingTeacher, setEditingTeacher] = useState<
-    TeacherUpsertValues | null
-  >(null);
+  const [editingTeacher, setEditingTeacher] =
+    useState<TeacherUpsertValues | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TeacherRecord | null>(null);
   const [newTeacher, setNewTeacher] =
     useState<TeacherCreateValues>(createEmptyTeacher);
@@ -298,7 +297,7 @@ export function TeacherManagement() {
     <>
       <UserManagementCard
         title="Teacher Management"
-        description="Handle instructor accounts, roles, and availability."
+        description="Handle teacher accounts, roles, and availability."
         icon={GraduationCap}
         addLabel="Add Teacher"
         searchTerm={searchTerm}
@@ -316,7 +315,6 @@ export function TeacherManagement() {
         </UserTable>
       </UserManagementCard>
 
-      
       <UserFormDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
@@ -335,7 +333,6 @@ export function TeacherManagement() {
         />
       </UserFormDialog>
 
-      
       <UserFormDialog
         open={Boolean(editingTeacher)}
         onOpenChange={(open) => {
@@ -365,7 +362,6 @@ export function TeacherManagement() {
           />
         ) : null}
       </UserFormDialog>
-
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}

@@ -63,7 +63,7 @@ export function DashboardContent({
         id: course.id,
         name: course.name,
         teacherId: course.teacherId ?? `${course.id}-teacher`,
-        teacherName: course.teacherName ?? "Instructor",
+        teacherName: course.teacherName ?? "Teacher",
       })),
     [courses]
   );

@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 
 type EnrolledCourse = Course & {
   code: string;
-  instructor: string;
+  teacher: string;
   progress: number;
   status: string;
 };

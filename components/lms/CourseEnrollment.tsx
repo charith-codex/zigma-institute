@@ -5,7 +5,13 @@ import { useSearchParams } from "next/navigation";
 import CourseCard from "@/components/courses/course-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useCourses, useEnrollments } from "@/hooks/useData";
@@ -36,8 +42,12 @@ const getMonthlyAmount = (course: Course) =>
 export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
   const { toast } = useToast();
   const searchParams = useSearchParams();
-  const { courses, loading: coursesLoading, error: coursesError, refetch: refetchCourses } =
-    useCourses();
+  const {
+    courses,
+    loading: coursesLoading,
+    error: coursesError,
+    refetch: refetchCourses,
+  } = useCourses();
   const {
     enrollments,
     loading: enrollmentsLoading,
@@ -45,7 +55,9 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
     refetch: refetchEnrollments,
   } = useEnrollments();
   const [search, setSearch] = useState("");
-  const [enrollingCourseId, setEnrollingCourseId] = useState<string | null>(null);
+  const [enrollingCourseId, setEnrollingCourseId] = useState<string | null>(
+    null
+  );
 
   const enrolledIds = useMemo(
     () => new Set(enrollments.map((enrollment) => enrollment.courseId)),
@@ -61,7 +73,8 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
       }
 
       const nameMatch = course.name.toLowerCase().includes(normalized);
-      const slugMatch = course.slug?.toLowerCase().includes(normalized) ?? false;
+      const slugMatch =
+        course.slug?.toLowerCase().includes(normalized) ?? false;
 
       return nameMatch || slugMatch;
     });
@@ -201,7 +214,11 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
             <p className="font-semibold">{coursesError ?? enrollmentsError}</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => Promise.all([refetchCourses(), refetchEnrollments()])}>
+            <Button
+              onClick={() =>
+                Promise.all([refetchCourses(), refetchEnrollments()])
+              }
+            >
               Retry
             </Button>
           </div>
@@ -216,8 +233,8 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
         <div className="space-y-1">
           <CardTitle>Enroll in new courses</CardTitle>
           <CardDescription>
-            Already registered students can add more classes and pay monthly fees without
-            re-registering.
+            Already registered students can add more classes and pay monthly
+            fees without re-registering.
           </CardDescription>
         </div>
         <div className="flex w-full gap-2 sm:w-auto">
@@ -237,7 +254,9 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
           <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed p-8 text-center text-muted-foreground">
             <BookOpen className="h-8 w-8" />
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-foreground">No courses found</p>
+              <p className="text-sm font-semibold text-foreground">
+                No courses found
+              </p>
               <p className="text-sm">Try a different search term.</p>
             </div>
           </div>
@@ -248,7 +267,7 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
               const monthlyAmount = getMonthlyAmount(course);
               const courseCardData: Course = {
                 ...course,
-                teacherName: course.teacherName ?? "Instructor",
+                teacherName: course.teacherName ?? "Teacher",
               };
 
               return (
@@ -272,7 +291,7 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
                     </div>
                     <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="text-xs text-muted-foreground">
-                        Teacher: {course.teacherName ?? "Instructor"}
+                        Teacher: {course.teacherName ?? "Teacher"}
                       </div>
                       <Button
                         variant={isEnrolled ? "secondary" : "default"}

@@ -27,7 +27,7 @@ export interface CourseDetailData {
   name: string;
   slug?: string | null;
   teacherName?: string | null;
-  instructor?: string | null;
+  teacher?: string | null;
   code?: string;
   progress?: number;
   status?: string;
@@ -105,8 +105,7 @@ export const CourseDetailView = ({
     );
   }, [orderedLessons, selectedLessonId]);
 
-  const instructorName =
-    classData.instructor ?? classData.teacherName ?? "Instructor";
+  const teacherName = classData.teacher ?? classData.teacherName ?? "Teacher";
   const totalLessons = orderedLessons.length;
   const lastUpdatedLesson = orderedLessons[orderedLessons.length - 1];
   const lastUpdatedLabel = lastUpdatedLesson
@@ -143,7 +142,7 @@ export const CourseDetailView = ({
             <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <span className="flex items-center gap-2">
                 <BookOpen className="h-4 w-4" />
-                {instructorName}
+                {teacherName}
               </span>
               <span className="flex items-center gap-2">
                 <LayoutList className="h-4 w-4" />

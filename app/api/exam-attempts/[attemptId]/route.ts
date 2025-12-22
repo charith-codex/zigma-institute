@@ -5,7 +5,7 @@ import { prisma } from "@/db/prisma";
 
 const gradeSchema = z.object({
   gradedById: z.string().uuid().optional(),
-  essayMarks: z
+  marks: z
     .array(
       z.object({
         answerId: z.string().uuid(),
@@ -37,12 +37,12 @@ export async function PATCH(
       return NextResponse.json({ error: "Attempt not found" }, { status: 404 });
     }
 
-    const updates = data.essayMarks?.map((essay) =>
+    const updates = data.marks?.map((m) =>
       prisma.examAnswer.update({
-        where: { id: essay.answerId },
+        where: { id: m.answerId },
         data: {
-          marksAwarded: essay.marksAwarded,
-          feedback: essay.feedback ?? null,
+          marksAwarded: m.marksAwarded,
+          feedback: m.feedback ?? null,
         },
       })
     );
