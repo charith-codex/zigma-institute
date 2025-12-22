@@ -40,7 +40,7 @@ const normalizeOptions = (value: unknown): string[] => {
 
 type QuestionRecord = {
   id: string;
-  lessonTitle: string;
+  lesson?: { title: string };
   type: "MCQ" | "ESSAY";
   questionText: string;
   options?: unknown;
@@ -152,7 +152,9 @@ export function ExamBuilder({ courseId }: { courseId: string }) {
 
   const lessons = useMemo(() => {
     const values = new Set(
-      questionBank.map((question) => question.lessonTitle)
+      questionBank
+        .map((question) => question.lesson?.title)
+        .filter(Boolean) as string[]
     );
     return Array.from(values).sort((a, b) => a.localeCompare(b));
   }, [questionBank]);
@@ -161,7 +163,7 @@ export function ExamBuilder({ courseId }: { courseId: string }) {
     if (questionLessonFilter === "all" || !questionLessonFilter)
       return questionBank;
     return questionBank.filter(
-      (question) => question.lessonTitle === questionLessonFilter
+      (question) => question.lesson?.title === questionLessonFilter
     );
   }, [questionBank, questionLessonFilter]);
 
@@ -375,7 +377,7 @@ export function ExamBuilder({ courseId }: { courseId: string }) {
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex flex-wrap items-center gap-2">
                           <Badge variant="outline">
-                            {question.lessonTitle}
+                            {question.lesson?.title ?? "General"}
                           </Badge>
                           <Badge variant="secondary">{question.type}</Badge>
                           {question.difficulty && (
@@ -468,7 +470,9 @@ export function ExamBuilder({ courseId }: { courseId: string }) {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="exam-time-limit">Time limit (minutes)</Label>
-                  <span className="text-xs text-muted-foreground">Optional</span>
+                  <span className="text-xs text-muted-foreground">
+                    Optional
+                  </span>
                 </div>
                 <Input
                   id="exam-time-limit"

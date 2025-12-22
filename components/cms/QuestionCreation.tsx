@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +39,8 @@ type QuestionType = "MCQ" | "ESSAY";
 
 type StoredQuestion = {
   id: string;
-  lessonTitle: string;
+  lessonId: string;
+  lesson?: { title: string };
   type: QuestionType;
   questionText: string;
   options?: { id?: number; text?: string }[] | string[] | null;
@@ -46,7 +48,6 @@ type StoredQuestion = {
   explanation?: string | null;
   sampleAnswer?: string | null;
   difficulty?: Difficulty | null;
-  sourceFileUrl?: string | null;
   createdAt: string;
 };
 
@@ -65,12 +66,12 @@ type DraftQuestion = {
 type GeneratedQuestion = DraftQuestion;
 
 type ManualFormState = {
-  lessonTitle: string;
+  lessonId: string;
   question: DraftQuestion;
 };
 
 type AiFormState = {
-  lessonTitle: string;
+  lessonId: string;
   difficulty: Difficulty;
   mcqCount: number;
   essayCount: number;
@@ -117,15 +118,16 @@ export function QuestionCreation({
   courseId,
   initialView = "creation",
 }: QuestionCreationProps) {
+  const { data: session } = useSession();
   const { lessons, loading: lessonsLoading } = useLessons(courseId);
   const [manualForm, setManualForm] = useState<ManualFormState>(() => ({
-    lessonTitle: "",
+    lessonId: "",
     question: createEmptyQuestion("MCQ"),
   }));
   const [savingManual, setSavingManual] = useState(false);
 
   const [aiForm, setAiForm] = useState<AiFormState>({
-    lessonTitle: "",
+    lessonId: "",
     difficulty: "MEDIUM",
     mcqCount: 3,
     essayCount: 1,
@@ -136,6 +138,7 @@ export function QuestionCreation({
     GeneratedQuestion[]
   >([]);
   const [aiMetadata, setAiMetadata] = useState<{
+    lessonId: string;
     lessonTitle: string;
     difficulty: Difficulty;
     sourceFileName?: string;
@@ -153,8 +156,12 @@ export function QuestionCreation({
   const filteredQuestions = useMemo(() => {
     let result = questionBank;
     if (lessonFilter !== "all" && lessonFilter.trim()) {
-      result = questionBank.filter((question) =>
-        question.lessonTitle.toLowerCase().includes(lessonFilter.toLowerCase())
+      result = questionBank.filter(
+        (question) =>
+          question.lessonId === lessonFilter ||
+          question.lesson?.title
+            .toLowerCase()
+            .includes(lessonFilter.toLowerCase())
       );
     }
     return result;
@@ -185,10 +192,15 @@ export function QuestionCreation({
   };
 
   const uniqueLessons = useMemo(() => {
-    const lessons = new Set(
-      questionBank.map((question) => question.lessonTitle)
-    );
-    return Array.from(lessons).sort((a, b) => a.localeCompare(b));
+    const lessonMap = new Map<string, string>();
+    questionBank.forEach((q) => {
+      if (q.lessonId && q.lesson?.title) {
+        lessonMap.set(q.lessonId, q.lesson.title);
+      }
+    });
+    return Array.from(lessonMap.entries())
+      .map(([id, title]) => ({ id, title }))
+      .sort((a, b) => a.title.localeCompare(b.title));
   }, [questionBank]);
 
   const refreshQuestionBank = async () => {
@@ -273,8 +285,8 @@ export function QuestionCreation({
   const handleManualSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!manualForm.lessonTitle.trim()) {
-      toast.error("Lesson title is required");
+    if (!manualForm.lessonId) {
+      toast.error("Please select a lesson");
       return;
     }
 
@@ -296,7 +308,8 @@ export function QuestionCreation({
 
     try {
       const payload = {
-        lessonTitle: manualForm.lessonTitle.trim(),
+        lessonId: manualForm.lessonId,
+        createdById: session?.user?.id,
         difficulty: manualForm.question.difficulty,
         questions: [
           {
@@ -334,10 +347,10 @@ export function QuestionCreation({
       }
 
       toast.success("Question saved to the bank");
-      setManualForm({
-        lessonTitle: manualForm.lessonTitle,
+      setManualForm((prev) => ({
+        ...prev,
         question: createEmptyQuestion(manualForm.question.type),
-      });
+      }));
       refreshQuestionBank();
     } catch (error) {
       console.error(error);
@@ -352,8 +365,8 @@ export function QuestionCreation({
   const handleAiGenerate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!aiForm.lessonTitle.trim()) {
-      toast.error("Lesson title is required");
+    if (!aiForm.lessonId) {
+      toast.error("Please select a lesson");
       return;
     }
 
@@ -370,8 +383,11 @@ export function QuestionCreation({
     setIsGenerating(true);
 
     try {
+      const selectedLesson = lessons.find((l) => l.id === aiForm.lessonId);
       const formData = new FormData();
-      formData.append("lessonTitle", aiForm.lessonTitle.trim());
+      formData.append("lessonId", aiForm.lessonId);
+      formData.append("lessonTitle", selectedLesson?.title ?? "");
+      formData.append("createdById", session?.user?.id ?? "");
       formData.append("difficulty", aiForm.difficulty);
       formData.append("mcqCount", aiForm.mcqCount.toString());
       formData.append("essayCount", aiForm.essayCount.toString());
@@ -412,7 +428,8 @@ export function QuestionCreation({
         }))
       );
       setAiMetadata({
-        lessonTitle: data.lessonTitle ?? aiForm.lessonTitle,
+        lessonId: data.lessonId ?? aiForm.lessonId,
+        lessonTitle: data.lessonTitle ?? "Selected Lesson",
         difficulty: data.difficulty ?? aiForm.difficulty,
         sourceFileName: data.sourceFileName,
       });
@@ -460,9 +477,9 @@ export function QuestionCreation({
 
     try {
       const payload = {
-        lessonTitle: aiMetadata.lessonTitle,
+        lessonId: aiMetadata.lessonId,
+        createdById: session?.user?.id,
         difficulty: aiMetadata.difficulty,
-        sourceFileUrl: aiMetadata.sourceFileName,
         questions: generatedQuestions.map((question) => ({
           type: question.type,
           questionText: question.questionText.trim(),
@@ -519,7 +536,6 @@ export function QuestionCreation({
             </CardTitle>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Badge variant="outline">Manual &amp; AI Creation</Badge>
-              <Badge variant="secondary">Question Bank</Badge>
             </div>
           </CardHeader>
           <CardContent>
@@ -535,11 +551,11 @@ export function QuestionCreation({
                     <div className="space-y-2">
                       <Label htmlFor="manual-lesson">Lesson title</Label>
                       <Select
-                        value={manualForm.lessonTitle}
+                        value={manualForm.lessonId}
                         onValueChange={(value) =>
                           setManualForm((prev) => ({
                             ...prev,
-                            lessonTitle: value,
+                            lessonId: value,
                           }))
                         }
                       >
@@ -548,7 +564,7 @@ export function QuestionCreation({
                         </SelectTrigger>
                         <SelectContent>
                           {lessons.map((lesson) => (
-                            <SelectItem key={lesson.id} value={lesson.title}>
+                            <SelectItem key={lesson.id} value={lesson.id}>
                               {lesson.title}
                             </SelectItem>
                           ))}
@@ -755,11 +771,11 @@ export function QuestionCreation({
                     <div className="space-y-2">
                       <Label htmlFor="ai-lesson">Lesson title</Label>
                       <Select
-                        value={aiForm.lessonTitle}
+                        value={aiForm.lessonId}
                         onValueChange={(value) =>
                           setAiForm((prev) => ({
                             ...prev,
-                            lessonTitle: value,
+                            lessonId: value,
                           }))
                         }
                       >
@@ -768,7 +784,7 @@ export function QuestionCreation({
                         </SelectTrigger>
                         <SelectContent>
                           {lessons.map((lesson) => (
-                            <SelectItem key={lesson.id} value={lesson.title}>
+                            <SelectItem key={lesson.id} value={lesson.id}>
                               {lesson.title}
                             </SelectItem>
                           ))}
@@ -1030,8 +1046,8 @@ export function QuestionCreation({
                 <SelectContent>
                   <SelectItem value="all">All lessons</SelectItem>
                   {uniqueLessons.map((lesson) => (
-                    <SelectItem key={lesson} value={lesson}>
-                      {lesson}
+                    <SelectItem key={lesson.id} value={lesson.id}>
+                      {lesson.title}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1078,7 +1094,7 @@ export function QuestionCreation({
                                 variant="outline"
                                 className="bg-background/50"
                               >
-                                {question.lessonTitle}
+                                {question.lesson?.title ?? "General"}
                               </Badge>
                               <Badge
                                 variant="secondary"
