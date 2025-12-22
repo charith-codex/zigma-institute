@@ -1,9 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, FileText, Upload } from "lucide-react";
+import {
+  Download,
+  FileText,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,6 +22,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -24,9 +31,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { UploadDropzone } from "@/lib/uploadthing";
 
 import { Badge } from "@/components/ui/badge";
+import {
+  deleteStudyMaterial,
+  updateStudyMaterial,
+} from "@/lib/actions/study-material";
 
 interface StudyMaterial {
   id: string;
@@ -95,6 +122,21 @@ export function StudyMaterialManager({
     title: "",
     description: "",
   });
+
+  const [editingMaterial, setEditingMaterial] = useState<StudyMaterial | null>(
+    null
+  );
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editFormState, setEditFormState] = useState({
+    title: "",
+    description: "",
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const [deletingMaterial, setDeletingMaterial] =
+    useState<StudyMaterial | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const dropzoneInput = useMemo(() => {
     const title = formState.title.trim();
@@ -178,6 +220,64 @@ export function StudyMaterialManager({
     setIsUploading(false);
     setIsDialogOpen(false);
     await fetchMaterials();
+  };
+
+  const handleEditClick = (material: StudyMaterial) => {
+    setEditingMaterial(material);
+    setEditFormState({
+      title: material.title,
+      description: material.description ?? "",
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingMaterial) return;
+
+    if (!editFormState.title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      await updateStudyMaterial(editingMaterial.id, {
+        title: editFormState.title.trim(),
+        description: editFormState.description.trim() || null,
+      });
+      toast.success("Study material updated successfully");
+      setIsEditDialogOpen(false);
+      setEditingMaterial(null);
+      await fetchMaterials();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update study material");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteClick = (material: StudyMaterial) => {
+    setDeletingMaterial(material);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingMaterial) return;
+
+    try {
+      setIsDeleting(true);
+      await deleteStudyMaterial(deletingMaterial.id);
+      toast.success("Study material deleted successfully");
+      setIsDeleteDialogOpen(false);
+      setDeletingMaterial(null);
+      await fetchMaterials();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete study material");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleUploadError = (error: Error) => {
@@ -324,22 +424,131 @@ export function StudyMaterialManager({
                       <span className="truncate">{material.fileName}</span>
                     </div>
                   </div>
-                  <Button variant="secondary" size="sm" asChild>
-                    <a
-                      href={material.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Download
-                    </a>
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button variant="secondary" size="sm" asChild>
+                      <a
+                        href={material.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download
+                      </a>
+                    </Button>
+                    {!readOnly && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleEditClick(material)}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => handleDeleteClick(material)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
         )}
       </CardContent>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit study material</DialogTitle>
+            <DialogDescription>
+              Update the title and description of your study material.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-material-title">Title</Label>
+              <Input
+                id="edit-material-title"
+                value={editFormState.title}
+                onChange={(event) =>
+                  setEditFormState((previous) => ({
+                    ...previous,
+                    title: event.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-material-description">Description</Label>
+              <Textarea
+                id="edit-material-description"
+                value={editFormState.description}
+                onChange={(event) =>
+                  setEditFormState((previous) => ({
+                    ...previous,
+                    description: event.target.value,
+                  }))
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+              disabled={isUpdating}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleUpdate} disabled={isUpdating}>
+              {isUpdating ? "Updating..." : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              study material &quot;{deletingMaterial?.title}&quot; from the
+              server.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
