@@ -16,8 +16,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { RefreshCw, Save, Upload, Wand2 } from "lucide-react";
+import { ChevronRight, RefreshCw, Save, Upload, Wand2 } from "lucide-react";
 import { FlowerLoader } from "../ui/flower-loader";
+import { cn } from "@/lib/utils";
 
 const difficultyOptions = [
   { value: "EASY", label: "Easy" },
@@ -100,7 +101,13 @@ const normalizeOptions = (value: StoredQuestion["options"]): string[] => {
   return [];
 };
 
-export function QuestionCreation() {
+export interface QuestionCreationProps {
+  initialView?: "creation" | "bank";
+}
+
+export function QuestionCreation({
+  initialView = "creation",
+}: QuestionCreationProps) {
   const [manualForm, setManualForm] = useState<ManualFormState>(() => ({
     lessonTitle: "",
     question: createEmptyQuestion("MCQ"),
@@ -129,16 +136,45 @@ export function QuestionCreation() {
   const [questionBank, setQuestionBank] = useState<StoredQuestion[]>([]);
   const [questionLoading, setQuestionLoading] = useState(false);
   const [lessonFilter, setLessonFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [expandedQuestionIds, setExpandedQuestionIds] = useState<Set<string>>(
+    new Set()
+  );
+  const ITEMS_PER_PAGE = 5;
 
   const filteredQuestions = useMemo(() => {
-    if (lessonFilter === "all" || !lessonFilter.trim()) {
-      return questionBank;
+    let result = questionBank;
+    if (lessonFilter !== "all" && lessonFilter.trim()) {
+      result = questionBank.filter((question) =>
+        question.lessonTitle.toLowerCase().includes(lessonFilter.toLowerCase())
+      );
     }
-
-    return questionBank.filter((question) =>
-      question.lessonTitle.toLowerCase().includes(lessonFilter.toLowerCase())
-    );
+    return result;
   }, [lessonFilter, questionBank]);
+
+  const totalPages = Math.ceil(filteredQuestions.length / ITEMS_PER_PAGE);
+
+  const paginatedQuestions = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredQuestions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredQuestions, currentPage]);
+
+  // Reset pagination when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [lessonFilter]);
+
+  const toggleQuestionExpansion = (id: string) => {
+    setExpandedQuestionIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   const uniqueLessons = useMemo(() => {
     const lessons = new Set(
@@ -467,614 +503,782 @@ export function QuestionCreation() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <CardTitle className="text-2xl font-bold">
-            Question Creation
-          </CardTitle>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Badge variant="outline">Manual &amp; AI Creation</Badge>
-            <Badge variant="secondary">Question Bank</Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="manual">
-            <TabsList className="grid w-full grid-cols-2 md:w-1/2">
-              <TabsTrigger value="manual">Manual Creation</TabsTrigger>
-              <TabsTrigger value="ai">AI Assisted</TabsTrigger>
-            </TabsList>
+      {initialView === "creation" && (
+        <Card>
+          <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <CardTitle className="text-2xl font-bold">
+              Question Creation
+            </CardTitle>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Badge variant="outline">Manual &amp; AI Creation</Badge>
+              <Badge variant="secondary">Question Bank</Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="manual">
+              <TabsList className="grid w-full grid-cols-2 md:w-1/2">
+                <TabsTrigger value="manual">Manual Creation</TabsTrigger>
+                <TabsTrigger value="ai">AI Assisted</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="manual" className="mt-6">
-              <form onSubmit={handleManualSubmit} className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="manual-lesson">Lesson title</Label>
-                    <Input
-                      id="manual-lesson"
-                      placeholder="e.g. Introduction to React"
-                      value={manualForm.lessonTitle}
-                      onChange={(event) =>
-                        setManualForm((prev) => ({
-                          ...prev,
-                          lessonTitle: event.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="manual-difficulty">Difficulty</Label>
-                    <Select
-                      value={manualDifficulty}
-                      onValueChange={(value: Difficulty) =>
-                        setManualDifficulty(value)
-                      }
-                    >
-                      <SelectTrigger id="manual-difficulty">
-                        <SelectValue placeholder="Select difficulty" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {difficultyOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="question-type">Question type</Label>
-                    <Select
-                      value={manualForm.question.type}
-                      onValueChange={(value: QuestionType) =>
-                        handleManualQuestionTypeChange(value)
-                      }
-                    >
-                      <SelectTrigger id="question-type">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="MCQ">Multiple choice</SelectItem>
-                        <SelectItem value="ESSAY">Essay</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="question-difficulty">
-                      Question difficulty
-                    </Label>
-                    <Select
-                      value={manualForm.question.difficulty}
-                      onValueChange={(value: Difficulty) =>
-                        setManualForm((prev) => ({
-                          ...prev,
-                          question: { ...prev.question, difficulty: value },
-                        }))
-                      }
-                    >
-                      <SelectTrigger id="question-difficulty">
-                        <SelectValue placeholder="Select difficulty" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {difficultyOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="question-text">Question</Label>
-                  <Textarea
-                    id="question-text"
-                    placeholder="Enter the question prompt"
-                    value={manualForm.question.questionText}
-                    onChange={(event) =>
-                      setManualForm((prev) => ({
-                        ...prev,
-                        question: {
-                          ...prev.question,
-                          questionText: event.target.value,
-                        },
-                      }))
-                    }
-                    rows={4}
-                  />
-                </div>
-
-                {manualForm.question.type === "MCQ" && (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label>Options</Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={addManualOption}
-                      >
-                        Add option
-                      </Button>
-                    </div>
-                    <div className="space-y-3">
-                      {manualForm.question.options.map((option, index) => (
-                        <div key={index} className="flex gap-2">
-                          <Input
-                            placeholder={`Option ${index + 1}`}
-                            value={option}
-                            onChange={(event) =>
-                              handleManualOptionChange(index, event)
-                            }
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => removeManualOption(index)}
-                            disabled={manualForm.question.options.length <= 2}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
+              <TabsContent value="manual" className="mt-6">
+                <form onSubmit={handleManualSubmit} className="space-y-6">
+                  <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <Label>Select correct answer</Label>
-                      <Select
-                        value={manualForm.question.correctAnswer}
-                        onValueChange={(value) =>
+                      <Label htmlFor="manual-lesson">Lesson title</Label>
+                      <Input
+                        id="manual-lesson"
+                        placeholder="e.g. Introduction to React"
+                        value={manualForm.lessonTitle}
+                        onChange={(event) =>
                           setManualForm((prev) => ({
                             ...prev,
-                            question: {
-                              ...prev.question,
-                              correctAnswer: value,
-                            },
+                            lessonTitle: event.target.value,
                           }))
                         }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="manual-difficulty">Difficulty</Label>
+                      <Select
+                        value={manualDifficulty}
+                        onValueChange={(value: Difficulty) =>
+                          setManualDifficulty(value)
+                        }
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose the correct option" />
+                        <SelectTrigger id="manual-difficulty">
+                          <SelectValue placeholder="Select difficulty" />
                         </SelectTrigger>
                         <SelectContent>
-                          {manualForm.question.options
-                            .filter((option) => option.trim().length > 0)
-                            .map((option) => (
-                              <SelectItem key={option} value={option}>
-                                {option}
-                              </SelectItem>
-                            ))}
+                          {difficultyOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="question-type">Question type</Label>
+                      <Select
+                        value={manualForm.question.type}
+                        onValueChange={(value: QuestionType) =>
+                          handleManualQuestionTypeChange(value)
+                        }
+                      >
+                        <SelectTrigger id="question-type">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="MCQ">Multiple choice</SelectItem>
+                          <SelectItem value="ESSAY">Essay</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="manual-explanation">
-                        Explanation (shown after submission)
+                      <Label htmlFor="question-difficulty">
+                        Question difficulty
                       </Label>
-                      <Textarea
-                        id="manual-explanation"
-                        placeholder="Provide a short explanation for the correct answer"
-                        value={manualForm.question.explanation}
-                        onChange={(event) =>
+                      <Select
+                        value={manualForm.question.difficulty}
+                        onValueChange={(value: Difficulty) =>
                           setManualForm((prev) => ({
                             ...prev,
-                            question: {
-                              ...prev.question,
-                              explanation: event.target.value,
-                            },
+                            question: { ...prev.question, difficulty: value },
                           }))
                         }
-                        rows={3}
-                      />
+                      >
+                        <SelectTrigger id="question-difficulty">
+                          <SelectValue placeholder="Select difficulty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {difficultyOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
-                )}
 
-                {manualForm.question.type === "ESSAY" && (
                   <div className="space-y-2">
-                    <Label htmlFor="manual-sample-answer">
-                      Sample answer (visible only to teachers)
-                    </Label>
+                    <Label htmlFor="question-text">Question</Label>
                     <Textarea
-                      id="manual-sample-answer"
-                      placeholder="Provide a model answer to guide manual grading"
-                      value={manualForm.question.sampleAnswer}
+                      id="question-text"
+                      placeholder="Enter the question prompt"
+                      value={manualForm.question.questionText}
                       onChange={(event) =>
                         setManualForm((prev) => ({
                           ...prev,
                           question: {
                             ...prev.question,
-                            sampleAnswer: event.target.value,
+                            questionText: event.target.value,
                           },
                         }))
                       }
                       rows={4}
                     />
                   </div>
-                )}
 
-                <Button
-                  type="submit"
-                  className="flex items-center gap-2"
-                  disabled={savingManual}
-                >
-                  {savingManual ? (
-                    <div className="text-center">
-                      <FlowerLoader
-                        size="md"
-                        className="text-[#A41FC5] mx-auto"
-                      />
-                    </div>
-                  ) : (
-                    <Save className="h-4 w-4" />
-                  )}
-                  Save question
-                </Button>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="ai" className="mt-6">
-              <form onSubmit={handleAiGenerate} className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="ai-lesson">Lesson title</Label>
-                    <Input
-                      id="ai-lesson"
-                      placeholder="e.g. Advanced Algorithms"
-                      value={aiForm.lessonTitle}
-                      onChange={(event) =>
-                        setAiForm((prev) => ({
-                          ...prev,
-                          lessonTitle: event.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ai-difficulty">Target difficulty</Label>
-                    <Select
-                      value={aiForm.difficulty}
-                      onValueChange={(value: Difficulty) =>
-                        setAiForm((prev) => ({ ...prev, difficulty: value }))
-                      }
-                    >
-                      <SelectTrigger id="ai-difficulty">
-                        <SelectValue placeholder="Select difficulty" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {difficultyOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="ai-mcq">Number of MCQs</Label>
-                    <Input
-                      id="ai-mcq"
-                      type="number"
-                      min={0}
-                      value={aiForm.mcqCount}
-                      onChange={(event) =>
-                        setAiForm((prev) => ({
-                          ...prev,
-                          mcqCount: Number.parseInt(
-                            event.target.value || "0",
-                            10
-                          ),
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ai-essay">Number of essay questions</Label>
-                    <Input
-                      id="ai-essay"
-                      type="number"
-                      min={0}
-                      value={aiForm.essayCount}
-                      onChange={(event) =>
-                        setAiForm((prev) => ({
-                          ...prev,
-                          essayCount: Number.parseInt(
-                            event.target.value || "0",
-                            10
-                          ),
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="ai-file">Upload lesson PDF</Label>
-                    <Input
-                      id="ai-file"
-                      type="file"
-                      accept="application/pdf"
-                      onChange={(event) =>
-                        setAiForm((prev) => ({
-                          ...prev,
-                          file: event.target.files?.[0] ?? null,
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="flex items-center gap-2"
-                  disabled={isGenerating}
-                >
-                  {isGenerating ? (
-                    <div className="text-center">
-                      <FlowerLoader
-                        size="md"
-                        className="text-[#A41FC5] mx-auto"
-                      />
-                    </div>
-                  ) : (
-                    <Wand2 className="h-4 w-4" />
-                  )}
-                  Generate questions
-                </Button>
-              </form>
-
-              {generatedQuestions.length > 0 && (
-                <div className="mt-8 space-y-4 rounded-md border p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold">
-                        Generated questions
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Review and edit the AI generated content before saving
-                        it to the question bank.
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => setGeneratedQuestions([])}
-                      >
-                        Clear
-                      </Button>
-                      <Button
-                        className="flex items-center gap-2"
-                        onClick={saveGeneratedQuestions}
-                      >
-                        <Upload className="h-4 w-4" /> Save to bank
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    {generatedQuestions.map((question, questionIndex) => (
-                      <div
-                        key={question.id}
-                        className="space-y-4 rounded-md border p-4"
-                      >
-                        <div className="flex flex-wrap items-center gap-3">
-                          <Badge variant="outline">
-                            {question.type === "MCQ"
-                              ? "Multiple choice"
-                              : "Essay"}
-                          </Badge>
-                          <Badge variant="secondary">
-                            Difficulty: {question.difficulty}
-                          </Badge>
-                          {question.sourceFileUrl && (
-                            <Badge variant="outline">
-                              Source: {question.sourceFileUrl}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Question {questionIndex + 1}</Label>
-                          <Textarea
-                            value={question.questionText}
-                            onChange={(event) =>
-                              handleGeneratedQuestionChange(
-                                question.id,
-                                "questionText",
-                                event.target.value
-                              )
-                            }
-                            rows={3}
-                          />
-                        </div>
-                        {question.type === "MCQ" && (
-                          <div className="space-y-4">
-                            <div className="space-y-2">
-                              <Label>Options</Label>
-                              <div className="space-y-2">
-                                {question.options.map((option, index) => (
-                                  <Input
-                                    key={`${question.id}-option-${index}`}
-                                    value={option}
-                                    onChange={(event) =>
-                                      handleGeneratedQuestionChange(
-                                        question.id,
-                                        "options",
-                                        event.target.value,
-                                        index
-                                      )
-                                    }
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Correct answer</Label>
-                              <Input
-                                value={question.correctAnswer}
-                                onChange={(event) =>
-                                  handleGeneratedQuestionChange(
-                                    question.id,
-                                    "correctAnswer",
-                                    event.target.value
-                                  )
-                                }
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Explanation</Label>
-                              <Textarea
-                                value={question.explanation}
-                                onChange={(event) =>
-                                  handleGeneratedQuestionChange(
-                                    question.id,
-                                    "explanation",
-                                    event.target.value
-                                  )
-                                }
-                                rows={3}
-                              />
-                            </div>
+                  {manualForm.question.type === "MCQ" && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label>Options</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={addManualOption}
+                        >
+                          Add option
+                        </Button>
+                      </div>
+                      <div className="space-y-3">
+                        {manualForm.question.options.map((option, index) => (
+                          <div key={index} className="flex gap-2">
+                            <Input
+                              placeholder={`Option ${index + 1}`}
+                              value={option}
+                              onChange={(event) =>
+                                handleManualOptionChange(index, event)
+                              }
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              onClick={() => removeManualOption(index)}
+                              disabled={manualForm.question.options.length <= 2}
+                            >
+                              Remove
+                            </Button>
                           </div>
-                        )}
-                        {question.type === "ESSAY" && (
+                        ))}
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Select correct answer</Label>
+                        <Select
+                          value={manualForm.question.correctAnswer}
+                          onValueChange={(value) =>
+                            setManualForm((prev) => ({
+                              ...prev,
+                              question: {
+                                ...prev.question,
+                                correctAnswer: value,
+                              },
+                            }))
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose the correct option" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {manualForm.question.options
+                              .filter((option) => option.trim().length > 0)
+                              .map((option) => (
+                                <SelectItem key={option} value={option}>
+                                  {option}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="manual-explanation">
+                          Explanation (shown after submission)
+                        </Label>
+                        <Textarea
+                          id="manual-explanation"
+                          placeholder="Provide a short explanation for the correct answer"
+                          value={manualForm.question.explanation}
+                          onChange={(event) =>
+                            setManualForm((prev) => ({
+                              ...prev,
+                              question: {
+                                ...prev.question,
+                                explanation: event.target.value,
+                              },
+                            }))
+                          }
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {manualForm.question.type === "ESSAY" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="manual-sample-answer">
+                        Sample answer (visible only to teachers)
+                      </Label>
+                      <Textarea
+                        id="manual-sample-answer"
+                        placeholder="Provide a model answer to guide manual grading"
+                        value={manualForm.question.sampleAnswer}
+                        onChange={(event) =>
+                          setManualForm((prev) => ({
+                            ...prev,
+                            question: {
+                              ...prev.question,
+                              sampleAnswer: event.target.value,
+                            },
+                          }))
+                        }
+                        rows={4}
+                      />
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="flex items-center gap-2"
+                    disabled={savingManual}
+                  >
+                    {savingManual ? (
+                      <div className="text-center">
+                        <FlowerLoader
+                          size="md"
+                          className="text-[#A41FC5] mx-auto"
+                        />
+                      </div>
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    Save question
+                  </Button>
+                </form>
+              </TabsContent>
+
+              <TabsContent value="ai" className="mt-6">
+                <form onSubmit={handleAiGenerate} className="space-y-6">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="ai-lesson">Lesson title</Label>
+                      <Input
+                        id="ai-lesson"
+                        placeholder="e.g. Advanced Algorithms"
+                        value={aiForm.lessonTitle}
+                        onChange={(event) =>
+                          setAiForm((prev) => ({
+                            ...prev,
+                            lessonTitle: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ai-difficulty">Target difficulty</Label>
+                      <Select
+                        value={aiForm.difficulty}
+                        onValueChange={(value: Difficulty) =>
+                          setAiForm((prev) => ({ ...prev, difficulty: value }))
+                        }
+                      >
+                        <SelectTrigger id="ai-difficulty">
+                          <SelectValue placeholder="Select difficulty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {difficultyOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="ai-mcq">Number of MCQs</Label>
+                      <Input
+                        id="ai-mcq"
+                        type="number"
+                        min={0}
+                        value={aiForm.mcqCount}
+                        onChange={(event) =>
+                          setAiForm((prev) => ({
+                            ...prev,
+                            mcqCount: Number.parseInt(
+                              event.target.value || "0",
+                              10
+                            ),
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ai-essay">
+                        Number of essay questions
+                      </Label>
+                      <Input
+                        id="ai-essay"
+                        type="number"
+                        min={0}
+                        value={aiForm.essayCount}
+                        onChange={(event) =>
+                          setAiForm((prev) => ({
+                            ...prev,
+                            essayCount: Number.parseInt(
+                              event.target.value || "0",
+                              10
+                            ),
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ai-file">Upload lesson PDF</Label>
+                      <Input
+                        id="ai-file"
+                        type="file"
+                        accept="application/pdf"
+                        onChange={(event) =>
+                          setAiForm((prev) => ({
+                            ...prev,
+                            file: event.target.files?.[0] ?? null,
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="flex items-center gap-2"
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? (
+                      <div className="text-center">
+                        <FlowerLoader
+                          size="md"
+                          className="text-[#A41FC5] mx-auto"
+                        />
+                      </div>
+                    ) : (
+                      <Wand2 className="h-4 w-4" />
+                    )}
+                    Generate questions
+                  </Button>
+                </form>
+
+                {generatedQuestions.length > 0 && (
+                  <div className="mt-8 space-y-4 rounded-md border p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-semibold">
+                          Generated questions
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Review and edit the AI generated content before saving
+                          it to the question bank.
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setGeneratedQuestions([])}
+                        >
+                          Clear
+                        </Button>
+                        <Button
+                          className="flex items-center gap-2"
+                          onClick={saveGeneratedQuestions}
+                        >
+                          <Upload className="h-4 w-4" /> Save to bank
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      {generatedQuestions.map((question, questionIndex) => (
+                        <div
+                          key={question.id}
+                          className="space-y-4 rounded-md border p-4"
+                        >
+                          <div className="flex flex-wrap items-center gap-3">
+                            <Badge variant="outline">
+                              {question.type === "MCQ"
+                                ? "Multiple choice"
+                                : "Essay"}
+                            </Badge>
+                            <Badge variant="secondary">
+                              Difficulty: {question.difficulty}
+                            </Badge>
+                            {question.sourceFileUrl && (
+                              <Badge variant="outline">
+                                Source: {question.sourceFileUrl}
+                              </Badge>
+                            )}
+                          </div>
                           <div className="space-y-2">
-                            <Label>Sample answer</Label>
+                            <Label>Question {questionIndex + 1}</Label>
                             <Textarea
-                              value={question.sampleAnswer}
+                              value={question.questionText}
                               onChange={(event) =>
                                 handleGeneratedQuestionChange(
                                   question.id,
-                                  "sampleAnswer",
+                                  "questionText",
                                   event.target.value
                                 )
                               }
-                              rows={4}
+                              rows={3}
                             />
+                          </div>
+                          {question.type === "MCQ" && (
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <Label>Options</Label>
+                                <div className="space-y-2">
+                                  {question.options.map((option, index) => (
+                                    <Input
+                                      key={`${question.id}-option-${index}`}
+                                      value={option}
+                                      onChange={(event) =>
+                                        handleGeneratedQuestionChange(
+                                          question.id,
+                                          "options",
+                                          event.target.value,
+                                          index
+                                        )
+                                      }
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Correct answer</Label>
+                                <Input
+                                  value={question.correctAnswer}
+                                  onChange={(event) =>
+                                    handleGeneratedQuestionChange(
+                                      question.id,
+                                      "correctAnswer",
+                                      event.target.value
+                                    )
+                                  }
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Explanation</Label>
+                                <Textarea
+                                  value={question.explanation}
+                                  onChange={(event) =>
+                                    handleGeneratedQuestionChange(
+                                      question.id,
+                                      "explanation",
+                                      event.target.value
+                                    )
+                                  }
+                                  rows={3}
+                                />
+                              </div>
+                            </div>
+                          )}
+                          {question.type === "ESSAY" && (
+                            <div className="space-y-2">
+                              <Label>Sample answer</Label>
+                              <Textarea
+                                value={question.sampleAnswer}
+                                onChange={(event) =>
+                                  handleGeneratedQuestionChange(
+                                    question.id,
+                                    "sampleAnswer",
+                                    event.target.value
+                                  )
+                                }
+                                rows={4}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      )}
+
+      {initialView === "bank" && (
+        <Card>
+          <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <CardTitle className="text-xl font-semibold">
+                Question bank
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Filter by lesson title and manage your saved questions.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={lessonFilter} onValueChange={setLessonFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Filter by lesson" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All lessons</SelectItem>
+                  {uniqueLessons.map((lesson) => (
+                    <SelectItem key={lesson} value={lesson}>
+                      {lesson}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={refreshQuestionBank}
+                disabled={questionLoading}
+              >
+                {questionLoading ? (
+                  <div className="text-center">
+                    <FlowerLoader
+                      size="md"
+                      className="text-[#A41FC5] mx-auto"
+                    />
+                  </div>
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                <span className="sr-only">Refresh</span>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {paginatedQuestions.length === 0 ? (
+              <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
+                No questions found. Create a new question manually or generate
+                with AI.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  {paginatedQuestions.map((question) => {
+                    const options = normalizeOptions(question.options);
+                    const isExpanded = expandedQuestionIds.has(question.id);
+                    return (
+                      <div
+                        key={question.id}
+                        className="overflow-hidden rounded-xl border border-border/60 bg-card/40 transition-all hover:bg-card/60"
+                      >
+                        <div
+                          className="flex cursor-pointer items-center justify-between p-4"
+                          onClick={() => toggleQuestionExpansion(question.id)}
+                        >
+                          <div className="flex flex-1 flex-col gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge
+                                variant="outline"
+                                className="bg-background/50"
+                              >
+                                {question.lessonTitle}
+                              </Badge>
+                              <Badge
+                                variant="secondary"
+                                className="bg-primary/5 text-primary"
+                              >
+                                {question.type}
+                              </Badge>
+                              {question.difficulty && (
+                                <Badge
+                                  variant="outline"
+                                  className="capitalize bg-background/50"
+                                >
+                                  {question.difficulty.toLowerCase()}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="font-medium text-foreground">
+                              {question.questionText}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              Added on{" "}
+                              {new Date(question.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="ml-4 h-8 w-8 p-0"
+                          >
+                            <ChevronRight
+                              className={cn(
+                                "h-4 w-4 transition-transform duration-200",
+                                isExpanded && "rotate-90"
+                              )}
+                            />
+                          </Button>
+                        </div>
+
+                        {isExpanded && (
+                          <div className="border-t border-border/50 bg-muted/20 p-4 pt-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="space-y-4">
+                              {question.type === "MCQ" &&
+                                options.length > 0 && (
+                                  <div className="space-y-2">
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                      Options
+                                    </p>
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                      {options.map((option, index) => {
+                                        const isCorrect =
+                                          question.correctAnswer === option;
+                                        return (
+                                          <div
+                                            key={`${question.id}-option-${index}`}
+                                            className={cn(
+                                              "flex items-center gap-2 rounded-lg border border-border/50 p-3 text-sm",
+                                              isCorrect
+                                                ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-700"
+                                                : "bg-background/50"
+                                            )}
+                                          >
+                                            <div
+                                              className={cn(
+                                                "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold",
+                                                isCorrect
+                                                  ? "border-emerald-500 bg-emerald-500 text-white"
+                                                  : "border-muted-foreground/30"
+                                              )}
+                                            >
+                                              {String.fromCharCode(65 + index)}
+                                            </div>
+                                            {option}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+
+                              {(question.explanation ||
+                                (question.type === "ESSAY" &&
+                                  question.sampleAnswer)) && (
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                  {question.explanation && (
+                                    <div className="space-y-1.5">
+                                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                        Explanation
+                                      </p>
+                                      <div className="rounded-lg bg-background/50 p-3 text-sm text-muted-foreground">
+                                        {question.explanation}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {question.type === "ESSAY" &&
+                                    question.sampleAnswer && (
+                                      <div className="space-y-1.5">
+                                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                          Sample Answer
+                                        </p>
+                                        <div className="rounded-lg bg-background/50 p-3 text-sm text-muted-foreground">
+                                          {question.sampleAnswer}
+                                        </div>
+                                      </div>
+                                    )}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle className="text-xl font-semibold">
-              Question bank
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Filter by lesson title and manage your saved questions.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Select value={lessonFilter} onValueChange={setLessonFilter}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Filter by lesson" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All lessons</SelectItem>
-                {uniqueLessons.map((lesson) => (
-                  <SelectItem key={lesson} value={lesson}>
-                    {lesson}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={refreshQuestionBank}
-              disabled={questionLoading}
-            >
-              {questionLoading ? (
-                <div className="text-center">
-                  <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
-                </div>
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
-              <span className="sr-only">Refresh</span>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {filteredQuestions.length === 0 ? (
-            <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
-              No questions found. Create a new question manually or generate
-              with AI.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredQuestions.map((question) => {
-                const options = normalizeOptions(question.options);
-                return (
-                  <div
-                    key={question.id}
-                    className="space-y-3 rounded-md border p-4"
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline">{question.lessonTitle}</Badge>
-                      <Badge variant="secondary">{question.type}</Badge>
-                      {question.difficulty && (
-                        <Badge variant="outline">
-                          Difficulty: {question.difficulty}
-                        </Badge>
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">{question.questionText}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Added on {new Date(question.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                    {question.type === "MCQ" && options.length > 0 && (
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Options</p>
-                        <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                          {options.map((option, index) => (
-                            <li key={`${question.id}-option-${index}`}>
-                              {option}
-                            </li>
-                          ))}
-                        </ul>
-                        {question.correctAnswer && (
-                          <p className="text-sm text-emerald-600">
-                            Correct answer: {question.correctAnswer}
-                          </p>
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between border-t border-border/40 pt-4">
+                    <p className="text-xs text-muted-foreground">
+                      Showing{" "}
+                      <span className="font-medium text-foreground">
+                        {(currentPage - 1) * ITEMS_PER_PAGE + 1}
+                      </span>{" "}
+                      to{" "}
+                      <span className="font-medium text-foreground">
+                        {Math.min(
+                          currentPage * ITEMS_PER_PAGE,
+                          filteredQuestions.length
                         )}
+                      </span>{" "}
+                      of{" "}
+                      <span className="font-medium text-foreground">
+                        {filteredQuestions.length}
+                      </span>{" "}
+                      results
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCurrentPage((p) => Math.max(1, p - 1))
+                        }
+                        disabled={currentPage === 1}
+                        className="h-8 px-2"
+                      >
+                        Previous
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                          .filter((p) => {
+                            // Show first, last, current, and neighbors
+                            return (
+                              p === 1 ||
+                              p === totalPages ||
+                              Math.abs(p - currentPage) <= 1
+                            );
+                          })
+                          .map((p, i, arr) => {
+                            return (
+                              <div key={p} className="flex items-center gap-1">
+                                {i > 0 && arr[i - 1] !== p - 1 && (
+                                  <span className="px-1 text-muted-foreground">
+                                    ...
+                                  </span>
+                                )}
+                                <Button
+                                  variant={
+                                    currentPage === p ? "default" : "outline"
+                                  }
+                                  size="sm"
+                                  onClick={() => setCurrentPage(p)}
+                                  className={cn(
+                                    "h-8 w-8 p-0",
+                                    currentPage === p &&
+                                      "bg-primary text-primary-foreground"
+                                  )}
+                                >
+                                  {p}
+                                </Button>
+                              </div>
+                            );
+                          })}
                       </div>
-                    )}
-                    {question.type === "ESSAY" && question.sampleAnswer && (
-                      <details className="text-sm">
-                        <summary className="cursor-pointer text-muted-foreground">
-                          View sample answer
-                        </summary>
-                        <p className="mt-2 whitespace-pre-wrap text-muted-foreground">
-                          {question.sampleAnswer}
-                        </p>
-                      </details>
-                    )}
-                    {question.explanation && (
-                      <p className="text-sm text-muted-foreground">
-                        Explanation: {question.explanation}
-                      </p>
-                    )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCurrentPage((p) => Math.min(totalPages, p + 1))
+                        }
+                        disabled={currentPage === totalPages}
+                        className="h-8 px-2"
+                      >
+                        Next
+                      </Button>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

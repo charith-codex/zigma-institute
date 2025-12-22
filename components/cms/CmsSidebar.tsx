@@ -9,11 +9,19 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, LucideIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, LucideIcon } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 
 interface CmsSidebarItem {
@@ -26,6 +34,7 @@ interface CourseNavItem {
   id: string;
   label: string;
   icon: LucideIcon;
+  subItems?: { id: string; label: string }[];
 }
 
 interface CourseSidebarDetails {
@@ -128,25 +137,93 @@ const CmsSidebar = ({
             )}
             <SidebarGroupContent>
               <SidebarMenu>
-                {courseNavItems.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      onClick={() => handleCourseSectionChange(item.id)}
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
-                        activeCourseSection === item.id
-                          ? "bg-primary/10 text-primary shadow-sm"
-                          : "hover:bg-muted"
-                      )}
-                      aria-current={
-                        activeCourseSection === item.id ? "page" : undefined
-                      }
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {state === "expanded" && <span>{item.label}</span>}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {courseNavItems.map((item) => {
+                  const hasSubItems = !!(
+                    item.subItems && item.subItems.length > 0
+                  );
+                  const isSubItemActive = !!(
+                    hasSubItems &&
+                    item.subItems?.some((sub) => sub.id === activeCourseSection)
+                  );
+                  const isActive =
+                    activeCourseSection === item.id || isSubItemActive;
+
+                  if (hasSubItems) {
+                    return (
+                      <Collapsible
+                        key={item.id}
+                        asChild
+                        defaultOpen={isActive}
+                        className="group/collapsible"
+                      >
+                        <SidebarMenuItem>
+                          <CollapsibleTrigger asChild>
+                            <SidebarMenuButton
+                              onClick={() => handleCourseSectionChange(item.id)}
+                              className={cn(
+                                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors cursor-pointer",
+                                isActive && activeCourseSection !== item.id
+                                  ? "text-primary"
+                                  : activeCourseSection === item.id
+                                    ? "bg-primary/10 text-primary shadow-sm"
+                                    : "hover:bg-muted"
+                              )}
+                              tooltip={item.label}
+                            >
+                              <item.icon className="h-4 w-4" />
+                              {state === "expanded" && (
+                                <>
+                                  <span className="flex-1">{item.label}</span>
+                                  <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                </>
+                              )}
+                            </SidebarMenuButton>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <SidebarMenuSub>
+                              {item.subItems?.map((subItem) => (
+                                <SidebarMenuSubItem key={subItem.id}>
+                                  <SidebarMenuSubButton
+                                    asChild
+                                    isActive={
+                                      activeCourseSection === subItem.id
+                                    }
+                                    onClick={() =>
+                                      handleCourseSectionChange(subItem.id)
+                                    }
+                                    className="cursor-pointer"
+                                  >
+                                    <span>{subItem.label}</span>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              ))}
+                            </SidebarMenuSub>
+                          </CollapsibleContent>
+                        </SidebarMenuItem>
+                      </Collapsible>
+                    );
+                  }
+
+                  return (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        onClick={() => handleCourseSectionChange(item.id)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                          activeCourseSection === item.id
+                            ? "bg-primary/10 text-primary shadow-sm"
+                            : "hover:bg-muted"
+                        )}
+                        aria-current={
+                          activeCourseSection === item.id ? "page" : undefined
+                        }
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {state === "expanded" && <span>{item.label}</span>}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
