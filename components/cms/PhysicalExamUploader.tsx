@@ -1,546 +1,604 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
-import { Loader2, Search, UploadCloud } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
+import {
+  Loader2,
+  Search,
+  UploadCloud,
+  Plus,
+  Trash2,
+  Edit2,
+  ArrowLeft,
+  FileText,
+  Calendar as CalendarIcon,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { UploadDropzone } from "@/lib/uploadthing";
 import {
   getEnrolledStudentsForCourse,
+  getPhysicalExamSummaries,
   getPhysicalExamMarks,
-  PhysicalExamMarkRecord,
   savePhysicalExamMarks,
+  deletePhysicalExam,
+  PhysicalExamSummary,
+  EnrolledStudent,
 } from "@/lib/actions/physical-exam";
-
-type EnrolledStudent = {
-  registrationId: string;
-  studentPublicId: string;
-  studentName: string;
-};
-
-interface ExamPaperUploadProps {
-  courseId: string;
-  examTitle: string;
-  onExamTitleChange: (value: string) => void;
-  paperUrl: string | null;
-  onUploadComplete: (payload: { url: string }) => void;
-  uploading: boolean;
-  onUploadingChange: (value: boolean) => void;
-  examDate: string;
-  onExamDateChange: (value: string) => void;
-}
-
-interface StudentMarksProps {
-  students: EnrolledStudent[];
-  searchTerm: string;
-  onSearch: (value: string) => void;
-  scores: Record<string, string>;
-  onScoreChange: (studentId: string, value: string) => void;
-  disabled: boolean;
-  loading: boolean;
-}
-
-interface SavedMarksListProps {
-  records: PhysicalExamMarkRecord[];
-  loading: boolean;
-}
+import {
+  physicalExamSchema,
+  type PhysicalExamInput,
+} from "@/lib/validators/physical-exam";
+import { cn } from "@/lib/utils";
+import { FlowerLoader } from "../ui/flower-loader";
 
 export function PhysicalExamUploader({ courseId }: { courseId: string }) {
-  const [examTitle, setExamTitle] = useState<string>("");
-  const [examDate, setExamDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
-  const [paperUrl, setPaperUrl] = useState<string | null>(null);
-  const [uploadingPaper, setUploadingPaper] = useState<boolean>(false);
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [scores, setScores] = useState<Record<string, string>>({});
+  const [view, setView] = useState<"list" | "form">("list");
+  const [summaries, setSummaries] = useState<PhysicalExamSummary[]>([]);
   const [students, setStudents] = useState<EnrolledStudent[]>([]);
-  const [records, setRecords] = useState<PhysicalExamMarkRecord[]>([]);
-  const [studentsLoading, setStudentsLoading] = useState<boolean>(true);
-  const [marksLoading, setMarksLoading] = useState<boolean>(true);
-  const [saving, startSaving] = useTransition();
+  const [loading, setLoading] = useState(true);
+  const [isPending, startTransition] = useTransition();
+  const [editingExam, setEditingExam] = useState<PhysicalExamSummary | null>(
+    null
+  );
+  const [examToDelete, setExamToDelete] = useState<PhysicalExamSummary | null>(
+    null
+  );
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    let active = true;
+  const form = useForm<PhysicalExamInput>({
+    resolver: zodResolver(physicalExamSchema),
+    defaultValues: {
+      courseId,
+      examTitle: "",
+      examDate: new Date().toISOString().split("T")[0],
+      paperUrl: "",
+      scores: [],
+      originalExamTitle: "",
+      originalExamDate: "",
+    },
+  });
 
-    const loadStudents = async () => {
-      setStudentsLoading(true);
-      try {
-        const loaded = await getEnrolledStudentsForCourse(courseId);
-        if (active) {
-          setStudents(loaded);
-        }
-      } catch (error) {
-        console.error(error);
-        toast.error("Failed to load enrolled students.");
-      } finally {
-        if (active) {
-          setStudentsLoading(false);
-        }
-      }
-    };
+  const {
+    watch,
+    setValue,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = form;
+  const watchExamTitle = watch("examTitle");
+  const watchPaperUrl = watch("paperUrl");
 
-    const loadMarks = async () => {
-      setMarksLoading(true);
-      try {
-        const saved = await getPhysicalExamMarks(courseId);
-        if (active) {
-          setRecords(saved);
-        }
-      } catch (error) {
-        console.error(error);
-        toast.error("Failed to load saved marks.");
-      } finally {
-        if (active) {
-          setMarksLoading(false);
-        }
-      }
-    };
+  const filteredStudents = useMemo(() => {
+    if (!searchQuery.trim()) return students;
+    const lowerQuery = searchQuery.toLowerCase();
+    return students.filter(
+      (s) =>
+        s.studentName.toLowerCase().includes(lowerQuery) ||
+        s.studentPublicId.toLowerCase().includes(lowerQuery)
+    );
+  }, [students, searchQuery]);
 
-    void loadStudents();
-    void loadMarks();
-
-    return () => {
-      active = false;
-    };
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const summariesData = await getPhysicalExamSummaries(courseId);
+      setSummaries(summariesData);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load physical exams.");
+    } finally {
+      setLoading(false);
+    }
   }, [courseId]);
 
-  const filteredStudents = useMemo<EnrolledStudent[]>(() => {
-    const query = searchTerm.trim().toLowerCase();
-    if (!query) {
-      return students;
+  const ensureStudentsLoaded = async () => {
+    if (students.length > 0) return students;
+    setLoading(true);
+    try {
+      const studentsData = await getEnrolledStudentsForCourse(courseId);
+      setStudents(studentsData);
+      return studentsData;
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load enrolled students.");
+      return [];
+    } finally {
+      setLoading(false);
     }
-
-    return students.filter(
-      (student) =>
-        student.studentName.toLowerCase().includes(query) ||
-        student.studentPublicId.toLowerCase().includes(query)
-    );
-  }, [students, searchTerm]);
-
-  const marksReady = Boolean(examTitle.trim() && paperUrl);
-
-  const handleScoreChange = (studentId: string, value: string) => {
-    if (!/^\d*(\.\d{0,2})?$/.test(value)) {
-      return;
-    }
-
-    setScores((previous) => ({
-      ...previous,
-      [studentId]: value,
-    }));
   };
 
-  const handleSaveMarks = () => {
-    if (!marksReady || !paperUrl) {
-      toast.error("Add an exam title and upload the paper first.");
-      return;
-    }
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-    const validEntries = students
-      .map((student) => {
-        const value = scores[student.registrationId];
-        if (!value) return null;
+  const handleCreateNew = async () => {
+    setEditingExam(null);
+    const sList = await ensureStudentsLoaded();
+    reset({
+      courseId,
+      examTitle: "",
+      examDate: new Date().toISOString().split("T")[0],
+      paperUrl: "",
+      scores: (sList || []).map((s) => ({
+        studentRegistrationId: s.registrationId,
+        score: 0,
+      })),
+      originalExamTitle: "",
+      originalExamDate: "",
+    });
+    setSearchQuery("");
+    setView("form");
+  };
 
-        const parsedScore = Number.parseFloat(value);
-        if (Number.isNaN(parsedScore) || parsedScore < 0 || parsedScore > 100) {
-          return null;
-        }
+  const handleEdit = async (summary: PhysicalExamSummary) => {
+    setLoading(true);
+    try {
+      const [examMarks, sList] = await Promise.all([
+        getPhysicalExamMarks(courseId, summary.examTitle, summary.examDate),
+        ensureStudentsLoaded(),
+      ]);
 
-        return {
-          studentRegistrationId: student.registrationId,
-          score: parsedScore,
-        };
-      })
-      .filter(
-        (entry): entry is { studentRegistrationId: string; score: number } =>
-          entry !== null
-      );
+      const examDateStr = new Date(summary.examDate)
+        .toISOString()
+        .split("T")[0];
 
-    if (validEntries.length === 0) {
-      toast.error("Enter at least one valid score between 0 and 100.");
-      return;
-    }
-
-    startSaving(() =>
-      savePhysicalExamMarks({
+      setEditingExam(summary);
+      reset({
         courseId,
-        examTitle: examTitle.trim(),
-        examDate,
-        paperUrl,
-        scores: validEntries,
-      }).then((result) => {
-        if (!result.success) {
-          toast.error(result.message);
-          return;
-        }
-
-        setRecords(result.records);
-        toast.success("Physical exam marks saved.");
-      })
-    );
+        examTitle: summary.examTitle,
+        examDate: examDateStr,
+        paperUrl: summary.paperUrl,
+        scores: sList.map((s) => {
+          const mark = examMarks.find(
+            (m) => m.studentRegistrationId === s.registrationId
+          );
+          return {
+            studentRegistrationId: s.registrationId,
+            score: mark ? mark.score : 0,
+          };
+        }),
+        originalExamTitle: summary.examTitle,
+        originalExamDate: summary.examDate,
+      });
+      setSearchQuery("");
+      setView("form");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load exam marks for editing.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleDelete = (summary: PhysicalExamSummary) => {
+    setExamToDelete(summary);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!examToDelete) return;
+
+    startTransition(async () => {
+      const result = await deletePhysicalExam(
+        courseId,
+        examToDelete.examTitle,
+        examToDelete.examDate
+      );
+      if (result.success) {
+        toast.success("Exam deleted successfully.");
+        setIsDeleteDialogOpen(false);
+        setExamToDelete(null);
+        loadData();
+      } else {
+        toast.error(result.message || "Failed to delete exam.");
+      }
+    });
+  };
+
+  const onSubmit = async (data: PhysicalExamInput) => {
+    startTransition(async () => {
+      const result = await savePhysicalExamMarks(data);
+      if (result.success) {
+        toast.success(
+          editingExam
+            ? "Exam updated successfully."
+            : "Exam created successfully."
+        );
+        setView("list");
+        loadData();
+      } else {
+        toast.error(result.message);
+      }
+    });
+  };
+
+  if (loading && view === "list") {
+    return (
+      <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-border">
+        <FlowerLoader size="md" className="text-[#A41FC5]" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <Card className="border-border/60">
-        <CardHeader className="space-y-1">
-          <CardTitle>Physical Exam Paper</CardTitle>
-          <CardDescription>
-            Enter the exam title, date, upload the scanned paper, and then
-            record marks for enrolled students in this course.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <ExamPaperUpload
-            courseId={courseId}
-            examTitle={examTitle}
-            onExamTitleChange={setExamTitle}
-            paperUrl={paperUrl}
-            onUploadComplete={(payload) => {
-              setPaperUrl(payload.url);
-            }}
-            uploading={uploadingPaper}
-            onUploadingChange={setUploadingPaper}
-            examDate={examDate}
-            onExamDateChange={setExamDate}
-          />
-        </CardContent>
-      </Card>
-
-      <Card className="border-border/60">
-        <CardHeader className="space-y-1">
-          <CardTitle>Enter student marks</CardTitle>
-          <CardDescription>
-            Search enrolled students by name or ID, then enter their marks.
-            Marks are enabled after the exam paper is uploaded.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <StudentMarks
-            students={filteredStudents}
-            searchTerm={searchTerm}
-            onSearch={setSearchTerm}
-            scores={scores}
-            onScoreChange={handleScoreChange}
-            disabled={
-              !marksReady || studentsLoading || uploadingPaper || saving
-            }
-            loading={studentsLoading}
-          />
-
-          <div className="flex justify-end">
-            <Button onClick={handleSaveMarks} disabled={!marksReady || saving}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save marks
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <SavedMarksList records={records} loading={marksLoading} />
-    </div>
-  );
-}
-
-function ExamPaperUpload({
-  courseId,
-  examTitle,
-  onExamTitleChange,
-  paperUrl,
-  onUploadComplete,
-  uploading,
-  onUploadingChange,
-  examDate,
-  onExamDateChange,
-}: ExamPaperUploadProps) {
-  return (
-    <div className="grid gap-6 md:grid-cols-2 md:items-start">
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="exam-title" className="text-sm font-semibold">
-            Exam title
-          </Label>
-          <Input
-            id="exam-title"
-            value={examTitle}
-            onChange={(event) => onExamTitleChange(event.target.value)}
-            placeholder="e.g., Annual Physical Assessment"
-            className="h-10 md:h-12 text-base"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="exam-date" className="text-sm font-semibold">
-            Exam date
-          </Label>
-          <Input
-            id="exam-date"
-            type="date"
-            value={examDate}
-            onChange={(event) => onExamDateChange(event.target.value)}
-            className="h-10 md:h-12 text-base"
-            required
-          />
-        </div>
-
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/20 border border-border/40">
-          <UploadCloud className="h-5 w-5 text-primary animate-pulse" />
-          <p className="text-xs text-muted-foreground leading-snug">
-            {paperUrl
-              ? "Physical paper has been successfully uploaded and is ready for grading."
-              : "Enter exam title, date and upload the physical exam paper (PDF)"}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Physical Exams</h2>
+          <p className="text-muted-foreground">
+            Manage physical exam papers and student marks for this course.
           </p>
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-sm font-semibold">Upload exam paper</Label>
-        {examTitle.trim() ? (
-          <UploadDropzone
-            endpoint="physicalExamPaper"
-            input={{
-              courseId,
-              examTitle: examTitle.trim(),
-              examDate,
-            }}
-            onUploadBegin={() => {
-              onUploadingChange(true);
-            }}
-            onClientUploadComplete={(res) => {
-              onUploadingChange(false);
-              const result = res?.[0];
-              if (result?.url) {
-                onUploadComplete({ url: result.url });
-                toast.success("Exam paper uploaded and saved.");
-              }
-            }}
-            onUploadError={(error) => {
-              onUploadingChange(false);
-              toast.error(error.message);
-            }}
-            appearance={{
-              container:
-                "border-2 border-dashed border-muted-foreground/30 rounded-lg bg-muted/30 py-8 transition-colors hover:border-primary/50 hover:bg-muted/50",
-              label: "text-sm text-muted-foreground",
-              uploadIcon: "text-primary h-8 w-8",
-              button:
-                "bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 mt-4",
-            }}
-            content={{
-              label({ isUploading }) {
-                if (isUploading) return "Uploading paper...";
-                if (paperUrl) return "Paper uploaded. Click to replace.";
-                return "Drag & drop or click to upload paper";
-              },
-              allowedContent: "PDF (max 64MB)",
-            }}
-            disabled={uploading}
-          />
+        {view === "list" ? (
+          <Button onClick={handleCreateNew}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add New Exam
+          </Button>
         ) : (
-          <div className="flex h-[240px] flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-muted/50 bg-muted/10 p-8 text-center transition-all duration-300">
-            <div className="rounded-full bg-muted/20 p-4">
-              <UploadCloud className="h-10 w-10 text-muted-foreground/40" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">
-                Upload Locked
-              </p>
-              <p className="text-xs text-muted-foreground/70 max-w-[200px] leading-relaxed">
-                Please enter an exam title to enable the upload area
-              </p>
-            </div>
-          </div>
+          <Button variant="ghost" onClick={() => setView("list")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to List
+          </Button>
         )}
       </div>
-    </div>
-  );
-}
 
-function StudentMarks({
-  students,
-  searchTerm,
-  onSearch,
-  scores,
-  onScoreChange,
-  disabled,
-  loading,
-}: StudentMarksProps) {
-  return (
-    <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={searchTerm}
-          onChange={(event) => onSearch(event.target.value)}
-          placeholder="Search students by name or ID"
-          className="pl-9"
-        />
-      </div>
-
-      <div className="space-y-3">
-        {loading ? (
-          <p className="text-sm text-muted-foreground">
-            Loading enrolled students…
-          </p>
-        ) : students.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No enrolled students found for this course.
-          </p>
-        ) : (
-          students.map((student) => (
-            <div
-              key={student.registrationId}
-              className="flex flex-col gap-4 rounded-lg border border-border/60 bg-card/60 p-2 px-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="space-y-1.5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary" className="font-mono text-[11px]">
-                    {student.studentPublicId}
-                  </Badge>
-                  <span className="font-semibold text-foreground text-sm md:text-base">
-                    {student.studentName}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 sm:min-w-[180px] md:min-w-[220px]">
-                <div className="relative flex-1">
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step={0.1}
-                    value={scores[student.registrationId] ?? ""}
-                    onChange={(event) =>
-                      onScoreChange(student.registrationId, event.target.value)
-                    }
-                    placeholder="Score"
-                    className="h-9 md:h-10 pr-8"
-                    disabled={disabled}
-                  />
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
-function SavedMarksList({ records, loading }: SavedMarksListProps) {
-  if (loading) {
-    return (
-      <Card className="border-border/60">
-        <CardHeader>
-          <CardTitle>Saved marks</CardTitle>
-          <CardDescription>
-            Loading previously saved physical exam scores.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Fetching saved grades…
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (records.length === 0) {
-    return (
-      <Card className="border-border/60">
-        <CardHeader>
-          <CardTitle>Saved marks</CardTitle>
-          <CardDescription>
-            Saved grades for physical exams will appear here once added.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">No saved marks yet.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="border-border/60">
-      <CardHeader>
-        <CardTitle>Saved marks</CardTitle>
-        <CardDescription>
-          Recently recorded physical exam scores.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {records.map((record) => (
-          <div
-            key={record.id}
-            className="flex flex-col gap-4 rounded-lg border border-border/70 bg-card/70 p-4 lg:flex-row lg:items-center lg:justify-between"
-          >
-            <div className="space-y-2 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge
-                  variant="secondary"
-                  className="px-2 py-0.5 text-[10px] uppercase tracking-wider"
-                >
-                  {record.examTitle}
-                </Badge>
-                <Badge
+      {view === "list" ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {summaries.length === 0 ? (
+            <Card className="col-span-full border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                <FileText className="h-12 w-12 text-muted-foreground/40 mb-4" />
+                <CardTitle className="text-lg">No Exams Found</CardTitle>
+                <CardDescription>
+                  Start by adding your first physical exam paper.
+                </CardDescription>
+                <Button
                   variant="outline"
-                  className="text-[10px] bg-sky-500/10 text-sky-600 border-sky-500/20"
+                  className="mt-4"
+                  onClick={handleCreateNew}
                 >
-                  {new Date(record.examDate).toLocaleDateString([], {
-                    dateStyle: "medium",
-                  })}
-                </Badge>
-                <Badge variant="outline" className="font-mono text-[10px]">
-                  {record.studentPublicId}
-                </Badge>
-                <span className="font-semibold text-foreground text-sm">
-                  {record.studentName}
-                </span>
-                <Badge
-                  variant={record.score >= 75 ? "default" : "outline"}
-                  className={
-                    record.score >= 75
-                      ? "bg-emerald-500 hover:bg-emerald-600"
-                      : ""
-                  }
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add New Exam
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            summaries.map((summary) => (
+              <Card
+                key={`${summary.examTitle}-${summary.examDate}`}
+                className="overflow-hidden border-border/60 hover:border-primary/50 transition-colors"
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <Badge
+                      variant="outline"
+                      className="bg-sky-500/10 text-sky-600 border-sky-500/20 mb-2"
+                    >
+                      {new Date(summary.examDate).toLocaleDateString([], {
+                        dateStyle: "medium",
+                      })}
+                    </Badge>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary"
+                        onClick={() => handleEdit(summary)}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => handleDelete(summary)}
+                        disabled={isPending}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <CardTitle className="text-lg line-clamp-1">
+                    {summary.examTitle}
+                  </CardTitle>
+                  <CardDescription className="flex items-center gap-2 mt-1">
+                    <Users className="h-3 w-3" />
+                    {summary.studentCount} Students Graded
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
+                    asChild
+                  >
+                    <a
+                      href={summary.paperUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View Paper PDF
+                    </a>
+                  </Button>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      ) : (
+        <Card className="border-border/60">
+          <CardHeader>
+            <CardTitle>
+              {editingExam ? "Edit Physical Exam" : "New Physical Exam"}
+            </CardTitle>
+            <CardDescription>
+              Fill in the details below and upload the exam paper to record
+              student marks.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-6">
+                  <Field>
+                    <FieldLabel htmlFor="examTitle">Exam Title</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        id="examTitle"
+                        placeholder="e.g., Mid-term Physical Assessment"
+                        {...form.register("examTitle")}
+                      />
+                    </FieldContent>
+                    <FieldError errors={[errors.examTitle]} />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="examDate">Exam Date</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        id="examDate"
+                        type="date"
+                        {...form.register("examDate")}
+                      />
+                    </FieldContent>
+                    <FieldError errors={[errors.examDate]} />
+                  </Field>
+
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/20 border border-border/40">
+                    <UploadCloud className="h-5 w-5 text-primary" />
+                    <p className="text-xs text-muted-foreground leading-snug">
+                      {watchPaperUrl
+                        ? "Physical paper has been successfully uploaded and is ready for grading."
+                        : "Enter exam title, date and upload the physical exam paper (PDF)"}
+                    </p>
+                  </div>
+                </div>
+
+                <Field>
+                  <FieldLabel>Upload Exam Paper</FieldLabel>
+                  <FieldContent>
+                    {watchExamTitle.trim() ? (
+                      <UploadDropzone
+                        endpoint="physicalExamPaper"
+                        input={{
+                          courseId,
+                          examTitle: watchExamTitle.trim(),
+                          examDate: form.getValues("examDate"),
+                        }}
+                        onClientUploadComplete={(res) => {
+                          const result = res?.[0];
+                          if (result?.url) {
+                            setValue("paperUrl", result.url);
+                            toast.success("Exam paper uploaded.");
+                          }
+                        }}
+                        onUploadError={(error) => {
+                          toast.error(error.message);
+                        }}
+                        appearance={{
+                          container: cn(
+                            "border-2 border-dashed border-muted-foreground/30 rounded-lg bg-muted/30 py-8 transition-colors hover:border-primary/50 hover:bg-muted/50",
+                            watchPaperUrl && "border-primary/50 bg-primary/5"
+                          ),
+                          label: "text-sm text-muted-foreground",
+                          uploadIcon: "text-primary h-8 w-8",
+                          button:
+                            "bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 mt-4",
+                        }}
+                        content={{
+                          label() {
+                            if (watchPaperUrl)
+                              return "Paper uploaded. Click to replace.";
+                            return "Drag & drop or click to upload paper";
+                          },
+                          allowedContent: "PDF (max 64MB)",
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-[240px] flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-muted/50 bg-muted/10 p-8 text-center transition-all duration-300">
+                        <UploadCloud className="h-10 w-10 text-muted-foreground/40" />
+                        <p className="text-sm font-medium text-muted-foreground">
+                          Upload Locked
+                        </p>
+                        <p className="text-xs text-muted-foreground/70">
+                          Please enter an exam title first
+                        </p>
+                      </div>
+                    )}
+                    <FieldError errors={[errors.paperUrl]} />
+                  </FieldContent>
+                </Field>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">Student Marks</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Enter scores for all eligible students.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-48 sm:w-64">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search students..."
+                        className="pl-9 h-9"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <Badge variant="secondary" className="font-mono">
+                      {filteredStudents.length} / {students.length} Students
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                  {students.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center border rounded-lg border-dashed">
+                      No enrolled students found for this course.
+                    </p>
+                  ) : filteredStudents.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-8 text-center border rounded-lg border-dashed">
+                      No students match your search &quot;{searchQuery}&quot;.
+                    </p>
+                  ) : (
+                    students.map((student, index) => {
+                      const isVisible = filteredStudents.some(
+                        (fs) => fs.registrationId === student.registrationId
+                      );
+
+                      if (!isVisible) return null;
+
+                      return (
+                        <div
+                          key={student.registrationId}
+                          className="flex items-center justify-between gap-4 rounded-lg border border-border/60 bg-card/60 p-3 px-4"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <Badge
+                              variant="secondary"
+                              className="font-mono text-[10px] shrink-0"
+                            >
+                              {student.studentPublicId}
+                            </Badge>
+                            <span className="font-medium truncate">
+                              {student.studentName}
+                            </span>
+                          </div>
+                          <div className="w-32 shrink-0">
+                            <Input
+                              type="number"
+                              min={0}
+                              max={100}
+                              step={0.1}
+                              placeholder="Score"
+                              className="h-9"
+                              {...form.register(`scores.${index}.score`, {
+                                valueAsNumber: true,
+                              })}
+                            />
+                            <input
+                              type="hidden"
+                              {...form.register(
+                                `scores.${index}.studentRegistrationId`
+                              )}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+                <FieldError errors={[errors.scores]} />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setView("list")}
+                  disabled={isPending}
                 >
-                  {record.score}%
-                </Badge>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isPending || !watchPaperUrl}>
+                  {isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {editingExam ? "Update Exam Marks" : "Save Exam Marks"}
+                </Button>
               </div>
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
-                <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                  <span className="font-medium text-foreground/70">
-                    Saved on:
-                  </span>{" "}
-                  {new Date(record.recordedAt).toLocaleString([], {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
-                </p>
-                <p className="text-[11px] text-muted-foreground truncate max-w-[250px] flex items-center gap-1">
-                  <span className="font-medium text-foreground/70">Paper:</span>{" "}
-                  {record.paperUrl}
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Physical Exam</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{examToDelete?.examTitle}
+              &quot;? This will remove all student marks recorded for this exam.
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={isPending}
+            >
+              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Delete Exam
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
