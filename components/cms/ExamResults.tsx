@@ -124,12 +124,11 @@ export function ExamResults({ courseId }: ExamResultsProps) {
   }, [attempts, statusFilter]);
 
   const openGradingDialog = (attempt: ExamAttemptRecord) => {
-    const essays = attempt.answers.filter((a) => a.question.type === "ESSAY");
     const initialState: GradeFormState = {};
-    essays.forEach((essay) => {
-      initialState[essay.id] = {
-        marksAwarded: essay.marksAwarded ?? 0,
-        feedback: essay.feedback ?? "",
+    attempt.answers.forEach((answer) => {
+      initialState[answer.id] = {
+        marksAwarded: answer.marksAwarded ?? 0,
+        feedback: answer.feedback ?? "",
       };
     });
     setGradeForm(initialState);
@@ -153,18 +152,14 @@ export function ExamResults({ courseId }: ExamResultsProps) {
 
   const submitGrades = async () => {
     if (!gradingAttempt) return;
-    const essays = gradingAttempt.answers.filter(
-      (a) => a.question.type === "ESSAY"
-    );
-    if (essays.length === 0) return;
 
     setIsSavingGrade(true);
     try {
       const payload = {
-        essayMarks: essays.map((essay) => ({
-          answerId: essay.id,
-          marksAwarded: gradeForm[essay.id]?.marksAwarded ?? 0,
-          feedback: gradeForm[essay.id]?.feedback ?? "",
+        marks: gradingAttempt.answers.map((answer) => ({
+          answerId: answer.id,
+          marksAwarded: gradeForm[answer.id]?.marksAwarded ?? 0,
+          feedback: gradeForm[answer.id]?.feedback ?? "",
         })),
         gradedById: session?.user?.id,
       };
@@ -179,7 +174,7 @@ export function ExamResults({ courseId }: ExamResultsProps) {
       if (!response.ok)
         throw new Error(data.error ?? "Failed to submit grades");
 
-      toast.success("Essay questions graded");
+      toast.success("Exam grades updated successfully");
       setAttempts((prev) =>
         prev.map((a) => (a.id === gradingAttempt.id ? data.attempt : a))
       );
@@ -334,19 +329,16 @@ export function ExamResults({ courseId }: ExamResultsProps) {
                             : "—"}
                         </TableCell>
                         <TableCell className="text-right">
-                          {essayPending ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openGradingDialog(attempt)}
-                            >
-                              <Pencil className="mr-1 h-4 w-4" /> Grade essays
-                            </Button>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">
-                              No grading required
-                            </span>
-                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openGradingDialog(attempt)}
+                          >
+                            <Pencil className="mr-1 h-4 w-4" />
+                            {attempt.status === "GRADED"
+                              ? "Update Grade"
+                              : "Grade"}
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
@@ -449,21 +441,16 @@ export function ExamResults({ courseId }: ExamResultsProps) {
                       </div>
 
                       <div className="pt-2">
-                        {essayPending ? (
-                          <Button
-                            className="w-full"
-                            variant="default"
-                            onClick={() => openGradingDialog(attempt)}
-                          >
-                            <Pencil className="mr-2 h-4 w-4" /> Grade essays
-                          </Button>
-                        ) : (
-                          <div className="text-center py-2 bg-muted/30 rounded-md">
-                            <span className="text-xs text-muted-foreground">
-                              No grading required
-                            </span>
-                          </div>
-                        )}
+                        <Button
+                          className="w-full"
+                          variant="default"
+                          onClick={() => openGradingDialog(attempt)}
+                        >
+                          <Pencil className="mr-2 h-4 w-4" />
+                          {attempt.status === "GRADED"
+                            ? "Update Grade"
+                            : "Grade Exam"}
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -481,7 +468,11 @@ export function ExamResults({ courseId }: ExamResultsProps) {
         >
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Grade essay responses</DialogTitle>
+              <DialogTitle>
+                {gradingAttempt.status === "GRADED"
+                  ? "Update grade"
+                  : "Grade exam attempt"}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-6">
               <div className="rounded-md border p-4">
@@ -492,62 +483,80 @@ export function ExamResults({ courseId }: ExamResultsProps) {
                 </p>
               </div>
               <div className="space-y-4">
-                {gradingAttempt.answers
-                  .filter((a) => a.question.type === "ESSAY")
-                  .map((a) => (
-                    <div key={a.id} className="space-y-3 rounded-md border p-4">
+                {gradingAttempt.answers.map((a) => (
+                  <div key={a.id} className="space-y-3 rounded-md border p-4">
+                    <div className="flex items-center justify-between">
                       <p className="font-medium">{a.question.questionText}</p>
-                      {a.question.sampleAnswer && (
-                        <details className="mt-2 text-sm text-muted-foreground">
-                          <summary>View sample answer</summary>
-                          <p className="mt-2 whitespace-pre-wrap">
-                            {a.question.sampleAnswer}
-                          </p>
-                        </details>
-                      )}
-                      <div className="space-y-2">
-                        <Label>Student response</Label>
-                        <div className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
-                          {a.answerText || "No response"}
-                        </div>
+                      <Badge variant="outline">{a.question.type}</Badge>
+                    </div>
+
+                    {a.question.type === "MCQ" && (
+                      <div className="space-y-2 text-sm">
+                        <p>
+                          <span className="font-semibold">Selected:</span>{" "}
+                          {a.selectedOption || "None"}
+                        </p>
+                        <p>
+                          <span className="font-semibold text-success">
+                            Correct:
+                          </span>{" "}
+                          {a.question.correctAnswer}
+                        </p>
                       </div>
-                      <div className="grid gap-3 md:grid-cols-[120px,1fr]">
-                        <div>
-                          <Label htmlFor={`${a.id}-marks`}>Marks awarded</Label>
-                          <Input
-                            id={`${a.id}-marks`}
-                            type="number"
-                            min={0}
-                            value={gradeForm[a.id]?.marksAwarded ?? 0}
-                            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                              handleGradeChange(
-                                a.id,
-                                "marksAwarded",
-                                e.target.value
-                              )
-                            }
-                          />
+                    )}
+
+                    {a.question.type === "ESSAY" && (
+                      <>
+                        {a.question.sampleAnswer && (
+                          <details className="mt-2 text-sm text-muted-foreground">
+                            <summary>View sample answer</summary>
+                            <p className="mt-2 whitespace-pre-wrap">
+                              {a.question.sampleAnswer}
+                            </p>
+                          </details>
+                        )}
+                        <div className="space-y-2">
+                          <Label>Student response</Label>
+                          <div className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
+                            {a.answerText || "No response"}
+                          </div>
                         </div>
-                        <div>
-                          <Label htmlFor={`${a.id}-feedback`}>
-                            Feedback (optional)
-                          </Label>
-                          <Textarea
-                            id={`${a.id}-feedback`}
-                            rows={3}
-                            value={gradeForm[a.id]?.feedback ?? ""}
-                            onChange={(e) =>
-                              handleGradeChange(
-                                a.id,
-                                "feedback",
-                                e.target.value
-                              )
-                            }
-                          />
-                        </div>
+                      </>
+                    )}
+
+                    <div className="grid gap-3 md:grid-cols-[120px,1fr]">
+                      <div>
+                        <Label htmlFor={`${a.id}-marks`}>Marks awarded</Label>
+                        <Input
+                          id={`${a.id}-marks`}
+                          type="number"
+                          min={0}
+                          value={gradeForm[a.id]?.marksAwarded ?? 0}
+                          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                            handleGradeChange(
+                              a.id,
+                              "marksAwarded",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`${a.id}-feedback`}>
+                          Feedback (optional)
+                        </Label>
+                        <Textarea
+                          id={`${a.id}-feedback`}
+                          rows={2}
+                          value={gradeForm[a.id]?.feedback ?? ""}
+                          onChange={(e) =>
+                            handleGradeChange(a.id, "feedback", e.target.value)
+                          }
+                        />
                       </div>
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
               <div className="flex justify-end gap-2">
                 <Button

@@ -70,7 +70,7 @@ function EventDetails({
             <User className="h-4 w-4" />
             <div>
               <p className="font-semibold">{teacherName}</p>
-              <p className="text-xs text-muted-foreground">Instructor</p>
+              <p className="text-xs text-muted-foreground">Teacher</p>
             </div>
           </div>
         ) : null}

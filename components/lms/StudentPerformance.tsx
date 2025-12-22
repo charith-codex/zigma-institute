@@ -23,7 +23,7 @@ import { FlowerLoader } from "../ui/flower-loader";
 
 type EnrolledCourse = Course & {
   code: string;
-  instructor: string;
+  teacher: string;
   progress: number;
   status: string;
 };

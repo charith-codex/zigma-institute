@@ -20,7 +20,7 @@ import { CourseEnrollment } from "@/components/lms/CourseEnrollment";
 
 type EnrolledCourse = Course & {
   code: string;
-  instructor: string;
+  teacher: string;
   progress: number;
   status: string;
 };
@@ -54,7 +54,7 @@ const LMS = () => {
         slug: enrollment.courseSlug ?? enrollment.courseId,
         description: "Course description will be available soon.",
         coverImage: "/logo.png",
-        teacherName: enrollment.teacherName ?? "Instructor",
+        teacherName: enrollment.teacherName ?? "Teacher",
         teacherId: null,
         courseCategoryId: "",
         courseCategory: null,
@@ -69,7 +69,7 @@ const LMS = () => {
         code:
           hydratedCourse.slug?.toUpperCase() ??
           hydratedCourse.id.slice(0, 8).toUpperCase(),
-        instructor: hydratedCourse.teacherName ?? "Instructor",
+        teacher: hydratedCourse.teacherName ?? "Teacher",
         progress: 0,
         status: "active",
       };
@@ -100,7 +100,7 @@ const LMS = () => {
         id: course.id,
         name: course.name,
         teacherId: course.teacherId ?? `${course.id}-teacher`,
-        teacherName: course.teacherName ?? "Instructor",
+        teacherName: course.teacherName ?? "Teacher",
       })),
     [enrolledCourses]
   );

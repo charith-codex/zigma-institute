@@ -17,7 +17,7 @@ interface VideoPlayerProps {
   title: string;
   description?: string;
   duration?: string;
-  instructor?: string;
+  teacher?: string;
   classDate?: string;
 }
 
@@ -26,7 +26,7 @@ export const VideoPlayer = ({
   title,
   description,
   duration,
-  instructor,
+  teacher,
   classDate,
 }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -100,9 +100,9 @@ export const VideoPlayer = ({
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-lg">{title}</CardTitle>
-            {instructor && (
+            {teacher && (
               <p className="text-sm text-muted-foreground">
-                Instructor: {instructor}
+                Teacher: {teacher}
               </p>
             )}
           </div>
