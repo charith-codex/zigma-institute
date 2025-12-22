@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { auth } from "@/auth";
 
 import {
   getVideoRecordings,
@@ -11,8 +12,6 @@ const createSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional().nullable(),
   fileUrl: z.string().url("fileUrl must be a valid URL"),
-  uploadedById: z.string().optional().nullable(),
-  courseId: z.string().optional().nullable(),
   lessonId: z.string().min(1, "lessonId is required"),
 });
 
@@ -41,6 +40,11 @@ export async function GET(request: Request) {
 
 export async function POST(req: Request) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const json = await req.json();
     const parsed = createSchema.safeParse(json);
     if (!parsed.success) {
@@ -50,7 +54,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const created = await createVideoRecording(parsed.data);
+    const created = await createVideoRecording({
+      ...parsed.data,
+      uploadedById: session.user.id,
+    });
     return NextResponse.json(created, { status: 201 });
   } catch (error) {
     console.error("Failed to create video recording", error);
