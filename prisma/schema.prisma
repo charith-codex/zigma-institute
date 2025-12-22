@@ -154,7 +154,6 @@ model Course {
   courseCategory CourseCategory @relation(fields: [courseCategoryId], references: [id], onDelete: Restrict)
 
   enrollments            Enrollment[]
-  studyMaterials         StudyMaterial[]
   videoRecordings        VideoRecording[]
   exams                  ExamPaper[]
   lessons                Lesson[]
@@ -231,11 +230,9 @@ model StudyMaterial {
   fileName     String
   fileSize     Int?
   uploadedById String?
-  courseId     String?
   lessonId     String?
 
   uploadedBy User?   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
-  course     Course? @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lesson     Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
