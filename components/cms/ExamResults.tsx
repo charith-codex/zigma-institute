@@ -55,6 +55,7 @@ type ExamAttemptRecord = {
   id: string;
   examId: string;
   studentId: string;
+  studentPublicId?: string | null;
   studentName?: string | null;
   status: "IN_PROGRESS" | "SUBMITTED" | "GRADED";
   score?: number | null;
@@ -299,7 +300,7 @@ export function ExamResults({ courseId }: ExamResultsProps) {
                               {attempt.studentName || attempt.studentId}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              {attempt.studentId}
+                              {attempt.studentPublicId || attempt.studentId}
                             </span>
                           </div>
                         </TableCell>
@@ -383,7 +384,7 @@ export function ExamResults({ courseId }: ExamResultsProps) {
                             {attempt.studentName || attempt.studentId}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            ID: {attempt.studentId}
+                            ID: {attempt.studentPublicId || attempt.studentId}
                           </p>
                         </div>
                         {renderStatusBadge(attempt.status)}

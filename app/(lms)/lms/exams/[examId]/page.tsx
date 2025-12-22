@@ -173,9 +173,29 @@ export default function ExamAttemptPage() {
   }, [examId, router]);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      setStudentId(session.user.id);
+    async function fetchPublicId() {
+      if (session?.user?.id) {
+        // Fetch public ID from a new small internal API or action if possible?
+        // For simplicity, let's just fetch from student profile if available
+        // But the user said "dont need to change sessions".
+        // We can fetch it locally in this component.
+        try {
+          const response = await fetch(`/api/students/${session.user.id}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.student?.studentPublicId) {
+              setStudentId(data.student.studentPublicId);
+              return;
+            }
+          }
+        } catch (e) {
+          console.error("Failed to fetch public ID", e);
+        }
+        setStudentId(session.user.id);
+      }
     }
+
+    fetchPublicId();
 
     if (session?.user?.name) {
       setStudentName(session.user.name);
@@ -308,15 +328,7 @@ export default function ExamAttemptPage() {
         setSubmitting(false);
       }
     },
-    [
-      answers,
-      exam,
-      examId,
-      result,
-      studentId,
-      studentName,
-      submitting,
-    ]
+    [answers, exam, examId, result, studentId, studentName, submitting]
   );
 
   useEffect(() => {
@@ -443,8 +455,8 @@ export default function ExamAttemptPage() {
                 </p>
                 <p className="text-2xl font-semibold text-primary">
                   {exam.timeLimitMinutes
-                    ? formattedRemaining ??
-                      formatDuration(exam.timeLimitMinutes * 60)
+                    ? (formattedRemaining ??
+                      formatDuration(exam.timeLimitMinutes * 60))
                     : formattedElapsed}
                 </p>
                 {exam.timeLimitMinutes ? (
@@ -666,11 +678,7 @@ export default function ExamAttemptPage() {
                             onClick={() => handleSubmit()}
                             disabled={submitting}
                           >
-                            {submitting ? (
-                              "Submitting exam..."
-                            ) : (
-                              "Submit exam"
-                            )}
+                            {submitting ? "Submitting exam..." : "Submit exam"}
                           </Button>
                         ) : null}
                       </div>
