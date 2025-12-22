@@ -16,9 +16,16 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { ChevronRight, RefreshCw, Save, Upload, Wand2 } from "lucide-react";
-import { FlowerLoader } from "../ui/flower-loader";
+import {
+  ChevronRight,
+  Loader2,
+  RefreshCw,
+  Save,
+  Upload,
+  Wand2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLessons } from "@/hooks/useData";
 
 const difficultyOptions = [
   { value: "EASY", label: "Easy" },
@@ -102,18 +109,19 @@ const normalizeOptions = (value: StoredQuestion["options"]): string[] => {
 };
 
 export interface QuestionCreationProps {
+  courseId?: string;
   initialView?: "creation" | "bank";
 }
 
 export function QuestionCreation({
+  courseId,
   initialView = "creation",
 }: QuestionCreationProps) {
+  const { lessons, loading: lessonsLoading } = useLessons(courseId);
   const [manualForm, setManualForm] = useState<ManualFormState>(() => ({
     lessonTitle: "",
     question: createEmptyQuestion("MCQ"),
   }));
-  const [manualDifficulty, setManualDifficulty] =
-    useState<Difficulty>("MEDIUM");
   const [savingManual, setSavingManual] = useState(false);
 
   const [aiForm, setAiForm] = useState<AiFormState>({
@@ -289,7 +297,7 @@ export function QuestionCreation({
     try {
       const payload = {
         lessonTitle: manualForm.lessonTitle.trim(),
-        difficulty: manualDifficulty,
+        difficulty: manualForm.question.difficulty,
         questions: [
           {
             type: manualForm.question.type,
@@ -523,38 +531,32 @@ export function QuestionCreation({
 
               <TabsContent value="manual" className="mt-6">
                 <form onSubmit={handleManualSubmit} className="space-y-6">
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4 md:grid-cols-1">
                     <div className="space-y-2">
                       <Label htmlFor="manual-lesson">Lesson title</Label>
-                      <Input
-                        id="manual-lesson"
-                        placeholder="e.g. Introduction to React"
+                      <Select
                         value={manualForm.lessonTitle}
-                        onChange={(event) =>
+                        onValueChange={(value) =>
                           setManualForm((prev) => ({
                             ...prev,
-                            lessonTitle: event.target.value,
+                            lessonTitle: value,
                           }))
                         }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="manual-difficulty">Difficulty</Label>
-                      <Select
-                        value={manualDifficulty}
-                        onValueChange={(value: Difficulty) =>
-                          setManualDifficulty(value)
-                        }
                       >
-                        <SelectTrigger id="manual-difficulty">
-                          <SelectValue placeholder="Select difficulty" />
+                        <SelectTrigger id="manual-lesson">
+                          <SelectValue placeholder="Select a lesson" />
                         </SelectTrigger>
                         <SelectContent>
-                          {difficultyOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
+                          {lessons.map((lesson) => (
+                            <SelectItem key={lesson.id} value={lesson.title}>
+                              {lesson.title}
                             </SelectItem>
                           ))}
+                          {lessons.length === 0 && !lessonsLoading && (
+                            <div className="p-2 text-center text-sm text-muted-foreground">
+                              No lessons found.
+                            </div>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -738,12 +740,7 @@ export function QuestionCreation({
                     disabled={savingManual}
                   >
                     {savingManual ? (
-                      <div className="text-center">
-                        <FlowerLoader
-                          size="md"
-                          className="text-[#A41FC5] mx-auto"
-                        />
-                      </div>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
                       <Save className="h-4 w-4" />
                     )}
@@ -757,17 +754,31 @@ export function QuestionCreation({
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="ai-lesson">Lesson title</Label>
-                      <Input
-                        id="ai-lesson"
-                        placeholder="e.g. Advanced Algorithms"
+                      <Select
                         value={aiForm.lessonTitle}
-                        onChange={(event) =>
+                        onValueChange={(value) =>
                           setAiForm((prev) => ({
                             ...prev,
-                            lessonTitle: event.target.value,
+                            lessonTitle: value,
                           }))
                         }
-                      />
+                      >
+                        <SelectTrigger id="ai-lesson">
+                          <SelectValue placeholder="Select a lesson" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {lessons.map((lesson) => (
+                            <SelectItem key={lesson.id} value={lesson.title}>
+                              {lesson.title}
+                            </SelectItem>
+                          ))}
+                          {lessons.length === 0 && !lessonsLoading && (
+                            <div className="p-2 text-center text-sm text-muted-foreground">
+                              No lessons found.
+                            </div>
+                          )}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="ai-difficulty">Target difficulty</Label>
@@ -852,12 +863,7 @@ export function QuestionCreation({
                     disabled={isGenerating}
                   >
                     {isGenerating ? (
-                      <div className="text-center">
-                        <FlowerLoader
-                          size="md"
-                          className="text-[#A41FC5] mx-auto"
-                        />
-                      </div>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
                       <Wand2 className="h-4 w-4" />
                     )}
@@ -1037,12 +1043,7 @@ export function QuestionCreation({
                 disabled={questionLoading}
               >
                 {questionLoading ? (
-                  <div className="text-center">
-                    <FlowerLoader
-                      size="md"
-                      className="text-[#A41FC5] mx-auto"
-                    />
-                  </div>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <RefreshCw className="h-4 w-4" />
                 )}

@@ -414,10 +414,10 @@ export function CourseContentManager({
 
       case "questions":
       case "question-creation":
-        return <QuestionCreation initialView="creation" />;
+        return <QuestionCreation courseId={courseId} initialView="creation" />;
 
       case "question-bank":
-        return <QuestionCreation initialView="bank" />;
+        return <QuestionCreation courseId={courseId} initialView="bank" />;
 
       case "exams":
         return <ExamBuilder courseId={courseId} />;
