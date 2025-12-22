@@ -48,6 +48,7 @@ import { LessonForm } from "./LessonForm";
 import { deleteLesson } from "@/lib/actions/lesson";
 import { EnrolledStudents } from "./EnrolledStudents";
 import { LessonNavigation } from "../lms/LessonNavigation";
+import { CourseAnalytics } from "./CourseAnalytics";
 
 export const courseNavigationItems = [
   { id: "lessons", label: "Lessons", icon: BookOpen },
@@ -416,21 +417,7 @@ export function CourseContentManager({
         return <PhysicalExamUploader courseId={courseId} />;
 
       case "analytics":
-        return (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Analytics</h3>
-            </div>
-            <div className="text-center py-12">
-              <BarChart3 className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h4 className="text-lg font-semibold mb-2">Course Analytics</h4>
-              <p className="text-muted-foreground">
-                View detailed analytics and insights about your class
-                performance.
-              </p>
-            </div>
-          </div>
-        );
+        return <CourseAnalytics courseId={courseId} />;
 
       default:
         return null;
