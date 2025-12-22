@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 
 export async function GET(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     const session = await auth();
@@ -12,7 +12,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { userId } = params;
+    const { userId } = await params;
 
     // Only allow students to fetch their own ID, or teachers/admins to fetch any?
     // For now, let's keep it simple: any authenticated user
