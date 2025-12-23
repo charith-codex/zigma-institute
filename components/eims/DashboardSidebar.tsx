@@ -80,6 +80,11 @@ const baseMenuEntries: MenuEntry[] = [
         label: "Material Distribution",
         icon: FileText,
       },
+      {
+        id: "course-access",
+        label: "Course Access Control",
+        icon: UserCog,
+      },
     ],
   },
   {
@@ -117,9 +122,7 @@ const baseMenuEntries: MenuEntry[] = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
-export const getMenuEntriesForRole = (
-  role?: string | null
-): MenuEntry[] => {
+export const getMenuEntriesForRole = (role?: string | null): MenuEntry[] => {
   const isAdmin = role === "ADMIN";
   const isManager = role === "MANAGER";
 
