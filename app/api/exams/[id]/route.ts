@@ -63,9 +63,12 @@ export async function PATCH(
       return NextResponse.json({ error: "Exam not found" }, { status: 404 });
     }
 
-    const nextStatus = data.publish
-      ? "PUBLISHED"
-      : (data.status ?? exam.status);
+    const nextStatus =
+      data.publish === true
+        ? "PUBLISHED"
+        : data.publish === false
+          ? "DRAFT"
+          : (data.status ?? exam.status);
 
     const updated = await prisma.examPaper.update({
       where: { id },
@@ -76,8 +79,16 @@ export async function PATCH(
           data.timeLimitMinutes === undefined
             ? exam.timeLimitMinutes
             : data.timeLimitMinutes,
-        status: nextStatus,
-        publishedAt: nextStatus === "PUBLISHED" ? new Date() : exam.publishedAt,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        status: nextStatus as any,
+        publishedAt:
+          nextStatus === "PUBLISHED"
+            ? exam.status === "PUBLISHED"
+              ? exam.publishedAt
+              : new Date()
+            : nextStatus === "DRAFT"
+              ? null
+              : exam.publishedAt,
       },
       include: {
         questions: {
@@ -99,6 +110,45 @@ export async function PATCH(
     console.error("Failed to update exam", error);
     return NextResponse.json(
       { error: "Unable to update exam. Please try again later." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params;
+
+    // Check if exam exists
+    const exam = await prisma.examPaper.findUnique({
+      where: { id },
+    });
+
+    if (!exam) {
+      return NextResponse.json({ error: "Exam not found" }, { status: 404 });
+    }
+
+    // Delete questions first (though prisma might handle this if cascade is set,
+    // but explicit is safer or required if not set)
+    await prisma.examQuestion.deleteMany({
+      where: { examId: id },
+    });
+
+    await prisma.examPaper.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Exam deleted successfully",
+    });
+  } catch (error) {
+    console.error("Failed to delete exam", error);
+    return NextResponse.json(
+      { error: "Unable to delete exam. Please try again later." },
       { status: 500 }
     );
   }
