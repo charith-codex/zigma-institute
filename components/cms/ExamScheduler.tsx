@@ -161,8 +161,7 @@ export function ExamScheduler({ courseId }: { courseId: string }) {
                   No active or upcoming exams
                 </h3>
                 <p className="text-sm text-muted-foreground max-w-sm mt-2">
-                  Create an exam paper in the "Paper Creation" section to start
-                  a session.
+                  Create an exam paper to start a session.
                 </p>
               </CardContent>
             </Card>
