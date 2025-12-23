@@ -4,8 +4,9 @@ import { prisma } from "@/db/prisma";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { enrollmentId: string } }
+  { params }: { params: Promise<{ enrollmentId: string }> }
 ) {
+  const { enrollmentId } = await params;
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -34,7 +35,7 @@ export async function PATCH(
     }
 
     const updatedEnrollment = await prisma.enrollment.update({
-      where: { id: params.enrollmentId },
+      where: { id: enrollmentId },
       data: { isActive },
     });
 
