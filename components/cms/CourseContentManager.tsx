@@ -16,6 +16,7 @@ import {
   HeartPulse,
   Pencil,
   Trash2,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { QuestionCreation } from "./QuestionCreation";
@@ -535,9 +536,7 @@ export function CourseContentManager({
               disabled={deletingLesson}
             >
               {deletingLesson && (
-                <div className="text-center">
-                  <FlowerLoader size="lg" className="text-[#A41FC5] mx-auto" />
-                </div>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
               Delete Lesson
             </Button>
