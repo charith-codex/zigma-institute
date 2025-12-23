@@ -378,13 +378,41 @@ export default function ExamAttemptPage() {
 
   if (loading || !exam) {
     return (
-      <div className="text-center">
+      <div className="flex min-h-screen items-center justify-center">
         <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
       </div>
     );
   }
 
+  if (!exam.questions || exam.questions.length === 0) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4 text-center">
+        <Card className="max-w-md p-8 rounded-3xl border border-muted/50 bg-background shadow-lg">
+          <div className="mb-4 flex justify-center">
+            <div className="rounded-full bg-primary/10 p-4 font-bold">?</div>
+          </div>
+          <h2 className="text-2xl font-semibold mb-2">No Questions Found</h2>
+          <p className="text-muted-foreground mb-6">
+            This exam doesn&apos;t have any questions yet. Please check back
+            later.
+          </p>
+          <Button asChild className="rounded-full px-8">
+            <Link href="/lms">Back to LMS</Link>
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   const currentEntry = exam.questions[currentQuestionIndex];
+  if (!currentEntry) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p>Question not found.</p>
+      </div>
+    );
+  }
+
   const currentQuestion = currentEntry.question;
   const currentOptions = parseOptions(currentQuestion.options);
   const evaluationMap = new Map(
