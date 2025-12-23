@@ -25,6 +25,9 @@ export async function GET(request: Request) {
             question: true,
           },
         },
+        _count: {
+          select: { attempts: true },
+        },
       },
       orderBy: { createdAt: "desc" },
     });

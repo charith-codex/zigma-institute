@@ -208,7 +208,7 @@ export function ExamResults({ courseId }: ExamResultsProps) {
         <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle className="text-2xl font-semibold">
-              Exam attempts
+              Online Exam Grading
             </CardTitle>
             <p className="text-sm text-muted-foreground">
               Review submissions and grade essay questions manually.
