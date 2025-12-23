@@ -30,6 +30,7 @@ export async function GET(request: Request) {
         enrollments: {
           some: {
             studentId: session.user.id,
+            isActive: true,
           },
         },
       };

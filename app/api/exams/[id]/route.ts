@@ -3,12 +3,22 @@ import { z } from "zod";
 import { prisma } from "@/db/prisma";
 import { updateExamSchema } from "@/lib/validators";
 
+import { auth } from "@/auth";
+
 export async function GET(
   _request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await context.params;
+    const { role, id: userId } = session.user;
+    const isStudent = role === "STUDENT";
 
     const exam = await prisma.examPaper.findUnique({
       where: { id },
@@ -21,6 +31,14 @@ export async function GET(
           select: {
             name: true,
             teacherName: true,
+            enrollments: isStudent
+              ? {
+                  where: {
+                    studentId: userId,
+                    isActive: true,
+                  },
+                }
+              : false,
           },
         },
         createdBy: {
@@ -30,6 +48,18 @@ export async function GET(
         },
       },
     });
+
+    if (!exam) {
+      return NextResponse.json({ error: "Exam not found" }, { status: 404 });
+    }
+
+    if (
+      isStudent &&
+      exam.course &&
+      (!exam.course.enrollments || exam.course.enrollments.length === 0)
+    ) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
 
     if (!exam) {
       return NextResponse.json({ error: "Exam not found" }, { status: 404 });

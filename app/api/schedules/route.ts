@@ -4,6 +4,7 @@ import { ZodError } from "zod";
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "@/lib/utils";
 import { scheduleSchema } from "@/lib/validators";
+import { auth } from "@/auth";
 
 function toDateOnly(value: string): Date {
   return new Date(`${value}T00:00:00.000Z`);
@@ -11,7 +12,31 @@ function toDateOnly(value: string): Date {
 
 export async function GET() {
   try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { role, id: userId } = session.user;
+    const isAdmin = role === "ADMIN" || role === "MANAGER";
+    const isStudent = role === "STUDENT";
+
+    const where: any = {};
+
+    if (isStudent) {
+      where.course = {
+        enrollments: {
+          some: {
+            studentId: userId,
+            isActive: true,
+          },
+        },
+      };
+    }
+
     const schedules = await prisma.schedule.findMany({
+      where,
       include: {
         course: { select: { name: true, teacherName: true } },
       },

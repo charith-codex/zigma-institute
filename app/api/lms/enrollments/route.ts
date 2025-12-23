@@ -53,7 +53,7 @@ export async function GET() {
   }
 
   const enrollments = await prisma.enrollment.findMany({
-    where: isAdmin ? undefined : { studentId: session.user.id },
+    where: isAdmin ? undefined : { studentId: session.user.id, isActive: true },
     include: {
       course: true,
       student: {
