@@ -33,6 +33,7 @@ import { ShowcaseManagement } from "./ShowcaseManagement";
 import { StudentManagement } from "./manage-users/StudentManagement";
 import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleManager";
 import { CourseCategoryManagement } from "./CourseCategoryManagement";
+import { CourseAccessControl } from "./CourseAccessControl";
 
 interface DashboardContentProps {
   activeModule: string;
@@ -300,6 +301,8 @@ export function DashboardContent({
         );
       case "material-distribution":
         return <PhysicalMaterialDistribution />;
+      case "course-access":
+        return <CourseAccessControl />;
       case "showcase-management":
         return <ShowcaseManagement />;
       case "notifications":

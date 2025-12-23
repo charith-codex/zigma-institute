@@ -3,20 +3,46 @@ import { z } from "zod";
 import { prisma } from "@/db/prisma";
 import { createExamSchema } from "@/lib/validators";
 
+import { auth } from "@/auth";
+
 export async function GET(request: Request) {
   try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
     const courseId = searchParams.get("courseId");
 
+    const isAdmin =
+      session.user.role === "ADMIN" || session.user.role === "MANAGER";
+    const isStudent = session.user.role === "STUDENT";
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {
+      status:
+        status === "DRAFT" || status === "PUBLISHED" || status === "CLOSED"
+          ? status
+          : undefined,
+      courseId: courseId ?? undefined,
+    };
+
+    if (isStudent) {
+      where.course = {
+        enrollments: {
+          some: {
+            studentId: session.user.id,
+            isActive: true,
+          },
+        },
+      };
+    }
+
     const exams = await prisma.examPaper.findMany({
-      where: {
-        status:
-          status === "DRAFT" || status === "PUBLISHED" || status === "CLOSED"
-            ? status
-            : undefined,
-        courseId: courseId ?? undefined,
-      },
+      where,
       include: {
         course: { select: { name: true } },
         questions: {

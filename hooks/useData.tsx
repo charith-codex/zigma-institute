@@ -39,12 +39,22 @@ export interface LessonSummary {
 export interface StudentEnrollment {
   id: string;
   courseId: string;
+  studentId: string;
   courseName: string;
   courseSlug: string | null;
   enrolledAt: string;
+  isActive: boolean;
   priceInCents: number;
   currency: string;
   teacherName: string | null;
+  student:
+    | {
+        userId: string;
+        studentPublicId: string | null;
+        name: string;
+        email: string;
+      }
+    | undefined;
 }
 
 export interface StudyMaterialSummary {
@@ -644,6 +654,8 @@ export function useEnrollments() {
               return {
                 id: typeof entry.id === "string" ? entry.id : courseId,
                 courseId,
+                studentId:
+                  typeof entry.studentId === "string" ? entry.studentId : "",
                 courseName,
                 courseSlug:
                   typeof course?.slug === "string"
@@ -654,6 +666,8 @@ export function useEnrollments() {
                   "string"
                     ? ((entry as { enrolledAt: string }).enrolledAt as string)
                     : new Date().toISOString(),
+                isActive:
+                  typeof entry.isActive === "boolean" ? entry.isActive : true,
                 priceInCents:
                   typeof course?.priceInCents === "number"
                     ? (course.priceInCents as number)
@@ -666,6 +680,14 @@ export function useEnrollments() {
                   typeof course?.teacherName === "string"
                     ? (course.teacherName as string)
                     : null,
+                student: entry.student
+                  ? {
+                      userId: entry.student.userId,
+                      studentPublicId: entry.student.studentPublicId,
+                      name: entry.student.user.name,
+                      email: entry.student.user.email,
+                    }
+                  : undefined,
               } satisfies StudentEnrollment;
             })
             .filter((entry): entry is StudentEnrollment => entry !== null)

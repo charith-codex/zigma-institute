@@ -72,8 +72,13 @@ const baseMenuEntries: MenuEntry[] = [
     label: "Course Operations",
     icon: BookOpen,
     items: [
-      { id: "classes", label: "Courses", icon: BookOpen },
       { id: "course-categories", label: "Categories", icon: Tag },
+      { id: "classes", label: "Courses", icon: BookOpen },
+      {
+        id: "course-access",
+        label: "Course Access",
+        icon: UserCog,
+      },
       { id: "scheduling", label: "Scheduling", icon: Calendar },
       {
         id: "material-distribution",
@@ -117,9 +122,7 @@ const baseMenuEntries: MenuEntry[] = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
-export const getMenuEntriesForRole = (
-  role?: string | null
-): MenuEntry[] => {
+export const getMenuEntriesForRole = (role?: string | null): MenuEntry[] => {
   const isAdmin = role === "ADMIN";
   const isManager = role === "MANAGER";
 

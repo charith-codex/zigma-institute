@@ -8,6 +8,7 @@ interface EnrollmentPayload {
   id: string;
   courseId: string;
   enrolledAt: Date;
+  isActive: boolean;
   course: {
     id: string;
     name: string;
@@ -19,6 +20,14 @@ interface EnrollmentPayload {
     currency: string;
     createdAt: Date;
     updatedAt: Date;
+  };
+  student?: {
+    userId: string;
+    studentPublicId: string | null;
+    user: {
+      name: string;
+      email: string;
+    };
   };
 }
 
@@ -44,8 +53,15 @@ export async function GET() {
   }
 
   const enrollments = await prisma.enrollment.findMany({
-    where: isAdmin ? undefined : { studentId: session.user.id },
-    include: { course: true },
+    where: isAdmin ? undefined : { studentId: session.user.id, isActive: true },
+    include: {
+      course: true,
+      student: {
+        include: {
+          user: true,
+        },
+      },
+    },
     orderBy: { enrolledAt: "desc" },
   });
 
@@ -73,6 +89,17 @@ export async function GET() {
           createdAt: course.createdAt,
           updatedAt: course.updatedAt,
         },
+        isActive: enrollment.isActive,
+        student: enrollment.student
+          ? {
+              userId: enrollment.student.userId,
+              studentPublicId: enrollment.student.studentPublicId,
+              user: {
+                name: enrollment.student.user.name,
+                email: enrollment.student.user.email,
+              },
+            }
+          : undefined,
       });
 
       return accumulator;
@@ -178,6 +205,7 @@ export async function POST(request: Request) {
       createdAt: enrollment.course.createdAt,
       updatedAt: enrollment.course.updatedAt,
     },
+    isActive: enrollment.isActive,
   };
 
   return NextResponse.json(convertToPlainObject(payload), { status: 201 });
