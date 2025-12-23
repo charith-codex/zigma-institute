@@ -7,9 +7,11 @@ const generateSchema = z.object({
   lessonId: z.string("Lesson ID is required"),
   lessonTitle: z.string().min(1, "Lesson title is required"),
   difficulty: z.enum(["EASY", "MEDIUM", "HARD"]).default("MEDIUM"),
-  mcqCount: z.coerce.number().int().min(0),
-  essayCount: z.coerce.number().int().min(0),
+  mcqCount: z.coerce.number().int().min(0).max(10),
+  essayCount: z.coerce.number().int().min(0).max(10),
   createdById: z.string().optional(),
+  materialId: z.string("Study material ID is required"),
+  customPrompt: z.string().max(50).optional(),
 });
 
 const JSON_FENCE = /```json([\s\S]*?)```/i;
@@ -17,18 +19,11 @@ const JSON_FENCE = /```json([\s\S]*?)```/i;
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
-    const pdf = formData.get("lessonPdf");
+    const materialId = formData.get("materialId") as string;
 
-    if (!pdf || !(pdf instanceof File)) {
+    if (!materialId) {
       return NextResponse.json(
-        { error: "A lesson PDF file is required" },
-        { status: 400 }
-      );
-    }
-
-    if (pdf.type !== "application/pdf") {
-      return NextResponse.json(
-        { error: "Only PDF lesson files are supported" },
+        { error: "Study material selection is required" },
         { status: 400 }
       );
     }
@@ -40,6 +35,8 @@ export async function POST(request: Request) {
       mcqCount: formData.get("mcqCount"),
       essayCount: formData.get("essayCount"),
       createdById: formData.get("createdById") ?? undefined,
+      materialId: formData.get("materialId"),
+      customPrompt: formData.get("customPrompt") ?? undefined,
     });
 
     if (parsed.mcqCount === 0 && parsed.essayCount === 0) {
@@ -49,7 +46,28 @@ export async function POST(request: Request) {
       );
     }
 
-    const fileBuffer = Buffer.from(await pdf.arrayBuffer());
+    const { prisma } = await import("@/db/prisma");
+    const material = await prisma.studyMaterial.findUnique({
+      where: { id: parsed.materialId },
+    });
+
+    if (!material) {
+      return NextResponse.json(
+        { error: "Study material not found" },
+        { status: 404 }
+      );
+    }
+
+    // Fetch PDF content from URL
+    const pdfResponse = await fetch(material.fileUrl);
+    if (!pdfResponse.ok) {
+      return NextResponse.json(
+        { error: "Failed to download study material PDF" },
+        { status: 500 }
+      );
+    }
+
+    const fileBuffer = Buffer.from(await pdfResponse.arrayBuffer());
     const base64Pdf = fileBuffer.toString("base64");
 
     const systemPrompt = `You are an expert assessment designer. Read the provided lesson carefully and craft challenging questions. Always answer with valid JSON only.`;
@@ -58,6 +76,7 @@ export async function POST(request: Request) {
 Difficulty: ${parsed.difficulty}
 Multiple Choice Questions Requested: ${parsed.mcqCount}
 Essay Questions Requested: ${parsed.essayCount}
+${parsed.customPrompt ? `Custom Instructions: ${parsed.customPrompt}` : ""}
 
 The lesson content is provided below as a base64-encoded PDF file. Decode it to understand the lesson before creating questions.
 
@@ -135,7 +154,7 @@ Ensure the number of MCQ and essay questions matches the counts requested. Expla
       lessonId: parsed.lessonId,
       lessonTitle: parsed.lessonTitle,
       difficulty: parsed.difficulty,
-      sourceFileName: pdf.name,
+      sourceFileName: material.title,
       createdById: parsed.createdById,
       questions: [
         ...structured.mcq.map((question) => ({

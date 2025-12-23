@@ -26,7 +26,7 @@ import {
   Wand2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useLessons } from "@/hooks/useData";
+import { useLessons, useStudyMaterials } from "@/hooks/useData";
 
 const difficultyOptions = [
   { value: "EASY", label: "Easy" },
@@ -75,7 +75,8 @@ type AiFormState = {
   difficulty: Difficulty;
   mcqCount: number;
   essayCount: number;
-  file: File | null;
+  studyMaterialId: string;
+  customPrompt: string;
 };
 
 const createEmptyQuestion = (type: QuestionType): DraftQuestion => ({
@@ -131,8 +132,14 @@ export function QuestionCreation({
     difficulty: "MEDIUM",
     mcqCount: 3,
     essayCount: 1,
-    file: null,
+    studyMaterialId: "",
+    customPrompt: "",
   });
+  const {
+    materials: studyMaterials,
+    loading: materialsLoading,
+    error: materialsError,
+  } = useStudyMaterials(aiForm.lessonId);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedQuestions, setGeneratedQuestions] = useState<
     GeneratedQuestion[]
@@ -370,8 +377,8 @@ export function QuestionCreation({
       return;
     }
 
-    if (!aiForm.file) {
-      toast.error("Upload a lesson PDF to generate questions");
+    if (!aiForm.studyMaterialId) {
+      toast.error("Select a lesson related PDF from study materials");
       return;
     }
 
@@ -380,10 +387,25 @@ export function QuestionCreation({
       return;
     }
 
+    if (aiForm.mcqCount > 10 || aiForm.essayCount > 10) {
+      toast.error(
+        "Maximum 10 questions of each type can be generated at a time"
+      );
+      return;
+    }
+
+    if (aiForm.customPrompt.length > 50) {
+      toast.error("Custom prompt must be 50 characters or less");
+      return;
+    }
+
     setIsGenerating(true);
 
     try {
       const selectedLesson = lessons.find((l) => l.id === aiForm.lessonId);
+      const selectedMaterial = studyMaterials.find(
+        (m) => m.id === aiForm.studyMaterialId
+      );
       const formData = new FormData();
       formData.append("lessonId", aiForm.lessonId);
       formData.append("lessonTitle", selectedLesson?.title ?? "");
@@ -391,7 +413,8 @@ export function QuestionCreation({
       formData.append("difficulty", aiForm.difficulty);
       formData.append("mcqCount", aiForm.mcqCount.toString());
       formData.append("essayCount", aiForm.essayCount.toString());
-      formData.append("lessonPdf", aiForm.file);
+      formData.append("materialId", aiForm.studyMaterialId);
+      formData.append("customPrompt", aiForm.customPrompt);
 
       const response = await fetch("/api/questions/generate", {
         method: "POST",
@@ -776,6 +799,7 @@ export function QuestionCreation({
                           setAiForm((prev) => ({
                             ...prev,
                             lessonId: value,
+                            studyMaterialId: "", // Reset selection on lesson change
                           }))
                         }
                       >
@@ -820,18 +844,19 @@ export function QuestionCreation({
 
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="space-y-2">
-                      <Label htmlFor="ai-mcq">Number of MCQs</Label>
+                      <Label htmlFor="ai-mcq">Number of MCQs (Max 10)</Label>
                       <Input
                         id="ai-mcq"
                         type="number"
                         min={0}
+                        max={10}
                         value={aiForm.mcqCount}
                         onChange={(event) =>
                           setAiForm((prev) => ({
                             ...prev,
-                            mcqCount: Number.parseInt(
-                              event.target.value || "0",
-                              10
+                            mcqCount: Math.min(
+                              10,
+                              Number.parseInt(event.target.value || "0", 10)
                             ),
                           }))
                         }
@@ -839,38 +864,116 @@ export function QuestionCreation({
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="ai-essay">
-                        Number of essay questions
+                        Number of essay questions (Max 10)
                       </Label>
                       <Input
                         id="ai-essay"
                         type="number"
                         min={0}
+                        max={10}
                         value={aiForm.essayCount}
                         onChange={(event) =>
                           setAiForm((prev) => ({
                             ...prev,
-                            essayCount: Number.parseInt(
-                              event.target.value || "0",
-                              10
+                            essayCount: Math.min(
+                              10,
+                              Number.parseInt(event.target.value || "0", 10)
                             ),
                           }))
                         }
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="ai-file">Upload lesson PDF</Label>
-                      <Input
-                        id="ai-file"
-                        type="file"
-                        accept="application/pdf"
-                        onChange={(event) =>
+                      <Label htmlFor="ai-material">Select Study Material</Label>
+                      <Select
+                        value={aiForm.studyMaterialId}
+                        onValueChange={(value) =>
                           setAiForm((prev) => ({
                             ...prev,
-                            file: event.target.files?.[0] ?? null,
+                            studyMaterialId: value,
                           }))
                         }
-                      />
+                        disabled={!aiForm.lessonId || materialsLoading}
+                      >
+                        <SelectTrigger id="ai-material">
+                          <SelectValue
+                            placeholder={
+                              materialsLoading
+                                ? "Loading..."
+                                : materialsError
+                                  ? "Error loading"
+                                  : aiForm.lessonId
+                                    ? "Select a PDF"
+                                    : "Select lesson first"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {studyMaterials
+                            .filter((m) => {
+                              const urlPart = m.fileUrl
+                                .toLowerCase()
+                                .split("?")[0];
+                              const namePart = (m.fileName || "").toLowerCase();
+                              return (
+                                urlPart.endsWith(".pdf") ||
+                                namePart.endsWith(".pdf") ||
+                                m.title.toLowerCase().includes(".pdf")
+                              );
+                            })
+                            .map((material) => (
+                              <SelectItem key={material.id} value={material.id}>
+                                {material.title}
+                              </SelectItem>
+                            ))}
+                          {studyMaterials.filter((m) => {
+                            const urlPart = m.fileUrl
+                              .toLowerCase()
+                              .split("?")[0];
+                            const namePart = (m.fileName || "").toLowerCase();
+                            return (
+                              urlPart.endsWith(".pdf") ||
+                              namePart.endsWith(".pdf") ||
+                              m.title.toLowerCase().includes(".pdf")
+                            );
+                          }).length === 0 &&
+                            !materialsLoading &&
+                            aiForm.lessonId && (
+                              <div className="p-2 text-center text-sm text-muted-foreground">
+                                No PDF materials found for this lesson.
+                              </div>
+                            )}
+                          {!aiForm.lessonId && (
+                            <div className="p-2 text-center text-sm text-muted-foreground">
+                              Please select a lesson first.
+                            </div>
+                          )}
+                        </SelectContent>
+                      </Select>
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Label htmlFor="ai-prompt">
+                        Custom instructions / prompt (Optional)
+                      </Label>
+                      <span className="text-xs text-muted-foreground">
+                        {aiForm.customPrompt.length}/50
+                      </span>
+                    </div>
+                    <Input
+                      id="ai-prompt"
+                      placeholder="e.g. Focus on the introduction, skip historical details..."
+                      value={aiForm.customPrompt}
+                      onChange={(event) =>
+                        setAiForm((prev) => ({
+                          ...prev,
+                          customPrompt: event.target.value.slice(0, 50),
+                        }))
+                      }
+                      maxLength={50}
+                    />
                   </div>
 
                   <Button
