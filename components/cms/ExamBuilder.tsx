@@ -30,7 +30,18 @@ import {
   ChevronDown,
   ChevronUp,
   Loader2,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { FlowerLoader } from "../ui/flower-loader";
 import { cn } from "@/lib/utils";
 
@@ -113,6 +124,7 @@ export function ExamBuilder({
   >({});
   const [examForm, setExamForm] = useState<ExamFormState>(DEFAULT_FORM);
   const [exams, setExams] = useState<ExamRecord[]>([]);
+  const [examToDelete, setExamToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState({
     questions: false,
     exams: false,
@@ -354,28 +366,59 @@ export function ExamBuilder({
     }
   };
 
-  const publishExam = async (examId: string) => {
+  const setExamStatus = async (examId: string, publish: boolean) => {
     try {
       const response = await fetch(`/api/exams/${examId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ publish: true }),
+        body: JSON.stringify({ publish }),
       });
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error ?? "Failed to publish exam");
+        throw new Error(
+          data.error ?? `Failed to ${publish ? "publish" : "unpublish"} exam`
+        );
       }
 
-      toast.success("Exam published successfully");
+      toast.success(
+        `Exam ${publish ? "published" : "unpublished"} successfully`
+      );
       fetchExams();
     } catch (error) {
       console.error(error);
       toast.error(
-        error instanceof Error ? error.message : "Unable to publish exam"
+        error instanceof Error
+          ? error.message
+          : `Unable to ${publish ? "publish" : "unpublish"} exam`
       );
+    }
+  };
+
+  const deleteExam = async () => {
+    if (!examToDelete) return;
+
+    try {
+      const response = await fetch(`/api/exams/${examToDelete}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error ?? "Failed to delete exam");
+      }
+
+      toast.success("Exam deleted successfully");
+      fetchExams();
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error instanceof Error ? error.message : "Unable to delete exam"
+      );
+    } finally {
+      setExamToDelete(null);
     }
   };
 
@@ -794,13 +837,33 @@ export function ExamBuilder({
                               )}
                               {isExpanded ? "Hide" : "View"}
                             </Button>
-                            {exam.status !== "PUBLISHED" && (
+
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => setExamToDelete(exam.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+
+                            {exam.status !== "PUBLISHED" ? (
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => publishExam(exam.id)}
+                                onClick={() => setExamStatus(exam.id, true)}
                               >
                                 Publish
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                onClick={() => setExamStatus(exam.id, false)}
+                              >
+                                Revert to Draft
                               </Button>
                             )}
                           </div>
@@ -936,6 +999,30 @@ export function ExamBuilder({
           </Card>
         </div>
       )}
+
+      <AlertDialog
+        open={!!examToDelete}
+        onOpenChange={(open) => !open && setExamToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              exam paper and all of its associated questions.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={deleteExam}
+            >
+              Yes, delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
