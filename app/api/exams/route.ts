@@ -21,6 +21,7 @@ export async function GET(request: Request) {
       session.user.role === "ADMIN" || session.user.role === "MANAGER";
     const isStudent = session.user.role === "STUDENT";
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       status:
         status === "DRAFT" || status === "PUBLISHED" || status === "CLOSED"

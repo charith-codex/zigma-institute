@@ -72,18 +72,18 @@ const baseMenuEntries: MenuEntry[] = [
     label: "Course Operations",
     icon: BookOpen,
     items: [
-      { id: "classes", label: "Courses", icon: BookOpen },
       { id: "course-categories", label: "Categories", icon: Tag },
+      { id: "classes", label: "Courses", icon: BookOpen },
+      {
+        id: "course-access",
+        label: "Course Access",
+        icon: UserCog,
+      },
       { id: "scheduling", label: "Scheduling", icon: Calendar },
       {
         id: "material-distribution",
         label: "Material Distribution",
         icon: FileText,
-      },
-      {
-        id: "course-access",
-        label: "Course Access Control",
-        icon: UserCog,
       },
     ],
   },

@@ -1,9 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Search, ShieldAlert, ShieldCheck } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Search,
+  ShieldAlert,
+  ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { toast } from "sonner";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { FlowerLoader } from "@/components/ui/flower-loader";
 import { useCourseSummaries, useEnrollments } from "@/hooks/useData";
 
 export function CourseAccessControl() {
@@ -28,10 +34,18 @@ export function CourseAccessControl() {
   } = useEnrollments();
   const [selectedCourseId, setSelectedCourseId] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 50;
+
+  // Synchronize local state with hook data
+  const [localEnrollments, setLocalEnrollments] = useState(enrollments);
+
+  useEffect(() => {
+    setLocalEnrollments(enrollments);
+  }, [enrollments]);
 
   const filteredEnrollments = useMemo(() => {
-    let list = enrollments;
+    let list = localEnrollments;
 
     if (selectedCourseId && selectedCourseId !== "all") {
       list = list.filter((e) => e.courseId === selectedCourseId);
@@ -41,20 +55,36 @@ export function CourseAccessControl() {
       const query = searchTerm.toLowerCase().trim();
       list = list.filter(
         (e) =>
-          e.student?.name.toLowerCase().includes(query) ||
-          e.student?.studentPublicId?.toLowerCase().includes(query) ||
-          e.student?.email.toLowerCase().includes(query)
+          e.student?.name.toLowerCase().trim().includes(query) ||
+          e.student?.studentPublicId?.toLowerCase().trim().includes(query) ||
+          e.student?.email.toLowerCase().trim().includes(query)
       );
     }
 
     return list;
-  }, [enrollments, selectedCourseId, searchTerm]);
+  }, [localEnrollments, selectedCourseId, searchTerm]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCourseId, searchTerm]);
+
+  const totalPages = Math.ceil(filteredEnrollments.length / ITEMS_PER_PAGE);
+  const paginatedEnrollments = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredEnrollments.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredEnrollments, currentPage]);
 
   const handleToggleAccess = async (
     enrollmentId: string,
     isActive: boolean
   ) => {
-    setUpdatingId(enrollmentId);
+    // Optimistic update
+    const previousEnrollments = [...localEnrollments];
+    setLocalEnrollments((current) =>
+      current.map((e) => (e.id === enrollmentId ? { ...e, isActive } : e))
+    );
+
     try {
       const response = await fetch(`/api/enrollments/${enrollmentId}`, {
         method: "PATCH",
@@ -69,12 +99,14 @@ export function CourseAccessControl() {
       toast.success(
         `Access ${isActive ? "enabled" : "disabled"} successfully.`
       );
-      await refreshEnrollments();
+      // We don't necessarily need to await refreshEnrollments() here if we trust our local update,
+      // but we can call it in the background to ensure sync.
+      void refreshEnrollments();
     } catch (error) {
       console.error(error);
       toast.error("Failed to update student access.");
-    } finally {
-      setUpdatingId(null);
+      // Revert on error
+      setLocalEnrollments(previousEnrollments);
     }
   };
 
@@ -144,8 +176,15 @@ export function CourseAccessControl() {
             </div>
 
             <div className="space-y-2 rounded-md border p-4">
-              {filteredEnrollments.length > 0 ? (
-                filteredEnrollments.map((enrollment) => (
+              {enrollmentsLoading ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
+                  <FlowerLoader size="md" className="text-primary" />
+                  <p className="text-sm font-medium">
+                    Fetching enrollment data...
+                  </p>
+                </div>
+              ) : filteredEnrollments.length > 0 ? (
+                paginatedEnrollments.map((enrollment) => (
                   <div
                     key={enrollment.id}
                     className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-3 border border-border/50"
@@ -194,19 +233,66 @@ export function CourseAccessControl() {
                         onCheckedChange={(checked) =>
                           void handleToggleAccess(enrollment.id, checked)
                         }
-                        disabled={updatingId === enrollment.id}
                       />
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-center py-8 text-muted-foreground">
-                  {enrollmentsLoading
-                    ? "Fetching enrollment data..."
-                    : "No students found matching your criteria."}
+                <p className="text-sm text-center py-12 text-muted-foreground">
+                  No students found matching your criteria.
                 </p>
               )}
             </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t pt-4">
+                <div className="text-sm text-muted-foreground">
+                  Showing{" "}
+                  <span className="font-medium">
+                    {(currentPage - 1) * ITEMS_PER_PAGE + 1}
+                  </span>{" "}
+                  to{" "}
+                  <span className="font-medium">
+                    {Math.min(
+                      currentPage * ITEMS_PER_PAGE,
+                      filteredEnrollments.length
+                    )}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-medium">
+                    {filteredEnrollments.length}
+                  </span>{" "}
+                  results
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-medium">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((p) => Math.min(totalPages, p + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

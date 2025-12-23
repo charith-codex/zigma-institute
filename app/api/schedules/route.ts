@@ -22,6 +22,7 @@ export async function GET() {
     const isAdmin = role === "ADMIN" || role === "MANAGER";
     const isStudent = role === "STUDENT";
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
 
     if (isStudent) {
