@@ -79,6 +79,7 @@ export async function PATCH(
           data.timeLimitMinutes === undefined
             ? exam.timeLimitMinutes
             : data.timeLimitMinutes,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         status: nextStatus as any,
         publishedAt:
           nextStatus === "PUBLISHED"
