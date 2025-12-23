@@ -63,9 +63,17 @@ export const courseNavigationItems = [
       { id: "question-bank", label: "Question Bank" },
     ],
   },
-  { id: "exams", label: "Exam Papers", icon: FileText },
+  {
+    id: "exams",
+    label: "Online Exams",
+    icon: FileText,
+    subItems: [
+      { id: "paper-creation", label: "Paper Creation" },
+      { id: "exam-papers", label: "Exam Papers" },
+    ],
+  },
   { id: "exam-sessions", label: "Exam Sessions", icon: Target },
-  { id: "exam-results", label: "Exam Results", icon: BarChart3 },
+  { id: "online-exam-results", label: "Online Exam Results", icon: BarChart3 },
   { id: "physical-exams", label: "Physical Exam Marks", icon: HeartPulse },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
 ];
@@ -73,7 +81,9 @@ export const courseNavigationItems = [
 export type CourseSectionId =
   | (typeof courseNavigationItems)[number]["id"]
   | "question-creation"
-  | "question-bank";
+  | "question-bank"
+  | "paper-creation"
+  | "exam-papers";
 
 interface CourseContentManagerProps {
   courseId: string;
@@ -421,12 +431,18 @@ export function CourseContentManager({
         return <QuestionCreation courseId={courseId} initialView="bank" />;
 
       case "exams":
-        return <ExamBuilder courseId={courseId} />;
+        return <ExamBuilder courseId={courseId} initialView="creation" />;
+
+      case "paper-creation":
+        return <ExamBuilder courseId={courseId} initialView="creation" />;
+
+      case "exam-papers":
+        return <ExamBuilder courseId={courseId} initialView="list" />;
 
       case "exam-sessions":
         return <ExamScheduler courseId={courseId} />;
 
-      case "exam-results":
+      case "online-exam-results":
         return <ExamResults courseId={courseId} />;
 
       case "physical-exams":
