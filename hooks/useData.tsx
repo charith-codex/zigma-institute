@@ -47,6 +47,15 @@ export interface StudentEnrollment {
   teacherName: string | null;
 }
 
+export interface StudyMaterialSummary {
+  id: string;
+  title: string;
+  description: string | null;
+  fileUrl: string;
+  fileName: string;
+  lessonId: string | null;
+}
+
 // Mock data hooks for demonstration - replace with your Neon PostgreSQL implementation
 export function useProfiles() {
   const [profiles, setProfiles] = useState<any[]>([]);
@@ -542,6 +551,52 @@ export function useLessons(courseId?: string) {
   );
 
   return { lessons, loading, error, refetch, createLesson };
+}
+
+export function useStudyMaterials(lessonId?: string) {
+  const [materials, setMaterials] = useState<StudyMaterialSummary[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchMaterials = async () => {
+      if (!lessonId) {
+        setMaterials([]);
+        setError(null);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `/api/study-materials?lessonId=${encodeURIComponent(lessonId)}`
+        );
+
+        if (!response.ok) {
+          const body = await response.json().catch(() => null);
+          throw new Error(body?.error ?? "Failed to load study materials");
+        }
+
+        const payload = await response.json();
+        setMaterials(payload);
+        setError(null);
+      } catch (fetchError) {
+        console.error("Failed to fetch study materials", fetchError);
+        setMaterials([]);
+        setError(
+          fetchError instanceof Error
+            ? fetchError.message
+            : "Failed to load study materials"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchMaterials();
+  }, [lessonId]);
+
+  return { materials, loading, error };
 }
 
 export function useEnrollments() {
