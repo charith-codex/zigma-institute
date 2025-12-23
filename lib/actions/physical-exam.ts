@@ -260,7 +260,7 @@ export async function savePhysicalExamMarks(
     const message =
       error instanceof Error
         ? error.message
-        : "Failed to save physical exam marks.";
+        : "Failed to save physical exam results.";
 
     return { success: false, message } satisfies SavePhysicalExamMarksResult;
   }

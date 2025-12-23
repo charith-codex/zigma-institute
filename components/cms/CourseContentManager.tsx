@@ -70,11 +70,15 @@ export const courseNavigationItems = [
     subItems: [
       { id: "paper-creation", label: "Paper Creation" },
       { id: "exam-papers", label: "Exam Papers" },
+      { id: "exam-sessions", label: "Exam Sessions" },
+      { id: "exam-results", label: "Exam Results" },
     ],
   },
-  { id: "exam-sessions", label: "Exam Sessions", icon: Target },
-  { id: "online-exam-results", label: "Online Exam Results", icon: BarChart3 },
-  { id: "physical-exams", label: "Physical Exam Marks", icon: HeartPulse },
+  {
+    id: "physical-exam-results",
+    label: "Physical Exam Results",
+    icon: HeartPulse,
+  },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
 ];
 
@@ -442,10 +446,10 @@ export function CourseContentManager({
       case "exam-sessions":
         return <ExamScheduler courseId={courseId} />;
 
-      case "online-exam-results":
+      case "exam-results":
         return <ExamResults courseId={courseId} />;
 
-      case "physical-exams":
+      case "physical-exam-results":
         return <PhysicalExamUploader courseId={courseId} />;
 
       case "analytics":

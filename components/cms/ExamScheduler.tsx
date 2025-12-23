@@ -1,31 +1,10 @@
-import { useState } from "react";
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FlowerLoader } from "@/components/ui/flower-loader";
 import {
   CalendarIcon,
   Clock,
@@ -33,378 +12,335 @@ import {
   Play,
   Square,
   Eye,
-  FileText,
-  Settings,
   CheckCircle,
-  Plus,
+  AlertCircle,
+  Loader2,
+  BarChart3,
 } from "lucide-react";
-import { format } from "date-fns";
 import { toast } from "sonner";
+import { getEnrolledStudents } from "@/lib/actions/enrolled-students";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
-interface ExamSession {
+type ExamRecord = {
   id: string;
   title: string;
-  examPaperId: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  duration: number; // in minutes
-  maxAttempts: number;
-  status: "scheduled" | "active" | "completed" | "cancelled";
-  enrolledStudents: number;
-  submittedCount: number;
-  instructions: string;
-  allowLateSubmission: boolean;
-  shuffleQuestions: boolean;
-  showResultsImmediately: boolean;
-}
+  status: "DRAFT" | "PUBLISHED" | "CLOSED";
+  timeLimitMinutes: number | null;
+  createdAt: string;
+  publishedAt: string | null;
+  _count: {
+    attempts: number;
+  };
+};
 
 export function ExamScheduler({ courseId }: { courseId: string }) {
-  const [activeTab, setActiveTab] = useState("scheduled");
-  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    new Date()
-  );
+  const [exams, setExams] = useState<ExamRecord[]>([]);
+  const [enrolledCount, setEnrolledCount] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("conduct");
 
-  const [examSessions] = useState<ExamSession[]>([
-    {
-      id: "session-001",
-      title: "Midterm Examination - React Fundamentals",
-      examPaperId: "paper-001",
-      date: "2024-01-25",
-      startTime: "10:00",
-      endTime: "12:00",
-      duration: 120,
-      maxAttempts: 1,
-      status: "scheduled",
-      enrolledStudents: 28,
-      submittedCount: 0,
-      instructions: "Please read all instructions carefully before starting.",
-      allowLateSubmission: false,
-      shuffleQuestions: true,
-      showResultsImmediately: false,
-    },
-    {
-      id: "session-002",
-      title: "Final Examination - Full Stack Development",
-      examPaperId: "paper-002",
-      date: "2024-01-30",
-      startTime: "14:00",
-      endTime: "17:00",
-      duration: 180,
-      maxAttempts: 1,
-      status: "active",
-      enrolledStudents: 28,
-      submittedCount: 15,
-      instructions: "Comprehensive exam covering all course topics.",
-      allowLateSubmission: true,
-      shuffleQuestions: true,
-      showResultsImmediately: false,
-    },
-  ]);
+  const fetchData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const [examsRes, students] = await Promise.all([
+        fetch(`/api/exams?courseId=${courseId}`),
+        getEnrolledStudents(courseId),
+      ]);
 
-  const handleScheduleExam = () => {
-    toast.success("Exam scheduled successfully!");
-    setScheduleDialogOpen(false);
-  };
+      if (!examsRes.ok) throw new Error("Failed to fetch exams");
 
-  const startExamSession = (sessionId: string) => {
-    toast.success("Exam session started! Students can now access the exam.");
-  };
+      const examsData = await examsRes.json();
+      setExams(examsData.exams || []);
+      setEnrolledCount(students.length);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load exam session data");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [courseId]);
 
-  const endExamSession = (sessionId: string) => {
-    toast.success("Exam session ended. All submissions collected.");
-  };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  const getStatusColor = (status: ExamSession["status"]) => {
-    switch (status) {
-      case "scheduled":
-        return "bg-primary/10 text-primary border-primary/20";
-      case "active":
-        return "bg-success/10 text-success border-success/20";
-      case "completed":
-        return "bg-secondary/10 text-secondary border-secondary/20";
-      case "cancelled":
-        return "bg-destructive/10 text-destructive border-destructive/20";
-      default:
-        return "bg-muted text-muted-foreground";
+  const updateExamStatus = async (
+    examId: string,
+    status: "PUBLISHED" | "CLOSED"
+  ) => {
+    try {
+      setActionLoading(examId);
+      const res = await fetch(`/api/exams/${examId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update exam status");
+
+      toast.success(
+        status === "PUBLISHED" ? "Exam session started" : "Exam session ended"
+      );
+      await fetchData();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update exam status");
+    } finally {
+      setActionLoading(null);
     }
   };
 
+  const getStatusConfig = (status: ExamRecord["status"]) => {
+    switch (status) {
+      case "PUBLISHED":
+        return {
+          label: "Live",
+          color: "bg-emerald-500/10 text-emerald-600 border-emerald-200",
+        };
+      case "CLOSED":
+        return {
+          label: "Closed",
+          color: "bg-slate-500/10 text-slate-600 border-slate-200",
+        };
+      default:
+        return {
+          label: "Draft",
+          color: "bg-amber-500/10 text-amber-600 border-amber-200",
+        };
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <FlowerLoader size="md" className="text-primary" />
+        <p className="mt-4 text-sm text-muted-foreground animate-pulse">
+          Loading sessions...
+        </p>
+      </div>
+    );
+  }
+
+  const liveExams = exams.filter((e) => e.status === "PUBLISHED");
+  const upcomingExams = exams.filter((e) => e.status === "DRAFT");
+  const pastExams = exams.filter((e) => e.status === "CLOSED");
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Exam Sessions</h2>
-          <p className="text-muted-foreground">
-            Schedule and monitor exam sessions
-          </p>
-        </div>
-        <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-gradient-primary hover:shadow-medium">
-              <Plus className="w-4 h-4 mr-2" />
-              Schedule Exam
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Schedule New Exam Session</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="exam-title">Exam Title</Label>
-                <Input
-                  id="exam-title"
-                  placeholder="Enter exam title"
-                  className="border-border/50 focus:border-primary"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="exam-paper">Select Exam Paper</Label>
-                <Select>
-                  <SelectTrigger className="border-border/50">
-                    <SelectValue placeholder="Choose exam paper" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="paper-001">
-                      Midterm - React Fundamentals
-                    </SelectItem>
-                    <SelectItem value="paper-002">
-                      Final - Full Stack Development
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Exam Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left border-border/50"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate
-                        ? format(selectedDate, "PPP")
-                        : "Pick a date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="start-time">Start Time</Label>
-                  <Input
-                    id="start-time"
-                    type="time"
-                    className="border-border/50 focus:border-primary"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="duration">Duration (minutes)</Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    placeholder="120"
-                    className="border-border/50 focus:border-primary"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="instructions">Instructions</Label>
-                <Textarea
-                  id="instructions"
-                  placeholder="Enter exam instructions"
-                  className="border-border/50 focus:border-primary"
-                />
-              </div>
-
-              <Button
-                onClick={handleScheduleExam}
-                className="w-full bg-gradient-primary"
-              >
-                Schedule Exam
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+      <div className="flex flex-col gap-1">
+        <h2 className="text-2xl font-bold tracking-tight">Exam Sessions</h2>
+        <p className="text-sm text-muted-foreground">
+          Manage and conduct online examinations for this course.
+        </p>
       </div>
 
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
-        className="space-y-4"
+        className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="scheduled">Scheduled Exams</TabsTrigger>
-          <TabsTrigger value="completed">Completed Exams</TabsTrigger>
+        <TabsList className="bg-muted/50 p-1">
+          <TabsTrigger value="conduct" className="px-6">
+            Conduct
+          </TabsTrigger>
+          <TabsTrigger value="history" className="px-6">
+            History
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="scheduled" className="space-y-4">
-          <div className="grid gap-4">
-            {examSessions
-              .filter(
-                (session) =>
-                  session.status === "scheduled" || session.status === "active"
-              )
-              .map((session) => (
-                <Card key={session.id} className="edu-card-hover">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold">
-                          {session.title}
-                        </h3>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1">
-                            <CalendarIcon className="w-4 h-4" />
-                            {session.date}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {session.startTime} - {session.endTime}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
-                            {session.enrolledStudents} students
-                          </span>
-                        </div>
-                      </div>
-                      <Badge className={getStatusColor(session.status)}>
-                        {session.status}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-muted-foreground">
-                        Duration: {session.duration} minutes • Max attempts:{" "}
-                        {session.maxAttempts}
-                        {session.status === "active" && (
-                          <span className="ml-4 text-success">
-                            {session.submittedCount}/{session.enrolledStudents}{" "}
-                            submitted
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        {session.status === "scheduled" && (
-                          <Button
-                            size="sm"
-                            onClick={() => startExamSession(session.id)}
-                            className="bg-success hover:bg-success-hover text-success-foreground"
-                          >
-                            <Play className="w-4 h-4 mr-1" />
-                            Start
-                          </Button>
-                        )}
-                        {session.status === "active" && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => endExamSession(session.id)}
-                            >
-                              <Square className="w-4 h-4 mr-1" />
-                              End
-                            </Button>
-                          </>
-                        )}
-                        <Button size="sm" variant="ghost">
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Button>
-                        <Button size="sm" variant="ghost">
-                          <Settings className="w-4 h-4 mr-1" />
-                          Settings
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="completed" className="space-y-4">
-          <div className="grid gap-4">
-            {examSessions
-              .filter((session) => session.status === "completed")
-              .map((session) => (
-                <Card key={session.id} className="edu-card-hover">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold">
-                          {session.title}
-                        </h3>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1">
-                            <CalendarIcon className="w-4 h-4" />
-                            {session.date}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <CheckCircle className="w-4 h-4 text-success" />
-                            {session.submittedCount}/{session.enrolledStudents}{" "}
-                            completed
-                          </span>
-                        </div>
-                      </div>
-                      <Badge className={getStatusColor(session.status)}>
-                        {session.status}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-muted-foreground">
-                        Completion rate:{" "}
-                        {Math.round(
-                          (session.submittedCount / session.enrolledStudents) *
-                            100
-                        )}
-                        %
-                      </div>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
-                          <FileText className="w-4 h-4 mr-1" />
-                          Results
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Eye className="w-4 h-4 mr-1" />
-                          Analytics
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-          </div>
-
-          {examSessions.filter((session) => session.status === "completed")
-            .length === 0 && (
-            <Card className="edu-card">
-              <CardContent className="p-8 text-center">
-                <CheckCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">
-                  No Completed Exams
+        <TabsContent value="conduct" className="space-y-4">
+          {liveExams.length === 0 && upcomingExams.length === 0 ? (
+            <Card className="border-dashed py-12">
+              <CardContent className="flex flex-col items-center justify-center text-center">
+                <div className="bg-muted p-4 rounded-full mb-4">
+                  <CalendarIcon className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="font-semibold text-lg">
+                  No active or upcoming exams
                 </h3>
-                <p className="text-muted-foreground">
-                  Completed exam sessions will appear here.
+                <p className="text-sm text-muted-foreground max-w-sm mt-2">
+                  Create an exam paper to start a session.
                 </p>
               </CardContent>
             </Card>
+          ) : (
+            <div className="grid gap-4">
+              {[...liveExams, ...upcomingExams].map((exam) => {
+                const config = getStatusConfig(exam.status);
+                const isLive = exam.status === "PUBLISHED";
+                const isPending = actionLoading === exam.id;
+
+                return (
+                  <Card
+                    key={exam.id}
+                    className={cn(
+                      "overflow-hidden border-l-4 transition-all hover:shadow-md",
+                      isLive ? "border-l-emerald-500" : "border-l-amber-500"
+                    )}
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className={cn(config.color, "font-medium")}
+                            >
+                              {config.label}
+                            </Badge>
+                            <h3 className="text-lg font-bold">{exam.title}</h3>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1.5">
+                              <Clock className="w-4 h-4" />
+                              {exam.timeLimitMinutes
+                                ? `${exam.timeLimitMinutes} mins`
+                                : "No limit"}
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                              <Users className="w-4 h-4" />
+                              {exam._count.attempts} / {enrolledCount}{" "}
+                              Submissions
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {!isLive ? (
+                            <Button
+                              size="sm"
+                              onClick={() =>
+                                updateExamStatus(exam.id, "PUBLISHED")
+                              }
+                              disabled={!!actionLoading}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                            >
+                              {isPending ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Play className="w-4 h-4" />
+                              )}
+                              Start Session
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() =>
+                                updateExamStatus(exam.id, "CLOSED")
+                              }
+                              disabled={!!actionLoading}
+                              className="gap-2 shadow-sm"
+                            >
+                              {isPending ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Square className="w-4 h-4" />
+                              )}
+                              End Session
+                            </Button>
+                          )}
+                          <Button variant="outline" size="sm" className="gap-2">
+                            <Eye className="w-4 h-4" />
+                            Preview
+                          </Button>
+                        </div>
+                      </div>
+
+                      {isLive && (
+                        <div className="mt-6 pt-6 border-t border-dashed">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium">
+                              Session Progress
+                            </span>
+                            <span className="text-sm text-muted-foreground">
+                              {Math.round(
+                                (exam._count.attempts / (enrolledCount || 1)) *
+                                  100
+                              )}
+                              %
+                            </span>
+                          </div>
+                          <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-emerald-500 transition-all duration-500"
+                              style={{
+                                width: `${(exam._count.attempts / (enrolledCount || 1)) * 100}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-4">
+          {pastExams.length === 0 ? (
+            <Card className="border-dashed py-12">
+              <CardContent className="flex flex-col items-center justify-center text-center">
+                <div className="bg-muted p-4 rounded-full mb-4">
+                  <CheckCircle className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="font-semibold text-lg">No past exams found</h3>
+                <p className="text-sm text-muted-foreground max-w-sm mt-2">
+                  Completed exams will appear here with their final metrics.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {pastExams.map((exam) => (
+                <Card
+                  key={exam.id}
+                  className="hover:shadow-sm transition-all border-l-4 border-l-slate-400"
+                >
+                  <CardContent className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <h3 className="font-semibold">{exam.title}</h3>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          Ended on{" "}
+                          {exam.publishedAt
+                            ? new Date(exam.publishedAt).toLocaleDateString()
+                            : "N/A"}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          {exam._count.attempts} submissions
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs h-8 gap-1.5"
+                      >
+                        <BarChart3 className="w-3.5 h-3.5" />
+                        Detailed Results
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs h-8 gap-1.5"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        View Paper
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           )}
         </TabsContent>
       </Tabs>
