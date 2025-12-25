@@ -7,6 +7,7 @@ import { generateAndStoreStudentQrCode } from "@/lib/student-registration/qr-cod
 import { generateStudentPublicId } from "@/lib/student-registration/identifiers";
 import { generateRandomPassword } from "@/lib/student-registration/password";
 import { registrationRequestSchema } from "@/lib/validators";
+import { sendStudentOnboardingEmail } from "@/email";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -24,7 +25,10 @@ export async function POST(request: Request) {
   try {
     payload = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid JSON payload." },
+      { status: 400 }
+    );
   }
 
   const parseResult = registrationRequestSchema.safeParse(payload);
@@ -164,18 +168,51 @@ export async function POST(request: Request) {
           skipDuplicates: true,
         });
 
-        return { registrationId: registration.id, studentPublicId: newPublicId };
+        return {
+          registrationId: registration.id,
+          studentPublicId: newPublicId,
+        };
       }
     );
 
-    await generateAndStoreStudentQrCode(registrationId);
+    // Generate QR code and ID card
+    const qrResult = await generateAndStoreStudentQrCode(registrationId);
+    if (!qrResult.success) {
+      console.error(
+        `Failed to generate QR code for manual registration: ${qrResult.error}`
+      );
+    }
+
     const idCardResult = await generateAndUploadIdCard(registrationId);
+    if (!idCardResult.success) {
+      console.error(
+        `Failed to generate ID card for manual registration: ${idCardResult.error}`
+      );
+    }
+
+    // Send onboarding email
+    try {
+      await sendStudentOnboardingEmail({
+        studentEmail: data.email,
+        guardianEmail: data.guardianEmail,
+        studentName: data.name,
+        temporaryPassword: plainPassword,
+        idCardUrl: idCardResult.success ? (idCardResult.idCardUrl ?? "") : "",
+        courses: courses.map((c) => c.name),
+      });
+    } catch (emailError) {
+      console.error(
+        "Failed to send onboarding email for manual registration:",
+        emailError
+      );
+      // We don't fail the whole request because the user is already created
+    }
 
     return NextResponse.json({
       registrationId,
       studentPublicId,
       temporaryPassword: plainPassword,
-      idCardUrl: idCardResult.success ? idCardResult.idCardUrl ?? null : null,
+      idCardUrl: idCardResult.success ? (idCardResult.idCardUrl ?? null) : null,
     });
   } catch (error) {
     console.error("Failed to create student registration (admin)", error);

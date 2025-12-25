@@ -46,7 +46,9 @@ export const sendInquiryResponseEmail = async ({
     from: `${APP_NAME} <${SENDER_EMAIL}>`,
     to,
     subject: `Response: ${subject}`,
-    react: <InquiryResponseEmail name={name} response={response} subject={subject} />,
+    react: (
+      <InquiryResponseEmail name={name} response={response} subject={subject} />
+    ),
   });
 };
 
@@ -67,10 +69,26 @@ export const sendStudentOnboardingEmail = async ({
   idCardUrl,
   courses,
 }: StudentOnboardingEmailPayload) => {
+  const attachments = [];
+
+  // If idCardUrl is a data URL, extract it as an attachment
+  if (idCardUrl && idCardUrl.startsWith("data:")) {
+    try {
+      const [_header, base64Data] = idCardUrl.split(",");
+      attachments.push({
+        filename: "student-id-card.svg",
+        content: base64Data,
+      });
+    } catch (err) {
+      console.error("Failed to parse ID card data URL for attachment", err);
+    }
+  }
+
   await resend.emails.send({
     from: `${APP_NAME} <${SENDER_EMAIL}>`,
     to: [studentEmail, guardianEmail],
     subject: `Welcome to ${APP_NAME}`,
+    attachments,
     react: (
       <StudentOnboardingEmail
         studentName={studentName}
