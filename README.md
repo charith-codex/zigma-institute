@@ -2,6 +2,8 @@
 
 A modern education management platform built with Next.js, Prisma, and Stripe. The system provides LMS, CMS, and admissions capabilities including an automated student registration workflow.
 
+> **Note:** For comprehensive documentation including API reference and architecture details, please see [DOCUMENTATION.md](./DOCUMENTATION.md).
+
 ## Key Features
 
 - **Student Registration** – Online registration with photo upload, course selection, and Stripe payment processing at `/student-registration`
