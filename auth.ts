@@ -3,10 +3,8 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/db/prisma";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compareSync } from "bcrypt-ts-edge";
-import type { NextAuthConfig, Session } from "next-auth";
+import type { NextAuthConfig } from "next-auth";
 import { DefaultSession } from "next-auth";
-import type { JWT } from "next-auth/jwt";
-import type { AdapterUser } from "next-auth/adapters";
 
 declare module "next-auth" {
   interface User {
@@ -64,17 +62,7 @@ export const config = {
     }),
   ],
   callbacks: {
-    async session({
-      session,
-      user,
-      trigger,
-      token,
-    }: {
-      session: Session;
-      user: AdapterUser;
-      trigger?: "update" | "signIn";
-      token: JWT & { role?: string; name?: string };
-    }) {
+    async session({ session, user, trigger, token }: any) {
       // set the user ID from the session
       session.user.id = token.sub;
       session.user.role = token.role;
@@ -87,17 +75,7 @@ export const config = {
 
       return session;
     },
-    async jwt({
-      token,
-      user,
-      trigger,
-      session,
-    }: {
-      token: JWT & { role?: string; name?: string };
-      user?: AdapterUser;
-      trigger?: "update" | "signIn";
-      session?: Session;
-    }) {
+    async jwt({ token, user, trigger, session }: any) {
       // assign user fields to token
       if (user) {
         token.role = user.role;
