@@ -100,9 +100,8 @@ export function TeacherManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingTeacher, setEditingTeacher] = useState<
-    TeacherUpsertValues | null
-  >(null);
+  const [editingTeacher, setEditingTeacher] =
+    useState<TeacherUpsertValues | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TeacherRecord | null>(null);
   const [newTeacher, setNewTeacher] =
     useState<TeacherCreateValues>(createEmptyTeacher);
@@ -272,23 +271,24 @@ export function TeacherManagement() {
           {teacher.status === "ACTIVE" ? "Active" : "Inactive"}
         </Badge>
       </TableCell>
-      <TableCell className="flex gap-2">
+      <TableCell className="flex gap-4">
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
+          className="h-8 rounded-lg border border-zinc-200 bg-zinc-900 px-4 text-xs font-medium text-zinc-100 hover:bg-zinc-800 hover:text-white dark:border-zinc-800"
           onClick={() => setEditingTeacher(toTeacherUpsertValues(teacher))}
           disabled={isPending}
         >
-          <Edit className="mr-1 h-4 w-4" /> Edit
+          Edit
         </Button>
         <Button
-          variant="ghost"
+          variant="destructive"
           size="sm"
-          className="text-destructive hover:text-destructive"
+          className="h-8 rounded-lg bg-[#b44b4b] px-4 text-xs font-medium text-white hover:bg-[#a34141] border-none shadow-none"
           onClick={() => setDeleteTarget(teacher)}
           disabled={isPending}
         >
-          <Trash2 className="mr-1 h-4 w-4" /> Delete
+          Delete
         </Button>
       </TableCell>
     </TableRow>
@@ -316,7 +316,6 @@ export function TeacherManagement() {
         </UserTable>
       </UserManagementCard>
 
-      
       <UserFormDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
@@ -335,7 +334,6 @@ export function TeacherManagement() {
         />
       </UserFormDialog>
 
-      
       <UserFormDialog
         open={Boolean(editingTeacher)}
         onOpenChange={(open) => {
@@ -365,7 +363,6 @@ export function TeacherManagement() {
           />
         ) : null}
       </UserFormDialog>
-
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}

@@ -75,9 +75,18 @@ export type StudentRecord = {
   status: "ACTIVE" | "INACTIVE";
   parentEmail: string | null;
   studentPublicId: string | null;
+  idCardUrl: string | null;
   dob: string | null;
   gender: "MALE" | "FEMALE" | null;
   profileImage: string | null;
+  enrollments: Array<{ id: string; name: string }>;
+  payments: Array<{
+    id: string;
+    amountInCents: number;
+    currency: string;
+    paidAt: string;
+    paymentType: string;
+  }>;
   createdAt: string;
   updatedAt: string;
 };
@@ -129,7 +138,16 @@ const serializeStudent = (user: {
   student: {
     parentEmail: string | null;
     studentPublicId: string | null;
+    idCardUrl: string | null;
+    enrollments: Array<{ course: { id: string; name: string } }>;
   } | null;
+  paymentTransactions: Array<{
+    id: string;
+    amountInCents: number;
+    currency: string;
+    paidAt: Date;
+    paymentType: string;
+  }>;
 }): StudentRecord => ({
   id: user.id,
   name: user.name,
@@ -139,9 +157,22 @@ const serializeStudent = (user: {
   status: user.status,
   parentEmail: user.student?.parentEmail ?? null,
   studentPublicId: user.student?.studentPublicId ?? null,
+  idCardUrl: user.student?.idCardUrl ?? null,
   dob: serializeDate(user.dob),
   gender: user.gender ?? null,
   profileImage: user.profileImage ?? null,
+  enrollments:
+    user.student?.enrollments.map((e) => ({
+      id: e.course.id,
+      name: e.course.name,
+    })) ?? [],
+  payments: user.paymentTransactions.map((p) => ({
+    id: p.id,
+    amountInCents: p.amountInCents,
+    currency: p.currency,
+    paidAt: serializeDate(p.paidAt)!,
+    paymentType: p.paymentType,
+  })),
   createdAt: serializeDate(user.createdAt)!,
   updatedAt: serializeDate(user.updatedAt)!,
 });
@@ -222,13 +253,28 @@ export async function listStudents(): Promise<
   try {
     const students = await prisma.user.findMany({
       where: { role: "STUDENT" },
-      include: { student: true },
+      include: {
+        student: {
+          include: {
+            enrollments: {
+              include: {
+                course: {
+                  select: { id: true, name: true },
+                },
+              },
+            },
+          },
+        },
+        paymentTransactions: {
+          orderBy: { paidAt: "desc" },
+        },
+      },
       orderBy: { createdAt: "desc" },
     });
 
     return {
       success: true,
-      data: students.map(serializeStudent),
+      data: students.map(serializeStudent as unknown as any), // Use any since types might be complex for implicit map
     };
   } catch (error) {
     console.error("Failed to list students", error);
@@ -277,7 +323,7 @@ export async function createStudent(
 
     return {
       success: true,
-      data: serializeStudent(created),
+      data: serializeStudent(created as unknown as any),
     };
   } catch (error) {
     console.error("Failed to create student", error);
@@ -339,7 +385,7 @@ export async function updateStudent(
 
     return {
       success: true,
-      data: serializeStudent(updated),
+      data: serializeStudent(updated as unknown as any),
     };
   } catch (error) {
     console.error("Failed to update student", error);

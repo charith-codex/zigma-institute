@@ -1,12 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Users, Edit, Trash2 } from "lucide-react";
+import { Users, Edit, Trash2, Eye } from "lucide-react";
 import { toast } from "sonner";
+import Image from "next/image";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import {
   createStudent,
@@ -100,9 +107,8 @@ export function StudentManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingStudent, setEditingStudent] = useState<
-    StudentUpsertValues | null
-  >(null);
+  const [editingStudent, setEditingStudent] =
+    useState<StudentUpsertValues | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StudentRecord | null>(null);
   const [newStudent, setNewStudent] =
     useState<StudentCreateValues>(createEmptyStudent);
@@ -112,6 +118,7 @@ export function StudentManagement() {
     useState<StudentCreateErrorState>({});
   const [editStudentErrors, setEditStudentErrors] =
     useState<StudentEditErrorState>({});
+  const [viewingIdCardUrl, setViewingIdCardUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -271,31 +278,79 @@ export function StudentManagement() {
 
   const rows = filteredStudents.map((student) => (
     <TableRow key={student.id}>
-      <TableCell className="font-medium">{student.name}</TableCell>
-      <TableCell>{student.email}</TableCell>
-      <TableCell>{student.parentEmail ?? "-"}</TableCell>
+      <TableCell>
+        <span className="text-xs">
+          {student.studentPublicId ?? "-"}
+        </span>
+      </TableCell>
+      <TableCell className="text-sm">{student.name}</TableCell>
+      <TableCell className="text-sm">{student.email}</TableCell>
+      <TableCell>
+        <div className="flex flex-wrap gap-1">
+          {student.enrollments.length > 0 ? (
+            student.enrollments.map((e) => (
+              <Badge key={e.id} variant="outline" className="text-[10px]">
+                {e.name}
+              </Badge>
+            ))
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          )}
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex flex-col">
+          <span className="text-sm">
+            {(
+              student.payments.reduce((sum, p) => sum + p.amountInCents, 0) /
+              100
+            ).toLocaleString(undefined, {
+              style: "currency",
+              currency: student.payments[0]?.currency ?? "LKR",
+            })}
+          </span>
+          <span className="text-[10px] text-muted-foreground">
+            {student.payments.length} transactions
+          </span>
+        </div>
+      </TableCell>
+      <TableCell>
+        {student.idCardUrl ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setViewingIdCardUrl(student.idCardUrl)}
+            disabled={isPending}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        )}
+      </TableCell>
       <TableCell>
         <Badge variant={student.status === "ACTIVE" ? "default" : "secondary"}>
           {student.status === "ACTIVE" ? "Active" : "Inactive"}
         </Badge>
       </TableCell>
-      <TableCell className="flex gap-2">
+      <TableCell className="flex gap-3">
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
+          className="h-8 rounded-lg border border-zinc-200 bg-zinc-900 px-4 text-xs font-medium text-zinc-100 hover:bg-zinc-800 hover:text-white dark:border-zinc-800"
           onClick={() => setEditingStudent(toStudentUpsertValues(student))}
           disabled={isPending}
         >
-          <Edit className="mr-1 h-4 w-4" /> Edit
+          Edit
         </Button>
         <Button
-          variant="ghost"
+          variant="destructive"
           size="sm"
-          className="text-destructive hover:text-destructive"
+          className="h-8 rounded-lg bg-[#b44b4b] px-4 text-xs font-medium text-white hover:bg-[#a34141] border-none shadow-none"
           onClick={() => setDeleteTarget(student)}
           disabled={isPending}
         >
-          <Trash2 className="mr-1 h-4 w-4" /> Delete
+          Delete
         </Button>
       </TableCell>
     </TableRow>
@@ -314,7 +369,16 @@ export function StudentManagement() {
         isLoading={isPending}
       >
         <UserTable
-          headers={["Name", "Email", "Parent Email", "Status", "Actions"]}
+          headers={[
+            "Student ID",
+            "Name",
+            "Email",
+            "Courses",
+            "Payments",
+            "ID Card",
+            "Status",
+            "Actions",
+          ]}
           isLoading={isLoading}
           error={listError}
           emptyMessage="No students found."
@@ -382,6 +446,31 @@ export function StudentManagement() {
         onConfirm={handleDeleteStudent}
         isPending={isPending}
       />
+
+      <Dialog
+        open={Boolean(viewingIdCardUrl)}
+        onOpenChange={(open) => {
+          if (!open) setViewingIdCardUrl(null);
+        }}
+      >
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Student ID Card</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 overflow-hidden rounded-xl border bg-muted shadow-lg">
+            {viewingIdCardUrl && (
+              <Image
+                src={viewingIdCardUrl}
+                alt="Student ID card"
+                width={960}
+                height={560}
+                className="h-auto w-full"
+                unoptimized
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

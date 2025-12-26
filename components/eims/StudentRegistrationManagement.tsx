@@ -2,12 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -56,14 +51,15 @@ const STATUS_OPTIONS: (
 
 export function StudentRegistrationManagement() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | StudentRegistrationStatus>(
-    "PAID"
-  );
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | StudentRegistrationStatus
+  >("PAID");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [regenerating, setRegenerating] = useState<Set<string>>(new Set());
   const statuses: StudentRegistrationStatus[] =
     statusFilter === "all" ? ["PAID", "APPROVED"] : [statusFilter];
-  const { registrations, loading, error, refetch } = useStudentRegistrations(statuses);
+  const { registrations, loading, error, refetch } =
+    useStudentRegistrations(statuses);
   const [activeRegistration, setActiveRegistration] =
     useState<StudentRegistrationSummary | null>(null);
 
@@ -105,9 +101,15 @@ export function StudentRegistrationManagement() {
 
   const stats = useMemo(() => {
     const total = registrations.length;
-    const paid = registrations.filter((registration) => registration.status === "PAID").length;
-    const approved = registrations.filter((registration) => registration.status === "APPROVED").length;
-    const idCardsReady = registrations.filter((registration) => Boolean(registration.idCardUrl)).length;
+    const paid = registrations.filter(
+      (registration) => registration.status === "PAID"
+    ).length;
+    const approved = registrations.filter(
+      (registration) => registration.status === "APPROVED"
+    ).length;
+    const idCardsReady = registrations.filter((registration) =>
+      Boolean(registration.idCardUrl)
+    ).length;
 
     return { total, paid, approved, idCardsReady };
   }, [registrations]);
@@ -126,7 +128,9 @@ export function StudentRegistrationManagement() {
 
   const toggleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelected(new Set(filteredRegistrations.map((registration) => registration.id)));
+      setSelected(
+        new Set(filteredRegistrations.map((registration) => registration.id))
+      );
     } else {
       setSelected(new Set());
     }
@@ -225,7 +229,8 @@ export function StudentRegistrationManagement() {
     }
 
     const toPrint = registrations.filter(
-      (registration) => selected.has(registration.id) && Boolean(registration.idCardUrl)
+      (registration) =>
+        selected.has(registration.id) && Boolean(registration.idCardUrl)
     );
 
     if (toPrint.length === 0) {
@@ -247,13 +252,16 @@ export function StudentRegistrationManagement() {
 
   const handleRegenerateIdCard = async (registrationId: string) => {
     setRegenerating((prev) => new Set(prev).add(registrationId));
-    
+
     try {
-      const response = await fetch("/api/student-registration/regenerate-id-card", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ registrationId }),
-      });
+      const response = await fetch(
+        "/api/student-registration/regenerate-id-card",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ registrationId }),
+        }
+      );
 
       if (!response.ok) {
         const body = await response.json().catch(() => null);
@@ -303,20 +311,12 @@ export function StudentRegistrationManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Student Registration Management</h1>
+          <h1 className="text-2xl font-bold">
+            Student Registration Management
+          </h1>
           <p className="text-muted-foreground">
-            Review payments, approve enrolments, and print ready-to-use ID cards
+            View and manage student registrations submitted online.
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBatchPrint}
-            disabled={selected.size === 0 || loading}
-          >
-            <Printer className="mr-2 h-4 w-4" /> Print selected
-          </Button>
         </div>
       </div>
 
@@ -329,38 +329,6 @@ export function StudentRegistrationManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Awaiting approval
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-warning">{stats.paid}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Approved
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">{stats.approved}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              ID cards ready
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-muted-foreground">
-              {stats.idCardsReady}
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -408,18 +376,6 @@ export function StudentRegistrationManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12">
-                  <Checkbox
-                    checked={
-                      filteredRegistrations.length > 0 &&
-                      filteredRegistrations.every((registration) =>
-                        selected.has(registration.id)
-                      )
-                    }
-                    onCheckedChange={(value) => toggleSelectAll(value === true)}
-                    aria-label="Select all"
-                  />
-                </TableHead>
                 <TableHead>Student</TableHead>
                 <TableHead>Contact</TableHead>
                 <TableHead>Courses</TableHead>
@@ -431,13 +387,6 @@ export function StudentRegistrationManagement() {
             <TableBody>
               {filteredRegistrations.map((registration) => (
                 <TableRow key={registration.id}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selected.has(registration.id)}
-                      onCheckedChange={() => toggleSelect(registration.id)}
-                      aria-label={`Select ${registration.name}`}
-                    />
-                  </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-semibold text-foreground">
@@ -482,46 +431,6 @@ export function StudentRegistrationManagement() {
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    {registration.idCardUrl ? (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handlePrintIdCard(registration)}
-                        aria-label="Print ID card"
-                      >
-                        <Printer className="h-4 w-4" />
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRegenerateIdCard(registration.id)}
-                        disabled={regenerating.has(registration.id)}
-                        aria-label="Generate ID card"
-                      >
-                        <RefreshCw className={`h-4 w-4 ${regenerating.has(registration.id) ? "animate-spin" : ""}`} />
-                      </Button>
-                    )}
-                    {registration.status === "PAID" ? (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleStatusChange(registration.id, "APPROVED")}
-                        aria-label="Approve registration"
-                      >
-                        <Check className="h-4 w-4 text-success" />
-                      </Button>
-                    ) : null}
-                    {registration.status === "PAID" ? (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleStatusChange(registration.id, "FAILED")}
-                        aria-label="Reject registration"
-                      >
-                        <X className="h-4 w-4 text-destructive" />
-                      </Button>
-                    ) : null}
                   </TableCell>
                 </TableRow>
               ))}
@@ -536,55 +445,10 @@ export function StudentRegistrationManagement() {
         </CardContent>
       </Card>
 
-      {filteredRegistrations.some((registration) => Boolean(registration.idCardUrl)) ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Student ID cards</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {filteredRegistrations
-                .filter((registration) => Boolean(registration.idCardUrl))
-                .map((registration) => (
-                  <div
-                    key={`${registration.id}-id-card`}
-                    className="rounded-xl border bg-card p-4 shadow-sm"
-                  >
-                    <div className="mb-3 flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">
-                          {registration.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          ID: {registration.studentPublicId}
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handlePrintIdCard(registration)}
-                      >
-                        <Printer className="mr-2 h-4 w-4" /> Print
-                      </Button>
-                    </div>
-                    <div className="overflow-hidden rounded-lg border bg-muted">
-                      <Image
-                        src={registration.idCardUrl ?? ""}
-                        alt={`${registration.name} ID card`}
-                        width={960}
-                        height={560}
-                        className="h-auto w-full"
-                        unoptimized
-                      />
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      <Dialog open={Boolean(activeRegistration)} onOpenChange={() => setActiveRegistration(null)}>
+      <Dialog
+        open={Boolean(activeRegistration)}
+        onOpenChange={() => setActiveRegistration(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Registration details</DialogTitle>
@@ -597,8 +461,12 @@ export function StudentRegistrationManagement() {
               <div>
                 <p className="font-semibold text-foreground">Student</p>
                 <p>{activeRegistration.name}</p>
-                <p className="text-muted-foreground">{activeRegistration.email}</p>
-                <p className="text-muted-foreground">Phone: {activeRegistration.phone}</p>
+                <p className="text-muted-foreground">
+                  {activeRegistration.email}
+                </p>
+                <p className="text-muted-foreground">
+                  Phone: {activeRegistration.phone}
+                </p>
               </div>
               <div>
                 <p className="font-semibold text-foreground">Guardian email</p>
@@ -616,14 +484,19 @@ export function StudentRegistrationManagement() {
               ) : null}
               {activeRegistration.address ? (
                 <div>
-                  <p className="font-semibold text-foreground">Postal address</p>
-                  <p className="text-muted-foreground">{activeRegistration.address}</p>
+                  <p className="font-semibold text-foreground">
+                    Postal address
+                  </p>
+                  <p className="text-muted-foreground">
+                    {activeRegistration.address}
+                  </p>
                 </div>
               ) : null}
               <div>
                 <p className="font-semibold text-foreground">Courses</p>
                 <p className="text-muted-foreground">
-                  {activeRegistration.courses.join(", ") || "Assigned post-approval"}
+                  {activeRegistration.courses.join(", ") ||
+                    "Assigned post-approval"}
                 </p>
               </div>
               <div>
@@ -638,7 +511,10 @@ export function StudentRegistrationManagement() {
             </div>
           ) : null}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setActiveRegistration(null)}>
+            <Button
+              variant="outline"
+              onClick={() => setActiveRegistration(null)}
+            >
               Close
             </Button>
           </DialogFooter>
