@@ -392,6 +392,58 @@ export function StudentManagement() {
     );
   }
 
+  if (editingStudent) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center">
+            <Edit className="mr-2 h-5 w-5" />
+            <h2 className="text-xl font-bold">Edit Student</h2>
+          </div>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setEditingStudent(null)}
+            className="rounded-lg bg-primary px-4 text-xs font-medium"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Student Management
+          </Button>
+        </div>
+
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
+          <UserEditForm
+            values={editingStudent}
+            errors={editStudentErrors}
+            fields={studentEditFields}
+            onChange={handleEditStudentChange}
+            onClearError={(key) => clearFieldError(key, setEditStudentErrors)}
+            passwordValue={editStudentPassword}
+            passwordLabel="Reset Password"
+            passwordDescription="Leave empty to keep the existing password."
+            passwordError={editStudentErrors.password}
+            onPasswordChange={(value) => {
+              setEditStudentPassword(value);
+              clearFieldError("password", setEditStudentErrors);
+            }}
+          />
+          <div className="mt-6 flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setEditingStudent(null)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateStudent} disabled={isPending}>
+              {isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <UserManagementCard
@@ -422,36 +474,6 @@ export function StudentManagement() {
           {rows}
         </UserTable>
       </UserManagementCard>
-
-      <UserFormDialog
-        open={Boolean(editingStudent)}
-        onOpenChange={(open) => {
-          if (!open) setEditingStudent(null);
-        }}
-        title="Edit Student"
-        description="Update student details or reset their credentials."
-        onSubmit={handleUpdateStudent}
-        submitLabel="Save Changes"
-        isPending={isPending}
-      >
-        {editingStudent ? (
-          <UserEditForm
-            values={editingStudent}
-            errors={editStudentErrors}
-            fields={studentEditFields}
-            onChange={handleEditStudentChange}
-            onClearError={(key) => clearFieldError(key, setEditStudentErrors)}
-            passwordValue={editStudentPassword}
-            passwordLabel="Reset Password"
-            passwordDescription="Leave empty to keep the existing password."
-            passwordError={editStudentErrors.password}
-            onPasswordChange={(value) => {
-              setEditStudentPassword(value);
-              clearFieldError("password", setEditStudentErrors);
-            }}
-          />
-        ) : null}
-      </UserFormDialog>
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}
