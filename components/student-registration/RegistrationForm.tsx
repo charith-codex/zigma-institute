@@ -8,12 +8,7 @@ import { toast } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -42,9 +37,6 @@ export interface StudentRegistrationCourse {
 
 interface StudentRegistrationFormProps {
   courses: StudentRegistrationCourse[];
-  instituteName: string;
-  instituteTagline: string;
-  instituteAddress: string;
   mode?: "checkout" | "admin";
   onSuccess?: (payload: {
     registrationId: string;
@@ -56,9 +48,6 @@ interface StudentRegistrationFormProps {
 
 export function StudentRegistrationForm({
   courses,
-  instituteName,
-  instituteTagline,
-  instituteAddress,
   mode = "checkout",
   onSuccess,
 }: StudentRegistrationFormProps) {
@@ -501,8 +490,8 @@ export function StudentRegistrationForm({
             ) : (
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="text-sm text-muted-foreground">
-                  Payment is skipped for admin-created students.
-                  Enrolments and ID card will be generated automatically.
+                  Payment is skipped for admin-created students. Enrolments and
+                  ID card will be generated automatically.
                 </div>
                 <Button type="submit" size="lg" disabled={isSubmitting}>
                   {isSubmitting ? "Creating student…" : "Create student"}

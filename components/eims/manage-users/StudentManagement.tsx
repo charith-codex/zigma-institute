@@ -31,6 +31,7 @@ import {
 import { ConfirmDialog } from "./ConfirmDialog";
 import { UserAddForm, UserEditForm, type UserFieldConfig } from "./UserForms";
 import { UserFormDialog } from "./UserFormDialog";
+import { AdminRegistrationDialog } from "./AdminRegistrationDialog";
 import { UserManagementCard } from "./UserManagementCard";
 import { UserTable } from "./UserTable";
 import {
@@ -120,32 +121,19 @@ export function StudentManagement() {
     useState<StudentEditErrorState>({});
   const [viewingIdCardUrl, setViewingIdCardUrl] = useState<string | null>(null);
 
+  const fetchStudents = async () => {
+    setIsLoading(true);
+    const result = await listStudents();
+
+    setStudents(result.success ? result.data : []);
+    setListError(result.success ? null : result.error);
+    if (!result.success) toast.error(result.error);
+
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchStudents = async () => {
-      setIsLoading(true);
-      const result = await listStudents();
-
-      if (!isMounted) return;
-
-      if (result.success) {
-        setStudents(result.data);
-        setListError(null);
-      } else {
-        setStudents([]);
-        setListError(result.error);
-        toast.error(result.error);
-      }
-
-      setIsLoading(false);
-    };
-
     void fetchStudents();
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
 
   useEffect(() => {
@@ -279,9 +267,7 @@ export function StudentManagement() {
   const rows = filteredStudents.map((student) => (
     <TableRow key={student.id}>
       <TableCell>
-        <span className="text-xs">
-          {student.studentPublicId ?? "-"}
-        </span>
+        <span className="text-xs">{student.studentPublicId ?? "-"}</span>
       </TableCell>
       <TableCell className="text-sm">{student.name}</TableCell>
       <TableCell className="text-sm">{student.email}</TableCell>
@@ -362,7 +348,7 @@ export function StudentManagement() {
         title="Student Management"
         description="Manage student profiles, credentials, and account status."
         icon={Users}
-        addLabel="Add Student"
+        addLabel="Manual Student Registration"
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         onAddClick={() => setIsAddDialogOpen(true)}
@@ -387,23 +373,11 @@ export function StudentManagement() {
         </UserTable>
       </UserManagementCard>
 
-      <UserFormDialog
+      <AdminRegistrationDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
-        title="Add Student"
-        description="Create a new student account and assign credentials."
-        onSubmit={handleCreateStudent}
-        submitLabel="Create"
-        isPending={isPending}
-      >
-        <UserAddForm
-          values={newStudent}
-          errors={newStudentErrors}
-          fields={studentCreateFields}
-          onChange={handleNewStudentChange}
-          onClearError={(key) => clearFieldError(key, setNewStudentErrors)}
-        />
-      </UserFormDialog>
+        onSuccess={() => void fetchStudents()}
+      />
 
       <UserFormDialog
         open={Boolean(editingStudent)}
