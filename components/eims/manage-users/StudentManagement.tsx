@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Users, Edit, Trash2, Eye, ArrowLeft, UserPlus } from "lucide-react";
+import {
+  Users,
+  Edit,
+  Trash2,
+  Eye,
+  ArrowLeft,
+  UserPlus,
+  Download,
+  BookOpen,
+} from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
 
@@ -20,6 +29,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 import {
   deleteStudent,
@@ -98,7 +112,10 @@ export function StudentManagement() {
   const [editStudentPassword, setEditStudentPassword] = useState("");
   const [editStudentErrors, setEditStudentErrors] =
     useState<StudentEditErrorState>({});
-  const [viewingIdCardUrl, setViewingIdCardUrl] = useState<string | null>(null);
+  const [viewingIdCard, setViewingIdCard] = useState<{
+    url: string;
+    studentPublicId: string;
+  } | null>(null);
 
   const fetchStudents = async () => {
     setIsLoading(true);
@@ -243,17 +260,46 @@ export function StudentManagement() {
       <TableCell className="text-sm">{student.name}</TableCell>
       <TableCell className="text-sm">{student.email}</TableCell>
       <TableCell>
-        <div className="flex flex-wrap gap-1">
-          {student.enrollments.length > 0 ? (
-            student.enrollments.map((e) => (
-              <Badge key={e.id} variant="outline" className="text-[10px]">
-                {e.name}
-              </Badge>
-            ))
-          ) : (
-            <span className="text-muted-foreground">-</span>
-          )}
-        </div>
+        {student.enrollments.length > 0 ? (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              >
+                <Eye className="h-4 w-4 text-primary" />
+                <span className="sr-only">View Courses</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-3 shadow-xl border-zinc-200 dark:border-zinc-800">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 border-b pb-2">
+                  <BookOpen className="h-4 w-4 text-primary" />
+                  <h4 className="font-semibold text-sm">Enrolled Courses</h4>
+                </div>
+                <div className="flex flex-col gap-1.5 max-h-[200px] overflow-y-auto pr-1">
+                  {student.enrollments.map((e) => (
+                    <div
+                      key={e.id}
+                      className="flex items-start gap-2 text-xs py-1.5 px-2 rounded-md bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
+                    >
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1 shrink-0" />
+                      <span className="font-medium">{e.name}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-[10px] text-muted-foreground pt-1 border-t italic">
+                  Total {student.enrollments.length} courses enrolled
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        ) : (
+          <span className="text-muted-foreground text-xs italic">
+            No courses
+          </span>
+        )}
       </TableCell>
       <TableCell>
         <div className="flex flex-col">
@@ -276,7 +322,12 @@ export function StudentManagement() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setViewingIdCardUrl(student.idCardUrl)}
+            onClick={() =>
+              setViewingIdCard({
+                url: student.idCardUrl!,
+                studentPublicId: student.studentPublicId ?? "card",
+              })
+            }
             disabled={isPending}
           >
             <Eye className="h-4 w-4" />
@@ -488,25 +539,85 @@ export function StudentManagement() {
       />
 
       <Dialog
-        open={Boolean(viewingIdCardUrl)}
+        open={Boolean(viewingIdCard)}
         onOpenChange={(open) => {
-          if (!open) setViewingIdCardUrl(null);
+          if (!open) setViewingIdCard(null);
         }}
       >
         <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Student ID Card</DialogTitle>
+          <DialogHeader className="pb-4 border-b">
+            <DialogTitle className="text-xl font-bold">
+              Student ID Card
+            </DialogTitle>
           </DialogHeader>
-          <div className="mt-4 overflow-hidden rounded-xl border bg-muted shadow-lg">
-            {viewingIdCardUrl && (
-              <Image
-                src={viewingIdCardUrl}
-                alt="Student ID card"
-                width={960}
-                height={560}
-                className="h-auto w-full"
-                unoptimized
-              />
+          <div className="mt-6 flex flex-col items-center gap-6">
+            <div className="w-full overflow-hidden rounded-xl border bg-muted shadow-lg">
+              {viewingIdCard?.url && (
+                <Image
+                  src={viewingIdCard.url}
+                  alt="Student ID card"
+                  width={960}
+                  height={560}
+                  className="h-auto w-full"
+                  unoptimized
+                />
+              )}
+            </div>
+            {viewingIdCard?.url && (
+              <Button
+                variant="default"
+                size="lg"
+                onClick={async () => {
+                  if (!viewingIdCard) return;
+                  const { url, studentPublicId } = viewingIdCard;
+
+                  try {
+                    if (url.startsWith("data:image/svg+xml")) {
+                      const img = new window.Image();
+                      img.onload = () => {
+                        const canvas = document.createElement("canvas");
+                        canvas.width = img.width || 980;
+                        canvas.height = img.height || 580;
+                        const ctx = canvas.getContext("2d");
+                        if (ctx) {
+                          ctx.fillStyle = "white";
+                          ctx.fillRect(0, 0, canvas.width, canvas.height);
+                          ctx.drawImage(img, 0, 0);
+                          const pngUrl = canvas.toDataURL("image/png");
+                          const link = document.createElement("a");
+                          link.href = pngUrl;
+                          link.download = `student-id-${studentPublicId}.png`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          toast.success("ID card downloaded as PNG");
+                        }
+                      };
+                      img.src = url;
+                    } else {
+                      const response = await fetch(url);
+                      const blob = await response.blob();
+                      const blobUrl = window.URL.createObjectURL(blob);
+                      const link = document.createElement("a");
+                      link.href = blobUrl;
+                      const extension = blob.type.split("/")[1] || "png";
+                      link.download = `student-id-${studentPublicId}.${extension}`;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      window.URL.revokeObjectURL(blobUrl);
+                      toast.success("ID card downloaded successfully");
+                    }
+                  } catch (error) {
+                    console.error("Download failed:", error);
+                    toast.error("Failed to download ID card");
+                  }
+                }}
+                className="bg-primary hover:bg-primary/90 text-white gap-2 h-11 px-8 rounded-xl shadow-md transition-all active:scale-95 mb-2"
+              >
+                <Download className="h-5 w-5" />
+                Download ID Card
+              </Button>
             )}
           </div>
         </DialogContent>
