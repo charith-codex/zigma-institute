@@ -95,11 +95,6 @@ const baseMenuEntries: MenuEntry[] = [
       { id: "fees", label: "Fee Management", icon: DollarSign },
       { id: "attendance-qr", label: "QR Attendance", icon: QrCode },
       {
-        id: "student-registration",
-        label: "Student Registration",
-        icon: UserPlus,
-      },
-      {
         id: "inquiry-management",
         label: "Inquiries",
         icon: MessageSquare,
@@ -119,7 +114,6 @@ const baseMenuEntries: MenuEntry[] = [
       { id: "notifications", label: "Notifications", icon: Bell },
     ],
   },
-  { id: "settings", label: "Settings", icon: Settings },
 ];
 
 export const getMenuEntriesForRole = (role?: string | null): MenuEntry[] => {

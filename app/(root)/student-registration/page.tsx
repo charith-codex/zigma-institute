@@ -74,12 +74,7 @@ export default async function StudentRegisterPage() {
             className="grid gap-10 lg:grid-cols-[3fr_2fr]"
             id="registration-form"
           >
-            <StudentRegistrationForm
-              courses={registrationCourses}
-              instituteName={INSTITUTE_NAME}
-              instituteTagline={INSTITUTE_TAGLINE}
-              instituteAddress={INSTITUTE_ADDRESS}
-            />
+            <StudentRegistrationForm courses={registrationCourses} />
 
             <div className="space-y-6">
               <Card>

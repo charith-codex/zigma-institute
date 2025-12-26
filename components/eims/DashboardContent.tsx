@@ -21,14 +21,12 @@ import {
 } from "lucide-react";
 import { PhysicalMaterialDistribution } from "./PhysicalMaterialDistribution";
 import { Notifications } from "./Notifications";
-import { Settings } from "./Settings";
 import FeeManagement from "./FeeManagement";
 import AttendanceQR from "./AttendanceQR";
 import { StaffManagement } from "./manage-users/StaffManagement";
 import { InquiryManagement } from "./InquiryManagement";
 import { TeacherManagement } from "./manage-users/TeacherManagement";
 import { CourseManagement } from "./CourseManagement";
-import { StudentRegistrationManagement } from "./StudentRegistrationManagement";
 import { ShowcaseManagement } from "./ShowcaseManagement";
 import { StudentManagement } from "./manage-users/StudentManagement";
 import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleManager";
@@ -274,8 +272,6 @@ export function DashboardContent({
         return <FeeManagement />;
       case "attendance-qr":
         return <AttendanceQR />;
-      case "student-registration":
-        return <StudentRegistrationManagement />;
       case "staff-management":
         return <StaffManagement />;
       case "inquiry-management":
@@ -307,8 +303,6 @@ export function DashboardContent({
         return <ShowcaseManagement />;
       case "notifications":
         return <Notifications />;
-      case "settings":
-        return <Settings />;
       case "profile":
         return (
           <div className="max-w-2xl mx-auto">
