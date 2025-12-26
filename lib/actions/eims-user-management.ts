@@ -274,7 +274,8 @@ export async function listStudents(): Promise<
 
     return {
       success: true,
-      data: students.map(serializeStudent as unknown as any), // Use any since types might be complex for implicit map
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: students.map(serializeStudent as unknown as any),
     };
   } catch (error) {
     console.error("Failed to list students", error);
@@ -323,6 +324,7 @@ export async function createStudent(
 
     return {
       success: true,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: serializeStudent(created as unknown as any),
     };
   } catch (error) {
@@ -385,6 +387,7 @@ export async function updateStudent(
 
     return {
       success: true,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: serializeStudent(updated as unknown as any),
     };
   } catch (error) {
