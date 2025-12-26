@@ -273,7 +273,10 @@ export function StaffManagement() {
       <TableCell>{member.email}</TableCell>
       <TableCell className="capitalize">{member.role.toLowerCase()}</TableCell>
       <TableCell>
-        <Badge variant={member.status === "ACTIVE" ? "default" : "secondary"}>
+        <Badge
+          variant={member.status === "ACTIVE" ? "default" : "secondary"}
+          className={member.status === "ACTIVE" ? "bg-green-700" : ""}
+        >
           {member.status === "ACTIVE" ? "Active" : "Inactive"}
         </Badge>
       </TableCell>
@@ -281,7 +284,7 @@ export function StaffManagement() {
         <Button
           variant="outline"
           size="sm"
-          className="h-8 rounded-lg border border-zinc-200 bg-zinc-900 px-4 text-xs font-medium text-zinc-100 hover:bg-zinc-800 hover:text-white dark:border-zinc-800"
+          className="h-8 rounded-lg px-4 text-xs font-medium hover:bg-zinc-800 hover:text-white"
           onClick={() => setEditingStaff(toStaffUpsertValues(member))}
           disabled={isPending}
         >

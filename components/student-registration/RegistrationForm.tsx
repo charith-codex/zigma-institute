@@ -139,7 +139,7 @@ export function StudentRegistrationForm({
           temporaryPassword?: string;
         };
 
-        toast.success("Student added without payment");
+        toast.success("Student added with manual payment");
         form.reset();
         setPhotoPreview(null);
         onSuccess?.(responsePayload);
