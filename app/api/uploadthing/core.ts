@@ -68,7 +68,7 @@ export const ourFileRouter = {
       // This allows prospective students to upload photos before having an account
       return { isPublic: true };
     })
-    .onUploadComplete(async ({ file, metadata }) => {
+    .onUploadComplete(async ({ file }) => {
       // Validate file exists
       if (!file) {
         throw new UploadThingError("No file received");

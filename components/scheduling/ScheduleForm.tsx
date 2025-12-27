@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScheduleEvent } from "@/hooks/useSchedules";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface CourseOption {
   id: string;
@@ -46,11 +45,6 @@ const defaultTimes = {
   startTime: "09:00",
   endTime: "10:30",
 };
-
-function getDayOfWeek(date: string) {
-  const parsed = new Date(date);
-  return format(parsed, "EEEE");
-}
 
 export function ScheduleForm({
   courseOptions,

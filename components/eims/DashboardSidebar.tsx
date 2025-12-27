@@ -119,9 +119,22 @@ const baseMenuEntries: MenuEntry[] = [
 export const getMenuEntriesForRole = (role?: string | null): MenuEntry[] => {
   const isAdmin = role === "ADMIN";
   const isManager = role === "MANAGER";
+  const isAttendance = role === "ATTENDANCE";
 
   return baseMenuEntries
     .map((entry) => {
+      // For attendance role, only allow Dashboard and Administration (filtered)
+      if (isAttendance) {
+        if (entry.id === "overview") return entry;
+        if (entry.id === "administration") {
+          const filteredItems = entry.items?.filter(
+            (item) => item.id === "attendance-qr"
+          );
+          return { ...entry, items: filteredItems };
+        }
+        return null;
+      }
+
       if (entry.id !== "user-management" || !entry.items) {
         return entry;
       }
@@ -140,7 +153,10 @@ export const getMenuEntriesForRole = (role?: string | null): MenuEntry[] => {
 
       return { ...entry, items: filteredItems };
     })
-    .filter((entry) => entry.items == null || entry.items.length > 0);
+    .filter(
+      (entry): entry is MenuEntry =>
+        entry !== null && (entry.items == null || entry.items.length > 0)
+    );
 };
 
 export function DashboardSidebar({

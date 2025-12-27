@@ -72,12 +72,6 @@ const calculateAverage = (papers: ExamPaper[]): number => {
   return Math.round((totalScored / totalPossible) * 1000) / 10;
 };
 
-const getPerformanceColor = (score: number): string => {
-  if (score >= 85) return "bg-success";
-  if (score >= 70) return "bg-warning";
-  return "bg-destructive";
-};
-
 const percentWidth = (score: number): string =>
   `${Math.min(Math.max(score, 0), 100)}%`;
 
