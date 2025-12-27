@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/db/prisma";
-import { convertToPlainObject } from "@/lib/utils";
+import { convertToPlainObject, MILLISECONDS_PER_DAY } from "@/lib/utils";
 
 interface DuePayment {
   courseId: string;
@@ -106,7 +106,7 @@ export async function GET() {
       // Calculate overdue status (if current date is past end of month)
       const isOverdue = now > dueDate;
       const daysOverdue = isOverdue 
-        ? Math.ceil((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))
+        ? Math.ceil((now.getTime() - dueDate.getTime()) / MILLISECONDS_PER_DAY)
         : 0;
 
       // Only add to due list if after first week of month OR overdue
@@ -153,7 +153,7 @@ export async function GET() {
       if (!monthPayment) {
         const [year, month] = checkMonthYear.split("-").map(Number);
         const dueDate = getEndOfMonth(year, month);
-        const daysOverdue = Math.ceil((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+        const daysOverdue = Math.ceil((now.getTime() - dueDate.getTime()) / MILLISECONDS_PER_DAY);
 
         duePayments.push({
           courseId: enrollment.course.id,

@@ -31,3 +31,18 @@ export function formatCurrency(amountInCents: number, currency: string) {
     currency: normalizedCurrency,
   }).format(amountInCents / 100);
 }
+
+/**
+ * Format a YYYY-MM month string to a human-readable label
+ * Example: "2024-01" -> "Jan 2024"
+ */
+export function formatMonthLabel(monthYear: string) {
+  const [year, month] = monthYear.split("-");
+  const date = new Date(Number(year), Number(month) - 1, 1);
+  return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+/**
+ * Milliseconds in a day - useful for date calculations
+ */
+export const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;

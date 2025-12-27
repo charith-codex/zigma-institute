@@ -29,17 +29,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { type StudentRecord } from "@/lib/actions/eims-user-management";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatMonthLabel } from "@/lib/utils";
 
 interface StudentDetailViewProps {
   student: StudentRecord;
   onClose?: () => void;
 }
-
-const formatMonthLabel = (monthYear: string) => {
-  const [year, month] = monthYear.split("-");
-  const date = new Date(Number(year), Number(month) - 1, 1);
-  return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
-};
 
 export function StudentDetailView({
   student,

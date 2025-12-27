@@ -5,6 +5,7 @@ import { AlertTriangle, Calendar, CreditCard, X } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatMonthLabel, formatCurrency as formatCurrencyDisplay } from "@/lib/utils";
 
 interface DuePayment {
   courseId: string;
@@ -22,17 +23,6 @@ interface DuePaymentsResponse {
   totalDueCount: number;
   overdueCount: number;
 }
-
-const formatCurrency = (cents: number, currency: string) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
-    cents / 100
-  );
-
-const formatMonthLabel = (monthYear: string) => {
-  const [year, month] = monthYear.split("-");
-  const date = new Date(Number(year), Number(month) - 1, 1);
-  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-};
 
 export function DuePaymentAlert() {
   const [dueData, setDueData] = useState<DuePaymentsResponse | null>(null);
@@ -108,7 +98,7 @@ export function DuePaymentAlert() {
                 ({formatMonthLabel(payment.monthYear)})
               </span>
               <span className="font-bold">
-                {formatCurrency(payment.amountDueInCents, payment.currency)}
+                {formatCurrencyDisplay(payment.amountDueInCents, payment.currency)}
               </span>
               {payment.isOverdue && (
                 <span className="text-[10px]">
@@ -125,7 +115,7 @@ export function DuePaymentAlert() {
         </div>
         <div className="flex items-center gap-4 pt-2">
           <span className="text-sm font-semibold">
-            Total Due: {formatCurrency(totalDue, currency)}
+            Total Due: {formatCurrencyDisplay(totalDue, currency)}
           </span>
           <Button size="sm" variant={hasOverdue ? "default" : "secondary"} asChild>
             <a href="/lms?module=payments">

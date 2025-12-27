@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { computeDurationInMonths, deriveMonthlyAmount } from "@/lib/payments";
+import { formatMonthLabel } from "@/lib/utils";
 
 interface PaymentCourse {
   id: string;
@@ -73,16 +74,10 @@ interface PaymentReceipt {
   paymentMethod?: "ONLINE" | "MANUAL";
 }
 
-const formatCurrency = (cents: number, currency: string) =>
+const formatCurrencyDisplay = (cents: number, currency: string) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
     cents / 100
   );
-
-const formatMonthLabel = (monthYear: string) => {
-  const [year, month] = monthYear.split("-");
-  const date = new Date(Number(year), Number(month) - 1, 1);
-  return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
-};
 
 const calculateNextDueDate = (
   enrolledAt: string,
@@ -389,7 +384,7 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                       Total Due This Month
                     </p>
                     <p className="text-xl font-bold">
-                      {formatCurrency(totalPending, activeCurrency)}
+                      {formatCurrencyDisplay(totalPending, activeCurrency)}
                     </p>
                   </div>
                 </div>
@@ -488,7 +483,7 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                             <div className="flex items-center gap-2">
                               <DollarSign className="h-4 w-4" />
                               <span className="font-semibold text-foreground">
-                                {formatCurrency(
+                                {formatCurrencyDisplay(
                                   plan.monthlyAmountInCents,
                                   activeCurrency
                                 )}
@@ -518,7 +513,7 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                               <CreditCard className="h-4 w-4" />
                               {processingId === plan.id
                                 ? "Processing..."
-                                : `Pay ${formatCurrency(plan.monthlyAmountInCents, activeCurrency)}`}
+                                : `Pay ${formatCurrencyDisplay(plan.monthlyAmountInCents, activeCurrency)}`}
                             </Button>
                             <Badge variant="secondary" className="gap-2">
                               <Clock className="h-3 w-3" />
@@ -559,7 +554,7 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                               {receipt.courseName ?? "Course"}
                             </p>
                             <p className="font-semibold text-foreground">
-                              {formatCurrency(
+                              {formatCurrencyDisplay(
                                 receipt.amountPaidInCents,
                                 receipt.currency ?? activeCurrency
                               )}

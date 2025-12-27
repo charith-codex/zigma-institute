@@ -21,7 +21,7 @@ interface ManualPaymentResponse {
   paidAt: string;
 }
 
-const generateTransactionId = () => `manual_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+const generateTransactionId = () => `manual_${crypto.randomUUID()}`;
 
 export async function POST(request: Request) {
   const session = await auth();

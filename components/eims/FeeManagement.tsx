@@ -51,17 +51,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { usePayments, useCourses, useEnrollments } from "@/hooks/useData";
 import { toast } from "sonner";
-
-const formatCurrency = (cents: number, currency: string) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
-    cents / 100
-  );
-
-const formatMonthLabel = (monthKey: string) => {
-  const [year, month] = monthKey.split("-");
-  const date = new Date(Number(year), Number(month) - 1, 1);
-  return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
-};
+import { formatMonthLabel, formatCurrency as formatCurrencyDisplay } from "@/lib/utils";
 
 const getCurrentMonthYear = () => {
   const now = new Date();
@@ -71,7 +61,7 @@ const getCurrentMonthYear = () => {
 interface ManualPaymentFormData {
   studentId: string;
   courseId: string;
-  amountInCents: number;
+  amount: number; // Amount in dollars (user input)
   monthYear: string;
   notes: string;
 }
@@ -87,7 +77,7 @@ const FeeManagement = () => {
   const [formData, setFormData] = useState<ManualPaymentFormData>({
     studentId: "",
     courseId: "",
-    amountInCents: 0,
+    amount: 0,
     monthYear: getCurrentMonthYear(),
     notes: "",
   });
@@ -139,7 +129,7 @@ const FeeManagement = () => {
   )?.totalInCents;
 
   const handleManualPaymentSubmit = async () => {
-    if (!formData.studentId || !formData.courseId || formData.amountInCents <= 0) {
+    if (!formData.studentId || !formData.courseId || formData.amount <= 0) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -153,7 +143,7 @@ const FeeManagement = () => {
         body: JSON.stringify({
           studentId: formData.studentId,
           courseId: formData.courseId,
-          amountInCents: Math.round(formData.amountInCents * 100), // Convert to cents
+          amountInCents: Math.round(formData.amount * 100), // Convert dollars to cents
           monthYear: formData.monthYear,
           notes: formData.notes || undefined,
         }),
@@ -169,7 +159,7 @@ const FeeManagement = () => {
       setFormData({
         studentId: "",
         courseId: "",
-        amountInCents: 0,
+        amount: 0,
         monthYear: getCurrentMonthYear(),
         notes: "",
       });
@@ -282,9 +272,9 @@ const FeeManagement = () => {
                     type="number"
                     min={0}
                     step={0.01}
-                    value={formData.amountInCents || ""}
+                    value={formData.amount || ""}
                     onChange={(e) =>
-                      setFormData({ ...formData, amountInCents: parseFloat(e.target.value) || 0 })
+                      setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })
                     }
                     placeholder="0.00"
                   />
@@ -334,7 +324,7 @@ const FeeManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(summary?.totalIncomeInCents ?? 0, currency)}
+              {formatCurrencyDisplay(summary?.totalIncomeInCents ?? 0, currency)}
             </div>
             <p className="text-xs text-muted-foreground">All recorded payments</p>
           </CardContent>
@@ -347,7 +337,7 @@ const FeeManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(summary?.onlineIncomeInCents ?? 0, currency)}
+              {formatCurrencyDisplay(summary?.onlineIncomeInCents ?? 0, currency)}
             </div>
             <p className="text-xs text-muted-foreground">Stripe payments</p>
           </CardContent>
@@ -360,7 +350,7 @@ const FeeManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(summary?.manualIncomeInCents ?? 0, currency)}
+              {formatCurrencyDisplay(summary?.manualIncomeInCents ?? 0, currency)}
             </div>
             <p className="text-xs text-muted-foreground">Cash/offline payments</p>
           </CardContent>
@@ -373,7 +363,7 @@ const FeeManagement = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(thisMonthIncome ?? 0, currency)}
+              {formatCurrencyDisplay(thisMonthIncome ?? 0, currency)}
             </div>
             <p className="text-xs text-muted-foreground">Month-to-date collections</p>
           </CardContent>
@@ -453,7 +443,7 @@ const FeeManagement = () => {
                         </div>
                       </TableCell>
                       <TableCell className="font-semibold">
-                        {formatCurrency(payment.amountInCents, payment.currency)}
+                        {formatCurrencyDisplay(payment.amountInCents, payment.currency)}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {new Date(payment.paidAt).toLocaleDateString()}
@@ -499,17 +489,17 @@ const FeeManagement = () => {
                       <span>{formatMonthLabel(month.month)}</span>
                     </div>
                     <span className="font-semibold">
-                      {formatCurrency(month.totalInCents, currency)}
+                      {formatCurrencyDisplay(month.totalInCents, currency)}
                     </span>
                   </div>
                   <div className="flex gap-2 text-xs text-muted-foreground pl-6">
                     <span className="flex items-center gap-1">
                       <CreditCard className="h-3 w-3" />
-                      {formatCurrency(month.onlineInCents, currency)}
+                      {formatCurrencyDisplay(month.onlineInCents, currency)}
                     </span>
                     <span className="flex items-center gap-1">
                       <HandCoins className="h-3 w-3" />
-                      {formatCurrency(month.manualInCents, currency)}
+                      {formatCurrencyDisplay(month.manualInCents, currency)}
                     </span>
                   </div>
                 </div>
@@ -543,7 +533,7 @@ const FeeManagement = () => {
                       <TableCell className="font-medium">{course.courseName}</TableCell>
                       <TableCell>{course.payments}</TableCell>
                       <TableCell className="font-semibold">
-                        {formatCurrency(course.totalInCents, currency)}
+                        {formatCurrencyDisplay(course.totalInCents, currency)}
                       </TableCell>
                     </TableRow>
                   ))
@@ -585,7 +575,7 @@ const FeeManagement = () => {
                       </TableCell>
                       <TableCell>{student.payments}</TableCell>
                       <TableCell className="font-semibold">
-                        {formatCurrency(student.totalInCents, currency)}
+                        {formatCurrencyDisplay(student.totalInCents, currency)}
                       </TableCell>
                     </TableRow>
                   ))
