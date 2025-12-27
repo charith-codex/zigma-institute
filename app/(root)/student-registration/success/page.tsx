@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Download } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   Card,
@@ -75,18 +76,44 @@ export default function StudentRegistrationSuccessPage({
     if (!registration?.idCardUrl) return;
 
     try {
-      const response = await fetch(registration.idCardUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${registration.studentPublicId || "student"}-id-card.svg`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      if (registration.idCardUrl.startsWith("data:image/svg+xml")) {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = 1960;
+          canvas.height = 1160;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const pngUrl = canvas.toDataURL("image/png");
+            const link = document.createElement("a");
+            link.href = pngUrl;
+            link.download = `${registration.studentPublicId || "student"}-id-card.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast.success("ID card downloaded as PNG");
+          }
+        };
+        img.src = registration.idCardUrl;
+      } else {
+        const response = await fetch(registration.idCardUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${registration.studentPublicId || "student"}-id-card.png`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success("ID card downloaded successfully");
+      }
     } catch (err) {
       console.error("Failed to download ID card:", err);
+      toast.error("Failed to download ID card");
     }
   };
 

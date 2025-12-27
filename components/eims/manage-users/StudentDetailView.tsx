@@ -77,8 +77,8 @@ export function StudentDetailView({
         const img = new window.Image();
         img.onload = () => {
           const canvas = document.createElement("canvas");
-          canvas.width = img.width || 980;
-          canvas.height = img.height || 580;
+          canvas.width = 1960;
+          canvas.height = 1160;
           const ctx = canvas.getContext("2d");
           if (ctx) {
             ctx.fillStyle = "white";
