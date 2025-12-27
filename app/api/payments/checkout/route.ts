@@ -244,12 +244,21 @@ export async function GET(request: Request) {
       checkoutSession.amount_total ??
       (estimatedBase > 0 ? estimatedBase : null);
 
-    const paidMonth = checkoutSession.metadata?.paidMonth
+    const now = new Date();
+    let paidMonth = checkoutSession.metadata?.paidMonth
       ? parseInt(checkoutSession.metadata.paidMonth, 10)
       : null;
-    const paidYear = checkoutSession.metadata?.paidYear
+    let paidYear = checkoutSession.metadata?.paidYear
       ? parseInt(checkoutSession.metadata.paidYear, 10)
       : null;
+
+    // Default to current month/year if not provided or invalid
+    if (!paidMonth || isNaN(paidMonth)) {
+      paidMonth = now.getMonth() + 1;
+    }
+    if (!paidYear || isNaN(paidYear)) {
+      paidYear = now.getFullYear();
+    }
 
     if (
       checkoutSession.payment_status === "paid" &&
