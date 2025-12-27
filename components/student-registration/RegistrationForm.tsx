@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -324,9 +325,11 @@ export function StudentRegistrationForm({
                   <div className="space-y-3">
                     {photoPreview ? (
                       <div className="flex items-center gap-4">
-                        <img
+                        <Image
                           src={photoPreview}
                           alt="Student photo preview"
+                          width={128}
+                          height={128}
                           className="h-32 w-32 rounded-lg border object-cover"
                         />
                         <Button

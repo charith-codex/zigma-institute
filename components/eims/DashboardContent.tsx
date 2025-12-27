@@ -62,7 +62,6 @@ export function DashboardContent({ session }: DashboardContentProps) {
   const isAttendance = userRole === "ATTENDANCE";
 
   const canManageStudents = isAdmin || isManager;
-  const canManageTeachers = canManageStudents;
   const canManageStaff = isAdmin;
 
   const scheduleCourseOptions = useMemo(
@@ -199,6 +198,7 @@ export function DashboardContent({ session }: DashboardContentProps) {
       <div className="space-y-6 sm:space-y-8">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {dashboardStats.map((stat: any, index: number) => (
             <Card key={index} className="edu-card-hover h-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

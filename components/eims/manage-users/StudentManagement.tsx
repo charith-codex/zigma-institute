@@ -4,16 +4,10 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   Users,
   Edit,
-  Trash2,
-  Eye,
   ArrowLeft,
   UserPlus,
-  Download,
-  BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
-import Image from "next/image";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -23,18 +17,6 @@ import {
   type StudentRegistrationCourse,
 } from "@/components/student-registration/RegistrationForm";
 import { getCourses } from "@/lib/actions/course";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-
 import {
   deleteStudent,
   listStudents,
@@ -47,7 +29,6 @@ import {
 } from "@/lib/validators/eims-user-management";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { UserEditForm, type UserFieldConfig } from "./UserForms";
-import { UserFormDialog } from "./UserFormDialog";
 import { UserManagementCard } from "./UserManagementCard";
 import { UserTable } from "./UserTable";
 import { StudentDetailView } from "./StudentDetailView";
