@@ -105,10 +105,10 @@ export const DuePayments = () => {
         <div className="space-y-1">
           <CardTitle className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-destructive" />
-            Due Payments (Current Month)
+            Due Payments
           </CardTitle>
           <p className="text-xs text-muted-foreground">
-            Students who haven't paid for the current month (Past 1st week).
+            Students who have not paid for the current month.
           </p>
         </div>
         <div className="text-right">
