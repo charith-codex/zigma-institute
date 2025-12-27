@@ -185,7 +185,7 @@ export function DashboardContent({ session }: DashboardContentProps) {
   }, [activeModule, allowedModules]);
 
   const renderOverview = () => (
-    <div className="px-4 pt-6 sm:px-6 lg:px-8">
+    <div className="px-4 pb-6 pt-6 sm:px-6 lg:px-8">
       <div className="mb-8 flex flex-col gap-2">
         <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
           Welcome, {session?.user?.name}!
@@ -444,7 +444,7 @@ export function DashboardContent({ session }: DashboardContentProps) {
   };
 
   return (
-    <div className="flex w-full pr-4 pb-4 flex-col min-h-[calc(100vh-3.5rem)] lg:flex-row">
+    <div className="flex w-full px-4 pb-4 flex-col min-h-[calc(100vh-3.5rem)] lg:flex-row gap-2">
       <DashboardSidebar
         activeModule={activeModule}
         onModuleChange={setActiveModule}
