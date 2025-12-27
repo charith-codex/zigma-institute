@@ -93,6 +93,7 @@ const baseMenuEntries: MenuEntry[] = [
     icon: ClipboardList,
     items: [
       { id: "fees", label: "Fee Management", icon: DollarSign },
+      { id: "due-payments", label: "Due Payments", icon: Bell },
       { id: "attendance-qr", label: "QR Attendance", icon: QrCode },
       {
         id: "inquiry-management",

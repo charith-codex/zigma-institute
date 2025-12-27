@@ -396,7 +396,7 @@ export function StudentDetailView({
                               >
                                 <div className="h-8 w-8 flex items-center justify-center rounded-lg bg-background shadow-sm border border-border/50">
                                   <span className="font-bold text-primary">
-                                    {p.monthNumber ? `M${p.monthNumber}` : "R"}
+                                    {p.paidMonth ? `M${p.paidMonth}` : "R"}
                                   </span>
                                 </div>
                                 <div className="flex-1">

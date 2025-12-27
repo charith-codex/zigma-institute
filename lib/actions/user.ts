@@ -271,7 +271,12 @@ export async function getUsers() {
       },
       paymentTransactions: {
         where: { paymentType: "INSTALLMENT" },
-        select: { courseId: true, monthNumber: true, paidAt: true },
+        select: {
+          courseId: true,
+          paidMonth: true,
+          paidYear: true,
+          paidAt: true,
+        },
         orderBy: { paidAt: "desc" },
       },
     },

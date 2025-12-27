@@ -37,6 +37,7 @@ import { StudentManagement } from "@/components/eims/manage-users/StudentManagem
 import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleManager";
 import { CourseCategoryManagement } from "@/components/eims/CourseCategoryManagement";
 import { CourseAccessControl } from "@/components/eims/CourseAccessControl";
+import { DuePayments } from "@/components/eims/DuePayments";
 
 type SessionLike = {
   user?: {
@@ -326,6 +327,12 @@ export function DashboardContent({ session }: DashboardContentProps) {
         return (
           <div className="px-4 pb-10 pt-6 sm:px-6 lg:px-8">
             <FeeManagement />
+          </div>
+        );
+      case "due-payments":
+        return (
+          <div className="px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+            <DuePayments />
           </div>
         );
       case "attendance-qr":

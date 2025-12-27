@@ -16,8 +16,8 @@ interface FeeRecord {
   paidAt: string;
   paymentType: "INSTALLMENT" | "REGISTRATION";
   transactionId: string | null;
-  monthNumber: number | null;
-  discountRate: number | null;
+  paidMonth: number | null;
+  paidYear: number | null;
 }
 
 interface FeeSummary {
@@ -43,7 +43,10 @@ interface FeeResponse {
   summary: FeeSummary;
 }
 
-const formatMonth = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+const formatMonth = (year: number, month: number) =>
+  `${year}-${String(month).padStart(2, "0")}`;
+const formatMonthFromDate = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
 export async function GET() {
   const session = await auth();
@@ -88,8 +91,8 @@ export async function GET() {
     paidAt: payment.paidAt.toISOString(),
     paymentType: payment.paymentType,
     transactionId: payment.transactionId,
-    monthNumber: payment.monthNumber ?? null,
-    discountRate: payment.discountRate ?? null,
+    paidMonth: payment.paidMonth,
+    paidYear: payment.paidYear,
   }));
 
   const registrationCourseShares = new Map<
@@ -99,11 +102,15 @@ export async function GET() {
 
   const registrationRecords: FeeRecord[] = registrations.map((registration) => {
     const courseSelections = registration.courses.filter(
-      (item): item is typeof item & { course: NonNullable<typeof item.course> } =>
+      (
+        item
+      ): item is typeof item & { course: NonNullable<typeof item.course> } =>
         Boolean(item.course)
     );
 
-    const courseNames = courseSelections.map((item) => item.course.name).join(", ");
+    const courseNames = courseSelections
+      .map((item) => item.course.name)
+      .join(", ");
     const courseCount = Math.max(1, courseSelections.length);
     const baseShare = Math.floor(registration.totalAmountInCents / courseCount);
     const remainder = registration.totalAmountInCents - baseShare * courseCount;
@@ -116,6 +123,8 @@ export async function GET() {
 
     registrationCourseShares.set(registration.id, shares);
 
+    // For registration, we set the service month to the registration month by default
+    const paidAt = registration.updatedAt;
     return {
       id: registration.id,
       studentId: registration.studentUserId ?? null,
@@ -125,23 +134,34 @@ export async function GET() {
       courseName: courseNames || "Registration",
       amountInCents: registration.totalAmountInCents,
       currency: registration.currency,
-      paidAt: registration.updatedAt.toISOString(),
+      paidAt: paidAt.toISOString(),
       paymentType: "REGISTRATION",
       transactionId: registration.stripeSessionId ?? registration.id,
-      monthNumber: 1,
-      discountRate: null,
+      paidMonth: paidAt.getMonth() + 1,
+      paidYear: paidAt.getFullYear(),
     } satisfies FeeRecord;
   });
 
   const allRecords = [...transactionRecords, ...registrationRecords];
 
   const monthlyIncomeMap = new Map<string, number>();
-  const courseTotalsMap = new Map<string, { name: string; total: number; count: number }>();
-  const studentTotalsMap = new Map<string, { name: string; email: string | null; total: number; count: number }>();
+  const courseTotalsMap = new Map<
+    string,
+    { name: string; total: number; count: number }
+  >();
+  const studentTotalsMap = new Map<
+    string,
+    { name: string; email: string | null; total: number; count: number }
+  >();
 
   allRecords.forEach((record) => {
-    const paidDate = new Date(record.paidAt);
-    const monthKey = formatMonth(paidDate);
+    let monthKey: string;
+    if (record.paidMonth && record.paidYear) {
+      monthKey = formatMonth(record.paidYear, record.paidMonth);
+    } else {
+      monthKey = formatMonthFromDate(new Date(record.paidAt));
+    }
+
     monthlyIncomeMap.set(
       monthKey,
       (monthlyIncomeMap.get(monthKey) ?? 0) + record.amountInCents
@@ -176,7 +196,8 @@ export async function GET() {
       });
     }
 
-    const studentKey = record.studentId ?? record.studentEmail ?? record.studentName;
+    const studentKey =
+      record.studentId ?? record.studentEmail ?? record.studentName;
     const existingStudent = studentTotalsMap.get(studentKey) ?? {
       name: record.studentName,
       email: record.studentEmail,

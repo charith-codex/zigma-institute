@@ -139,10 +139,32 @@ async function handleCheckoutSessionCompleted(
         },
       });
 
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+
       for (const regCourse of registration.courses) {
         if (regCourse.courseId) {
           await tx.enrollment.create({
             data: { studentId: user.id, courseId: regCourse.courseId },
+          });
+
+          // Create payment transaction for the first month
+          const course = regCourse.course;
+          const coursePrice = course?.priceInCents ?? 0;
+
+          await tx.paymentTransaction.create({
+            data: {
+              studentId: user.id,
+              courseId: regCourse.courseId,
+              amountInCents: coursePrice,
+              currency: registration.currency,
+              paymentType: "REGISTRATION",
+              paidMonth: currentMonth,
+              paidYear: currentYear,
+              transactionId: session.id, // Using Stripe session ID as transaction ID for registration
+              paidAt: now,
+            },
           });
         }
       }
@@ -152,7 +174,7 @@ async function handleCheckoutSessionCompleted(
   );
 
   const qrResult = await generateAndStoreStudentQrCode(registration.id);
-  const qrCodeUrl = qrResult.success ? qrResult.qrCodeUrl ?? null : null;
+  const qrCodeUrl = qrResult.success ? (qrResult.qrCodeUrl ?? null) : null;
 
   if (!qrResult.success) {
     console.error(`Failed to generate QR code: ${qrResult.error}`);

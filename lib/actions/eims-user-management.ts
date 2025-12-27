@@ -87,7 +87,8 @@ export type StudentRecord = {
     paidAt: string;
     paymentType: string;
     courseId: string | null;
-    monthNumber: number | null;
+    paidMonth: number | null;
+    paidYear: number | null;
   }>;
   createdAt: string;
   updatedAt: string;
@@ -150,7 +151,8 @@ const serializeStudent = (user: {
     paidAt: Date;
     paymentType: string;
     courseId: string | null;
-    monthNumber: number | null;
+    paidMonth: number | null;
+    paidYear: number | null;
   }>;
 }): StudentRecord => ({
   id: user.id,
@@ -177,7 +179,8 @@ const serializeStudent = (user: {
     paidAt: serializeDate(p.paidAt)!,
     paymentType: p.paymentType,
     courseId: p.courseId,
-    monthNumber: p.monthNumber,
+    paidMonth: p.paidMonth,
+    paidYear: p.paidYear,
   })),
   createdAt: serializeDate(user.createdAt)!,
   updatedAt: serializeDate(user.updatedAt)!,
