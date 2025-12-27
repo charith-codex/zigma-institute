@@ -8,6 +8,7 @@ import { LmsSidebar } from "@/components/lms/LmsSidebar";
 import AIStudyTools from "@/components/lms/AIStudyTools";
 import { CourseDetailView } from "@/components/lms/CourseDetailView";
 import { DailyQuotes } from "@/components/lms/DailyQuotes";
+import { DuePaymentAlert } from "@/components/lms/DuePaymentAlert";
 import { PaymentSection } from "@/components/lms/PaymentSection";
 import StudentPerformance from "@/components/lms/StudentPerformance";
 import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleManager";
@@ -173,6 +174,9 @@ const LMS = () => {
           <div className="flex-1 space-y-8 p-4 sm:p-6 lg:p-8">
             {activeModule === "dashboard" && (
               <div className="space-y-8">
+                {/* Due Payment Alert */}
+                <DuePaymentAlert />
+
                 {/* Daily Motivation */}
                 <DailyQuotes />
 

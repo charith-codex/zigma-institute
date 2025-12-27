@@ -287,6 +287,10 @@ export async function GET(request: Request) {
       });
 
       const monthNumber = previousInstallments + 1;
+      
+      // Calculate monthYear and dueDate for the payment
+      const monthYear = `${paidAt.getFullYear()}-${String(paidAt.getMonth() + 1).padStart(2, "0")}`;
+      const dueDate = new Date(paidAt.getFullYear(), paidAt.getMonth() + 1, 0, 23, 59, 59, 999);
 
       await prisma.paymentTransaction.upsert({
         where: { transactionId },
@@ -298,6 +302,8 @@ export async function GET(request: Request) {
             course?.currency ??
             "usd",
           monthNumber,
+          monthYear,
+          dueDate,
           discountRate,
           paidAt,
         },
@@ -312,7 +318,10 @@ export async function GET(request: Request) {
             course?.currency ??
             "usd",
           paymentType: "INSTALLMENT",
+          paymentMethod: "ONLINE",
           monthNumber,
+          monthYear,
+          dueDate,
           discountRate,
           paidAt,
         },

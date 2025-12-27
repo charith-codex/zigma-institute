@@ -453,19 +453,28 @@ enum PaymentType {
   INSTALLMENT
 }
 
+enum PaymentMethod {
+  ONLINE
+  MANUAL
+}
+
 model PaymentTransaction {
-  id             String      @id @default(uuid())
+  id             String        @id @default(uuid())
   studentId      String
   courseId       String?
   registrationId String?
   amountInCents  Int
-  currency       String      @default("usd")
+  currency       String        @default("usd")
   paymentType    PaymentType
+  paymentMethod  PaymentMethod @default(ONLINE)
   monthNumber    Int?
-  discountRate   Float       @default(0)
-  transactionId  String      @unique
-  paidAt         DateTime    @default(now())
+  monthYear      String?       // Format: YYYY-MM for clear monthly tracking
+  dueDate        DateTime?     // When the payment was due
+  discountRate   Float         @default(0)
+  transactionId  String        @unique
+  paidAt         DateTime      @default(now())
   notes          String?
+  recordedById   String?       // Staff who recorded manual payment
 
   student      User                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
   course       Course?              @relation(fields: [courseId], references: [id], onDelete: SetNull)
@@ -474,6 +483,7 @@ model PaymentTransaction {
   @@index([studentId])
   @@index([courseId])
   @@index([paidAt])
+  @@index([monthYear])
 }
 
 model AttendanceSession {

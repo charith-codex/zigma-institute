@@ -15,14 +15,19 @@ interface FeeRecord {
   currency: string;
   paidAt: string;
   paymentType: "INSTALLMENT" | "REGISTRATION";
+  paymentMethod: "ONLINE" | "MANUAL";
   transactionId: string | null;
   monthNumber: number | null;
+  monthYear: string | null;
   discountRate: number | null;
+  notes: string | null;
 }
 
 interface FeeSummary {
   totalIncomeInCents: number;
-  monthlyIncome: { month: string; totalInCents: number }[];
+  onlineIncomeInCents: number;
+  manualIncomeInCents: number;
+  monthlyIncome: { month: string; totalInCents: number; onlineInCents: number; manualInCents: number }[];
   courseTotals: {
     courseId: string;
     courseName: string;
@@ -87,9 +92,12 @@ export async function GET() {
     currency: payment.currency,
     paidAt: payment.paidAt.toISOString(),
     paymentType: payment.paymentType,
+    paymentMethod: payment.paymentMethod,
     transactionId: payment.transactionId,
     monthNumber: payment.monthNumber ?? null,
+    monthYear: payment.monthYear ?? null,
     discountRate: payment.discountRate ?? null,
+    notes: payment.notes ?? null,
   }));
 
   const registrationCourseShares = new Map<
@@ -127,51 +135,57 @@ export async function GET() {
       currency: registration.currency,
       paidAt: registration.updatedAt.toISOString(),
       paymentType: "REGISTRATION",
+      paymentMethod: "ONLINE",
       transactionId: registration.stripeSessionId ?? registration.id,
       monthNumber: 1,
+      monthYear: formatMonth(registration.updatedAt),
       discountRate: null,
+      notes: null,
     } satisfies FeeRecord;
   });
 
   const allRecords = [...transactionRecords, ...registrationRecords];
 
-  const monthlyIncomeMap = new Map<string, number>();
+  const monthlyIncomeMap = new Map<string, { total: number; online: number; manual: number }>();
   const courseTotalsMap = new Map<string, { name: string; total: number; count: number }>();
   const studentTotalsMap = new Map<string, { name: string; email: string | null; total: number; count: number }>();
 
   allRecords.forEach((record) => {
     const paidDate = new Date(record.paidAt);
     const monthKey = formatMonth(paidDate);
-    monthlyIncomeMap.set(
-      monthKey,
-      (monthlyIncomeMap.get(monthKey) ?? 0) + record.amountInCents
-    );
+    const existing = monthlyIncomeMap.get(monthKey) ?? { total: 0, online: 0, manual: 0 };
+    const isOnline = record.paymentMethod === "ONLINE";
+    monthlyIncomeMap.set(monthKey, {
+      total: existing.total + record.amountInCents,
+      online: existing.online + (isOnline ? record.amountInCents : 0),
+      manual: existing.manual + (isOnline ? 0 : record.amountInCents),
+    });
 
     if (record.courseId && record.courseName) {
       const courseKey = record.courseId;
-      const existing = courseTotalsMap.get(courseKey) ?? {
+      const existingCourse = courseTotalsMap.get(courseKey) ?? {
         name: record.courseName,
         total: 0,
         count: 0,
       };
       courseTotalsMap.set(courseKey, {
-        name: existing.name,
-        total: existing.total + record.amountInCents,
-        count: existing.count + 1,
+        name: existingCourse.name,
+        total: existingCourse.total + record.amountInCents,
+        count: existingCourse.count + 1,
       });
     } else if (record.paymentType === "REGISTRATION") {
       const shares = registrationCourseShares.get(record.id) ?? [];
       shares.forEach((share) => {
-        const existing = courseTotalsMap.get(share.courseId) ?? {
+        const existingShare = courseTotalsMap.get(share.courseId) ?? {
           name: share.courseName,
           total: 0,
           count: 0,
         };
 
         courseTotalsMap.set(share.courseId, {
-          name: existing.name,
-          total: existing.total + share.amountInCents,
-          count: existing.count + 1,
+          name: existingShare.name,
+          total: existingShare.total + share.amountInCents,
+          count: existingShare.count + 1,
         });
       });
     }
@@ -192,13 +206,27 @@ export async function GET() {
     });
   });
 
+  const onlineTotal = allRecords
+    .filter((r) => r.paymentMethod === "ONLINE")
+    .reduce((sum, r) => sum + r.amountInCents, 0);
+  const manualTotal = allRecords
+    .filter((r) => r.paymentMethod === "MANUAL")
+    .reduce((sum, r) => sum + r.amountInCents, 0);
+
   const summary: FeeSummary = {
     totalIncomeInCents: allRecords.reduce(
       (sum, record) => sum + record.amountInCents,
       0
     ),
+    onlineIncomeInCents: onlineTotal,
+    manualIncomeInCents: manualTotal,
     monthlyIncome: Array.from(monthlyIncomeMap.entries())
-      .map(([month, totalInCents]) => ({ month, totalInCents }))
+      .map(([month, data]) => ({ 
+        month, 
+        totalInCents: data.total,
+        onlineInCents: data.online,
+        manualInCents: data.manual,
+      }))
       .sort((a, b) => (a.month < b.month ? 1 : -1)),
     courseTotals: Array.from(courseTotalsMap.entries())
       .map(([courseId, entry]) => ({

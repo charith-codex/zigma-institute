@@ -13,6 +13,7 @@ import {
   History,
   IdCard,
   ArrowLeft,
+  HandCoins,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -33,6 +34,12 @@ interface StudentDetailViewProps {
   student: StudentRecord;
   onClose?: () => void;
 }
+
+const formatMonthLabel = (monthYear: string) => {
+  const [year, month] = monthYear.split("-");
+  const date = new Date(Number(year), Number(month) - 1, 1);
+  return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+};
 
 export function StudentDetailView({
   student,
@@ -366,7 +373,7 @@ export function StudentDetailView({
                 </CardTitle>
                 <CardDescription>
                   Monthly installments and registration fees organized by
-                  course.
+                  course. Showing payment method (Online/Manual).
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
@@ -410,15 +417,33 @@ export function StudentDetailView({
                                     )}
                                   </p>
                                   <p className="text-muted-foreground">
-                                    {format(new Date(p.paidAt), "MMM d, yyyy")}
+                                    {p.monthYear ? formatMonthLabel(p.monthYear) : format(new Date(p.paidAt), "MMM d, yyyy")}
                                   </p>
                                 </div>
-                                <Badge
-                                  variant="outline"
-                                  className="text-[10px] capitalize"
-                                >
-                                  {p.paymentType.toLowerCase()}
-                                </Badge>
+                                <div className="flex flex-col gap-1 items-end">
+                                  <Badge
+                                    variant={p.paymentMethod === "ONLINE" ? "default" : "secondary"}
+                                    className="text-[10px] gap-1"
+                                  >
+                                    {p.paymentMethod === "ONLINE" ? (
+                                      <>
+                                        <CreditCard className="h-2.5 w-2.5" />
+                                        Online
+                                      </>
+                                    ) : (
+                                      <>
+                                        <HandCoins className="h-2.5 w-2.5" />
+                                        Manual
+                                      </>
+                                    )}
+                                  </Badge>
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[10px] capitalize"
+                                  >
+                                    {p.paymentType.toLowerCase()}
+                                  </Badge>
+                                </div>
                               </div>
                             ))}
                           </div>
@@ -450,9 +475,25 @@ export function StudentDetailView({
                                   )}
                                 </p>
                                 <p className="text-muted-foreground">
-                                  {format(new Date(p.paidAt), "MMM d, yyyy")}
+                                  {p.monthYear ? formatMonthLabel(p.monthYear) : format(new Date(p.paidAt), "MMM d, yyyy")}
                                 </p>
                               </div>
+                              <Badge
+                                variant={p.paymentMethod === "ONLINE" ? "default" : "secondary"}
+                                className="text-[10px] gap-1"
+                              >
+                                {p.paymentMethod === "ONLINE" ? (
+                                  <>
+                                    <CreditCard className="h-2.5 w-2.5" />
+                                    Online
+                                  </>
+                                ) : (
+                                  <>
+                                    <HandCoins className="h-2.5 w-2.5" />
+                                    Manual
+                                  </>
+                                )}
+                              </Badge>
                             </div>
                           ))}
                         </div>

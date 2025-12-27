@@ -746,14 +746,19 @@ export interface FeeRecord {
   currency: string;
   paidAt: string;
   paymentType: "INSTALLMENT" | "REGISTRATION";
+  paymentMethod: "ONLINE" | "MANUAL";
   transactionId: string | null;
   monthNumber: number | null;
+  monthYear: string | null;
   discountRate: number | null;
+  notes: string | null;
 }
 
 export interface FeeSummary {
   totalIncomeInCents: number;
-  monthlyIncome: { month: string; totalInCents: number }[];
+  onlineIncomeInCents: number;
+  manualIncomeInCents: number;
+  monthlyIncome: { month: string; totalInCents: number; onlineInCents: number; manualInCents: number }[];
   courseTotals: {
     courseId: string;
     courseName: string;

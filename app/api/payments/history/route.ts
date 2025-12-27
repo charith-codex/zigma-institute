@@ -12,9 +12,12 @@ interface PaymentHistoryResponse {
   amountPaidInCents: number;
   currency: string;
   paymentType: "INSTALLMENT" | "REGISTRATION";
+  paymentMethod: "ONLINE" | "MANUAL";
   monthNumber: number | null;
+  monthYear: string | null;
   transactionId: string;
   discountRate: number | null;
+  notes: string | null;
 }
 
 export async function GET() {
@@ -49,9 +52,12 @@ export async function GET() {
     amountPaidInCents: payment.amountInCents,
     currency: payment.currency,
     paymentType: payment.paymentType,
+    paymentMethod: payment.paymentMethod,
     monthNumber: payment.monthNumber ?? null,
+    monthYear: payment.monthYear ?? null,
     transactionId: payment.transactionId,
     discountRate: payment.discountRate ?? null,
+    notes: payment.notes ?? null,
   }));
 
   return NextResponse.json(convertToPlainObject(payload));

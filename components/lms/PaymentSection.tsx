@@ -66,15 +66,23 @@ interface PaymentReceipt {
   paidOn: string;
   amountPaidInCents: number;
   monthNumber: number;
+  monthYear: string | null;
   transactionId: string;
   currency?: string;
   paymentType?: "INSTALLMENT" | "REGISTRATION";
+  paymentMethod?: "ONLINE" | "MANUAL";
 }
 
 const formatCurrency = (cents: number, currency: string) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
     cents / 100
   );
+
+const formatMonthLabel = (monthYear: string) => {
+  const [year, month] = monthYear.split("-");
+  const date = new Date(Number(year), Number(month) - 1, 1);
+  return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+};
 
 const calculateNextDueDate = (
   enrolledAt: string,
@@ -157,7 +165,9 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
         payload.map((entry) => ({
           ...entry,
           monthNumber: entry.monthNumber ?? 1,
+          monthYear: entry.monthYear ?? null,
           paymentType: entry.paymentType ?? "INSTALLMENT",
+          paymentMethod: entry.paymentMethod ?? "ONLINE",
         }))
       );
     } catch (historyError) {
@@ -558,8 +568,8 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                               {receipt.paymentType === "REGISTRATION"
                                 ? "Registration"
                                 : "Installment"}{" "}
-                              • Month {receipt.monthNumber} • Transaction{" "}
-                              {receipt.transactionId}
+                              • {receipt.monthYear ? formatMonthLabel(receipt.monthYear) : `Month ${receipt.monthNumber}`}
+                              {" "}• {receipt.paymentMethod === "MANUAL" ? "Manual" : "Online"}
                             </p>
                           </div>
                           <Badge className="gap-2 self-start bg-success/10 text-success hover:bg-success/10">
