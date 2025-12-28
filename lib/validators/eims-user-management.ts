@@ -1,11 +1,5 @@
 import { z } from "zod";
-
-const optionalPasswordSchema = z
-  .string()
-  .trim()
-  .min(6, "Password must be at least 6 characters long")
-  .optional()
-  .or(z.literal(""));
+import { optionalPasswordSchema } from "./common";
 
 const optionalDateSchema = z
   .string()

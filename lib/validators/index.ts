@@ -7,7 +7,6 @@ export * from "./exams";
 export * from "./inquiries";
 export * from "./course-category";
 export * from "./schedules";
-export * from "./settings";
 export * from "./student-registration";
 export * from "./showcase";
 export * from "./users";
