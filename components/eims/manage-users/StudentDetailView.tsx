@@ -83,7 +83,7 @@ export function StudentDetailView({
           if (ctx) {
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             const pngUrl = canvas.toDataURL("image/png");
             const link = document.createElement("a");
             link.href = pngUrl;

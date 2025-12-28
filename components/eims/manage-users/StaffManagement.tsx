@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Users, Edit, Trash2 } from "lucide-react";
+import { Users, Edit, Trash2, ArrowLeft, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -103,7 +103,7 @@ export function StaffManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isAddingStaff, setIsAddingStaff] = useState(false);
   const [editingStaff, setEditingStaff] = useState<StaffUpsertValues | null>(
     null
   );
@@ -187,7 +187,7 @@ export function StaffManagement() {
       if (result.success) {
         setStaffMembers((prev) => [result.data, ...prev]);
         setNewStaff(createEmptyStaff());
-        setIsAddDialogOpen(false);
+        setIsAddingStaff(false);
         toast.success("Staff member added successfully.");
       } else {
         toast.error(result.error);
@@ -303,58 +303,74 @@ export function StaffManagement() {
     </TableRow>
   ));
 
-  return (
-    <>
-      <UserManagementCard
-        title="Staff Management"
-        description="Manage staff roles, access levels, and account status."
-        icon={Users}
-        addLabel="Add Staff"
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        onAddClick={() => setIsAddDialogOpen(true)}
-        isLoading={isPending}
-      >
-        <UserTable
-          headers={["Name", "Email", "Role", "Status", "Actions"]}
-          isLoading={isLoading}
-          error={listError}
-          emptyMessage="No staff members found."
-        >
-          {rows}
-        </UserTable>
-      </UserManagementCard>
+  if (isAddingStaff) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center text-[#A41FC5]">
+            <UserPlus className="mr-2 h-5 w-5" />
+            <h2 className="text-xl font-bold">Add Staff Member</h2>
+          </div>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setIsAddingStaff(false)}
+            className="rounded-lg bg-[#A41FC5] hover:bg-[#A41FC5]/90 px-4 text-xs font-medium text-white"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Staff Management
+          </Button>
+        </div>
 
-      <UserFormDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        title="Add Staff Member"
-        description="Create staff accounts with appropriate permissions."
-        onSubmit={handleCreateStaff}
-        submitLabel="Create"
-        isPending={isPending}
-      >
-        <UserAddForm
-          values={newStaff}
-          errors={newStaffErrors}
-          fields={staffCreateFields}
-          onChange={handleNewStaffChange}
-          onClearError={(key) => clearFieldError(key, setNewStaffErrors)}
-        />
-      </UserFormDialog>
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
+          <UserAddForm
+            values={newStaff}
+            errors={newStaffErrors}
+            fields={staffCreateFields}
+            onChange={handleNewStaffChange}
+            onClearError={(key) => clearFieldError(key, setNewStaffErrors)}
+          />
+          <div className="mt-6 flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setIsAddingStaff(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateStaff}
+              disabled={isPending}
+              className="bg-[#A41FC5] hover:bg-[#A41FC5]/90 text-white"
+            >
+              {isPending ? "Creating..." : "Create Staff"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-      <UserFormDialog
-        open={Boolean(editingStaff)}
-        onOpenChange={(open) => {
-          if (!open) setEditingStaff(null);
-        }}
-        title="Edit Staff Member"
-        description="Update staff information or reset access credentials."
-        onSubmit={handleUpdateStaff}
-        submitLabel="Save Changes"
-        isPending={isPending}
-      >
-        {editingStaff ? (
+  if (editingStaff) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center text-[#A41FC5]">
+            <Edit className="mr-2 h-5 w-5" />
+            <h2 className="text-xl font-bold">Edit Staff Member</h2>
+          </div>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setEditingStaff(null)}
+            className="rounded-lg bg-[#A41FC5] hover:bg-[#A41FC5]/90 px-4 text-xs font-medium text-white"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Staff Management
+          </Button>
+        </div>
+
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
           <UserEditForm
             values={editingStaff}
             errors={editStaffErrors}
@@ -370,8 +386,48 @@ export function StaffManagement() {
               clearFieldError("password", setEditStaffErrors);
             }}
           />
-        ) : null}
-      </UserFormDialog>
+          <div className="mt-6 flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setEditingStaff(null)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateStaff}
+              disabled={isPending}
+              className="bg-[#A41FC5] hover:bg-[#A41FC5]/90 text-white"
+            >
+              {isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <UserManagementCard
+        title="Staff Management"
+        description="Manage staff roles, access levels, and account status."
+        icon={Users}
+        addLabel="Add Staff"
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onAddClick={() => setIsAddingStaff(true)}
+        isLoading={isPending}
+      >
+        <UserTable
+          headers={["Name", "Email", "Role", "Status", "Actions"]}
+          isLoading={isLoading}
+          error={listError}
+          emptyMessage="No staff members found."
+        >
+          {rows}
+        </UserTable>
+      </UserManagementCard>
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}

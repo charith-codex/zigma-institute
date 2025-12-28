@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, ArrowLeft, UserPlus, Edit } from "lucide-react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
@@ -99,7 +99,7 @@ export function TeacherManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isAddingTeacher, setIsAddingTeacher] = useState(false);
   const [editingTeacher, setEditingTeacher] =
     useState<TeacherUpsertValues | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TeacherRecord | null>(null);
@@ -181,7 +181,7 @@ export function TeacherManagement() {
       if (result.success) {
         setTeachers((prev) => [result.data, ...prev]);
         setNewTeacher(createEmptyTeacher());
-        setIsAddDialogOpen(false);
+        setIsAddingTeacher(false);
         toast.success("Teacher added successfully.");
       } else {
         toast.error(result.error);
@@ -297,58 +297,74 @@ export function TeacherManagement() {
     </TableRow>
   ));
 
-  return (
-    <>
-      <UserManagementCard
-        title="Teacher Management"
-        description="Handle teacher accounts, roles, and availability."
-        icon={GraduationCap}
-        addLabel="Add Teacher"
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        onAddClick={() => setIsAddDialogOpen(true)}
-        isLoading={isPending}
-      >
-        <UserTable
-          headers={["Name", "Email", "Qualification", "Status", "Actions"]}
-          isLoading={isLoading}
-          error={listError}
-          emptyMessage="No teachers found."
-        >
-          {rows}
-        </UserTable>
-      </UserManagementCard>
+  if (isAddingTeacher) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center text-[#A41FC5]">
+            <UserPlus className="mr-2 h-5 w-5" />
+            <h2 className="text-xl font-bold">Add Teacher</h2>
+          </div>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setIsAddingTeacher(false)}
+            className="rounded-lg bg-[#A41FC5] hover:bg-[#A41FC5]/90 px-4 text-xs font-medium text-white"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Teacher Management
+          </Button>
+        </div>
 
-      <UserFormDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        title="Add Teacher"
-        description="Create a new teacher profile and login details."
-        onSubmit={handleCreateTeacher}
-        submitLabel="Create"
-        isPending={isPending}
-      >
-        <UserAddForm
-          values={newTeacher}
-          errors={newTeacherErrors}
-          fields={teacherCreateFields}
-          onChange={handleNewTeacherChange}
-          onClearError={(key) => clearFieldError(key, setNewTeacherErrors)}
-        />
-      </UserFormDialog>
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
+          <UserAddForm
+            values={newTeacher}
+            errors={newTeacherErrors}
+            fields={teacherCreateFields}
+            onChange={handleNewTeacherChange}
+            onClearError={(key) => clearFieldError(key, setNewTeacherErrors)}
+          />
+          <div className="mt-6 flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setIsAddingTeacher(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateTeacher}
+              disabled={isPending}
+              className="bg-[#A41FC5] hover:bg-[#A41FC5]/90 text-white"
+            >
+              {isPending ? "Creating..." : "Create Teacher"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-      <UserFormDialog
-        open={Boolean(editingTeacher)}
-        onOpenChange={(open) => {
-          if (!open) setEditingTeacher(null);
-        }}
-        title="Edit Teacher"
-        description="Update teacher details or reset their credentials."
-        onSubmit={handleUpdateTeacher}
-        submitLabel="Save Changes"
-        isPending={isPending}
-      >
-        {editingTeacher ? (
+  if (editingTeacher) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center text-[#A41FC5]">
+            <Edit className="mr-2 h-5 w-5" />
+            <h2 className="text-xl font-bold">Edit Teacher</h2>
+          </div>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setEditingTeacher(null)}
+            className="rounded-lg bg-[#A41FC5] hover:bg-[#A41FC5]/90 px-4 text-xs font-medium text-white"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Teacher Management
+          </Button>
+        </div>
+
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
           <UserEditForm
             values={editingTeacher}
             errors={editTeacherErrors}
@@ -364,8 +380,48 @@ export function TeacherManagement() {
               clearFieldError("password", setEditTeacherErrors);
             }}
           />
-        ) : null}
-      </UserFormDialog>
+          <div className="mt-6 flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setEditingTeacher(null)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateTeacher}
+              disabled={isPending}
+              className="bg-[#A41FC5] hover:bg-[#A41FC5]/90 text-white"
+            >
+              {isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <UserManagementCard
+        title="Teacher Management"
+        description="Handle teacher accounts, roles, and availability."
+        icon={GraduationCap}
+        addLabel="Add Teacher"
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onAddClick={() => setIsAddingTeacher(true)}
+        isLoading={isPending}
+      >
+        <UserTable
+          headers={["Name", "Email", "Qualification", "Status", "Actions"]}
+          isLoading={isLoading}
+          error={listError}
+          emptyMessage="No teachers found."
+        >
+          {rows}
+        </UserTable>
+      </UserManagementCard>
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}

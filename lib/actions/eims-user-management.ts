@@ -324,7 +324,22 @@ export async function createStudent(
           },
         },
       },
-      include: { student: true },
+      include: {
+        student: {
+          include: {
+            enrollments: {
+              include: {
+                course: {
+                  select: { id: true, name: true },
+                },
+              },
+            },
+          },
+        },
+        paymentTransactions: {
+          orderBy: { paidAt: "desc" },
+        },
+      },
     });
 
     revalidatePath("/dashboard");
@@ -387,7 +402,22 @@ export async function updateStudent(
           },
         },
       },
-      include: { student: true },
+      include: {
+        student: {
+          include: {
+            enrollments: {
+              include: {
+                course: {
+                  select: { id: true, name: true },
+                },
+              },
+            },
+          },
+        },
+        paymentTransactions: {
+          orderBy: { paidAt: "desc" },
+        },
+      },
     });
 
     revalidatePath("/dashboard");
