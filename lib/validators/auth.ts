@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { passwordSchema } from "./common";
 
 export const signInFormSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -12,12 +13,7 @@ export const forgotPasswordSchema = z.object({
 export const resetPasswordSchema = z
   .object({
     token: z.string().min(1, { message: "Reset token is required" }),
-    password: z
-      .string()
-      .min(8, { message: "Password must be at least 8 characters" })
-      .regex(/[A-Z]/, { message: "Include at least one uppercase letter" })
-      .regex(/[a-z]/, { message: "Include at least one lowercase letter" })
-      .regex(/[0-9]/, { message: "Include at least one number" }),
+    password: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
