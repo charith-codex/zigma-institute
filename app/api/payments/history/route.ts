@@ -11,7 +11,6 @@ interface PaymentHistoryResponse {
   paidOn: string;
   amountPaidInCents: number;
   currency: string;
-  paymentType: "INSTALLMENT" | "REGISTRATION";
   transactionId: string;
   paidMonth: number | null;
   paidYear: number | null;
@@ -48,7 +47,6 @@ export async function GET() {
     paidOn: payment.paidAt.toISOString(),
     amountPaidInCents: payment.amountInCents,
     currency: payment.currency,
-    paymentType: payment.paymentType,
     transactionId: payment.transactionId,
     paidMonth: payment.paidMonth,
     paidYear: payment.paidYear,

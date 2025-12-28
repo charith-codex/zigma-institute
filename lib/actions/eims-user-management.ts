@@ -85,7 +85,6 @@ export type StudentRecord = {
     amountInCents: number;
     currency: string;
     paidAt: string;
-    paymentType: string;
     courseId: string | null;
     paidMonth: number | null;
     paidYear: number | null;
@@ -177,7 +176,6 @@ const serializeStudent = (user: {
     amountInCents: p.amountInCents,
     currency: p.currency,
     paidAt: serializeDate(p.paidAt)!,
-    paymentType: p.paymentType,
     courseId: p.courseId,
     paidMonth: p.paidMonth,
     paidYear: p.paidYear,

@@ -317,7 +317,6 @@ export async function GET(request: Request) {
             existingEnrollment?.course?.currency ??
             course?.currency ??
             "usd",
-          paymentType: "INSTALLMENT",
           paidMonth,
           paidYear,
           paidAt,

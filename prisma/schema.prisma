@@ -447,22 +447,16 @@ model StudentRegistrationCourse {
   @@unique([registrationId, courseId])
 }
 
-enum PaymentType {
-  REGISTRATION
-  INSTALLMENT
-}
-
 model PaymentTransaction {
-  id            String      @id @default(uuid())
+  id            String   @id @default(uuid())
   studentId     String
   courseId      String?
   amountInCents Int
-  currency      String      @default("usd")
-  paymentType   PaymentType
+  currency      String   @default("usd")
   paidMonth     Int?
   paidYear      Int?
-  transactionId String      @unique
-  paidAt        DateTime    @default(now())
+  transactionId String   @unique
+  paidAt        DateTime @default(now())
 
   student User    @relation(fields: [studentId], references: [id], onDelete: Cascade)
   course  Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)

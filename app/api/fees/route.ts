@@ -14,7 +14,6 @@ interface FeeRecord {
   amountInCents: number;
   currency: string;
   paidAt: string;
-  paymentType: "INSTALLMENT" | "REGISTRATION";
   transactionId: string | null;
   paidMonth: number | null;
   paidYear: number | null;
@@ -62,87 +61,28 @@ export async function GET() {
     );
   }
 
-  const [transactions, registrations] = await Promise.all([
-    prisma.paymentTransaction.findMany({
-      include: {
-        student: { select: { name: true, email: true } },
-        course: { select: { name: true } },
-      },
-      orderBy: { paidAt: "desc" },
-    }),
-    prisma.studentRegistration.findMany({
-      where: { status: "PAID" },
-      include: {
-        courses: { include: { course: true } },
-        student: { include: { user: true } },
-      },
-    }),
-  ]);
+  const transactions = await prisma.paymentTransaction.findMany({
+    include: {
+      student: { select: { name: true, email: true } },
+      course: { select: { name: true } },
+    },
+    orderBy: { paidAt: "desc" },
+  });
 
-  const transactionRecords: FeeRecord[] = transactions.map((payment) => ({
+  const records: FeeRecord[] = transactions.map((payment) => ({
     id: payment.id,
     studentId: payment.studentId,
     studentName: payment.student?.name ?? "Unknown student",
     studentEmail: payment.student?.email ?? null,
     courseId: payment.courseId ?? null,
-    courseName: payment.course?.name ?? null,
+    courseName: payment.course?.name ?? "Registration",
     amountInCents: payment.amountInCents,
     currency: payment.currency,
     paidAt: payment.paidAt.toISOString(),
-    paymentType: payment.paymentType,
     transactionId: payment.transactionId,
     paidMonth: payment.paidMonth,
     paidYear: payment.paidYear,
   }));
-
-  const registrationCourseShares = new Map<
-    string,
-    { courseId: string; courseName: string; amountInCents: number }[]
-  >();
-
-  const registrationRecords: FeeRecord[] = registrations.map((registration) => {
-    const courseSelections = registration.courses.filter(
-      (
-        item
-      ): item is typeof item & { course: NonNullable<typeof item.course> } =>
-        Boolean(item.course)
-    );
-
-    const courseNames = courseSelections
-      .map((item) => item.course.name)
-      .join(", ");
-    const courseCount = Math.max(1, courseSelections.length);
-    const baseShare = Math.floor(registration.totalAmountInCents / courseCount);
-    const remainder = registration.totalAmountInCents - baseShare * courseCount;
-
-    const shares = courseSelections.map((item, index) => ({
-      courseId: item.course.id,
-      courseName: item.course.name,
-      amountInCents: index === 0 ? baseShare + remainder : baseShare,
-    }));
-
-    registrationCourseShares.set(registration.id, shares);
-
-    // For registration, we set the service month to the registration month by default
-    const paidAt = registration.updatedAt;
-    return {
-      id: registration.id,
-      studentId: registration.studentUserId ?? null,
-      studentName: registration.student?.user.name ?? registration.name,
-      studentEmail: registration.student?.user.email ?? registration.email,
-      courseId: null,
-      courseName: courseNames || "Registration",
-      amountInCents: registration.totalAmountInCents,
-      currency: registration.currency,
-      paidAt: paidAt.toISOString(),
-      paymentType: "REGISTRATION",
-      transactionId: registration.stripeSessionId ?? registration.id,
-      paidMonth: paidAt.getMonth() + 1,
-      paidYear: paidAt.getFullYear(),
-    } satisfies FeeRecord;
-  });
-
-  const allRecords = [...transactionRecords, ...registrationRecords];
 
   const monthlyIncomeMap = new Map<string, number>();
   const courseTotalsMap = new Map<
@@ -154,13 +94,11 @@ export async function GET() {
     { name: string; email: string | null; total: number; count: number }
   >();
 
-  allRecords.forEach((record) => {
-    let monthKey: string;
-    if (record.paidMonth && record.paidYear) {
-      monthKey = formatMonth(record.paidYear, record.paidMonth);
-    } else {
-      monthKey = formatMonthFromDate(new Date(record.paidAt));
-    }
+  records.forEach((record) => {
+    const monthKey =
+      record.paidMonth && record.paidYear
+        ? formatMonth(record.paidYear, record.paidMonth)
+        : formatMonthFromDate(new Date(record.paidAt));
 
     monthlyIncomeMap.set(
       monthKey,
@@ -178,21 +116,6 @@ export async function GET() {
         name: existing.name,
         total: existing.total + record.amountInCents,
         count: existing.count + 1,
-      });
-    } else if (record.paymentType === "REGISTRATION") {
-      const shares = registrationCourseShares.get(record.id) ?? [];
-      shares.forEach((share) => {
-        const existing = courseTotalsMap.get(share.courseId) ?? {
-          name: share.courseName,
-          total: 0,
-          count: 0,
-        };
-
-        courseTotalsMap.set(share.courseId, {
-          name: existing.name,
-          total: existing.total + share.amountInCents,
-          count: existing.count + 1,
-        });
       });
     }
 
@@ -214,7 +137,7 @@ export async function GET() {
   });
 
   const summary: FeeSummary = {
-    totalIncomeInCents: allRecords.reduce(
+    totalIncomeInCents: records.reduce(
       (sum, record) => sum + record.amountInCents,
       0
     ),
@@ -240,12 +163,10 @@ export async function GET() {
       .sort((a, b) => b.totalInCents - a.totalInCents),
   };
 
-  const response: FeeResponse = {
-    records: allRecords.sort((a, b) =>
-      new Date(a.paidAt).getTime() < new Date(b.paidAt).getTime() ? 1 : -1
-    ),
-    summary,
-  };
-
-  return NextResponse.json(convertToPlainObject(response));
+  return NextResponse.json(
+    convertToPlainObject({
+      records,
+      summary,
+    })
+  );
 }

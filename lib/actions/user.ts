@@ -270,7 +270,6 @@ export async function getUsers() {
         },
       },
       paymentTransactions: {
-        where: { paymentType: "INSTALLMENT" },
         select: {
           courseId: true,
           paidMonth: true,

@@ -1,7 +1,13 @@
 "use client";
 
 import { type LucideIcon } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -9,11 +15,11 @@ interface UserManagementCardProps {
   title: string;
   description: string;
   icon: LucideIcon;
-  addLabel: string;
+  addLabel?: string;
   searchPlaceholder?: string;
   searchTerm: string;
   onSearchChange: (value: string) => void;
-  onAddClick: () => void;
+  onAddClick?: () => void;
   isLoading?: boolean;
   children: React.ReactNode;
 }
@@ -44,9 +50,11 @@ export function UserManagementCard({
             </CardDescription>
           </div>
         </div>
-        <Button onClick={onAddClick} disabled={isLoading} size="sm">
-          {addLabel}
-        </Button>
+        {onAddClick && addLabel && (
+          <Button onClick={onAddClick} disabled={isLoading} size="sm">
+            {addLabel}
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

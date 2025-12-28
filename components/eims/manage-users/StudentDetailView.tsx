@@ -500,12 +500,6 @@ export function StudentDetailView({
                                   {format(new Date(p.paidAt), "MMM d, yyyy")}
                                 </p>
                               </div>
-                              <Badge
-                                variant="outline"
-                                className="text-[10px] uppercase font-bold"
-                              >
-                                {p.paymentType.toLowerCase()}
-                              </Badge>
                             </div>
                           ))}
                         </div>

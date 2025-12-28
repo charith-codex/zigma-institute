@@ -4,11 +4,8 @@ import { hashSync } from "bcrypt-ts-edge";
 
 import { prisma } from "@/db/prisma";
 import { stripe } from "@/lib/stripe";
-import { generateRandomPassword } from "@/lib/student-registration/password";
-import { generateStudentPublicId } from "@/lib/student-registration/identifiers";
-import { generateAndUploadIdCard } from "@/lib/student-registration/generate-id-card";
-import { generateAndStoreStudentQrCode } from "@/lib/student-registration/qr-code";
-import { sendStudentOnboardingEmail } from "@/email";
+
+import { processCheckoutSession } from "@/lib/student-registration/payment-processing";
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -66,144 +63,8 @@ export async function POST(req: NextRequest) {
 async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session
 ) {
-  const registrationId = session.metadata?.registrationId;
-  if (!registrationId) {
-    console.warn("Missing registrationId in metadata");
-    return;
-  }
+  console.log("=== Stripe Webhook: Processing checkout.session.completed ===");
 
-  const registration = await prisma.studentRegistration.findUnique({
-    where: { id: registrationId },
-    include: { courses: { include: { course: true } } },
-  });
-
-  if (!registration) {
-    console.warn("Registration not found:", registrationId);
-    return;
-  }
-
-  if (registration.status !== "PENDING") {
-    console.info("Registration already processed:", registrationId);
-    return;
-  }
-
-  const existingUser = await prisma.user.findUnique({
-    where: { email: registration.email },
-  });
-
-  if (existingUser) {
-    await prisma.studentRegistration.update({
-      where: { id: registration.id },
-      data: { status: "FAILED" },
-    });
-    console.error("User already exists:", registration.email);
-    return;
-  }
-
-  // Generate credentials and create records
-  const plainPassword = generateRandomPassword();
-  const hashedPassword = hashSync(plainPassword, 10);
-
-  const { studentUserId, studentPublicId } = await prisma.$transaction(
-    async (tx) => {
-      const newPublicId = await generateStudentPublicId(tx);
-
-      const user = await tx.user.create({
-        data: {
-          name: registration.name,
-          email: registration.email,
-          password: hashedPassword,
-          phone: registration.phone,
-          dob: registration.dateOfBirth,
-          address: registration.address ?? undefined,
-          gender: registration.gender ?? undefined,
-          role: "STUDENT",
-          profileImage: registration.studentPhotoUrl,
-        },
-      });
-
-      await tx.student.create({
-        data: {
-          userId: user.id,
-          studentPublicId: newPublicId,
-          parentEmail: registration.guardianEmail,
-        },
-      });
-
-      await tx.studentRegistration.update({
-        where: { id: registration.id },
-        data: {
-          status: "PAID",
-          studentUserId: user.id,
-          studentPublicId: newPublicId,
-        },
-      });
-
-      const now = new Date();
-      const currentMonth = now.getMonth() + 1;
-      const currentYear = now.getFullYear();
-
-      for (const regCourse of registration.courses) {
-        if (regCourse.courseId) {
-          await tx.enrollment.create({
-            data: { studentId: user.id, courseId: regCourse.courseId },
-          });
-
-          // Create payment transaction for the first month
-          const course = regCourse.course;
-          const coursePrice = course?.priceInCents ?? 0;
-
-          await tx.paymentTransaction.create({
-            data: {
-              studentId: user.id,
-              courseId: regCourse.courseId,
-              amountInCents: coursePrice,
-              currency: registration.currency,
-              paymentType: "REGISTRATION",
-              paidMonth: currentMonth,
-              paidYear: currentYear,
-              transactionId: session.id, // Using Stripe session ID as transaction ID for registration
-              paidAt: now,
-            },
-          });
-        }
-      }
-
-      return { studentUserId: user.id, studentPublicId: newPublicId };
-    }
-  );
-
-  const qrResult = await generateAndStoreStudentQrCode(registration.id);
-  const qrCodeUrl = qrResult.success ? (qrResult.qrCodeUrl ?? null) : null;
-
-  if (!qrResult.success) {
-    console.error(`Failed to generate QR code: ${qrResult.error}`);
-  }
-
-  // Generate student ID card (non-critical - can be regenerated later if it fails)
-  let idCardUrl: string | null = null;
-  const idCardResult = await generateAndUploadIdCard(registration.id);
-  if (idCardResult.success) {
-    idCardUrl = idCardResult.idCardUrl ?? null;
-  } else {
-    console.error(`Failed to generate ID card: ${idCardResult.error}`);
-    // Continue anyway - ID card can be regenerated from dashboard later
-  }
-
-  // Get courses for email
-  const courses = registration.courses
-    .map((c) => c.course?.name)
-    .filter((n): n is string => Boolean(n));
-
-  // Send onboarding email
-  await sendStudentOnboardingEmail({
-    studentEmail: registration.email,
-    guardianEmail: registration.guardianEmail,
-    studentName: registration.name,
-    temporaryPassword: plainPassword,
-    idCardUrl: idCardUrl || "", // Empty string if ID card generation failed
-    courses,
-  });
-
-  console.log(`Student ${registration.email} onboarded successfully`);
+  // Use shared logic
+  await processCheckoutSession(session);
 }

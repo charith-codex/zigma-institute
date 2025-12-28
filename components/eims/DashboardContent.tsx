@@ -153,7 +153,6 @@ export function DashboardContent({ session }: DashboardContentProps) {
   ];
 
   const quickActions = [
-    { title: "Add Student", icon: Users, action: "add-student" },
     { title: "Create Course", icon: BookOpen, action: "create-course" },
     { title: "Schedule Course", icon: Calendar, action: "schedule-course" },
     { title: "Generate Report", icon: BarChart3, action: "generate-report" },

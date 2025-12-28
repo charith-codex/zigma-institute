@@ -61,6 +61,19 @@ export default function StudentRegistrationSuccessPage({
         }
 
         const data = await response.json();
+
+        // Attempt to sync payment status in case webhook failed
+        try {
+          await fetch("/api/payments/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ registrationId: data.id }),
+          });
+        } catch (syncError) {
+          console.error("Background sync failed:", syncError);
+          // Don't block UI on sync failure, just log it
+        }
+
         setRegistration(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");

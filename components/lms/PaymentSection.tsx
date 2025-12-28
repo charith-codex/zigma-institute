@@ -69,7 +69,6 @@ interface PaymentReceipt {
   paidYear: number | null;
   transactionId: string;
   currency?: string;
-  paymentType?: "INSTALLMENT" | "REGISTRATION";
 }
 
 const formatCurrency = (cents: number, currency: string) =>
@@ -519,10 +518,8 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                                 receipt.currency ?? activeCurrency
                               )}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              {receipt.paymentType === "REGISTRATION"
-                                ? "Registration"
-                                : "Installment"}
+                            <p className="text-xs text-muted-foreground uppercase font-bold tracking-tight">
+                              MONTHLY INSTALLMENT
                               {receipt.paidMonth &&
                                 receipt.paidYear &&
                                 ` • ${getMonthName(receipt.paidMonth)} ${

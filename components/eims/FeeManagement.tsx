@@ -174,9 +174,21 @@ const FeeManagement = () => {
             Real-time revenue tracking and course performance metrics.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full">
-          <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-          LIVE DATA UPDATED
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full">
+            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+            LIVE DATA UPDATED
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-auto md:ml-0"
+            onClick={() => void refetch()}
+            title="Sync/Refresh Data"
+          >
+            <ListChecks className="mr-2 h-4 w-4" />
+            Refresh Data
+          </Button>
         </div>
       </div>
 
@@ -420,9 +432,6 @@ const FeeManagement = () => {
                         <div className="flex flex-col gap-0.5">
                           <span className="text-xs font-bold text-foreground overflow-hidden text-ellipsis max-w-[200px] whitespace-nowrap">
                             {payment.courseName ?? "Registration"}
-                          </span>
-                          <span className="text-[9px] font-black text-primary/60 uppercase tracking-tighter">
-                            {payment.paymentType.replace("_", " ")}
                           </span>
                         </div>
                       </TableCell>
