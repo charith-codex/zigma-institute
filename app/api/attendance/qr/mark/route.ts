@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject } from "@/lib/utils";
 import { markSchema } from "@/lib/validators";
+import { sendAttendanceNotificationEmail } from "@/email";
 
 export async function POST(request: Request) {
   let payload: unknown;
@@ -24,21 +25,68 @@ export async function POST(request: Request) {
   });
 
   if (!session) {
-    return NextResponse.json({ error: "Attendance session not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Attendance session not found" },
+      { status: 404 }
+    );
+  }
+
+  if (!session.courseId) {
+    return NextResponse.json(
+      { error: "This session is not linked to a specific course" },
+      { status: 400 }
+    );
   }
 
   const normalizedPublicId = data.data.studentPublicId.trim().toUpperCase();
 
-  const registration = await prisma.studentRegistration.findFirst({
-    where: {
-      OR: [
-        { studentPublicId: normalizedPublicId },
-        ...(data.data.registrationId ? [{ id: data.data.registrationId }] : []),
-      ],
+  // Find student by public ID
+  const student = await prisma.student.findUnique({
+    where: { studentPublicId: normalizedPublicId },
+    include: {
+      user: true,
+      registration: true,
     },
   });
 
-  const studentName = registration?.name ?? data.data.studentName.trim();
+  if (!student) {
+    return NextResponse.json({ error: "Student not found" }, { status: 404 });
+  }
+
+  // Check enrollment
+  const enrollment = await prisma.enrollment.findUnique({
+    where: {
+      studentId_courseId: {
+        studentId: student.userId,
+        courseId: session.courseId,
+      },
+    },
+  });
+
+  if (!enrollment || !enrollment.isActive) {
+    return NextResponse.json(
+      {
+        error:
+          "Student is not enrolled in this course or enrollment is inactive",
+      },
+      { status: 403 }
+    );
+  }
+
+  // Check payment for the session month/year
+  const sessionMonth = session.sessionDate.getUTCMonth() + 1;
+  const sessionYear = session.sessionDate.getUTCFullYear();
+
+  const payment = await prisma.paymentTransaction.findFirst({
+    where: {
+      studentId: student.userId,
+      courseId: session.courseId,
+      paidMonth: sessionMonth,
+      paidYear: sessionYear,
+    },
+  });
+
+  const paymentWarning = !payment;
 
   const existing = await prisma.attendanceEntry.findUnique({
     where: {
@@ -51,7 +99,11 @@ export async function POST(request: Request) {
 
   if (existing) {
     return NextResponse.json(
-      convertToPlainObject({ alreadyMarked: true, entry: existing })
+      convertToPlainObject({
+        alreadyMarked: true,
+        entry: existing,
+        paymentWarning,
+      })
     );
   }
 
@@ -59,12 +111,36 @@ export async function POST(request: Request) {
     data: {
       sessionId: session.id,
       studentPublicId: normalizedPublicId,
-      studentName,
-      registrationId: registration?.id ?? data.data.registrationId ?? null,
+      studentName: student.user.name,
+      registrationId:
+        student.registration?.id ?? data.data.registrationId ?? null,
     },
   });
 
+  // Send email to parent
+  if (student.parentEmail) {
+    try {
+      const markedAt = new Intl.DateTimeFormat("en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(new Date());
+
+      await sendAttendanceNotificationEmail({
+        to: student.parentEmail,
+        studentName: student.user.name,
+        courseName: session.courseName,
+        markedAt,
+      });
+    } catch (emailError) {
+      console.error("Failed to send attendance email notification", emailError);
+    }
+  }
+
   return NextResponse.json(
-    convertToPlainObject({ alreadyMarked: false, entry })
+    convertToPlainObject({
+      alreadyMarked: false,
+      entry,
+      paymentWarning,
+    })
   );
 }

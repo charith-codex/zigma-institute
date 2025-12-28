@@ -277,11 +277,19 @@ const AttendanceQR = () => {
         );
         setScannedStudent(entry.studentPublicId);
         setScanError(null);
-        toast.success(
-          body.alreadyMarked
-            ? "Attendance already recorded for this student"
-            : "Attendance marked"
-        );
+
+        if (body.paymentWarning) {
+          toast.warning("Attendance marked, but monthly payment not paid!", {
+            description: `Student: ${entry.studentName}`,
+            duration: 6000,
+          });
+        } else {
+          toast.success(
+            body.alreadyMarked
+              ? "Attendance already recorded for this student"
+              : "Attendance marked"
+          );
+        }
       } catch (error) {
         console.error("Failed to mark attendance", error);
         setScanError(
