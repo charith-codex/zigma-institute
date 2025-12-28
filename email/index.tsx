@@ -6,6 +6,7 @@ import PaymentInvoice from "./payment-invoice";
 import { StudentOnboardingEmail } from "./student-onboarding";
 import { PasswordResetEmail } from "./password-reset";
 import { InquiryResponseEmail } from "./inquiry-response";
+import { AttendanceNotificationEmail } from "./attendance-notification";
 
 const resend = new Resend(process.env.RESEND_API_KEY as string);
 
@@ -96,6 +97,33 @@ export const sendStudentOnboardingEmail = async ({
         temporaryPassword={temporaryPassword}
         idCardUrl={idCardUrl}
         courses={courses}
+      />
+    ),
+  });
+};
+
+interface AttendanceNotificationPayload {
+  to: string;
+  studentName: string;
+  courseName: string;
+  markedAt: string;
+}
+
+export const sendAttendanceNotificationEmail = async ({
+  to,
+  studentName,
+  courseName,
+  markedAt,
+}: AttendanceNotificationPayload) => {
+  await resend.emails.send({
+    from: `${APP_NAME} <${SENDER_EMAIL}>`,
+    to,
+    subject: `Attendance Marked: ${studentName} - ${courseName}`,
+    react: (
+      <AttendanceNotificationEmail
+        studentName={studentName}
+        courseName={courseName}
+        markedAt={markedAt}
       />
     ),
   });
