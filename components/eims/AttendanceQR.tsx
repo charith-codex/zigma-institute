@@ -5,6 +5,7 @@ import { Scanner } from "@yudiel/react-qr-scanner";
 import {
   CalendarDays,
   CheckCircle,
+  Loader2,
   QrCode,
   RefreshCw,
   Users,
@@ -519,10 +520,7 @@ const AttendanceQR = () => {
               >
                 {creatingSession ? (
                   <div className="text-center">
-                    <FlowerLoader
-                      size="md"
-                      className="text-[#A41FC5] mx-auto"
-                    />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Saving...
                   </div>
                 ) : (
