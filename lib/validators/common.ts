@@ -1,8 +1,20 @@
 import { z } from "zod";
 
-export const phoneNumberSchema = z.string().regex(/^[0-9]{10,15}$/, {
-  message: "Phone number must contain only digits (10–15 digits)",
-});
+export const phoneNumberSchema = z
+  .string()
+  .trim()
+  .regex(/^[0-9]{10,15}$/, {
+    message: "Phone number must contain only digits (10–15 digits)",
+  });
+
+export const optionalPhoneNumberSchema = z
+  .string()
+  .trim()
+  .optional()
+  .or(z.literal(""))
+  .refine((val) => !val || /^[0-9]{10,15}$/.test(val), {
+    message: "Phone number must contain only digits (10–15 digits)",
+  });
 
 export const optionalString = (maxLength: number) =>
   z

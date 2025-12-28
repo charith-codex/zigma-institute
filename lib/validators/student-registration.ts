@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { phoneNumberSchema } from "./common";
 
 export const registrationSchema = z.object({
   name: z.string().min(2, "Student name is required"),
   dateOfBirth: z.string().min(1, "Date of birth is required"),
-  email: z.string().email("Enter a valid email"),
-  phone: z.string().min(6, "Enter a valid phone number"),
+  email: z.string("Enter a valid email"),
+  phone: phoneNumberSchema,
   address: z
     .string()
     .max(200, "Address must be 200 characters or fewer")

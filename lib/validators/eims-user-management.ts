@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { optionalPasswordSchema } from "./common";
+import { optionalPasswordSchema, optionalPhoneNumberSchema } from "./common";
 
 const optionalDateSchema = z
   .string()
@@ -36,18 +36,11 @@ const optionalGenderSchema = z
   .optional()
   .or(z.literal(""));
 
-const phoneSchema = z
-  .string()
-  .trim()
-  .regex(/^[0-9]{7,15}$/, "Please enter a valid phone number")
-  .optional()
-  .or(z.literal(""));
-
 export const studentUpsertSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().trim().min(1, "Name is required"),
   email: z.string().trim().email("Invalid email address"),
-  phone: phoneSchema,
+  phone: optionalPhoneNumberSchema,
   address: optionalStringSchema,
   status: z.enum(["ACTIVE", "INACTIVE"]).default("ACTIVE"),
   parentEmail: optionalEmailSchema,
@@ -62,7 +55,7 @@ export const teacherUpsertSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().trim().min(1, "Name is required"),
   email: z.string().trim().email("Invalid email address"),
-  phone: phoneSchema,
+  phone: optionalPhoneNumberSchema,
   address: optionalStringSchema,
   qualification: optionalStringSchema,
   nic: optionalStringSchema,
@@ -77,7 +70,7 @@ export const staffUpsertSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().trim().min(1, "Name is required"),
   email: z.string().trim().email("Invalid email address"),
-  phone: phoneSchema,
+  phone: optionalPhoneNumberSchema,
   address: optionalStringSchema,
   nic: optionalStringSchema,
   role: z.enum(["ADMIN", "MANAGER", "ATTENDANCE"] as const),

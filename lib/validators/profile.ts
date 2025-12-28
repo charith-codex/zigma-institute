@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { phoneNumberSchema } from "./common";
 
 export const profileSchema = z.object({
   name: z
@@ -6,11 +7,8 @@ export const profileSchema = z.object({
     .trim()
     .min(3, "Name must be at least 3 characters")
     .max(100, "Name must be less than 100 characters"),
-  email: z.email(),
-  phone: z
-    .string()
-    .trim()
-    .regex(/^\d{10,15}$/, "Phone must be 10-15 digits"),
+  email: z.string(),
+  phone: phoneNumberSchema,
   address: z
     .string()
     .max(255, "Address must be less than 255 characters")
