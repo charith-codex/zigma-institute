@@ -747,8 +747,6 @@ export interface FeeRecord {
   paidAt: string;
   paymentType: "INSTALLMENT" | "REGISTRATION";
   transactionId: string | null;
-  monthNumber: number | null;
-  discountRate: number | null;
 }
 
 export interface FeeSummary {

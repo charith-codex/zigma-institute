@@ -92,10 +92,18 @@ export function CourseEnrollment({ onEnrolled }: CourseEnrollmentProps) {
     setEnrollingCourseId(course.id);
 
     try {
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+
       const response = await fetch("/api/payments/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId: course.id }),
+        body: JSON.stringify({
+          courseId: course.id,
+          month: currentMonth,
+          year: currentYear,
+        }),
       });
 
       if (!response.ok) {

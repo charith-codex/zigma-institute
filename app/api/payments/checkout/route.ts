@@ -71,7 +71,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const { courseId, planId } = body as { courseId?: unknown; planId?: unknown };
+  const { courseId, planId, month, year } = body as {
+    courseId?: unknown;
+    planId?: unknown;
+    month?: unknown;
+    year?: unknown;
+  };
 
   if (typeof courseId !== "string" || courseId.trim().length === 0) {
     return NextResponse.json(
@@ -158,8 +163,9 @@ export async function POST(request: Request) {
             ? planId
             : course.id,
         baseMonthlyAmount: amountInCents.toString(),
-        discountRate: "0",
         enrollOnSuccess: alreadyEnrolled ? "false" : "true",
+        paidMonth: typeof month === "number" ? month.toString() : "",
+        paidYear: typeof year === "number" ? year.toString() : "",
       },
     });
 
@@ -219,7 +225,6 @@ export async function GET(request: Request) {
     const courseId = checkoutSession.metadata?.courseId ?? null;
     const enrollOnSuccess =
       checkoutSession.metadata?.enrollOnSuccess === "true";
-    const discountRate = Number(checkoutSession.metadata?.discountRate ?? 0);
     const estimatedBase = Number(
       checkoutSession.metadata?.baseMonthlyAmount ?? 0
     );
@@ -237,12 +242,23 @@ export async function GET(request: Request) {
 
     const amountInCents =
       checkoutSession.amount_total ??
-      (estimatedBase > 0
-        ? Math.max(
-            Math.round(estimatedBase * (1 - discountRate)),
-            estimatedBase
-          )
-        : null);
+      (estimatedBase > 0 ? estimatedBase : null);
+
+    const now = new Date();
+    let paidMonth = checkoutSession.metadata?.paidMonth
+      ? parseInt(checkoutSession.metadata.paidMonth, 10)
+      : null;
+    let paidYear = checkoutSession.metadata?.paidYear
+      ? parseInt(checkoutSession.metadata.paidYear, 10)
+      : null;
+
+    // Default to current month/year if not provided or invalid
+    if (!paidMonth || isNaN(paidMonth)) {
+      paidMonth = now.getMonth() + 1;
+    }
+    if (!paidYear || isNaN(paidYear)) {
+      paidYear = now.getFullYear();
+    }
 
     if (
       checkoutSession.payment_status === "paid" &&
@@ -278,16 +294,6 @@ export async function GET(request: Request) {
         ? new Date(checkoutSession.created * 1000)
         : new Date();
 
-      const previousInstallments = await prisma.paymentTransaction.count({
-        where: {
-          studentId: session.user.id,
-          courseId,
-          paymentType: "INSTALLMENT",
-        },
-      });
-
-      const monthNumber = previousInstallments + 1;
-
       await prisma.paymentTransaction.upsert({
         where: { transactionId },
         update: {
@@ -297,8 +303,8 @@ export async function GET(request: Request) {
             existingEnrollment?.course?.currency ??
             course?.currency ??
             "usd",
-          monthNumber,
-          discountRate,
+          paidMonth,
+          paidYear,
           paidAt,
         },
         create: {
@@ -311,9 +317,8 @@ export async function GET(request: Request) {
             existingEnrollment?.course?.currency ??
             course?.currency ??
             "usd",
-          paymentType: "INSTALLMENT",
-          monthNumber,
-          discountRate,
+          paidMonth,
+          paidYear,
           paidAt,
         },
       });

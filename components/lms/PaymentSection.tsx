@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { computeDurationInMonths, deriveMonthlyAmount } from "@/lib/payments";
+import { deriveMonthlyAmount } from "@/lib/payments";
 
 interface PaymentCourse {
   id: string;
@@ -54,9 +54,9 @@ interface CoursePaymentPlan {
   courseId: string;
   courseName: string;
   monthlyAmountInCents: number;
-  monthsRemaining: number;
-  totalMonths: number;
-  nextDueDate: string;
+  month: number;
+  year: number;
+  isPaid: boolean;
 }
 
 interface PaymentReceipt {
@@ -65,10 +65,10 @@ interface PaymentReceipt {
   courseName: string | null;
   paidOn: string;
   amountPaidInCents: number;
-  monthNumber: number;
+  paidMonth: number | null;
+  paidYear: number | null;
   transactionId: string;
   currency?: string;
-  paymentType?: "INSTALLMENT" | "REGISTRATION";
 }
 
 const formatCurrency = (cents: number, currency: string) =>
@@ -76,28 +76,10 @@ const formatCurrency = (cents: number, currency: string) =>
     cents / 100
   );
 
-const calculateNextDueDate = (
-  enrolledAt: string,
-  completedPayments: number
-) => {
-  const anchor = new Date(enrolledAt);
-  anchor.setMonth(anchor.getMonth() + completedPayments);
-
-  return new Date(
-    anchor.getFullYear(),
-    anchor.getMonth() + 1,
-    0,
-    23,
-    59,
-    59,
-    999
-  );
-};
-
-const daysUntil = (target: Date) => {
-  const now = new Date();
-  const diff = target.getTime() - now.getTime();
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+const getMonthName = (month: number) => {
+  return new Date(2000, month - 1, 1).toLocaleString("default", {
+    month: "long",
+  });
 };
 
 export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
@@ -153,13 +135,7 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
       }
 
       const payload = (await response.json()) as PaymentReceipt[];
-      setHistory(
-        payload.map((entry) => ({
-          ...entry,
-          monthNumber: entry.monthNumber ?? 1,
-          paymentType: entry.paymentType ?? "INSTALLMENT",
-        }))
-      );
+      setHistory(payload);
     } catch (historyError) {
       console.error("Failed to load payment history", historyError);
     }
@@ -223,54 +199,47 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
     void finalizePayment();
   }, [fetchPaymentData, fetchPaymentHistory, searchParams, student]);
 
-  const pendingPlans = useMemo(() => {
+  const monthlyPlans = useMemo(() => {
     if (!student) return [] as CoursePaymentPlan[];
 
-    return courses
-      .map((course) => {
-        const totalMonths = computeDurationInMonths(course.priceInCents);
-        const paidInstallments = history.filter(
-          (entry) =>
-            entry.courseId === course.id && entry.paymentType === "INSTALLMENT"
-        ).length;
-        const monthsRemaining = Math.max(totalMonths - paidInstallments, 0);
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
 
-        if (monthsRemaining <= 0) {
-          return null;
-        }
+    return courses.map((course) => {
+      const isPaid = history.some(
+        (entry) =>
+          entry.courseId === course.id &&
+          entry.paidMonth === currentMonth &&
+          entry.paidYear === currentYear
+      );
 
-        const monthlyAmount = deriveMonthlyAmount(course.priceInCents);
-        const nextDue = calculateNextDueDate(
-          course.enrolledAt,
-          paidInstallments
-        );
-
-        return {
-          id: `plan-${course.id}`,
-          courseId: course.id,
-          courseName: course.name,
-          monthlyAmountInCents: monthlyAmount,
-          monthsRemaining,
-          totalMonths,
-          nextDueDate: nextDue.toISOString(),
-        } satisfies CoursePaymentPlan;
-      })
-      .filter((plan): plan is CoursePaymentPlan => plan !== null);
+      return {
+        id: `plan-${course.id}-${currentMonth}-${currentYear}`,
+        courseId: course.id,
+        courseName: course.name,
+        monthlyAmountInCents: deriveMonthlyAmount(course.priceInCents),
+        month: currentMonth,
+        year: currentYear,
+        isPaid,
+      } satisfies CoursePaymentPlan;
+    });
   }, [courses, history, student]);
 
   const totalPending = useMemo(
     () =>
-      pendingPlans.reduce(
-        (total, plan) => total + plan.monthlyAmountInCents,
-        0
-      ),
-    [pendingPlans]
+      monthlyPlans
+        .filter((plan) => !plan.isPaid)
+        .reduce((total, plan) => total + plan.monthlyAmountInCents, 0),
+    [monthlyPlans]
   );
 
-  const handlePayment = async (planId: string, courseId: string) => {
-    const targetPlan = pendingPlans.find((plan) => plan.id === planId);
-    if (!targetPlan) return;
-
+  const handlePayment = async (
+    planId: string,
+    courseId: string,
+    month: number,
+    year: number
+  ) => {
     setProcessingId(planId);
     setError(null);
 
@@ -278,7 +247,7 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
       const response = await fetch("/api/payments/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId, planId }),
+        body: JSON.stringify({ courseId, planId, month, year }),
       });
 
       if (!response.ok) {
@@ -394,9 +363,11 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      Active Courses
+                      Courses to Pay
                     </p>
-                    <p className="text-xl font-bold">{pendingPlans.length}</p>
+                    <p className="text-xl font-bold">
+                      {monthlyPlans.filter((p) => !p.isPaid).length}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -410,7 +381,7 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      Payments Completed
+                      History Records
                     </p>
                     <p className="text-xl font-bold">{history.length}</p>
                   </div>
@@ -423,7 +394,7 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
             <TabsList>
               <TabsTrigger value="pending" className="gap-2">
                 <Clock className="h-4 w-4" />
-                Due payments
+                Current month
               </TabsTrigger>
               <TabsTrigger value="history" className="gap-2">
                 <CheckCircle className="h-4 w-4" />
@@ -432,96 +403,89 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
             </TabsList>
 
             <TabsContent value="pending" className="space-y-4">
-              {pendingPlans.length === 0 ? (
+              {monthlyPlans.length === 0 ? (
                 <Card>
                   <CardContent className="p-12 text-center">
                     <CheckCircle className="mx-auto mb-4 h-16 w-16 text-success" />
                     <h3 className="mb-2 text-lg font-semibold">
-                      All caught up
+                      No courses found
                     </h3>
                     <p className="text-muted-foreground">
-                      You have paid every installment for your enrolled courses.
+                      Enroll in a course to see your monthly payments.
                     </p>
                   </CardContent>
                 </Card>
               ) : (
                 <div className="grid gap-4">
-                  {pendingPlans.map((plan) => {
-                    const dueDate = new Date(plan.nextDueDate);
-                    const daysRemaining = daysUntil(dueDate);
-                    const isOverdue = daysRemaining < 0;
-                    const reminderLabel = isOverdue
-                      ? `Overdue by ${Math.abs(daysRemaining)} day(s)`
-                      : daysRemaining === 0
-                        ? "Due today"
-                        : `Due in ${daysRemaining} day(s)`;
-
-                    return (
-                      <Card
-                        key={plan.id}
-                        className={
-                          plan.monthsRemaining <= 1 ? "border-success/40" : ""
-                        }
-                      >
-                        <CardHeader className="flex flex-row items-start justify-between space-y-0">
-                          <div>
-                            <CardTitle className="text-lg">
-                              {plan.courseName}
-                            </CardTitle>
-                            <p className="text-sm text-muted-foreground">
-                              {plan.monthsRemaining} monthly payment(s) left
-                            </p>
+                  {monthlyPlans.map((plan) => (
+                    <Card
+                      key={plan.id}
+                      className={
+                        plan.isPaid ? "border-success/40 opacity-80" : ""
+                      }
+                    >
+                      <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                        <div>
+                          <CardTitle className="text-lg">
+                            {plan.courseName}
+                          </CardTitle>
+                          <p className="text-sm text-muted-foreground">
+                            {getMonthName(plan.month)} {plan.year}
+                          </p>
+                        </div>
+                        {plan.isPaid && (
+                          <Badge className="bg-success/10 text-success hover:bg-success/10 border-success/20 gap-1">
+                            <CheckCircle className="h-3 w-3" />
+                            Paid
+                          </Badge>
+                        )}
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="h-4 w-4" />
+                            <span className="font-semibold text-foreground">
+                              {formatCurrency(
+                                plan.monthlyAmountInCents,
+                                activeCurrency
+                              )}
+                            </span>
                           </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-2">
-                              <DollarSign className="h-4 w-4" />
-                              <span className="font-semibold text-foreground">
-                                {formatCurrency(
-                                  plan.monthlyAmountInCents,
-                                  activeCurrency
-                                )}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              <span>Due by {dueDate.toLocaleDateString()}</span>
-                            </div>
-                            <Badge
-                              variant={isOverdue ? "destructive" : "secondary"}
-                              className="gap-2"
-                            >
+                          {!plan.isPaid && (
+                            <Badge variant="destructive" className="gap-2">
                               <Clock className="h-3 w-3" />
-                              {reminderLabel}
+                              Payment Due
                             </Badge>
-                          </div>
+                          )}
+                        </div>
 
+                        {!plan.isPaid && (
                           <div className="flex flex-wrap gap-2">
                             <Button
                               className="gap-2"
                               onClick={() =>
-                                handlePayment(plan.id, plan.courseId)
+                                handlePayment(
+                                  plan.id,
+                                  plan.courseId,
+                                  plan.month,
+                                  plan.year
+                                )
                               }
                               disabled={processingId === plan.id}
                             >
                               <CreditCard className="h-4 w-4" />
                               {processingId === plan.id
                                 ? "Processing..."
-                                : `Pay ${formatCurrency(plan.monthlyAmountInCents, activeCurrency)}`}
+                                : `Pay ${formatCurrency(
+                                    plan.monthlyAmountInCents,
+                                    activeCurrency
+                                  )}`}
                             </Button>
-                            <Badge variant="secondary" className="gap-2">
-                              <Clock className="h-3 w-3" />
-                              Month{" "}
-                              {plan.totalMonths -
-                                plan.monthsRemaining +
-                                1} of {plan.totalMonths}
-                            </Badge>
                           </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               )}
             </TabsContent>
@@ -554,11 +518,14 @@ export const PaymentSection = ({ refreshKey = 0 }: { refreshKey?: number }) => {
                                 receipt.currency ?? activeCurrency
                               )}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              {receipt.paymentType === "REGISTRATION"
-                                ? "Registration"
-                                : "Installment"}{" "}
-                              • Month {receipt.monthNumber} • Transaction{" "}
+                            <p className="text-xs text-muted-foreground uppercase font-bold tracking-tight">
+                              MONTHLY INSTALLMENT
+                              {receipt.paidMonth &&
+                                receipt.paidYear &&
+                                ` • ${getMonthName(receipt.paidMonth)} ${
+                                  receipt.paidYear
+                                }`}
+                              {" • Transaction "}
                               {receipt.transactionId}
                             </p>
                           </div>

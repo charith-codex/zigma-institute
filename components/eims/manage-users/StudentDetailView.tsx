@@ -13,6 +13,7 @@ import {
   History,
   IdCard,
   ArrowLeft,
+  Check,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -28,6 +29,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { type StudentRecord } from "@/lib/actions/eims-user-management";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface StudentDetailViewProps {
   student: StudentRecord;
@@ -68,8 +77,8 @@ export function StudentDetailView({
         const img = new window.Image();
         img.onload = () => {
           const canvas = document.createElement("canvas");
-          canvas.width = img.width || 980;
-          canvas.height = img.height || 580;
+          canvas.width = 1960;
+          canvas.height = 1160;
           const ctx = canvas.getContext("2d");
           if (ctx) {
             ctx.fillStyle = "white";
@@ -341,7 +350,6 @@ export function StudentDetailView({
                             </p>
                           </div>
                         </div>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     ))}
                   </div>
@@ -371,75 +379,114 @@ export function StudentDetailView({
               </CardHeader>
               <CardContent className="p-0">
                 {paymentsByCourse.length > 0 ? (
-                  <div className="divide-y">
-                    {paymentsByCourse.map(({ course, payments, totalPaid }) => (
-                      <div key={course.id} className="p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-bold text-sm text-primary">
-                            {course.name}
-                          </h4>
-                          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
-                            Total:{" "}
-                            {(totalPaid / 100).toLocaleString(undefined, {
-                              style: "currency",
-                              currency: payments[0]?.currency ?? "LKR",
-                            })}
-                          </span>
-                        </div>
+                  <div className="p-4 overflow-x-auto">
+                    {(() => {
+                      // Generate columns for the last 6 months
+                      const now = new Date();
+                      const monthsToShow: { month: number; year: number }[] =
+                        [];
+                      for (let i = 0; i < 6; i++) {
+                        const d = new Date(
+                          now.getFullYear(),
+                          now.getMonth() - i,
+                          1
+                        );
+                        monthsToShow.unshift({
+                          month: d.getMonth() + 1,
+                          year: d.getFullYear(),
+                        });
+                      }
 
-                        {payments.length > 0 ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {payments.map((p) => (
-                              <div
-                                key={p.id}
-                                className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/30 border border-border/50 text-xs"
-                              >
-                                <div className="h-8 w-8 flex items-center justify-center rounded-lg bg-background shadow-sm border border-border/50">
-                                  <span className="font-bold text-primary">
-                                    {p.monthNumber ? `M${p.monthNumber}` : "R"}
-                                  </span>
-                                </div>
-                                <div className="flex-1">
-                                  <p className="font-semibold">
-                                    {(p.amountInCents / 100).toLocaleString(
+                      return (
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="border-b-2 hover:bg-transparent">
+                              <TableHead className="w-[200px] font-bold text-foreground">
+                                Course
+                              </TableHead>
+                              {monthsToShow.map((m) => (
+                                <TableHead
+                                  key={`${m.year}-${m.month}`}
+                                  className="text-center font-bold text-foreground"
+                                >
+                                  {format(
+                                    new Date(m.year, m.month - 1),
+                                    "yyyy MMM"
+                                  ).toLowerCase()}
+                                </TableHead>
+                              ))}
+                              <TableHead className="text-right font-bold text-foreground">
+                                Total
+                              </TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {paymentsByCourse.map(
+                              ({ course, payments, totalPaid }) => (
+                                <TableRow key={course.id} className="h-16">
+                                  <TableCell className="font-bold text-primary">
+                                    {course.name}
+                                  </TableCell>
+                                  {monthsToShow.map((m) => {
+                                    const payment = payments.find(
+                                      (p) =>
+                                        p.paidMonth === m.month &&
+                                        p.paidYear === m.year
+                                    );
+                                    return (
+                                      <TableCell
+                                        key={`${m.year}-${m.month}`}
+                                        className="text-center"
+                                      >
+                                        {payment ? (
+                                          <div className="flex flex-col items-center gap-1">
+                                            <div className="flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600">
+                                              <Check className="h-4 w-4" />
+                                            </div>
+                                            <span className="text-[10px] font-bold text-green-600">
+                                              {format(
+                                                new Date(payment.paidAt),
+                                                "MMM d"
+                                              )}
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <span className="text-muted-foreground/30 font-bold">
+                                            -
+                                          </span>
+                                        )}
+                                      </TableCell>
+                                    );
+                                  })}
+                                  <TableCell className="text-right font-bold">
+                                    {(totalPaid / 100).toLocaleString(
                                       undefined,
                                       {
                                         style: "currency",
-                                        currency: p.currency,
+                                        currency:
+                                          payments[0]?.currency ?? "USD",
                                       }
                                     )}
-                                  </p>
-                                  <p className="text-muted-foreground">
-                                    {format(new Date(p.paidAt), "MMM d, yyyy")}
-                                  </p>
-                                </div>
-                                <Badge
-                                  variant="outline"
-                                  className="text-[10px] capitalize"
-                                >
-                                  {p.paymentType.toLowerCase()}
-                                </Badge>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-muted-foreground italic px-2">
-                            No payment records for this course.
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                                  </TableCell>
+                                </TableRow>
+                              )
+                            )}
+                          </TableBody>
+                        </Table>
+                      );
+                    })()}
 
                     {generalPayments.length > 0 && (
-                      <div className="p-4 space-y-3">
-                        <h4 className="font-bold text-sm text-muted-foreground flex items-center gap-2">
-                          Other Payments
+                      <div className="mt-8 space-y-3">
+                        <h4 className="font-bold text-sm text-muted-foreground flex items-center gap-2 px-2">
+                          <History className="h-4 w-4" />
+                          Other Payments (Non-Course)
                         </h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-2">
                           {generalPayments.map((p) => (
                             <div
                               key={p.id}
-                              className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/30 border border-border/50 text-xs"
+                              className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/50 text-xs"
                             >
                               <History className="h-4 w-4 text-muted-foreground" />
                               <div className="flex-1">
@@ -449,7 +496,7 @@ export function StudentDetailView({
                                     { style: "currency", currency: p.currency }
                                   )}
                                 </p>
-                                <p className="text-muted-foreground">
+                                <p className="text-muted-foreground uppercase font-bold text-[10px]">
                                   {format(new Date(p.paidAt), "MMM d, yyyy")}
                                 </p>
                               </div>

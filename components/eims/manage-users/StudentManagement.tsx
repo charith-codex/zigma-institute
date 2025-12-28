@@ -1,21 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import {
-  Users,
-  Edit,
-  ArrowLeft,
-  UserPlus,
-} from "lucide-react";
+import { Users, Edit, ArrowLeft, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  StudentRegistrationForm,
-  type StudentRegistrationCourse,
-} from "@/components/student-registration/RegistrationForm";
+import { type StudentRegistrationCourse } from "@/components/student-registration/RegistrationForm";
 import { getCourses } from "@/lib/actions/course";
 import {
   deleteStudent,
@@ -77,16 +69,6 @@ export function StudentManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [listError, setListError] = useState<string | null>(null);
-  const [showRegistration, setShowRegistration] = useState(false);
-  const [registrationCourses, setRegistrationCourses] = useState<
-    StudentRegistrationCourse[]
-  >([]);
-  const [isFetchingCourses, setIsFetchingCourses] = useState(false);
-  const [registrationSuccess, setRegistrationSuccess] = useState<{
-    studentPublicId?: string | null;
-    temporaryPassword?: string;
-    idCardUrl?: string | null;
-  } | null>(null);
   const [editingStudent, setEditingStudent] =
     useState<StudentUpsertValues | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StudentRecord | null>(null);
@@ -138,36 +120,6 @@ export function StudentManagement() {
       return haystacks.some((value) => value.includes(term));
     });
   }, [students, searchTerm]);
-
-  const handleOpenRegistration = async () => {
-    setShowRegistration(true);
-    setRegistrationSuccess(null);
-    if (registrationCourses.length === 0) {
-      setIsFetchingCourses(true);
-      try {
-        const data = await getCourses();
-        setRegistrationCourses(
-          data.map((c) => ({
-            id: c.id,
-            name: c.name,
-            priceInCents: c.priceInCents,
-            currency: c.currency,
-            teacherName: c.teacherName,
-          }))
-        );
-      } catch (error) {
-        toast.error("Failed to load courses for registration");
-      } finally {
-        setIsFetchingCourses(false);
-      }
-    }
-  };
-
-  const handleBackToList = () => {
-    setShowRegistration(false);
-    setRegistrationSuccess(null);
-    void fetchStudents();
-  };
 
   const handleUpdateStudent = () => {
     if (!editingStudent) return;
@@ -284,82 +236,6 @@ export function StudentManagement() {
     </TableRow>
   ));
 
-  if (showRegistration) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between px-2">
-          <div className="flex items-center">
-            <UserPlus className="mr-2 h-5 w-5" />
-            <h2 className="text-xl font-bold">Manual Student Registration</h2>
-          </div>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handleBackToList}
-            className="rounded-lg bg-primary px-4 text-xs font-medium"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Student Management
-          </Button>
-        </div>
-
-        {registrationSuccess && (
-          <Alert className="bg-primary/10 border-primary/20">
-            <AlertTitle className="text-primary font-bold">
-              Student created successfully!
-            </AlertTitle>
-            <AlertDescription className="space-y-2 mt-2">
-              <p>
-                Student ID:{" "}
-                <span className="font-semibold">
-                  {registrationSuccess.studentPublicId ?? "Pending"}
-                </span>
-              </p>
-              {registrationSuccess.temporaryPassword ? (
-                <p className="text-sm">
-                  Temporary password:{" "}
-                  <span className="font-mono bg-background px-2 py-0.5 border rounded">
-                    {registrationSuccess.temporaryPassword}
-                  </span>
-                </p>
-              ) : null}
-              {registrationSuccess.idCardUrl && (
-                <p className="text-sm text-muted-foreground italic">
-                  An ID card was generated automatically and can be viewed in
-                  the student list.
-                </p>
-              )}
-              <div className="pt-2">
-                <Button size="sm" onClick={handleBackToList}>
-                  Return to Student List
-                </Button>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {!isFetchingCourses ? (
-          <StudentRegistrationForm
-            courses={registrationCourses}
-            mode="admin"
-            onSuccess={(payload) => {
-              setRegistrationSuccess({
-                studentPublicId: payload.studentPublicId,
-                temporaryPassword: payload.temporaryPassword,
-                idCardUrl: payload.idCardUrl,
-              });
-              void fetchStudents();
-            }}
-          />
-        ) : (
-          <div className="flex items-center justify-center">
-            <FlowerLoader size="md" className="text-[#A41FC5] mx-auto" />
-          </div>
-        )}
-      </div>
-    );
-  }
-
   if (editingStudent) {
     return (
       <div className="space-y-6">
@@ -429,10 +305,8 @@ export function StudentManagement() {
         title="Student Management"
         description="Manage student profiles, credentials, and account status."
         icon={Users}
-        addLabel="Manual Student Registration"
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        onAddClick={handleOpenRegistration}
         isLoading={isPending}
       >
         <UserTable

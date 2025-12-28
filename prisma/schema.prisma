@@ -429,10 +429,9 @@ model StudentRegistration {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  student             Student?                    @relation(name: "StudentRegistrationStudent", fields: [studentUserId], references: [userId], onDelete: SetNull)
-  courses             StudentRegistrationCourse[]
-  physicalExamMarks   PhysicalExamMark[]
-  paymentTransactions PaymentTransaction[]
+  student           Student?                    @relation(name: "StudentRegistrationStudent", fields: [studentUserId], references: [userId], onDelete: SetNull)
+  courses           StudentRegistrationCourse[]
+  physicalExamMarks PhysicalExamMark[]
 }
 
 model StudentRegistrationCourse {
@@ -448,28 +447,19 @@ model StudentRegistrationCourse {
   @@unique([registrationId, courseId])
 }
 
-enum PaymentType {
-  REGISTRATION
-  INSTALLMENT
-}
-
 model PaymentTransaction {
-  id             String      @id @default(uuid())
-  studentId      String
-  courseId       String?
-  registrationId String?
-  amountInCents  Int
-  currency       String      @default("usd")
-  paymentType    PaymentType
-  monthNumber    Int?
-  discountRate   Float       @default(0)
-  transactionId  String      @unique
-  paidAt         DateTime    @default(now())
-  notes          String?
+  id            String   @id @default(uuid())
+  studentId     String
+  courseId      String?
+  amountInCents Int
+  currency      String   @default("usd")
+  paidMonth     Int?
+  paidYear      Int?
+  transactionId String   @unique
+  paidAt        DateTime @default(now())
 
-  student      User                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  course       Course?              @relation(fields: [courseId], references: [id], onDelete: SetNull)
-  registration StudentRegistration? @relation(fields: [registrationId], references: [id], onDelete: SetNull)
+  student User    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
 
   @@index([studentId])
   @@index([courseId])
