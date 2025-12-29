@@ -31,6 +31,7 @@ export async function getEnrolledStudents(params: {
   const skip = (page - 1) * pageSize;
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {
       courseId,
     };

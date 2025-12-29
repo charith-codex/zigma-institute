@@ -265,6 +265,7 @@ export async function listStudents(params?: {
   const searchTerm = params?.searchTerm?.trim().toLowerCase();
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = { role: "STUDENT" };
 
     if (searchTerm) {
@@ -514,6 +515,7 @@ export async function listTeachers(params?: {
   const searchTerm = params?.searchTerm?.trim().toLowerCase();
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = { role: "TEACHER" };
 
     if (searchTerm) {
@@ -710,6 +712,7 @@ export async function listStaff(params?: {
   const searchTerm = params?.searchTerm?.trim().toLowerCase();
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = { role: { in: ["ADMIN", "MANAGER", "ATTENDANCE"] } };
 
     if (searchTerm) {

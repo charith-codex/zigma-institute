@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/table";
 import { usePayments } from "@/hooks/useData";
 import { FlowerLoader } from "../ui/flower-loader";
+import { TransactionActivity } from "./TransactionActivity";
 
 const CHART_COLORS = [
   "#A41FC5", // Primary
@@ -97,6 +98,7 @@ const CustomTooltip = ({
 
 const FeeManagement = () => {
   const { payments, summary, loading, error, refetch } = usePayments();
+  const [isViewingAllActivity, setIsViewingAllActivity] = React.useState(false);
 
   const currency = payments[0]?.currency ?? "LKR";
 
@@ -162,6 +164,12 @@ const FeeManagement = () => {
           </Button>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (isViewingAllActivity) {
+    return (
+      <TransactionActivity onClose={() => setIsViewingAllActivity(false)} />
     );
   }
 
@@ -455,6 +463,7 @@ const FeeManagement = () => {
                 variant="ghost"
                 size="sm"
                 className="text-xs font-bold gap-2 text-muted-foreground"
+                onClick={() => setIsViewingAllActivity(true)}
               >
                 View All Activity
                 <ArrowUpRight className="h-3 w-3" />
