@@ -38,6 +38,7 @@ export async function listFeeTransactions(params: {
   const searchTerm = params.searchTerm?.trim().toLowerCase();
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
 
     if (searchTerm) {
