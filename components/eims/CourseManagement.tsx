@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { CourseCreateForm } from "@/components/eims/CourseCreateForm";
+import { CourseDetailView } from "@/components/eims/CourseDetailView";
 import { useCourses } from "@/hooks/useData";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
+  ArrowLeft,
   BookOpen,
   Calendar,
   DollarSign,
@@ -41,8 +42,11 @@ import { Course } from "@/types";
 export function CourseManagement() {
   const { courses, loading, error, refetch } = useCourses();
   const [searchTerm, setSearchTerm] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAddingCourse, setIsAddingCourse] = useState(false);
   const [courseBeingEdited, setCourseBeingEdited] = useState<Course | null>(
+    null
+  );
+  const [courseBeingViewed, setCourseBeingViewed] = useState<Course | null>(
     null
   );
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
@@ -80,6 +84,57 @@ export function CourseManagement() {
   const isInitialLoading = loading && courses.length === 0;
   const hasCourses = filteredCourses.length > 0;
 
+  if (courseBeingViewed) {
+    return (
+      <CourseDetailView
+        course={courseBeingViewed}
+        onClose={() => setCourseBeingViewed(null)}
+      />
+    );
+  }
+
+  if (isAddingCourse || courseBeingEdited) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-3">
+            <Calendar className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold">
+              {courseBeingEdited ? "Edit Course" : "Create a New Course"}
+            </h1>
+          </div>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => {
+              setIsAddingCourse(false);
+              setCourseBeingEdited(null);
+            }}
+            className="rounded-lg bg-primary px-4 text-xs font-medium"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Course Management
+          </Button>
+        </div>
+
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
+          <CourseCreateForm
+            course={courseBeingEdited}
+            onSuccess={() => {
+              setIsAddingCourse(false);
+              setCourseBeingEdited(null);
+              void refetch();
+            }}
+            onCancel={() => {
+              setIsAddingCourse(false);
+              setCourseBeingEdited(null);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -95,28 +150,10 @@ export function CourseManagement() {
           </p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="self-start">
-              <Plus className="mr-2 h-4 w-4" />
-              Create course
-            </Button>
-          </DialogTrigger>
-          <DialogContent
-            size="wide"
-            className="w-full max-w-none h-full md:h-auto overflow-y-auto"
-          >
-            <DialogHeader>
-              <DialogTitle>Create a new course</DialogTitle>
-            </DialogHeader>
-            <CourseCreateForm
-              onSuccess={() => {
-                setIsDialogOpen(false);
-                void refetch();
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+        <Button className="self-start" onClick={() => setIsAddingCourse(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create course
+        </Button>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -210,6 +247,7 @@ export function CourseManagement() {
                     <TableHead>Course</TableHead>
                     <TableHead>Teacher</TableHead>
                     <TableHead>Monthly Price</TableHead>
+                    <TableHead className="w-24 text-center">View</TableHead>
                     <TableHead className="w-24 text-center">Edit</TableHead>
                     <TableHead className="w-28 text-center">Delete</TableHead>
                   </TableRow>
@@ -249,6 +287,16 @@ export function CourseManagement() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => setCourseBeingViewed(course)}
+                          className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
+                        >
+                          View
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => setCourseBeingEdited(course)}
                         >
                           Edit
@@ -277,33 +325,6 @@ export function CourseManagement() {
           </CardContent>
         </Card>
       )}
-
-      <Dialog
-        open={Boolean(courseBeingEdited)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setCourseBeingEdited(null);
-          }
-        }}
-      >
-        <DialogContent
-          size="wide"
-          className="w-full max-w-none h-full md:h-auto overflow-y-auto"
-        >
-          <DialogHeader>
-            <DialogTitle>Edit course</DialogTitle>
-          </DialogHeader>
-          {courseBeingEdited ? (
-            <CourseCreateForm
-              course={courseBeingEdited}
-              onSuccess={() => {
-                setCourseBeingEdited(null);
-                void refetch();
-              }}
-            />
-          ) : null}
-        </DialogContent>
-      </Dialog>
 
       <Dialog
         open={Boolean(courseToDelete)}

@@ -36,12 +36,14 @@ type CourseFormData = z.infer<typeof courseSchema>;
 interface CourseCreateFormProps {
   className?: string;
   onSuccess?: () => void;
+  onCancel?: () => void;
   course?: Course | null;
 }
 
 export function CourseCreateForm({
   className,
   onSuccess,
+  onCancel,
   course,
 }: CourseCreateFormProps) {
   const router = useRouter();
@@ -414,10 +416,10 @@ export function CourseCreateForm({
           <Button
             type="button"
             variant="ghost"
-            onClick={() => reset()}
+            onClick={() => onCancel?.() || reset()}
             disabled={isSubmitting}
           >
-            {isEditMode ? "Revert" : "Reset"}
+            {onCancel ? "Cancel" : isEditMode ? "Revert" : "Reset"}
           </Button>
           <Button type="submit" disabled={isSubmitting || teachersLoading}>
             {isSubmitting ? (

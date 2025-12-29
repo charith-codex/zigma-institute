@@ -23,7 +23,6 @@ import {
 } from "@/lib/validators/eims-user-management";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { UserAddForm, UserEditForm, type UserFieldConfig } from "./UserForms";
-import { UserFormDialog } from "./UserFormDialog";
 import { UserManagementCard } from "./UserManagementCard";
 import { UserTable } from "./UserTable";
 import {
@@ -33,6 +32,8 @@ import {
   statusOptions,
   type FieldErrorState,
 } from "./form-utils";
+import { Pagination } from "./Pagination";
+import { useDebounce } from "@/hooks/use-debounce";
 
 type TeacherCreateErrorState = FieldErrorState<TeacherCreateValues>;
 type TeacherEditErrorState = FieldErrorState<TeacherUpsertValues>;
@@ -112,33 +113,41 @@ export function TeacherManagement() {
   const [editTeacherErrors, setEditTeacherErrors] =
     useState<TeacherEditErrorState>({});
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 50;
+  const debouncedSearch = useDebounce(searchTerm, 500);
+
+  const fetchTeachers = async (page: number, search: string) => {
+    setIsLoading(true);
+    const result = await listTeachers({
+      page,
+      pageSize,
+      searchTerm: search,
+    });
+
+    if (result.success) {
+      setTeachers(result.data.data);
+      setTotalCount(result.data.totalCount);
+      setListError(null);
+    } else {
+      setTeachers([]);
+      setTotalCount(0);
+      setListError(result.error);
+      toast.error(result.error);
+    }
+
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    let isMounted = true;
+    setCurrentPage(1);
+    void fetchTeachers(1, debouncedSearch);
+  }, [debouncedSearch]);
 
-    const fetchTeachers = async () => {
-      setIsLoading(true);
-      const result = await listTeachers();
-
-      if (!isMounted) return;
-
-      if (result.success) {
-        setTeachers(result.data);
-        setListError(null);
-      } else {
-        setTeachers([]);
-        setListError(result.error);
-        toast.error(result.error);
-      }
-
-      setIsLoading(false);
-    };
-
-    void fetchTeachers();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  useEffect(() => {
+    void fetchTeachers(currentPage, debouncedSearch);
+  }, [currentPage]);
 
   useEffect(() => {
     setEditTeacherPassword("");
@@ -261,7 +270,7 @@ export function TeacherManagement() {
     });
   };
 
-  const rows = filteredTeachers.map((teacher) => (
+  const rows = teachers.map((teacher) => (
     <TableRow key={teacher.id}>
       <TableCell className="font-medium">{teacher.name}</TableCell>
       <TableCell>{teacher.email}</TableCell>
@@ -421,6 +430,13 @@ export function TeacherManagement() {
         >
           {rows}
         </UserTable>
+        <Pagination
+          currentPage={currentPage}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          isLoading={isLoading}
+        />
       </UserManagementCard>
 
       <ConfirmDialog

@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Users, Edit, Trash2, ArrowLeft, UserPlus } from "lucide-react";
+import { Users, Edit, ArrowLeft, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
-
 import {
   createStaff,
   deleteStaff,
@@ -23,7 +21,6 @@ import {
 } from "@/lib/validators/eims-user-management";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { UserAddForm, UserEditForm, type UserFieldConfig } from "./UserForms";
-import { UserFormDialog } from "./UserFormDialog";
 import { UserManagementCard } from "./UserManagementCard";
 import { UserTable } from "./UserTable";
 import {
@@ -33,6 +30,8 @@ import {
   statusOptions,
   type FieldErrorState,
 } from "./form-utils";
+import { Pagination } from "./Pagination";
+import { useDebounce } from "@/hooks/use-debounce";
 
 type StaffCreateErrorState = FieldErrorState<StaffCreateValues>;
 type StaffEditErrorState = FieldErrorState<StaffUpsertValues>;
@@ -118,33 +117,41 @@ export function StaffManagement() {
     {}
   );
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 50;
+  const debouncedSearch = useDebounce(searchTerm, 500);
+
+  const fetchStaff = async (page: number, search: string) => {
+    setIsLoading(true);
+    const result = await listStaff({
+      page,
+      pageSize,
+      searchTerm: search,
+    });
+
+    if (result.success) {
+      setStaffMembers(result.data.data);
+      setTotalCount(result.data.totalCount);
+      setListError(null);
+    } else {
+      setStaffMembers([]);
+      setTotalCount(0);
+      setListError(result.error);
+      toast.error(result.error);
+    }
+
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    let isMounted = true;
+    setCurrentPage(1);
+    void fetchStaff(1, debouncedSearch);
+  }, [debouncedSearch]);
 
-    const fetchStaff = async () => {
-      setIsLoading(true);
-      const result = await listStaff();
-
-      if (!isMounted) return;
-
-      if (result.success) {
-        setStaffMembers(result.data);
-        setListError(null);
-      } else {
-        setStaffMembers([]);
-        setListError(result.error);
-        toast.error(result.error);
-      }
-
-      setIsLoading(false);
-    };
-
-    void fetchStaff();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  useEffect(() => {
+    void fetchStaff(currentPage, debouncedSearch);
+  }, [currentPage]);
 
   useEffect(() => {
     setEditStaffPassword("");
@@ -267,7 +274,7 @@ export function StaffManagement() {
     });
   };
 
-  const rows = filteredStaff.map((member) => (
+  const rows = staffMembers.map((member) => (
     <TableRow key={member.id}>
       <TableCell className="font-medium">{member.name}</TableCell>
       <TableCell>{member.email}</TableCell>
@@ -427,6 +434,13 @@ export function StaffManagement() {
         >
           {rows}
         </UserTable>
+        <Pagination
+          currentPage={currentPage}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          isLoading={isLoading}
+        />
       </UserManagementCard>
 
       <ConfirmDialog

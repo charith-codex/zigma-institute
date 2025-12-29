@@ -33,7 +33,7 @@ export function EnrolledStudents({
     const fetchStudents = async () => {
       try {
         setLoading(true);
-        const data = await getEnrolledStudents(courseId);
+        const { data } = await getEnrolledStudents({ courseId, pageSize: 300 });
         setStudents(data);
         setFilteredStudents(data);
       } catch (error) {

@@ -46,14 +46,14 @@ export function ExamScheduler({ courseId }: { courseId: string }) {
       setIsLoading(true);
       const [examsRes, students] = await Promise.all([
         fetch(`/api/exams?courseId=${courseId}`),
-        getEnrolledStudents(courseId),
+        getEnrolledStudents({ courseId }),
       ]);
 
       if (!examsRes.ok) throw new Error("Failed to fetch exams");
 
       const examsData = await examsRes.json();
       setExams(examsData.exams || []);
-      setEnrolledCount(students.length);
+      setEnrolledCount(students.totalCount);
     } catch (error) {
       console.error(error);
       toast.error("Failed to load exam session data");
