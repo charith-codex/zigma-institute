@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { CourseCreateForm } from "@/components/eims/CourseCreateForm";
+import { CourseDetailView } from "@/components/eims/CourseDetailView";
 import { useCourses } from "@/hooks/useData";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,9 @@ export function CourseManagement() {
   const [courseBeingEdited, setCourseBeingEdited] = useState<Course | null>(
     null
   );
+  const [courseBeingViewed, setCourseBeingViewed] = useState<Course | null>(
+    null
+  );
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -79,6 +83,15 @@ export function CourseManagement() {
 
   const isInitialLoading = loading && courses.length === 0;
   const hasCourses = filteredCourses.length > 0;
+
+  if (courseBeingViewed) {
+    return (
+      <CourseDetailView
+        course={courseBeingViewed}
+        onClose={() => setCourseBeingViewed(null)}
+      />
+    );
+  }
 
   if (isAddingCourse || courseBeingEdited) {
     return (
@@ -234,6 +247,7 @@ export function CourseManagement() {
                     <TableHead>Course</TableHead>
                     <TableHead>Teacher</TableHead>
                     <TableHead>Monthly Price</TableHead>
+                    <TableHead className="w-24 text-center">View</TableHead>
                     <TableHead className="w-24 text-center">Edit</TableHead>
                     <TableHead className="w-28 text-center">Delete</TableHead>
                   </TableRow>
@@ -268,6 +282,16 @@ export function CourseManagement() {
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         {formatCurrency(course.priceInCents, course.currency)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCourseBeingViewed(course)}
+                          className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20"
+                        >
+                          View
+                        </Button>
                       </TableCell>
                       <TableCell className="text-center">
                         <Button
