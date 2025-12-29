@@ -249,40 +249,74 @@ const serializeStaff = (user: {
   updatedAt: serializeDate(user.updatedAt)!,
 });
 
-export async function listStudents(): Promise<
-  BaseActionResult<StudentRecord[]>
-> {
+export async function listStudents(params?: {
+  page?: number;
+  pageSize?: number;
+  searchTerm?: string;
+}): Promise<BaseActionResult<{ data: StudentRecord[]; totalCount: number }>> {
   const authorization = await ensureAuthorized();
   if (!authorization.success) {
     return authorization;
   }
 
+  const page = params?.page ?? 1;
+  const pageSize = params?.pageSize ?? 50;
+  const skip = (page - 1) * pageSize;
+  const searchTerm = params?.searchTerm?.trim().toLowerCase();
+
   try {
-    const students = await prisma.user.findMany({
-      where: { role: "STUDENT" },
-      include: {
-        student: {
-          include: {
-            enrollments: {
-              include: {
-                course: {
-                  select: { id: true, name: true },
+    const where: any = { role: "STUDENT" };
+
+    if (searchTerm) {
+      where.OR = [
+        { name: { contains: searchTerm, mode: "insensitive" } },
+        { email: { contains: searchTerm, mode: "insensitive" } },
+        {
+          student: {
+            OR: [
+              { parentEmail: { contains: searchTerm, mode: "insensitive" } },
+              {
+                studentPublicId: { contains: searchTerm, mode: "insensitive" },
+              },
+            ],
+          },
+        },
+      ];
+    }
+
+    const [students, totalCount] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        include: {
+          student: {
+            include: {
+              enrollments: {
+                include: {
+                  course: {
+                    select: { id: true, name: true },
+                  },
                 },
               },
             },
           },
+          paymentTransactions: {
+            orderBy: { paidAt: "desc" },
+          },
         },
-        paymentTransactions: {
-          orderBy: { paidAt: "desc" },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: pageSize,
+      }),
+      prisma.user.count({ where }),
+    ]);
 
     return {
       success: true,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data: students.map(serializeStudent as unknown as any),
+      data: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data: students.map(serializeStudent as unknown as any),
+        totalCount,
+      },
     };
   } catch (error) {
     console.error("Failed to list students", error);
@@ -464,24 +498,53 @@ export async function deleteStudent(
   }
 }
 
-export async function listTeachers(): Promise<
-  BaseActionResult<TeacherRecord[]>
-> {
+export async function listTeachers(params?: {
+  page?: number;
+  pageSize?: number;
+  searchTerm?: string;
+}): Promise<BaseActionResult<{ data: TeacherRecord[]; totalCount: number }>> {
   const authorization = await ensureAuthorized();
   if (!authorization.success) {
     return authorization;
   }
 
+  const page = params?.page ?? 1;
+  const pageSize = params?.pageSize ?? 50;
+  const skip = (page - 1) * pageSize;
+  const searchTerm = params?.searchTerm?.trim().toLowerCase();
+
   try {
-    const teachers = await prisma.user.findMany({
-      where: { role: "TEACHER" },
-      include: { teacher: true },
-      orderBy: { createdAt: "desc" },
-    });
+    const where: any = { role: "TEACHER" };
+
+    if (searchTerm) {
+      where.OR = [
+        { name: { contains: searchTerm, mode: "insensitive" } },
+        { email: { contains: searchTerm, mode: "insensitive" } },
+        {
+          teacher: {
+            qualification: { contains: searchTerm, mode: "insensitive" },
+          },
+        },
+      ];
+    }
+
+    const [teachers, totalCount] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        include: { teacher: true },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: pageSize,
+      }),
+      prisma.user.count({ where }),
+    ]);
 
     return {
       success: true,
-      data: teachers.map(serializeTeacher),
+      data: {
+        data: teachers.map(serializeTeacher),
+        totalCount,
+      },
     };
   } catch (error) {
     console.error("Failed to list teachers", error);
@@ -631,22 +694,53 @@ export async function deleteTeacher(
   }
 }
 
-export async function listStaff(): Promise<BaseActionResult<StaffRecord[]>> {
+export async function listStaff(params?: {
+  page?: number;
+  pageSize?: number;
+  searchTerm?: string;
+}): Promise<BaseActionResult<{ data: StaffRecord[]; totalCount: number }>> {
   const authorization = await ensureAuthorized(adminOnlyRoles);
   if (!authorization.success) {
     return authorization;
   }
 
+  const page = params?.page ?? 1;
+  const pageSize = params?.pageSize ?? 50;
+  const skip = (page - 1) * pageSize;
+  const searchTerm = params?.searchTerm?.trim().toLowerCase();
+
   try {
-    const staffMembers = await prisma.user.findMany({
-      where: { role: { in: ["ADMIN", "MANAGER", "ATTENDANCE"] } },
-      include: { staff: true },
-      orderBy: { createdAt: "desc" },
-    });
+    const where: any = { role: { in: ["ADMIN", "MANAGER", "ATTENDANCE"] } };
+
+    if (searchTerm) {
+      where.AND = [
+        { role: { in: ["ADMIN", "MANAGER", "ATTENDANCE"] } },
+        {
+          OR: [
+            { name: { contains: searchTerm, mode: "insensitive" } },
+            { email: { contains: searchTerm, mode: "insensitive" } },
+          ],
+        },
+      ];
+    }
+
+    const [staffMembers, totalCount] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        include: { staff: true },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: pageSize,
+      }),
+      prisma.user.count({ where }),
+    ]);
 
     return {
       success: true,
-      data: staffMembers.map(serializeStaff),
+      data: {
+        data: staffMembers.map(serializeStaff),
+        totalCount,
+      },
     };
   } catch (error) {
     console.error("Failed to list staff", error);

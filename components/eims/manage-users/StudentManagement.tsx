@@ -6,9 +6,6 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { type StudentRegistrationCourse } from "@/components/student-registration/RegistrationForm";
-import { getCourses } from "@/lib/actions/course";
 import {
   deleteStudent,
   listStudents,
@@ -31,7 +28,8 @@ import {
   statusOptions,
   type FieldErrorState,
 } from "./form-utils";
-import { FlowerLoader } from "@/components/ui/flower-loader";
+import { Pagination } from "./Pagination";
+import { useDebounce } from "@/hooks/use-debounce";
 
 type StudentEditErrorState = FieldErrorState<StudentUpsertValues>;
 
@@ -79,21 +77,41 @@ export function StudentManagement() {
   const [viewingStudent, setViewingStudent] = useState<StudentRecord | null>(
     null
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 50;
+  const debouncedSearch = useDebounce(searchTerm, 500);
 
-  const fetchStudents = async () => {
+  const fetchStudents = async (page: number, search: string) => {
     setIsLoading(true);
-    const result = await listStudents();
+    const result = await listStudents({
+      page,
+      pageSize,
+      searchTerm: search,
+    });
 
-    setStudents(result.success ? result.data : []);
-    setListError(result.success ? null : result.error);
-    if (!result.success) toast.error(result.error);
+    if (result.success) {
+      setStudents(result.data.data);
+      setTotalCount(result.data.totalCount);
+      setListError(null);
+    } else {
+      setStudents([]);
+      setTotalCount(0);
+      setListError(result.error);
+      toast.error(result.error);
+    }
 
     setIsLoading(false);
   };
 
   useEffect(() => {
-    void fetchStudents();
-  }, []);
+    setCurrentPage(1);
+    void fetchStudents(1, debouncedSearch);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    void fetchStudents(currentPage, debouncedSearch);
+  }, [currentPage]);
 
   useEffect(() => {
     setEditStudentPassword("");
@@ -185,7 +203,7 @@ export function StudentManagement() {
     });
   };
 
-  const rows = filteredStudents.map((student) => (
+  const rows = students.map((student) => (
     <TableRow key={student.id}>
       <TableCell>
         <span className="text-xs">{student.studentPublicId ?? "-"}</span>
@@ -324,6 +342,13 @@ export function StudentManagement() {
         >
           {rows}
         </UserTable>
+        <Pagination
+          currentPage={currentPage}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          isLoading={isLoading}
+        />
       </UserManagementCard>
 
       <ConfirmDialog
