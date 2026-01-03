@@ -3,12 +3,17 @@ import Link from "next/link";
 import {
   ArrowRight,
   CalendarDays,
+  GraduationCap,
+  BookOpen,
+  Users,
   LayoutDashboard,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import * as motion from "framer-motion/client";
 
 import { APP_NAME } from "@/lib/constants";
+import { HeroSlider } from "@/components/marketing/HeroSlider";
 
 const modules = [
   {
@@ -38,14 +43,23 @@ const roleHighlights = [
   {
     title: "Students",
     copy: "Self-register online, follow personalized study paths, and stay motivated with AI-driven reminders and progress dashboards.",
+    icon: GraduationCap,
+    color: "from-blue-500/20 to-indigo-500/20",
+    iconColor: "text-blue-500",
   },
   {
     title: "Teachers",
     copy: "Publish multimedia content, set quizzes, track paper marks, and receive AI assistance for lesson planning.",
+    icon: BookOpen,
+    color: "from-emerald-500/20 to-teal-500/20",
+    iconColor: "text-emerald-500",
   },
   {
     title: "Staff & Admins",
     copy: "Centralize attendance, payments, and communications while approving enrollments and managing multi operations securely.",
+    icon: Users,
+    color: "from-purple-500/20 to-pink-500/20",
+    iconColor: "text-purple-500",
   },
 ];
 
@@ -85,9 +99,9 @@ const timeline = [
   },
   {
     step: "02",
-    title: "Staff Approval & Onboarding",
+    title: "Student ID & LMS Credentials",
     description:
-      "Attendance or finance teams verify payments, assign classes, and trigger automated welcome emails.",
+      "A unique Student ID is generated, and LMS login credentials are sent to the student via email.",
   },
   {
     step: "03",
@@ -100,178 +114,213 @@ const timeline = [
 export default function ShowcaseSite() {
   return (
     <div className="space-y-24 py-10 lg:space-y-32 lg:py-16 ">
-      <section className="relative overflow-hidden rounded-3xl border bg-slate-950/95 text-slate-50 py-6 px-10">
-        <Image
-          src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1600&q=80"
-          alt="Students collaborating with laptops"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover opacity-30"
-        />
-        <div className="absolute inset-0 bg-linear-to-r from-slate-900 via-slate-900/95 to-primary/20" />
-        <div className="relative z-10 wrapper flex flex-col gap-10 py-20 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-2xl space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm uppercase tracking-[0.3em] text-primary">
-              Future-Ready Institute
-            </div>
-            <h1 className="text-4xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
-              Next-era educational experience with modern comfort zone
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              {APP_NAME} unifies enrollment, communication, and
-              analytics so your team can focus on what matters most student
-              success.
-            </p>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/student-registration"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition hover:scale-[1.02]"
-              >
-                Start Student Registration
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </div>
-          <div className="grid w-full max-w-sm grid-cols-2 gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200 backdrop-blur">
-            <div className="rounded-xl bg-slate-900/70 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                Active Learners
-              </p>
-              <p className="mt-3 text-3xl font-semibold">3,500+</p>
-            </div>
-            <div className="rounded-xl bg-slate-900/70 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                Staff Workflows Automated
-              </p>
-              <p className="mt-3 text-3xl font-semibold">45+</p>
-            </div>
-            <div className="rounded-xl bg-slate-900/70 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                Parent Satisfaction
-              </p>
-              <p className="mt-3 text-3xl font-semibold">97%</p>
-            </div>
-            <div className="rounded-xl bg-slate-900/70 p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                AI Study Sessions
-              </p>
-              <p className="mt-3 text-3xl font-semibold">12k</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <div className="wrapper">
+        <HeroSlider />
+      </div>
 
-      <section className="wrapper space-y-12">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl space-y-4">
-            <p className="text-sm uppercase tracking-[0.3em] text-primary">
+      <section className="wrapper space-y-16 py-12">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl space-y-5">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-primary border border-primary/20"
+            >
               Three connected pillars
-            </p>
-            <h2 className="text-3xl font-semibold sm:text-4xl">
+            </motion.div>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="text-4xl font-bold tracking-tight sm:text-5xl"
+            >
               Everything your institute needs to manage, teach, and inspire
-            </h2>
-            <p className="text-base text-muted-foreground">
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="text-lg text-muted-foreground leading-relaxed"
+            >
               From admissions to alumni, {APP_NAME} connects every team with
               smart dashboards, live reporting, and effortless collaboration.
-            </p>
+            </motion.p>
           </div>
           <Link
             href="/courses"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-primary"
+            className="group inline-flex items-center gap-2 text-sm font-bold text-primary transition-all hover:gap-3"
           >
             Explore Courses
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
         <div className="grid gap-8 md:grid-cols-3">
-          {modules.map((module) => (
-            <article
+          {modules.map((module, index) => (
+            <motion.article
               key={module.name}
-              className="group relative overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1, duration: 0.5 }}
+              whileHover={{ y: -10 }}
+              className="group relative overflow-hidden rounded-3xl border border-border/50 bg-card shadow-2xl transition-all duration-300 hover:border-primary/50 hover:shadow-primary/5"
             >
-              <div className="relative h-48 w-full overflow-hidden">
+              <div className="relative h-56 w-full overflow-hidden">
                 <Image
                   src={module.image}
                   alt={`${module.name} preview`}
                   fill
                   sizes="(min-width: 768px) 33vw, 100vw"
-                  className="object-cover transition duration-500 group-hover:scale-105"
+                  className="object-cover transition-transform duration-700 group-hover:scale-110"
                 />
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
               </div>
-              <div className="space-y-3 p-6">
-                <h3 className="text-xl font-semibold">{module.name}</h3>
-                <p className="text-sm text-muted-foreground">
+              <div className="relative space-y-4 p-8">
+                <h3 className="text-2xl font-bold tracking-tight group-hover:text-primary transition-colors">
+                  {module.name}
+                </h3>
+                <p className="text-[15px] leading-relaxed text-muted-foreground group-hover:text-foreground/80 transition-colors">
                   {module.description}
                 </p>
                 <Link
                   href="/dashboard"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary"
+                  className="inline-flex items-center gap-2 text-sm font-bold text-primary transition-all hover:gap-3"
                 >
                   View demo
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
               </div>
-            </article>
+
+              {/* Decorative accent */}
+              <div className="absolute bottom-0 right-0 h-1 w-0 bg-linear-to-r from-primary to-purple-500 transition-all duration-500 group-hover:w-full" />
+            </motion.article>
           ))}
         </div>
       </section>
 
-      <section className="wrapper grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-        <div className="space-y-8">
-          <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-            Designed for every role
-          </span>
-          <h2 className="text-3xl font-semibold sm:text-4xl">
-            A personalized experience from login to learning
-          </h2>
-          <p className="text-base text-muted-foreground">
-            Role-aware dashboards ensure each stakeholder lands exactly where
-            they need to work—from class scheduling and fee management to study
-            plans and performance reports.
-          </p>
-          <div className="grid gap-6 md:grid-cols-3">
-            {roleHighlights.map((role) => (
-              <div
-                key={role.title}
-                className="rounded-2xl border bg-card p-6 shadow-sm"
+      <section className="wrapper relative overflow-hidden">
+        {/* Background Decorative Elements */}
+        <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-purple-500/5 blur-3xl" />
+
+        <div className="grid gap-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center relative z-10">
+          <div className="space-y-10">
+            <div className="space-y-4">
+              <motion.span
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-primary border border-primary/20"
               >
-                <h3 className="text-lg font-semibold">{role.title}</h3>
-                <p className="mt-3 text-sm text-muted-foreground">
-                  {role.copy}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="grid gap-4">
-          <div className="relative h-72 w-full overflow-hidden rounded-3xl">
-            <Image
-              src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80"
-              alt="Teacher guiding students"
-              fill
-              sizes="(min-width: 1024px) 40vw, 100vw"
-              className="object-cover"
-            />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="relative h-48 w-full overflow-hidden rounded-2xl">
-              <Image
-                src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80"
-                alt="Students celebrating success"
-                fill
-                sizes="(min-width: 640px) 50vw, 100vw"
-                className="object-cover"
-              />
+                <Sparkles className="h-3.5 w-3.5" />
+                Designed for every role
+              </motion.span>
+              <motion.h2
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="text-4xl font-bold tracking-tight sm:text-5xl lg:leading-[1.1]"
+              >
+                A modern experience from login to learning
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="text-lg text-muted-foreground leading-relaxed max-w-xl"
+              >
+                Role-aware dashboards ensure each stakeholder lands exactly
+                where they need to work—from class scheduling and fee management
+                to study plans and performance reports.
+              </motion.p>
             </div>
-            <div className="relative h-48 w-full overflow-hidden rounded-2xl">
+
+            <div className="grid gap-6 md:grid-cols-3">
+              {roleHighlights.map((role, index) => (
+                <motion.div
+                  key={role.title}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 * index, duration: 0.4 }}
+                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                  className="group relative rounded-3xl border border-border/50 bg-card/50 p-7 shadow-xl backdrop-blur-sm transition-all hover:border-primary/50 hover:shadow-primary/10"
+                >
+                  <div
+                    className={`absolute inset-0 rounded-3xl bg-linear-to-br ${role.color} opacity-0 transition-opacity duration-500 group-hover:opacity-100`}
+                  />
+
+                  <div className="relative z-10">
+                    <div
+                      className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted group-hover:bg-background transition-colors duration-300 ${role.iconColor} shadow-inner`}
+                    >
+                      <role.icon className="h-7 w-7 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+                    </div>
+                    <h3 className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors">
+                      {role.title}
+                    </h3>
+                    <p className="mt-4 text-sm leading-relaxed text-muted-foreground group-hover:text-foreground/80 transition-colors">
+                      {role.copy}
+                    </p>
+                  </div>
+
+                  {/* Decorative corner element */}
+                  <div className="absolute top-4 right-4 h-2 w-2 rounded-full bg-primary/20 group-hover:bg-primary transition-colors" />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+          <div className="grid gap-4">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="relative h-72 w-full overflow-hidden rounded-3xl shadow-2xl"
+            >
               <Image
-                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80"
-                alt="Administrator reviewing dashboards"
+                src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80"
+                alt="Teacher guiding students"
                 fill
-                sizes="(min-width: 640px) 50vw, 100vw"
-                className="object-cover"
+                sizes="(min-width: 1024px) 40vw, 100vw"
+                className="object-cover transition-transform duration-700 hover:scale-105"
               />
+            </motion.div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="relative h-48 w-full overflow-hidden rounded-2xl shadow-xl"
+              >
+                <Image
+                  src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80"
+                  alt="Students celebrating success"
+                  fill
+                  sizes="(min-width: 640px) 50vw, 100vw"
+                  className="object-cover transition-transform duration-700 hover:scale-110"
+                />
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="relative h-48 w-full overflow-hidden rounded-2xl shadow-xl"
+              >
+                <Image
+                  src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80"
+                  alt="Administrator reviewing dashboards"
+                  fill
+                  sizes="(min-width: 640px) 50vw, 100vw"
+                  className="object-cover transition-transform duration-700 hover:scale-110"
+                />
+              </motion.div>
             </div>
           </div>
         </div>
@@ -310,7 +359,7 @@ export default function ShowcaseSite() {
         </div>
       </section>
 
-     {/* Enrollment Journey Section */}
+      {/* Enrollment Journey Section */}
       <section className="wrapper space-y-12">
         <div className="max-w-2xl space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full bg-linear-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 px-5 py-2 text-xs font-bold uppercase tracking-[0.3em] text-green-600 dark:text-green-400">
