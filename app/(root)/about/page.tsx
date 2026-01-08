@@ -9,9 +9,19 @@ import {
   Brain,
   CheckCircle,
 } from "lucide-react";
-import Image from "next/image";
+import TeacherCard from "@/components/shared/TeacherCard";
+import { Pagination } from "@/components/shared/Pagination";
+import { getTeachersWithCourses } from "@/lib/actions/teacher.actions";
 
-const About = () => {
+interface SearchParamsProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+const About = async ({ searchParams }: SearchParamsProps) => {
+  const params = await searchParams;
+  const page = Number(params?.page) || 1;
+  const { teachers, metadata } = await getTeachersWithCourses(page, 8);
+
   const values = [
     {
       icon: Heart,
@@ -39,43 +49,6 @@ const About = () => {
     },
   ];
 
-  const achievements = [
-    { number: "50,000+", label: "Students Educated" },
-    { number: "1,200+", label: "Expert Faculty" },
-    { number: "98%", label: "Graduate Success Rate" },
-    { number: "25+", label: "Years of Excellence" },
-  ];
-
-  const team = [
-    {
-      name: "Dr. Sarah Wilson",
-      role: "Chief Technology Officer",
-      image: "👩‍💼",
-      description:
-        "Leading our AI integration and educational technology initiatives.",
-    },
-    {
-      name: "Prof. Michael Chen",
-      role: "Director of Academic Excellence",
-      image: "👨‍🏫",
-      description:
-        "Overseeing curriculum development and faculty training programs.",
-    },
-    {
-      name: "Dr. Emily Davis",
-      role: "Head of Student Success",
-      image: "👩‍🎓",
-      description:
-        "Ensuring comprehensive student support and career development.",
-    },
-    {
-      name: "Alex Johnson",
-      role: "Innovation Manager",
-      image: "👨‍💻",
-      description: "Driving digital transformation and platform development.",
-    },
-  ];
-
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -86,11 +59,6 @@ const About = () => {
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
               Transforming Education Through Innovation
             </h1>
-            <p className="text-xl text-muted-foreground leading-relaxed">
-              We are pioneering the future of education with our comprehensive
-              management system that seamlessly integrates traditional learning
-              with cutting-edge technology.
-            </p>
           </div>
         </div>
       </div>
@@ -169,88 +137,34 @@ const About = () => {
         </div>
       </section>
 
-      {/* Courses in Action Section */}
+      {/* Teachers Section */}
       <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-12">
-              Our Courses in Action
+            <h2 className="text-3xl font-bold text-center mb-6">
+              Meet Our Experts
             </h2>
             <p className="text-lg text-muted-foreground text-center mb-12 max-w-3xl mx-auto">
-              See how our students engage with cutting-edge learning
-              environments designed to foster creativity, collaboration, and
-              academic excellence.
+              Learn from industry experts and experienced educators dedicated to
+              your success.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="aspect-video relative overflow-hidden">
-                  <Image
-                    src="https://images.unsplash.com/photo-1577896851231-70ef18881754?fm=jpg&q=80&w=1600"
-                    alt="Modern classroom with students learning"
-                    width={1600}
-                    height={900}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                  />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {teachers.length > 0 ? (
+                teachers.map((teacher) => (
+                  <TeacherCard key={teacher.userId} teacher={teacher} />
+                ))
+              ) : (
+                <div className="col-span-full text-center text-muted-foreground">
+                  No teachers found.
                 </div>
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    Interactive Learning
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Modern classrooms equipped with smart boards, collaborative
-                    workspaces, and technology that enhances the learning
-                    experience.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="aspect-video relative overflow-hidden">
-                  <Image
-                    src="https://images.unsplash.com/photo-1758685734470-a75109299497?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fA%3D%3D&auto=format&fit=crop&q=80&w=1600"
-                    alt="Students conducting science experiments"
-                    width={1600}
-                    height={900}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <CardHeader>
-                  <CardTitle className="text-lg">Hands-on Science</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    State-of-the-art laboratories where students conduct real
-                    experiments and explore scientific concepts through
-                    practical application.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="aspect-video relative overflow-hidden">
-                  <Image
-                    src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?fm=jpg&q=80&w=1600"
-                    alt="Programming class with students coding"
-                    width={1600}
-                    height={900}
-                    className="w-full h-full object-cover hover:scale-105transition-transform duration-300"
-                  />
-                </div>
-                <CardHeader>
-                  <CardTitle className="text-lg">Technology Focus</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Cutting-edge computer labs where students learn programming,
-                    web development, and emerging technologies for the digital
-                    future.
-                  </p>
-                </CardContent>
-              </Card>
+              )}
             </div>
+
+            <Pagination
+              totalPages={metadata.totalPages}
+              currentPage={metadata.currentPage}
+            />
           </div>
         </div>
       </section>

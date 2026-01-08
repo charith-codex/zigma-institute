@@ -1,5 +1,4 @@
 import Link from "next/link";
-
 import { StudentRegistrationForm } from "@/components/student-registration/RegistrationForm";
 import { prisma } from "@/db/prisma";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { CalendarClock, ShieldCheck, Users, Phone, Mail } from "lucide-react";
 
 const infoHighlights = [
@@ -120,7 +118,7 @@ export default async function StudentRegisterPage() {
                       <p className="font-medium text-foreground">Hotline</p>
                       <Link
                         href="tel:0112223344"
-                        className="text-primary hover:underline"
+                        className="text-muted-foreground hover:underline"
                       >
                         011 222 3344
                       </Link>
@@ -132,7 +130,7 @@ export default async function StudentRegisterPage() {
                       <p className="font-medium text-foreground">Email</p>
                       <Link
                         href="mailto:admissions@zigmainstitute.lk"
-                        className="text-primary hover:underline"
+                        className="text-muted-foreground hover:underline"
                       >
                         admissions@zigmainstitute.lk
                       </Link>

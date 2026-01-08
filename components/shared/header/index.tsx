@@ -6,7 +6,7 @@ import Menu from "./menu";
 const Header = () => {
   return (
     <header className="w-full bg-linear-to-b from-blue-500/20 via-purple-500/20 to-transparent dark:from-blue-600/30 dark:via-purple-500/30 dark:to-transparent backdrop-blur-lg z-50">
-      <div className="wrapper flex-between">
+      <div className="wrapper py-3 flex-between">
         <div className="flex-start">
           <Link href="/" className="flex-start">
             <Image
