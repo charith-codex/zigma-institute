@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useEnrollments, useAssignments, useCourses } from "@/hooks/useData";
+import { useEnrollments, useCourses } from "@/hooks/useData";
 import { BookOpen, Star, CheckCircle, Video } from "lucide-react";
 import { LmsSidebar } from "@/components/lms/LmsSidebar";
 import AIStudyTools from "@/components/lms/AIStudyTools";
@@ -17,6 +17,7 @@ import CourseCard from "@/components/courses/course-card";
 import { Course } from "@/types";
 import { Input } from "@/components/ui/input";
 import { CourseEnrollment } from "@/components/lms/CourseEnrollment";
+import { StudentIdCardDisplay } from "@/components/lms/StudentIdCardDisplay";
 
 type EnrolledCourse = Course & {
   code: string;
@@ -37,7 +38,7 @@ const LMS = () => {
     loading: enrollmentsLoading,
     refetch: refetchEnrollments,
   } = useEnrollments();
-  const { assignments, loading: assignmentsLoading } = useAssignments();
+  // const { assignments, loading: assignmentsLoading } = useAssignments();
   const { courses } = useCourses();
   const [paymentRefreshKey, setPaymentRefreshKey] = useState(0);
 
@@ -359,6 +360,8 @@ const LMS = () => {
             {activeModule === "payments" && (
               <PaymentSection refreshKey={paymentRefreshKey} />
             )}
+
+            {activeModule === "id-card" && <StudentIdCardDisplay />}
           </div>
         </div>
       </main>
