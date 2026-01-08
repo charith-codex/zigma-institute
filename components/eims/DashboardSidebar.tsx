@@ -108,8 +108,8 @@ const baseMenuEntries: MenuEntry[] = [
     icon: Megaphone,
     items: [
       {
-        id: "showcase-management",
-        label: "Website Management",
+        id: "gallery-management",
+        label: "Gallery Management",
         icon: Globe,
       },
       { id: "notifications", label: "Notifications", icon: Bell },

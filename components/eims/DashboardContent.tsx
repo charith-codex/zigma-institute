@@ -22,8 +22,6 @@ import {
 } from "@/components/eims/DashboardSidebar";
 import { cn } from "@/lib/utils";
 import { useDashboardStats, useCourses } from "@/hooks/useData";
-
-// Module Imports
 import { PhysicalMaterialDistribution } from "@/components/eims/PhysicalMaterialDistribution";
 import { Notifications } from "@/components/eims/Notifications";
 import FeeManagement from "@/components/eims/FeeManagement";
@@ -32,12 +30,12 @@ import { StaffManagement } from "@/components/eims/manage-users/StaffManagement"
 import { InquiryManagement } from "@/components/eims/InquiryManagement";
 import { TeacherManagement } from "@/components/eims/manage-users/TeacherManagement";
 import { CourseManagement } from "@/components/eims/CourseManagement";
-import { ShowcaseManagement } from "@/components/eims/ShowcaseManagement";
 import { StudentManagement } from "@/components/eims/manage-users/StudentManagement";
 import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleManager";
 import { CourseCategoryManagement } from "@/components/eims/CourseCategoryManagement";
 import { CourseAccessControl } from "@/components/eims/CourseAccessControl";
 import { DuePayments } from "@/components/eims/DuePayments";
+import { GalleryManagement } from "@/components/eims/GalleryManagement";
 
 type SessionLike = {
   user?: {
@@ -399,10 +397,10 @@ export function DashboardContent({ session }: DashboardContentProps) {
             <CourseAccessControl />
           </div>
         );
-      case "showcase-management":
+      case "gallery-management":
         return (
           <div className="px-4 pb-10 pt-6 sm:px-6 lg:px-8">
-            <ShowcaseManagement />
+            <GalleryManagement />
           </div>
         );
       case "notifications":
