@@ -113,8 +113,8 @@ const timeline = [
 
 export default function ShowcaseSite() {
   return (
-    <div className="space-y-24 py-10 lg:space-y-32 lg:py-16 ">
-      <div className="wrapper">
+    <div className="space-y-24 pb-10 pt-4 lg:space-y-32 lg:pb-16 lg:pt-6">
+      <div className="wrapper pt-0">
         <HeroSlider />
       </div>
 
