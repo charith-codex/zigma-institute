@@ -20,6 +20,7 @@ import {
   Paperclip,
   SquarePlus,
   FileSpreadsheet,
+  IdCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +38,7 @@ const menuItems = [
   { id: "schedule", label: "Schedule", icon: Calendar },
   { id: "study-tools", label: "AI Study Tools", icon: Brain },
   { id: "performance", label: "Student Performance", icon: TrendingUp },
+  { id: "id-card", label: "ID Card", icon: IdCard },
   { id: "payments", label: "Payments", icon: CreditCard },
 ];
 
