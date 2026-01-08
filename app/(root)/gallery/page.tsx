@@ -9,10 +9,8 @@ import {
   Zap,
 } from "lucide-react";
 import type { ComponentType } from "react";
-
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-
 export const dynamic = "force-dynamic";
 import {
   Card,
