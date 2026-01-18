@@ -71,7 +71,7 @@ export function DashboardContent({ session }: DashboardContentProps) {
         teacherId: course.teacherId ?? `${course.id}-teacher`,
         teacherName: course.teacherName ?? "Teacher",
       })),
-    [courses]
+    [courses],
   );
 
   const statStyles = {
@@ -99,14 +99,11 @@ export function DashboardContent({ session }: DashboardContentProps) {
           color: "secondary",
         },
         {
-          title: "Total Revenue",
-          value: statsLoading
-            ? "..."
-            : `$${stats.totalRevenue?.toLocaleString() || "0"}`,
-          change: "+8%",
-          icon: DollarSign,
+          title: "Total Staff",
+          value: statsLoading ? "..." : stats.staffCount?.toString() || "0",
+          change: "+2%",
+          icon: UserCheck,
           color: "accent",
-          hidden: isAttendance,
         },
         {
           title: "Active Courses",
@@ -116,49 +113,81 @@ export function DashboardContent({ session }: DashboardContentProps) {
           color: "success",
         },
       ].filter((s) => !("hidden" in s) || !s.hidden),
-    [stats, statsLoading, courses, isAttendance]
+    [stats, statsLoading, courses, isAttendance],
   );
 
-  const recentActivities = [
-    {
-      id: 1,
-      type: "enrollment",
-      message: "New student enrolled in Computer Science",
-      time: "2 hours ago",
-      icon: UserCheck,
-    },
-    {
-      id: 2,
-      type: "payment",
-      message: "Fee payment received from John Doe",
-      time: "3 hours ago",
-      icon: DollarSign,
-    },
-    {
-      id: 3,
-      type: "course",
-      message: "New course 'AI Fundamentals' published",
-      time: "5 hours ago",
-      icon: BookOpen,
-    },
-    {
-      id: 4,
-      type: "assignment",
-      message: "Assignment submitted by Sarah Wilson",
-      time: "6 hours ago",
-      icon: FileText,
-    },
-  ];
-
   const quickActions = [
-    { title: "Create Course", icon: BookOpen, action: "create-course" },
-    { title: "Schedule Course", icon: Calendar, action: "schedule-course" },
-    { title: "Generate Report", icon: BarChart3, action: "generate-report" },
-  ];
+    {
+      title: "Manage Students",
+      description: "Add or update student records",
+      icon: Users,
+      module: "students",
+      gradient: "from-blue-500/10 via-blue-500/5 to-transparent",
+      iconBg: "bg-blue-500/10 dark:bg-blue-500/20",
+      iconColor: "text-blue-600 dark:text-blue-400",
+      textColor: "text-blue-700 dark:text-blue-300",
+      show: canManageStudents,
+    },
+    {
+      title: "Manage Courses",
+      description: "Create and edit course content",
+      icon: BookOpen,
+      module: "classes",
+      gradient: "from-purple-500/10 via-purple-500/5 to-transparent",
+      iconBg: "bg-purple-500/10 dark:bg-purple-500/20",
+      iconColor: "text-purple-600 dark:text-purple-400",
+      textColor: "text-purple-700 dark:text-purple-300",
+      show: isAdmin || isManager,
+    },
+    {
+      title: "Manage Schedule",
+      description: "Set up class timetables",
+      icon: Calendar,
+      module: "scheduling",
+      gradient: "from-green-500/10 via-green-500/5 to-transparent",
+      iconBg: "bg-green-500/10 dark:bg-green-500/20",
+      iconColor: "text-green-600 dark:text-green-400",
+      textColor: "text-green-700 dark:text-green-300",
+      show: isAdmin || isManager,
+    },
+    {
+      title: "Fee Management",
+      description: "Track payments and dues",
+      icon: DollarSign,
+      module: "fees",
+      gradient: "from-orange-500/10 via-orange-500/5 to-transparent",
+      iconBg: "bg-orange-500/10 dark:bg-orange-500/20",
+      iconColor: "text-orange-600 dark:text-orange-400",
+      textColor: "text-orange-700 dark:text-orange-300",
+      show: !isAttendance,
+    },
+    {
+      title: "Attendance QR",
+      description: "Generate attendance codes",
+      icon: Clock,
+      module: "attendance-qr",
+      gradient: "from-cyan-500/10 via-cyan-500/5 to-transparent",
+      iconBg: "bg-cyan-500/10 dark:bg-cyan-500/20",
+      iconColor: "text-cyan-600 dark:text-cyan-400",
+      textColor: "text-cyan-700 dark:text-cyan-300",
+      show: true,
+    },
+    {
+      title: "Manage Teachers",
+      description: "Assign and update faculty",
+      icon: GraduationCap,
+      module: "teachers",
+      gradient: "from-rose-500/10 via-rose-500/5 to-transparent",
+      iconBg: "bg-rose-500/10 dark:bg-rose-500/20",
+      iconColor: "text-rose-600 dark:text-rose-400",
+      textColor: "text-rose-700 dark:text-rose-300",
+      show: canManageStudents,
+    },
+  ].filter((action) => action.show);
 
   const menuEntries = useMemo(
     () => getMenuEntriesForRole(userRole),
-    [userRole]
+    [userRole],
   );
 
   const allowedModules = useMemo(() => {
@@ -195,99 +224,157 @@ export function DashboardContent({ session }: DashboardContentProps) {
       {/* Stats and Activity Sections */}
       <div className="space-y-6 sm:space-y-8">
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-4">
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {dashboardStats.map((stat: any, index: number) => (
-            <Card key={index} className="edu-card-hover h-full">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.title}
-                </CardTitle>
-                <div
-                  className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-lg",
-                    statStyles[stat.color as keyof typeof statStyles]
-                  )}
-                >
-                  <stat.icon className="h-4 w-4" />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="text-2xl font-bold text-foreground">
-                  {stat.value}
-                </div>
-                <div className="flex items-center gap-1 text-xs text-success">
-                  <TrendingUp className="w-3 h-3" />
-                  <span>{stat.change} from last month</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+          {dashboardStats.map((stat: any, index: number) => {
+            const gradients = {
+              primary: "from-blue-500/20 via-blue-500/10 to-transparent",
+              secondary: "from-purple-500/20 via-purple-500/10 to-transparent",
+              accent: "from-emerald-500/20 via-emerald-500/10 to-transparent",
+              success: "from-orange-500/20 via-orange-500/10 to-transparent",
+            };
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
-          {/* Quick Actions - Hidden for Attendance Staff */}
-          {!isAttendance && (
-            <Card className="md:col-span-1 lg:col-span-1">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Plus className="w-5 h-5" />
-                  Quick Actions
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {quickActions.map((action, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    className="h-12 w-full justify-start gap-3 rounded-xl border-border/70 text-left text-sm font-medium"
-                  >
-                    <action.icon className="h-4 w-4" />
-                    {action.title}
-                  </Button>
-                ))}
-              </CardContent>
-            </Card>
-          )}
+            const iconBgColors = {
+              primary:
+                "bg-blue-500/15 dark:bg-blue-500/25 group-hover:bg-blue-500/25 dark:group-hover:bg-blue-500/35",
+              secondary:
+                "bg-purple-500/15 dark:bg-purple-500/25 group-hover:bg-purple-500/25 dark:group-hover:bg-purple-500/35",
+              accent:
+                "bg-emerald-500/15 dark:bg-emerald-500/25 group-hover:bg-emerald-500/25 dark:group-hover:bg-emerald-500/35",
+              success:
+                "bg-orange-500/15 dark:bg-orange-500/25 group-hover:bg-orange-500/25 dark:group-hover:bg-orange-500/35",
+            };
 
-          {/* Recent Activities */}
-          <Card
-            className={cn(
-              "md:col-span-1",
-              isAttendance ? "lg:col-span-3" : "lg:col-span-2"
-            )}
-          >
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="w-5 h-5" />
-                Recent Activities
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentActivities.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex flex-col gap-3 rounded-xl border border-border p-4 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center"
-                  >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                      <activity.icon className="h-5 w-5 text-primary" />
+            const iconColors = {
+              primary: "text-blue-600 dark:text-blue-400",
+              secondary: "text-purple-600 dark:text-purple-400",
+              accent: "text-emerald-600 dark:text-emerald-400",
+              success: "text-orange-600 dark:text-orange-400",
+            };
+
+            const textColors = {
+              primary: "text-blue-700 dark:text-blue-300",
+              secondary: "text-purple-700 dark:text-purple-300",
+              accent: "text-emerald-700 dark:text-emerald-300",
+              success: "text-orange-700 dark:text-orange-300",
+            };
+
+            return (
+              <Card
+                key={index}
+                className={cn(
+                  "group relative overflow-hidden transition-all duration-300 border-border/60",
+                  "hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1",
+                  "bg-linear-to-br",
+                  gradients[stat.color as keyof typeof gradients],
+                )}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground mb-1">
+                        {stat.title}
+                      </p>
+                      <h3
+                        className={cn(
+                          "text-3xl font-bold tracking-tight transition-colors",
+                          textColors[stat.color as keyof typeof textColors],
+                        )}
+                      >
+                        {stat.value}
+                      </h3>
                     </div>
-                    <div className="flex-1 text-left">
-                      <p className="text-sm font-medium text-foreground">
-                        {activity.message}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {activity.time}
-                      </p>
+                    <div
+                      className={cn(
+                        "p-3 rounded-xl transition-all duration-300",
+                        "group-hover:scale-110 group-hover:rotate-3",
+                        iconBgColors[stat.color as keyof typeof iconBgColors],
+                      )}
+                    >
+                      <stat.icon
+                        className={cn(
+                          "h-6 w-6 transition-colors",
+                          iconColors[stat.color as keyof typeof iconColors],
+                        )}
+                      />
                     </div>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+
+                {/* Decorative gradient overlay */}
+                <div className="absolute inset-0 bg-linear-to-br from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+                {/* Subtle animated border effect */}
+                <div
+                  className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, transparent, rgba(var(--primary), 0.1), transparent)",
+                    backgroundSize: "200% 100%",
+                    animation: "shimmer 3s infinite",
+                  }}
+                />
+              </Card>
+            );
+          })}
         </div>
+
+        {/* Quick Actions Grid */}
+        {!isAttendance && quickActions.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Plus className="w-5 h-5" />
+              Quick Actions
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {quickActions.map((action, index) => (
+                <Card
+                  key={index}
+                  className={cn(
+                    "group relative cursor-pointer overflow-hidden transition-all duration-300",
+                    "border-border/60 hover:border-primary/40",
+                    "bg-linear-to-br",
+                    action.gradient,
+                    "hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1",
+                  )}
+                  onClick={() => setActiveModule(action.module)}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div
+                        className={cn(
+                          "p-3 rounded-xl transition-all duration-300",
+                          "group-hover:scale-110",
+                          action.iconBg,
+                        )}
+                      >
+                        <action.icon
+                          className={cn("h-6 w-6", action.iconColor)}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3
+                          className={cn(
+                            "font-semibold text-base mb-1.5",
+                            action.textColor,
+                          )}
+                        >
+                          {action.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {action.description}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+
+                  {/* Decorative gradient overlay on hover */}
+                  <div className="absolute inset-0 bg-linear-to-br from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
