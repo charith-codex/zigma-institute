@@ -1,13 +1,11 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEnrollments, useCourses } from "@/hooks/useData";
-import { BookOpen, Star, CheckCircle, Video } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { LmsSidebar } from "@/components/lms/LmsSidebar";
 import AIStudyTools from "@/components/lms/AIStudyTools";
 import { CourseDetailView } from "@/components/lms/CourseDetailView";
-import { DailyQuotes } from "@/components/lms/DailyQuotes";
 import { PaymentSection } from "@/components/lms/PaymentSection";
 import StudentPerformance from "@/components/lms/StudentPerformance";
 import { CourseScheduleManager } from "@/components/scheduling/CourseScheduleManager";
@@ -18,6 +16,8 @@ import { Course } from "@/types";
 import { Input } from "@/components/ui/input";
 import { CourseEnrollment } from "@/components/lms/CourseEnrollment";
 import { StudentIdCardDisplay } from "@/components/lms/StudentIdCardDisplay";
+import { WelcomeBanner } from "@/components/lms/WelcomeBanner";
+import { QuickActions } from "@/components/lms/QuickActions";
 
 type EnrolledCourse = Course & {
   code: string;
@@ -29,7 +29,7 @@ type EnrolledCourse = Course & {
 const LMS = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
   const [selectedCourse, setSelectedCourse] = useState<EnrolledCourse | null>(
-    null
+    null,
   );
   const [nameQuery, setNameQuery] = useState("");
   const searchParams = useSearchParams();
@@ -38,7 +38,6 @@ const LMS = () => {
     loading: enrollmentsLoading,
     refetch: refetchEnrollments,
   } = useEnrollments();
-  // const { assignments, loading: assignmentsLoading } = useAssignments();
   const { courses } = useCourses();
   const [paymentRefreshKey, setPaymentRefreshKey] = useState(0);
 
@@ -83,6 +82,42 @@ const LMS = () => {
     return Array.from(byCourseId.values());
   }, [courses, enrollments]);
 
+  // Mock data for dashboard stats - replace with real data from API
+  const dashboardStats = useMemo(
+    () => ({
+      enrolledCourses: enrolledCourses.length,
+      completedCourses: enrolledCourses.filter((c) => c.status === "completed")
+        .length,
+      averageGrade: 85, // TODO: Calculate from actual grades
+      totalHoursWatched: 42, // TODO: Get from video tracking
+      upcomingExams: 3, // TODO: Get from exams API
+      pendingAssignments: 5, // TODO: Get from assignments API
+      currentStreak: 7, // TODO: Calculate from user activity
+      achievementsUnlocked: 12, // TODO: Get from achievements system
+    }),
+    [enrolledCourses],
+  );
+
+  // Mock upcoming classes - replace with real schedule data
+  const upcomingClasses = useMemo(
+    () => [
+      // TODO: Fetch from schedules API
+      // Example structure:
+      // {
+      //   id: "1",
+      //   courseId: "course-1",
+      //   courseName: "Mathematics",
+      //   teacherName: "Dr. Smith",
+      //   startTime: new Date(),
+      //   endTime: new Date(),
+      //   location: "Room 101",
+      //   isOnline: false,
+      //   status: "scheduled" as const,
+      // },
+    ],
+    [],
+  );
+
   const filteredCourses = useMemo<EnrolledCourse[]>(() => {
     const normalizedQuery = nameQuery.trim().toLowerCase();
 
@@ -91,7 +126,7 @@ const LMS = () => {
     }
 
     return enrolledCourses.filter((courseItem) =>
-      courseItem.name.toLowerCase().includes(normalizedQuery)
+      courseItem.name.toLowerCase().includes(normalizedQuery),
     );
   }, [enrolledCourses, nameQuery]);
 
@@ -103,7 +138,7 @@ const LMS = () => {
         teacherId: course.teacherId ?? `${course.id}-teacher`,
         teacherName: course.teacherName ?? "Teacher",
       })),
-    [enrolledCourses]
+    [enrolledCourses],
   );
 
   useEffect(() => {
@@ -129,7 +164,7 @@ const LMS = () => {
       try {
         const response = await fetch(
           `/api/payments/checkout?session_id=${encodeURIComponent(sessionId)}`,
-          { cache: "no-store" }
+          { cache: "no-store" },
         );
 
         if (!response.ok) {
@@ -170,199 +205,141 @@ const LMS = () => {
 
       {/* Main Content */}
       <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mx-auto flex h-full w-full max-w-7xl flex-col rounded-2xl border border-border bg-background shadow-sm">
-          <div className="flex-1 space-y-8 p-4 sm:p-6 lg:p-8">
-            {activeModule === "dashboard" && (
-              <div className="space-y-8">
-                {/* Daily Motivation */}
-                <DailyQuotes />
+        <div className="mx-auto flex h-full w-full max-w-7xl flex-col space-y-6">
+          {activeModule === "dashboard" && (
+            <>
+              {/* Welcome Banner */}
+              <WelcomeBanner />
 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <BookOpen className="w-5 h-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            Enrolled Courses
-                          </p>
-                          {/* <p className="text-xl font-bold">
-                              {studentInfo.totalCourses}
-                            </p> */}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+              {/* Quick Actions */}
+              <QuickActions
+                onActionClick={setActiveModule}
+                upcomingExams={dashboardStats.upcomingExams}
+                pendingPayments={0}
+                newNotifications={0}
+              />
+            </>
+          )}
 
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                          <CheckCircle className="w-5 h-5 text-success" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            Completed
-                          </p>
-                          {/* <p className="text-xl font-bold">
-                              {studentInfo.completedCourses}
-                            </p> */}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                          <Star className="w-5 h-5 text-orange-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            Average Grade
-                          </p>
-                          {/* <p className="text-xl font-bold">
-                              {studentInfo.gpa}
-                            </p> */}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-sky-500/10 flex items-center justify-center">
-                          <Video className="w-5 h-5 text-sky-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">
-                            Hours Watched
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Welcome Message */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Welcome back!</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">
-                      Your learning journey continues. Explore your courses,
-                      check upcoming schedules, and make the most of your LMS
-                      experience.
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {activeModule === "classes" &&
-              (selectedCourse ? (
+          {activeModule === "classes" &&
+            (selectedCourse ? (
+              <div className="rounded-2xl border border-border bg-background shadow-sm p-4 sm:p-6 lg:p-8">
                 <CourseDetailView
                   classData={selectedCourse}
                   onBack={() => setSelectedCourse(null)}
                 />
-              ) : (
-                <div className="space-y-6">
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                      <h1 className="text-2xl font-bold">My Courses</h1>
-                      <p className="text-muted-foreground">
-                        Click on a course to start learning.
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-border bg-background shadow-sm p-4 sm:p-6 lg:p-8 space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h1 className="text-2xl font-bold">My Courses</h1>
+                    <p className="text-muted-foreground">
+                      Click on a course to start learning.
+                    </p>
+                  </div>
+                  <div className="space-y-2 max-w-sm w-full sm:w-auto">
+                    <Input
+                      id="course-name"
+                      placeholder="Search course by name"
+                      value={nameQuery}
+                      onChange={(event) => setNameQuery(event.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {filteredCourses.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    {filteredCourses.map((courseItem) => (
+                      <CourseCard
+                        key={courseItem.id}
+                        course={courseItem}
+                        showPrice={false}
+                        showDescription
+                        href={`/lms/courses/${courseItem.slug}`}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          setSelectedCourse(courseItem);
+                        }}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
+                    <BookOpen className="h-10 w-10 text-primary" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-foreground">
+                        No courses found
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Try a different course name.
                       </p>
                     </div>
-                    <div className="space-y-2 max-w-sm w-full sm:w-auto">
-                      <Input
-                        id="course-name"
-                        placeholder="Search course by name"
-                        value={nameQuery}
-                        onChange={(event) => setNameQuery(event.target.value)}
-                      />
-                    </div>
                   </div>
+                )}
+              </div>
+            ))}
 
-                  {filteredCourses.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                      {filteredCourses.map((courseItem) => (
-                        <CourseCard
-                          key={courseItem.id}
-                          course={courseItem}
-                          showPrice={false}
-                          showDescription
-                          href={`/lms/courses/${courseItem.slug}`}
-                          onClick={(event) => {
-                            event.preventDefault();
-                            setSelectedCourse(courseItem);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
-                      <BookOpen className="h-10 w-10 text-primary" />
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-foreground">
-                          No courses found
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Try a different course name.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-            {activeModule === "exams" && (
+          {activeModule === "exams" && (
+            <div className="rounded-2xl border border-border bg-background shadow-sm p-4 sm:p-6 lg:p-8">
               <PublishedExams
                 heading="Exams"
                 description="Browse available exams and start a session when you're ready."
               />
-            )}
+            </div>
+          )}
 
-            {activeModule === "schedule" && (
+          {activeModule === "schedule" && (
+            <div className="rounded-2xl border border-border bg-background shadow-sm p-4 sm:p-6 lg:p-8">
               <CourseScheduleManager
                 courseOptions={scheduleCourseOptions}
                 heading="My Course Schedule"
                 description="Check upcoming classes on a responsive calendar."
                 mode="view"
               />
-            )}
+            </div>
+          )}
 
-            {activeModule === "study-tools" && <AIStudyTools />}
+          {activeModule === "study-tools" && (
+            <div className="rounded-2xl border border-border bg-background shadow-sm p-4 sm:p-6 lg:p-8">
+              <AIStudyTools />
+            </div>
+          )}
 
-            {activeModule === "performance" && (
+          {activeModule === "performance" && (
+            <div className="rounded-2xl border border-border bg-background shadow-sm p-4 sm:p-6 lg:p-8">
               <StudentPerformance enrolledCourses={enrolledCourses} />
-            )}
+            </div>
+          )}
 
-            {activeModule === "exam-marks" && (
+          {activeModule === "exam-marks" && (
+            <div className="rounded-2xl border border-border bg-background shadow-sm p-4 sm:p-6 lg:p-8">
               <ExamMarksDisplay enrolledCourses={enrolledCourses} />
-            )}
+            </div>
+          )}
 
-            {activeModule === "enroll" && (
+          {activeModule === "enroll" && (
+            <div className="rounded-2xl border border-border bg-background shadow-sm p-4 sm:p-6 lg:p-8">
               <CourseEnrollment
                 onEnrolled={() => {
                   void refetchEnrollments();
                   setPaymentRefreshKey((previous) => previous + 1);
                 }}
               />
-            )}
+            </div>
+          )}
 
-            {activeModule === "payments" && (
+          {activeModule === "payments" && (
+            <div className="rounded-2xl border border-border bg-background shadow-sm p-4 sm:p-6 lg:p-8">
               <PaymentSection refreshKey={paymentRefreshKey} />
-            )}
+            </div>
+          )}
 
-            {activeModule === "id-card" && <StudentIdCardDisplay />}
-          </div>
+          {activeModule === "id-card" && (
+            <div className="rounded-2xl border border-border bg-background shadow-sm p-4 sm:p-6 lg:p-8">
+              <StudentIdCardDisplay />
+            </div>
+          )}
         </div>
       </main>
     </div>
