@@ -248,6 +248,15 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 .h1-bold {
   font-weight: 700;
   font-size: 1.875rem;

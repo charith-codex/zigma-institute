@@ -124,7 +124,7 @@ export function useCourses() {
       setError(
         fetchError instanceof Error
           ? fetchError.message
-          : "Failed to load courses"
+          : "Failed to load courses",
       );
     } finally {
       setLoading(false);
@@ -170,7 +170,7 @@ export function useCourseCategories() {
       setError(
         fetchError instanceof Error
           ? fetchError.message
-          : "Failed to load course categories"
+          : "Failed to load course categories",
       );
     } finally {
       setLoading(false);
@@ -206,7 +206,7 @@ export function useTeachers() {
               (teacher): teacher is TeacherSummary =>
                 Boolean(teacher) &&
                 typeof teacher.id === "string" &&
-                typeof teacher.name === "string"
+                typeof teacher.name === "string",
             )
             .map((teacher) => ({
               id: teacher.id,
@@ -223,7 +223,7 @@ export function useTeachers() {
       setError(
         fetchError instanceof Error
           ? fetchError.message
-          : "Failed to load teachers"
+          : "Failed to load teachers",
       );
     } finally {
       setLoading(false);
@@ -238,7 +238,7 @@ export function useTeachers() {
 }
 
 export function useStudentRegistrations(
-  statuses: StudentRegistrationStatus[] = ["PAID", "APPROVED"]
+  statuses: StudentRegistrationStatus[] = ["PAID", "APPROVED"],
 ) {
   const [registrations, setRegistrations] = useState<
     StudentRegistrationSummary[]
@@ -262,7 +262,7 @@ export function useStudentRegistrations(
       const normalized: StudentRegistrationSummary[] = Array.isArray(payload)
         ? payload
             .filter((item): item is StudentRegistrationSummary =>
-              Boolean(item?.id)
+              Boolean(item?.id),
             )
             .map((item) => ({
               ...item,
@@ -280,7 +280,7 @@ export function useStudentRegistrations(
       setError(
         fetchError instanceof Error
           ? fetchError.message
-          : "Failed to load student registrations"
+          : "Failed to load student registrations",
       );
     } finally {
       setLoading(false);
@@ -295,7 +295,7 @@ export function useStudentRegistrations(
 }
 
 const normalizeCourseToCourseSummary = (
-  course: unknown
+  course: unknown,
 ): CourseSummary | null => {
   if (!course || typeof course !== "object") {
     return null;
@@ -411,7 +411,7 @@ export function useCourseSummaries() {
       setError(
         fetchError instanceof Error
           ? fetchError.message
-          : "Failed to load courses"
+          : "Failed to load courses",
       );
     } finally {
       setLoading(false);
@@ -477,7 +477,7 @@ export function useLessons(courseId?: string) {
     try {
       setLoading(true);
       const response = await fetch(
-        `/api/lessons?courseId=${encodeURIComponent(courseId)}`
+        `/api/lessons?courseId=${encodeURIComponent(courseId)}`,
       );
 
       if (!response.ok) {
@@ -493,7 +493,7 @@ export function useLessons(courseId?: string) {
             .sort(
               (a, b) =>
                 new Date(b.createdAt).getTime() -
-                new Date(a.createdAt).getTime()
+                new Date(a.createdAt).getTime(),
             )
         : [];
 
@@ -505,7 +505,7 @@ export function useLessons(courseId?: string) {
       setError(
         fetchError instanceof Error
           ? fetchError.message
-          : "Failed to load lessons"
+          : "Failed to load lessons",
       );
     } finally {
       setLoading(false);
@@ -538,7 +538,7 @@ export function useLessons(courseId?: string) {
         throw new Error(
           (payload && typeof payload.error === "string"
             ? payload.error
-            : null) ?? "Failed to create lesson"
+            : null) ?? "Failed to create lesson",
         );
       }
 
@@ -551,13 +551,13 @@ export function useLessons(courseId?: string) {
       setLessons((previous) =>
         [...previous, normalized].sort(
           (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        ),
       );
 
       return normalized;
     },
-    [courseId]
+    [courseId],
   );
 
   return { lessons, loading, error, refetch, createLesson };
@@ -579,7 +579,7 @@ export function useStudyMaterials(lessonId?: string) {
       try {
         setLoading(true);
         const response = await fetch(
-          `/api/study-materials?lessonId=${encodeURIComponent(lessonId)}`
+          `/api/study-materials?lessonId=${encodeURIComponent(lessonId)}`,
         );
 
         if (!response.ok) {
@@ -596,7 +596,7 @@ export function useStudyMaterials(lessonId?: string) {
         setError(
           fetchError instanceof Error
             ? fetchError.message
-            : "Failed to load study materials"
+            : "Failed to load study materials",
         );
       } finally {
         setLoading(false);
@@ -701,7 +701,7 @@ export function useEnrollments() {
       setError(
         fetchError instanceof Error
           ? fetchError.message
-          : "Failed to load enrollments"
+          : "Failed to load enrollments",
       );
     } finally {
       setLoading(false);
@@ -795,7 +795,7 @@ export function usePayments() {
       setError(
         fetchError instanceof Error
           ? fetchError.message
-          : "Failed to load fee data"
+          : "Failed to load fee data",
       );
     } finally {
       setLoading(false);
@@ -813,23 +813,33 @@ export function useDashboardStats() {
   const [stats, setStats] = useState({
     studentCount: 0,
     teacherCount: 0,
+    staffCount: 0,
     activeClasses: 0,
-    totalRevenue: 0,
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const refetch = async () => {
     setLoading(true);
-    setTimeout(() => {
+    setError(null);
+    try {
+      const response = await fetch("/api/stats");
+      if (!response.ok) {
+        throw new Error("Failed to fetch dashboard stats");
+      }
+      const data = await response.json();
       setStats({
-        studentCount: 0,
-        teacherCount: 0,
-        activeClasses: 0,
-        totalRevenue: 0,
+        studentCount: data.studentCount || 0,
+        teacherCount: data.teacherCount || 0,
+        staffCount: data.staffCount || 0,
+        activeClasses: data.activeClasses || 0,
       });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      console.error("Error fetching dashboard stats:", err);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   useEffect(() => {
