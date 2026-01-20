@@ -59,7 +59,7 @@ export default auth((req: NextRequest & { auth: any }) => {
   // Check if route is public
   const isPublicRoute =
     PUBLIC_ROUTES.some(
-      (route) => pathname === route || pathname.startsWith(`${route}/`)
+      (route) => pathname === route || pathname.startsWith(`${route}/`),
     ) || pathname.startsWith("/user/verify-email");
 
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
@@ -92,7 +92,7 @@ export default auth((req: NextRequest & { auth: any }) => {
       ];
       if (!allowedRoles.includes(userRole)) {
         return NextResponse.redirect(
-          new URL(getDefaultRoute(userRole), nextUrl)
+          new URL(getDefaultRoute(userRole), nextUrl),
         );
       }
     }
@@ -107,7 +107,7 @@ export default auth((req: NextRequest & { auth: any }) => {
       ];
       if (!allowedRoles.includes(userRole)) {
         return NextResponse.redirect(
-          new URL(getDefaultRoute(userRole), nextUrl)
+          new URL(getDefaultRoute(userRole), nextUrl),
         );
       }
     }
@@ -117,7 +117,7 @@ export default auth((req: NextRequest & { auth: any }) => {
       const allowedRoles: (keyof typeof ROLE_ACCESS)[] = ["MANAGER", "ADMIN"];
       if (!allowedRoles.includes(userRole)) {
         return NextResponse.redirect(
-          new URL(getDefaultRoute(userRole), nextUrl)
+          new URL(getDefaultRoute(userRole), nextUrl),
         );
       }
     }
@@ -126,7 +126,7 @@ export default auth((req: NextRequest & { auth: any }) => {
     if (pathname.startsWith("/test")) {
       if (userRole !== "ADMIN") {
         return NextResponse.redirect(
-          new URL(getDefaultRoute(userRole), nextUrl)
+          new URL(getDefaultRoute(userRole), nextUrl),
         );
       }
     }
