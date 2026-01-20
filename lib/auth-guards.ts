@@ -45,7 +45,7 @@ export function getDefaultRoute(role?: string): string {
     case "TEACHER":
       return "/lms-cms";
     case "ATTENDANCE":
-      return "/lms-cms";
+      return "/dashboard";
     case "MANAGER":
       return "/dashboard";
     case "ADMIN":
