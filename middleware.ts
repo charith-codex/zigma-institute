@@ -1,6 +1,6 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 // Define role-based route access
 const ROLE_ACCESS = {
@@ -34,13 +34,18 @@ const EXCLUDED_API_ROUTES = [
   "/api/student-registration/regenerate-id-card",
 ];
 
-export default auth((req: NextRequest & { auth: any }) => {
+export async function middleware(req: NextRequest) {
   const { nextUrl } = req;
-  const session = req.auth;
-  const isLoggedIn = !!session?.user;
-  const userRole = session?.user?.role as keyof typeof ROLE_ACCESS | undefined;
-
   const pathname = nextUrl.pathname;
+
+  // Get the token from the request (Edge-compatible)
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  const isLoggedIn = !!token;
+  const userRole = token?.role as keyof typeof ROLE_ACCESS | undefined;
 
   // Allow excluded API routes
   if (EXCLUDED_API_ROUTES.some((route) => pathname.startsWith(route))) {
@@ -133,7 +138,7 @@ export default auth((req: NextRequest & { auth: any }) => {
   }
 
   return NextResponse.next();
-});
+}
 
 // Helper function to get default route based on user role
 function getDefaultRoute(role: keyof typeof ROLE_ACCESS | undefined): string {
