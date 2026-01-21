@@ -75,8 +75,8 @@ export function DashboardContent({ session }: DashboardContentProps) {
   const { stats, loading: statsLoading } = useDashboardStats();
   const { courses } = useCourses();
 
-  const isAdmin = userRole === "ADMIN" || userRole === "it_admin";
-  const isManager = userRole === "MANAGER" || userRole === "management_staff";
+  const isAdmin = userRole === "ADMIN";
+  const isManager = userRole === "MANAGER";
   const isAttendance = userRole === "ATTENDANCE";
 
   const canManageStudents = isAdmin || isManager;
