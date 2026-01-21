@@ -124,12 +124,11 @@ export const getMenuEntriesForRole = (role?: string | null): MenuEntry[] => {
 
   return baseMenuEntries
     .map((entry) => {
-      // For attendance role, only allow Dashboard and Administration (filtered)
+      // For attendance role, only allow Administration (filtered)
       if (isAttendance) {
-        if (entry.id === "overview") return entry;
         if (entry.id === "administration") {
           const filteredItems = entry.items?.filter(
-            (item) => item.id === "attendance-qr"
+            (item) => item.id === "attendance-qr",
           );
           return { ...entry, items: filteredItems };
         }
@@ -156,7 +155,7 @@ export const getMenuEntriesForRole = (role?: string | null): MenuEntry[] => {
     })
     .filter(
       (entry): entry is MenuEntry =>
-        entry !== null && (entry.items == null || entry.items.length > 0)
+        entry !== null && (entry.items == null || entry.items.length > 0),
     );
 };
 
@@ -197,7 +196,7 @@ export function DashboardSidebar({
                         className={cn(
                           isActive(entry.id)
                             ? "bg-primary/10 text-primary font-medium"
-                            : "hover:bg-muted/50"
+                            : "hover:bg-muted/50",
                         )}
                       >
                         <button
@@ -215,7 +214,7 @@ export function DashboardSidebar({
 
                 // Has sub-items → collapsible section
                 const sectionActive = entry.items.some((item) =>
-                  isActive(item.id)
+                  isActive(item.id),
                 );
 
                 return (
@@ -231,7 +230,7 @@ export function DashboardSidebar({
                           className={cn(
                             sectionActive
                               ? "bg-primary/10 text-primary font-medium"
-                              : "hover:bg-muted/50"
+                              : "hover:bg-muted/50",
                           )}
                         >
                           <entry.icon className="h-4 w-4" />
