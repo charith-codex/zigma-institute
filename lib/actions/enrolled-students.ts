@@ -22,7 +22,7 @@ export async function getEnrolledStudents(params: {
   const session = await auth();
   if (
     !session?.user?.role ||
-    !["ADMIN", "MANAGER"].includes(session.user.role)
+    !["ADMIN", "MANAGER","TEACHER"].includes(session.user.role)
   ) {
     throw new Error("Unauthorized");
   }
