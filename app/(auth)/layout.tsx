@@ -9,6 +9,6 @@ const AuthLayout = async ({ children }: { children: React.ReactNode }) => {
     redirect(getDefaultRoute(session.user.role));
   }
 
-  return <div className="flex-center min-h-screen w-full ">{children}</div>;
+  return <div className="min-h-screen w-full">{children}</div>;
 };
 export default AuthLayout;

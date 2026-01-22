@@ -387,3 +387,41 @@
     0 0 45px rgba(59, 130, 246, 0.15),
     0 4px 20px rgba(0, 0, 0, 0.5);
 }
+
+/* Custom 3D Effects for Sign In Page */
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  
+  .rotateX-15 {
+    transform: rotateX(15deg);
+  }
+  
+  .rotateY-15 {
+    transform: rotateY(15deg);
+  }
+  
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+  
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  
+  /* 3D hover effects */
+  .hover-3d:hover {
+    transform: perspective(1000px) rotateX(10deg) rotateY(10deg) scale(1.05);
+  }
+  
+  /* Gradient text utilities */
+  .text-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
