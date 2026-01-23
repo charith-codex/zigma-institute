@@ -1025,3 +1025,70 @@ export function useData() {
     loading,
   };
 }
+
+export function useEnrollmentTrends() {
+  const [enrollmentTrends, setEnrollmentTrends] = useState<Array<{
+    month: string;
+    students: number;
+    teachers: number;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refetch = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/stats/enrollment-trends");
+      if (!response.ok) {
+        throw new Error("Failed to fetch enrollment trends");
+      }
+      const data = await response.json();
+      setEnrollmentTrends(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      console.error("Error fetching enrollment trends:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refetch();
+  }, []);
+
+  return { enrollmentTrends, loading, error, refetch };
+}
+
+export function useRevenueTrends() {
+  const [revenueTrends, setRevenueTrends] = useState<Array<{
+    month: string;
+    revenue: number;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refetch = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/stats/revenue-trends");
+      if (!response.ok) {
+        throw new Error("Failed to fetch revenue trends");
+      }
+      const data = await response.json();
+      setRevenueTrends(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      console.error("Error fetching revenue trends:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refetch();
+  }, []);
+
+  return { revenueTrends, loading, error, refetch };
+}

@@ -19,13 +19,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 import {
-  BarChart,
-  Bar,
   LineChart,
   Line,
-  PieChart,
-  Pie,
-  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -40,7 +35,12 @@ import {
   getMenuEntriesForRole,
 } from "@/components/eims/DashboardSidebar";
 import { cn } from "@/lib/utils";
-import { useDashboardStats, useCourses } from "@/hooks/useData";
+import {
+  useDashboardStats,
+  useCourses,
+  useEnrollmentTrends,
+  useRevenueTrends,
+} from "@/hooks/useData";
 import { PhysicalMaterialDistribution } from "@/components/eims/PhysicalMaterialDistribution";
 import { Notifications } from "@/components/eims/Notifications";
 import FeeManagement from "@/components/eims/FeeManagement";
@@ -74,6 +74,9 @@ export function DashboardContent({ session }: DashboardContentProps) {
 
   const { stats, loading: statsLoading } = useDashboardStats();
   const { courses } = useCourses();
+  const { enrollmentTrends, loading: enrollmentLoading } =
+    useEnrollmentTrends();
+  const { revenueTrends, loading: revenueLoading } = useRevenueTrends();
 
   const isAdmin = userRole === "ADMIN";
   const isManager = userRole === "MANAGER";
@@ -229,58 +232,6 @@ export function DashboardContent({ session }: DashboardContentProps) {
     }
   }, [activeModule, allowedModules]);
 
-  // Mock data for charts - in production, fetch from API
-  const enrollmentTrendData = useMemo(
-    () => [
-      { month: "Aug", students: 45, teachers: 8 },
-      { month: "Sep", students: 62, teachers: 10 },
-      { month: "Oct", students: 78, teachers: 12 },
-      { month: "Nov", students: 95, teachers: 14 },
-      { month: "Dec", students: 112, teachers: 15 },
-      {
-        month: "Jan",
-        students: stats.studentCount || 128,
-        teachers: stats.teacherCount || 16,
-      },
-    ],
-    [stats],
-  );
-
-  const courseDistributionData = useMemo(() => {
-    const activeCount = courses.length;
-    const totalSlots = Math.max(activeCount + 2, 15);
-    const inactiveCount = totalSlots - activeCount;
-    return [
-      { name: "Active Courses", value: activeCount, color: "#10b981" },
-      { name: "Available Slots", value: inactiveCount, color: "#6b7280" },
-    ];
-  }, [courses]);
-
-  const recentActivityData = useMemo(
-    () => [
-      { day: "Mon", enrollments: 12, completions: 8, attendance: 85 },
-      { day: "Tue", enrollments: 15, completions: 10, attendance: 88 },
-      { day: "Wed", enrollments: 8, completions: 12, attendance: 92 },
-      { day: "Thu", enrollments: 18, completions: 15, attendance: 87 },
-      { day: "Fri", enrollments: 22, completions: 18, attendance: 90 },
-      { day: "Sat", enrollments: 10, completions: 9, attendance: 78 },
-      { day: "Sun", enrollments: 5, completions: 6, attendance: 65 },
-    ],
-    [],
-  );
-
-  const revenueData = useMemo(
-    () => [
-      { month: "Aug", revenue: 12500 },
-      { month: "Sep", revenue: 18200 },
-      { month: "Oct", revenue: 22100 },
-      { month: "Nov", revenue: 25800 },
-      { month: "Dec", revenue: 31200 },
-      { month: "Jan", revenue: 28500 },
-    ],
-    [],
-  );
-
   const CHART_COLORS = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444"];
 
   const renderOverview = () => (
@@ -342,8 +293,8 @@ export function DashboardContent({ session }: DashboardContentProps) {
                   gradients[stat.color as keyof typeof gradients],
                 )}
               >
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
                       <p className="text-sm font-medium text-muted-foreground mb-1">
                         {stat.title}
@@ -390,6 +341,161 @@ export function DashboardContent({ session }: DashboardContentProps) {
               </Card>
             );
           })}
+        </div>
+
+        {/* Charts and Analytics Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          {/* Enrollment Trends */}
+          <Card className="overflow-hidden border-border/60">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                Enrollment Trends
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {enrollmentLoading ? (
+                <div className="flex items-center justify-center h-[280px]">
+                  <div className="text-muted-foreground">
+                    Loading enrollment data...
+                  </div>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={280}>
+                  <AreaChart data={enrollmentTrends}>
+                    <defs>
+                      <linearGradient
+                        id="colorStudents"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor="#8b5cf6"
+                          stopOpacity={0.3}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="#8b5cf6"
+                          stopOpacity={0}
+                        />
+                      </linearGradient>
+                      <linearGradient
+                        id="colorTeachers"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="5%"
+                          stopColor="#3b82f6"
+                          stopOpacity={0.3}
+                        />
+                        <stop
+                          offset="95%"
+                          stopColor="#3b82f6"
+                          stopOpacity={0}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted"
+                    />
+                    <XAxis dataKey="month" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                      }}
+                    />
+                    <Legend />
+                    <Area
+                      type="monotone"
+                      dataKey="students"
+                      stroke="#8b5cf6"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorStudents)"
+                      name="Students"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="teachers"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorTeachers)"
+                      name="Teachers"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Revenue Trends */}
+          {!isAttendance && (
+            <Card className="overflow-hidden border-border/60">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                  Revenue Trends
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {revenueLoading ? (
+                  <div className="flex items-center justify-center h-[280px]">
+                    <div className="text-muted-foreground">
+                      Loading revenue data...
+                    </div>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <LineChart data={revenueTrends}>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        className="stroke-muted"
+                      />
+                      <XAxis dataKey="month" className="text-xs" />
+                      <YAxis
+                        className="text-xs"
+                        tickFormatter={(value) =>
+                          value >= 1000
+                            ? `$${Math.floor(value / 1000)}k`
+                            : `$${Math.floor(value)}`
+                        }
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                        }}
+                        formatter={(value) => [
+                          `$${(value || 0).toLocaleString()}`,
+                          "Revenue",
+                        ]}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="#10b981"
+                        strokeWidth={3}
+                        dot={{ fill: "#10b981", r: 5 }}
+                        activeDot={{ r: 7 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Quick Actions Grid */}
@@ -448,210 +554,6 @@ export function DashboardContent({ session }: DashboardContentProps) {
             </div>
           </div>
         )}
-
-        {/* Charts and Analytics Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          {/* Enrollment Trends */}
-          <Card className="overflow-hidden border-border/60">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary" />
-                Enrollment Trends
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={enrollmentTrendData}>
-                  <defs>
-                    <linearGradient
-                      id="colorStudents"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient
-                      id="colorTeachers"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    className="stroke-muted"
-                  />
-                  <XAxis dataKey="month" className="text-xs" />
-                  <YAxis className="text-xs" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                    }}
-                  />
-                  <Legend />
-                  <Area
-                    type="monotone"
-                    dataKey="students"
-                    stroke="#8b5cf6"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#colorStudents)"
-                    name="Students"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="teachers"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#colorTeachers)"
-                    name="Teachers"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Course Distribution */}
-          <Card className="overflow-hidden border-border/60">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-primary" />
-                Course Distribution
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={courseDistributionData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, value, percent }) =>
-                      `${name}: ${value} (${((percent || 0) * 100).toFixed(0)}%)`
-                    }
-                    outerRadius={90}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {courseDistributionData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          {/* Weekly Activity */}
-          {!isAttendance && (
-            <Card className="overflow-hidden border-border/60">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-primary" />
-                  Weekly Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={recentActivityData}>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      className="stroke-muted"
-                    />
-                    <XAxis dataKey="day" className="text-xs" />
-                    <YAxis className="text-xs" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                      }}
-                    />
-                    <Legend />
-                    <Bar
-                      dataKey="enrollments"
-                      fill="#8b5cf6"
-                      radius={[4, 4, 0, 0]}
-                      name="Enrollments"
-                    />
-                    <Bar
-                      dataKey="completions"
-                      fill="#10b981"
-                      radius={[4, 4, 0, 0]}
-                      name="Completions"
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Revenue Trends */}
-          {!isAttendance && (
-            <Card className="overflow-hidden border-border/60">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-primary" />
-                  Revenue Trends
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={revenueData}>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      className="stroke-muted"
-                    />
-                    <XAxis dataKey="month" className="text-xs" />
-                    <YAxis
-                      className="text-xs"
-                      tickFormatter={(value) =>
-                        `$${(value / 1000).toFixed(0)}k`
-                      }
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                      }}
-                      formatter={(value) => [
-                        `$${(value || 0).toLocaleString()}`,
-                        "Revenue",
-                      ]}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#10b981"
-                      strokeWidth={3}
-                      dot={{ fill: "#10b981", r: 5 }}
-                      activeDot={{ r: 7 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          )}
-        </div>
       </div>
     </div>
   );
