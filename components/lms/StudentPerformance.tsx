@@ -94,7 +94,7 @@ export const StudentPerformance = ({
         }
       } catch (err) {
         setError(
-          "An unexpected error occurred while fetching performance data."
+          "An unexpected error occurred while fetching performance data.",
         );
         console.error(err);
       } finally {
@@ -112,7 +112,7 @@ export const StudentPerformance = ({
     return enrolledCourses.map((course) => {
       // Filter papers for this course
       const physicals = data.physicalExams
-        .filter((e) => e.courseName === course.name)
+        .filter((e) => e.courseId === course.id)
         .map(
           (e): ExamPaper => ({
             id: e.id,
@@ -121,11 +121,11 @@ export const StudentPerformance = ({
             maxScore: 100, // Assuming 100 for percentage marks
             mode: "physical",
             paperUrl: e.paperUrl,
-          })
+          }),
         );
 
       const onlines = data.onlineExams
-        .filter((e) => e.courseName === course.name)
+        .filter((e) => e.courseId === course.id)
         .map(
           (e): ExamPaper => ({
             id: e.id,
@@ -133,7 +133,7 @@ export const StudentPerformance = ({
             score: e.score || 0,
             maxScore: e.totalMarks,
             mode: "online",
-          })
+          }),
         );
 
       const combinedPapers = [...physicals, ...onlines];
@@ -170,15 +170,15 @@ export const StudentPerformance = ({
         acc[course.courseId] = papers;
         return acc;
       },
-      {}
+      {},
     );
   }, [coursePerformances]);
 
   const physicalPapers = coursePerformances.flatMap((course) =>
-    course.papers.filter((paper) => paper.mode === "physical")
+    course.papers.filter((paper) => paper.mode === "physical"),
   );
   const onlinePapers = coursePerformances.flatMap((course) =>
-    course.papers.filter((paper) => paper.mode === "online")
+    course.papers.filter((paper) => paper.mode === "online"),
   );
 
   const physicalAverage = calculateAverage(physicalPapers);
@@ -480,7 +480,7 @@ export const StudentPerformance = ({
 
                       const maxPercent = Math.max(
                         ...paperChartData.map((item) => item.percent),
-                        1
+                        1,
                       );
 
                       return paperChartData.map((paper) => {

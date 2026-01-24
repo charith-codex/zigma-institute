@@ -7,6 +7,7 @@ import { convertToPlainObject } from "@/lib/utils";
 export interface StudentPerformanceData {
   physicalExams: {
     id: string;
+    courseId: string;
     courseName: string;
     examTitle: string;
     score: number;
@@ -15,6 +16,7 @@ export interface StudentPerformanceData {
   }[];
   onlineExams: {
     id: string;
+    courseId: string | null;
     courseName: string;
     examTitle: string;
     score: number | null;
@@ -65,6 +67,10 @@ export async function getStudentPerformance(): Promise<
       publicIds.push(studentProfile.studentPublicId);
     }
 
+    // Build list of possible student IDs for exam attempts
+    // ExamAttempt.studentId can be either the userId or studentPublicId
+    const possibleStudentIds = [userId, ...publicIds];
+
     // 2. Fetch Physical Exam Marks
     // Using OR to match either registration ID or public ID is safest if data consistency is mixed
     const physicalMarks = await prisma.physicalExamMark.findMany({
@@ -84,6 +90,7 @@ export async function getStudentPerformance(): Promise<
 
     const formattedPhysicalExams = physicalMarks.map((mark) => ({
       id: mark.id,
+      courseId: mark.courseId,
       courseName: mark.course.name,
       examTitle: mark.examTitle,
       score: mark.score,
@@ -92,15 +99,16 @@ export async function getStudentPerformance(): Promise<
     }));
 
     // 3. Fetch Online Exam Attempts
-    // Online exams are linked via ExamAttempt.studentId which usually is the User ID
+    // Online exams are linked via ExamAttempt.studentId which can be either userId or studentPublicId
     const onlineAttempts = await prisma.examAttempt.findMany({
       where: {
-        studentId: userId,
-        status: "GRADED", // Only show graded exams? Or all? Let's show submitted/graded.
+        studentId: { in: possibleStudentIds },
+        status: "GRADED",
       },
       include: {
         exam: {
           select: {
+            courseId: true,
             title: true,
             course: { select: { name: true } },
             questions: { select: { marks: true } },
@@ -113,10 +121,11 @@ export async function getStudentPerformance(): Promise<
     const formattedOnlineExams = onlineAttempts.map((attempt) => {
       const totalMarks = attempt.exam.questions.reduce(
         (sum, q) => sum + q.marks,
-        0
+        0,
       );
       return {
         id: attempt.id,
+        courseId: attempt.exam.courseId,
         courseName: attempt.exam.course?.name || "General",
         examTitle: attempt.exam.title,
         score: attempt.score,
@@ -167,7 +176,7 @@ export async function getStudentPerformance(): Promise<
 
       const totalMarks = attempt.exam.questions.reduce(
         (sum, q) => sum + q.marks,
-        0
+        0,
       );
       if (totalMarks === 0) return;
 

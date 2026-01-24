@@ -53,7 +53,7 @@ export default function ExamMarksDisplay({
         }
       } catch (err) {
         setError(
-          "An unexpected error occurred while fetching your exam marks."
+          "An unexpected error occurred while fetching your exam marks.",
         );
         console.error(err);
       } finally {
@@ -69,10 +69,10 @@ export default function ExamMarksDisplay({
     return enrolledCourses
       .map((course) => {
         const physicals = data.physicalExams.filter(
-          (e) => e.courseName === course.name
+          (e) => e.courseId === course.id,
         );
         const onlines = data.onlineExams.filter(
-          (e) => e.courseName === course.name
+          (e) => e.courseId === course.id,
         );
 
         return {
@@ -140,14 +140,14 @@ export default function ExamMarksDisplay({
               "edu-card transition-all duration-300",
               expandedCourseId === course.id
                 ? "ring-2 ring-primary/20 shadow-lg"
-                : "hover:shadow-md"
+                : "hover:shadow-md",
             )}
           >
             <CardHeader
               className="cursor-pointer select-none"
               onClick={() =>
                 setExpandedCourseId(
-                  expandedCourseId === course.id ? null : course.id
+                  expandedCourseId === course.id ? null : course.id,
                 )
               }
             >
@@ -171,7 +171,7 @@ export default function ExamMarksDisplay({
                 <ChevronRight
                   className={cn(
                     "w-5 h-5 text-muted-foreground transition-transform duration-300",
-                    expandedCourseId === course.id && "rotate-90"
+                    expandedCourseId === course.id && "rotate-90",
                   )}
                 />
               </div>
@@ -258,7 +258,7 @@ export default function ExamMarksDisplay({
                                     "text-[10px] h-4",
                                     exam.status === "GRADED"
                                       ? "bg-success/10 text-success border-success/20"
-                                      : "bg-warning/10 text-warning border-warning/20"
+                                      : "bg-warning/10 text-warning border-warning/20",
                                   )}
                                 >
                                   {exam.status}
