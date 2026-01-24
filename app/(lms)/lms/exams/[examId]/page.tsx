@@ -156,12 +156,12 @@ export default function ExamAttemptPage() {
         setAnswers(initialAnswers);
         setAutoSubmitTriggered(false);
         setTimeRemaining(
-          examData.timeLimitMinutes ? examData.timeLimitMinutes * 60 : null
+          examData.timeLimitMinutes ? examData.timeLimitMinutes * 60 : null,
         );
       } catch (error) {
         console.error(error);
         toast.error(
-          error instanceof Error ? error.message : "Unable to load exam"
+          error instanceof Error ? error.message : "Unable to load exam",
         );
         router.push("/lms");
       } finally {
@@ -322,13 +322,13 @@ export default function ExamAttemptPage() {
       } catch (error) {
         console.error(error);
         toast.error(
-          error instanceof Error ? error.message : "Unable to submit exam"
+          error instanceof Error ? error.message : "Unable to submit exam",
         );
       } finally {
         setSubmitting(false);
       }
     },
-    [answers, exam, examId, result, studentId, studentName, submitting]
+    [answers, exam, examId, result, studentId, studentName, submitting],
   );
 
   useEffect(() => {
@@ -350,7 +350,7 @@ export default function ExamAttemptPage() {
     try {
       setCheckingMarks(true);
       const response = await fetch(
-        `/api/exam-attempts?examId=${examId}&studentId=${encodeURIComponent(studentId.trim())}`
+        `/api/exam-attempts?examId=${examId}&studentId=${encodeURIComponent(studentId.trim())}`,
       );
       if (!response.ok) {
         throw new Error("Unable to retrieve latest marks");
@@ -369,7 +369,7 @@ export default function ExamAttemptPage() {
     } catch (error) {
       console.error(error);
       toast.error(
-        error instanceof Error ? error.message : "Unable to refresh marks"
+        error instanceof Error ? error.message : "Unable to refresh marks",
       );
     } finally {
       setCheckingMarks(false);
@@ -416,20 +416,20 @@ export default function ExamAttemptPage() {
   const currentQuestion = currentEntry.question;
   const currentOptions = parseOptions(currentQuestion.options);
   const evaluationMap = new Map(
-    result?.evaluation.map((entry) => [entry.questionId, entry])
+    result?.evaluation.map((entry) => [entry.questionId, entry]),
   );
   const currentEvaluation = evaluationMap.get(currentEntry.questionId);
 
   const finalMarks = result
     ? result.attempt.answers.reduce(
         (sum, answer) => sum + (answer.marksAwarded ?? 0),
-        0
+        0,
       )
     : 0;
   const essaysPending = result
     ? result.attempt.answers.some(
         (answer) =>
-          answer.question.type === "ESSAY" && answer.marksAwarded == null
+          answer.question.type === "ESSAY" && answer.marksAwarded == null,
       )
     : false;
 
@@ -446,69 +446,117 @@ export default function ExamAttemptPage() {
   const studentNameLocked = Boolean(result) || Boolean(session?.user?.name);
 
   return (
-    <div className="min-h-screen space-y-8 bg-muted/10 px-4 py-6 sm:px-6 lg:px-10">
+    <div className="min-h-screen space-y-8 bg-linear-to-br from-background via-muted/5 to-background px-4 py-6 sm:px-6 lg:px-10">
       <div className="mx-auto max-w-6xl space-y-6">
-        <Card className="overflow-hidden rounded-3xl border border-muted/50 bg-linear-to-r from-primary/10 via-background to-secondary/10 shadow-lg">
-          <CardContent className="flex flex-col items-center gap-4 p-6 text-center md:gap-6">
-            <h1 className="text-3xl font-semibold leading-tight md:text-4xl">
-              {exam.title}
-            </h1>
-            <div className="flex flex-wrap justify-center gap-2 text-sm text-muted-foreground">
-              <Badge variant="outline">
-                Course: {exam.course?.name ?? "Not assigned"}
-              </Badge>
-              <Badge variant="outline">
-                Teacher:{" "}
-                {exam.course?.teacherName ?? exam.createdBy?.name ?? "TBD"}
-              </Badge>
+        <Card className="overflow-hidden rounded-3xl border border-primary/20 bg-linear-to-br from-primary/5 via-background to-secondary/5 shadow-2xl backdrop-blur-sm">
+          <CardContent className="flex flex-col items-center gap-6 p-8 text-center">
+            <div className="space-y-3">
+              <h1 className="text-4xl font-bold leading-tight text-primary md:text-5xl">
+                {exam.title}
+              </h1>
+              <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
+                <Badge
+                  variant="secondary"
+                  className="rounded-full px-4 py-1.5 font-medium shadow-sm"
+                >
+                  <span className="text-muted-foreground">Course:</span>{" "}
+                  <span className="ml-1 font-semibold">
+                    {exam.course?.name ?? "Not assigned"}
+                  </span>
+                </Badge>
+                <Badge
+                  variant="secondary"
+                  className="rounded-full px-4 py-1.5 font-medium shadow-sm"
+                >
+                  <span className="text-muted-foreground">Teacher:</span>{" "}
+                  <span className="ml-1 font-semibold">
+                    {exam.course?.teacherName ?? exam.createdBy?.name ?? "TBD"}
+                  </span>
+                </Badge>
+              </div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-1 lg:grid-cols-3">
-              <div className="rounded-2xl border bg-background/80 px-4 py-3 text-left shadow-sm">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Questions
-                </p>
-                <p className="text-2xl font-semibold">
-                  {exam.questions.length}
-                </p>
-              </div>
-              <div className="rounded-2xl border bg-background/80 px-4 py-3 text-left shadow-sm">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Total marks
-                </p>
-                <p className="text-2xl font-semibold">{totalMarks}</p>
-              </div>
-              <div className="rounded-2xl border bg-background/80 px-4 py-3 text-left shadow-sm">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {exam.timeLimitMinutes ? "Time remaining" : "Time spent"}
-                </p>
-                <p className="text-2xl font-semibold text-primary">
-                  {exam.timeLimitMinutes
-                    ? (formattedRemaining ??
-                      formatDuration(exam.timeLimitMinutes * 60))
-                    : formattedElapsed}
-                </p>
-                {exam.timeLimitMinutes ? (
-                  <p className="text-xs text-muted-foreground">
-                    Time limit: {exam.timeLimitMinutes} minutes
+
+            <div className="grid w-full max-w-4xl gap-4 sm:grid-cols-1 lg:grid-cols-3">
+              <div className="group relative overflow-hidden rounded-2xl border border-border/50 bg-linear-to-br from-blue-500/10 to-blue-600/5 p-5 shadow-lg transition-all hover:shadow-xl hover:scale-105">
+                <div className="absolute inset-0 bg-linear-to-br from-blue-500/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                <div className="relative space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                    Questions
                   </p>
-                ) : null}
+                  <p className="text-3xl font-bold text-foreground">
+                    {exam.questions.length}
+                  </p>
+                </div>
+              </div>
+
+              <div className="group relative overflow-hidden rounded-2xl border border-border/50 bg-linear-to-br from-emerald-500/10 to-emerald-600/5 p-5 shadow-lg transition-all hover:shadow-xl hover:scale-105">
+                <div className="absolute inset-0 bg-linear-to-br from-emerald-500/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                <div className="relative space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    Total Marks
+                  </p>
+                  <p className="text-3xl font-bold text-foreground">
+                    {totalMarks}
+                  </p>
+                </div>
+              </div>
+
+              <div className="group relative overflow-hidden rounded-2xl border border-border/50 bg-linear-to-br from-primary/10 to-primary/5 p-5 shadow-lg transition-all hover:shadow-xl hover:scale-105">
+                <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                <div className="relative space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                    {exam.timeLimitMinutes ? "Time Remaining" : "Time Spent"}
+                  </p>
+                  <p className="text-3xl font-bold text-primary">
+                    {exam.timeLimitMinutes
+                      ? (formattedRemaining ??
+                        formatDuration(exam.timeLimitMinutes * 60))
+                      : formattedElapsed}
+                  </p>
+                  {exam.timeLimitMinutes ? (
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Time limit: {exam.timeLimitMinutes} minutes
+                    </p>
+                  ) : null}
+                </div>
               </div>
             </div>
-            <div className="space-y-2 text-sm text-muted-foreground md:text-base">
+
+            <div className="w-full max-w-3xl space-y-4 rounded-2xl bg-muted/30 p-6 backdrop-blur-sm">
               {exam.instructions ? (
-                <p className="max-w-3xl leading-relaxed text-foreground">
-                  {exam.instructions}
-                </p>
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    Instructions
+                  </p>
+                  <p className="leading-relaxed text-foreground/90">
+                    {exam.instructions}
+                  </p>
+                </div>
               ) : (
-                <p className="max-w-3xl">
-                  No specific instructions were provided for this exam.
+                <p className="text-sm font-semibold text-center text-foreground/80">
+                  Answer all questions
                 </p>
               )}
               {exam.timeLimitMinutes ? (
-                <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                  Time limit: {exam.timeLimitMinutes} minutes. The exam will
-                  submit automatically when the timer ends.
-                </p>
+                <div className="flex items-center justify-center gap-2 rounded-xl bg-primary/10 px-4 py-3 border border-primary/20">
+                  <svg
+                    className="h-5 w-5 text-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <p className="text-sm font-bold uppercase tracking-wide text-primary">
+                    Time limit: {exam.timeLimitMinutes} minutes. The exam will
+                    submit automatically when the timer ends.
+                  </p>
+                </div>
               ) : null}
             </div>
           </CardContent>
@@ -607,7 +655,7 @@ export default function ExamAttemptPage() {
                                     onChange={() =>
                                       handleSelectOption(
                                         currentEntry.questionId,
-                                        option
+                                        option,
                                       )
                                     }
                                     disabled={Boolean(result)}
@@ -659,7 +707,7 @@ export default function ExamAttemptPage() {
                           onChange={(event) =>
                             handleEssayChange(
                               currentEntry.questionId,
-                              event.target.value
+                              event.target.value,
                             )
                           }
                           rows={5}
@@ -770,7 +818,7 @@ export default function ExamAttemptPage() {
                       {exam.questions.map((entry, index) => {
                         const answered = Boolean(
                           answers[entry.questionId]?.selectedOption ||
-                            answers[entry.questionId]?.answerText
+                            answers[entry.questionId]?.answerText,
                         );
 
                         const isCurrent = index === currentQuestionIndex;
