@@ -125,6 +125,7 @@ function buildSimpleIdCardSvg(data: SimpleIdCardData): string {
       <text x="0" y="24" font-size="14" font-weight="600" letter-spacing="4" fill="#38bdf8">STUDENT IDENTITY CARD</text>
       <text x="0" y="64" font-size="38" font-weight="700" fill="#f8fafc">${INSTITUTE_INFO.name}</text>
       <text x="0" y="94" font-size="19" font-weight="500" fill="#b8d5ff">${INSTITUTE_INFO.tagline}</text>
+      <text x="0" y="94" font-size="19" font-weight="500" fill="#b8d5ff">Colombo</text>
       <g transform="translate(0, 130)">
         <rect width="540" height="310" rx="26" fill="url(#panelGradient)" stroke="#1e3a8a" stroke-width="2" />
         <g transform="translate(32, 40)">
