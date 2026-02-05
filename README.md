@@ -2,6 +2,19 @@
 
 A comprehensive education management platform built with Next.js 15, Prisma ORM, and modern web technologies. The platform integrates multiple surfaces including public marketing, student learning management, teacher content management, and administrative systems into a unified experience.
 
+<img src="https://github.com/user-attachments/assets/5865c3f1-49bd-423b-99a2-1ccae2f99654" width="800" />
+<img src="https://github.com/user-attachments/assets/b5aa31a8-0f96-4c27-9833-f4edfa88c561" width="800" />
+<img src="https://github.com/user-attachments/assets/12decd7e-3f19-4124-9b0c-d9d1114111c3" width="800" />
+<img src="https://github.com/user-attachments/assets/bce30e6b-20da-428c-a82d-e880db49d8f7" width="800" />
+<img src="https://github.com/user-attachments/assets/3268b264-2937-41ac-b166-75e47e81b638" width="800" />
+<img src="https://github.com/user-attachments/assets/dec833e6-f069-4668-9192-aa2966d78d6d" width="800" />
+<img src="https://github.com/user-attachments/assets/85cd2e7f-1506-41ef-94a1-86960ea0a2df" width="800" />
+<img src="https://github.com/user-attachments/assets/3c4e1388-fb40-4428-b470-b44c88909d18" width="800" />
+<img src="https://github.com/user-attachments/assets/1b3e0e23-a050-48b0-b070-9cf54abc4dbc" width="800" />
+<img src="https://github.com/user-attachments/assets/e0170ad5-86c2-4977-a7cb-af403d42e464" width="800" />
+<img src="https://github.com/user-attachments/assets/3e75afa1-f5d1-4b1c-a418-66794394a964" width="800" />
+
+
 ## Platform Overview
 
 Zigma Institute is a multi-tenant educational platform designed to handle the complete lifecycle of student education—from marketing and enrollment through course delivery, assessment, and performance tracking. Built with the Next.js App Router and server components, it delivers high performance while maintaining clean separation of concerns across different user roles.
