@@ -11,8 +11,9 @@ export default function PreviewBanner() {
   return (
     <div className="w-full bg-red-800 text-white text-center text-sm font-medium py-2 px-4 z-[9999] relative flex items-center justify-center">
       <span>
-        ⚠️ Preview Version — You have been granted admin privileges and can
-        access the entire project.
+        ⚠️ Preview Version — Sign in with admin credentials to check the entire
+        project: <span className="font-bold">Email:</span> admin@mail.com
+        &nbsp;|&nbsp; <span className="font-bold">Password:</span> 123456
       </span>
       <button
         onClick={() => setDismissed(true)}
