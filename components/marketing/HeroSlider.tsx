@@ -20,8 +20,7 @@ const slides = [
     title: "Next-Era Educational Experience",
     subtitle: "Modern Comfort Zone",
     description: `${APP_NAME} unifies enrollment, communication, and analytics so your team can focus on what matters most student success.`,
-    image:
-      "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1600&q=80",
+    image: "/images/showcase/hero-education.jpg",
     ctaText: "Start Registration",
     ctaLink: "/student-registration",
     accentParams: {
@@ -36,8 +35,7 @@ const slides = [
     subtitle: "Unlock Potential",
     description:
       "Our modern learning paths and AI-driven insights ensure every student achieves their academic goals.",
-    image:
-      "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1600&q=80",
+    image: "/images/showcase/learning-environment.jpg",
     ctaText: "Explore Courses",
     ctaLink: "/courses",
     accentParams: {
@@ -52,8 +50,7 @@ const slides = [
     subtitle: "Digital Transformation",
     description:
       "Streamline operations with our integrated EIMS, Learning content management.",
-    image:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80",
+    image: "/images/showcase/digital-technology.jpg",
     ctaText: "View Gallery",
     ctaLink: "/gallery",
     accentParams: {

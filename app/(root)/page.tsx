@@ -20,22 +20,19 @@ const modules = [
     name: "EIMS Dashboard",
     description:
       "Manage admissions, attendance, finance, and institute-wide communications with automated alerts and analytics.",
-    image:
-      "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=800&q=80",
+    image: "/images/showcase/learning-environment.jpg",
   },
   {
     name: "Learning Management System",
     description:
       "Deliver digital lessons, assignments, and AI-powered study support to keep every learner engaged and on track.",
-    image:
-      "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80",
+    image: "/images/showcase/teacher-lms.jpg",
   },
   {
     name: "Teacher CMS Portal",
     description:
       "Give educators a single workspace to publish resources, monitor progress, and collaborate with management in real time.",
-    image:
-      "https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=800&q=80",
+    image: "/images/showcase/cms-portal.jpg",
   },
 ];
 
@@ -283,7 +280,7 @@ export default function ShowcaseSite() {
               className="relative h-72 w-full overflow-hidden rounded-3xl shadow-2xl"
             >
               <Image
-                src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80"
+                src="/images/showcase/team-teaching.jpg"
                 alt="Teacher guiding students"
                 fill
                 sizes="(min-width: 1024px) 40vw, 100vw"
@@ -299,7 +296,7 @@ export default function ShowcaseSite() {
                 className="relative h-48 w-full overflow-hidden rounded-2xl shadow-xl"
               >
                 <Image
-                  src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80"
+                  src="/images/showcase/students-celebrating.jpg"
                   alt="Students celebrating success"
                   fill
                   sizes="(min-width: 640px) 50vw, 100vw"
@@ -314,7 +311,7 @@ export default function ShowcaseSite() {
                 className="relative h-48 w-full overflow-hidden rounded-2xl shadow-xl"
               >
                 <Image
-                  src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80"
+                  src="/images/showcase/digital-technology.jpg"
                   alt="Administrator reviewing dashboards"
                   fill
                   sizes="(min-width: 640px) 50vw, 100vw"
@@ -442,7 +439,7 @@ export default function ShowcaseSite() {
           </div>
           <div className="relative h-64 w-full max-w-xs">
             <Image
-              src="https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=600&q=80"
+              src="/images/showcase/learning-environment.jpg"
               alt="Student using tablet in library"
               fill
               sizes="(min-width: 1024px) 20vw, 60vw"
